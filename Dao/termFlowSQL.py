@@ -750,7 +750,7 @@ def lista_institution_production_db(text, institution, type_):
     if type_ == "SPEAKER":
         filter = filter = util.filterSQLRank(text, ";", "event_name")
 
-        sql = """SELECT  COUNT(distinct r.id) AS qtd,i.id as id, i.name as institution,image 
+        sql = """SELECT  COUNT(distinct r.id) AS qtd,i.id as id, i.name as institution,image, i.id AS institution_id
                   FROM  researcher r , institution i, researcher_production rp,   participation_events AS b 
                            WHERE 
                             r.institution_id = i.id 
@@ -771,7 +771,7 @@ def lista_institution_production_db(text, institution, type_):
     if type_ == "ABSTRACT":
         filter = filter = util.filterSQLRank(text, ";", "r.abstract")
 
-        sql = """SELECT  COUNT(distinct r.id) AS qtd,i.id as id, i.name as institution,image 
+        sql = """SELECT  COUNT(distinct r.id) AS qtd,i.id as id, i.name as institution,image , i.id AS institution_id
                   FROM  researcher r , institution i, researcher_production rp 
                            WHERE 
                             r.institution_id = i.id 
@@ -794,7 +794,7 @@ def lista_institution_production_db(text, institution, type_):
         if type_ == "BOOK":
             filterType = " AND (b.type='%s' or b.type='BOOK_CHAPTER') " % type_
         # AND acronym IS NOT NULL
-        sql = """SELECT  COUNT( r.id) AS qtd,i.id as id, i.name as institution,image 
+        sql = """SELECT  COUNT( r.id) AS qtd,i.id as id, i.name as institution,image , i.id AS institution_id
                   FROM  researcher r , institution i, researcher_production rp, bibliographic_production AS b 
                            WHERE 
                             r.institution_id = i.id 
@@ -814,7 +814,7 @@ def lista_institution_production_db(text, institution, type_):
         )
 
     if type_ == "PATENT":
-        sql = """SELECT  COUNT(distinct b.title) AS qtd,i.id as id, i.name as institution,image 
+        sql = """SELECT  COUNT(distinct b.title) AS qtd,i.id as id, i.name as institution,image , i.id AS institution_id
                   FROM  researcher r , institution i, researcher_production rp, patent AS b 
                            WHERE 
                             r.institution_id = i.id 
@@ -832,7 +832,9 @@ def lista_institution_production_db(text, institution, type_):
         )
 
     reg = sgbdSQL.consultar_db(sql)
-    df_bd = pd.DataFrame(reg, columns=["qtd", "id", "institution", "image"])
+    df_bd = pd.DataFrame(
+        reg, columns=["qtd", "id", "institution", "image", "institution_id"]
+    )
 
     return df_bd
 
