@@ -76,7 +76,6 @@ def researcherBook():
     graduate_program_id = request.args.get("graduate_program_id")
     university = request.args.get("university")
     book_type = request.args.get("type")
-
     list_researcher = areaFlowSQL.lista_researcher_book_db(
         term, university, graduate_program_id, book_type
     )
