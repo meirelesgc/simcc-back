@@ -39,7 +39,7 @@ if __name__ == "__main__":
             embeddings = get_embeddings(data["text"])
             script_sql = f"""
                 INSERT INTO embeddings.abstract (reference_id, embeddings, price)
-                VALUES ('{data['id']}', '{embeddings}', '{price}')
+                VALUES ('{data["id"]}', '{embeddings}', '{price}')
                 """
             sgbdSQL.execScript_db(sql=script_sql)
 
@@ -63,7 +63,7 @@ if __name__ == "__main__":
             embeddings = get_embeddings(data["text"])
             script_sql = f"""
                 INSERT INTO embeddings.article (reference_id, embeddings, price)
-                VALUES ('{data['id']}', '{embeddings}', '{price}')
+                VALUES ('{data["id"]}', '{embeddings}', '{price}')
                 """
             sgbdSQL.execScript_db(sql=script_sql)
 
@@ -85,7 +85,7 @@ if __name__ == "__main__":
             embeddings = get_embeddings(data["text"])
             script_sql = f"""
                 INSERT INTO embeddings.article_abstract (reference_id, embeddings, price)
-                VALUES ('{data['id']}', '{embeddings}', '{price}')
+                VALUES ('{data["id"]}', '{embeddings}', '{price}')
                 """
             sgbdSQL.execScript_db(sql=script_sql)
 
@@ -109,7 +109,7 @@ if __name__ == "__main__":
             embeddings = get_embeddings(data["text"])
             script_sql = f"""
                 INSERT INTO embeddings.book (reference_id, embeddings, price)
-                VALUES ('{data['id']}', '{embeddings}', '{price}')
+                VALUES ('{data["id"]}', '{embeddings}', '{price}')
                 """
             sgbdSQL.execScript_db(sql=script_sql)
 
@@ -133,7 +133,7 @@ if __name__ == "__main__":
             embeddings = get_embeddings(data["text"])
             script_sql = f"""
                 INSERT INTO embeddings.event (reference_id, embeddings, price)
-                VALUES ('{data['id']}', '{embeddings}', '{price}')
+                VALUES ('{data["id"]}', '{embeddings}', '{price}')
                 """
             sgbdSQL.execScript_db(sql=script_sql)
 
@@ -156,6 +156,6 @@ if __name__ == "__main__":
             embeddings = get_embeddings(data["text"])
             script_sql = f"""
                 INSERT INTO embeddings.patent (reference_id, embeddings, price)
-                VALUES ('{data['id']}', '{embeddings}', '{price}')
+                VALUES ('{data["id"]}', '{embeddings}', '{price}')
                 """
             sgbdSQL.execScript_db(sql=script_sql)

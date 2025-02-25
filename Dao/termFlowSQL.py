@@ -118,6 +118,7 @@ def lists_patent_production_researcher_db(researcher_id, year, term, distinct):
 				'name', r.name,
 				'researcher_id', p.researcher_id
 			)),
+            '' AS blank,
             p.title as title,
             MIN(p.development_year) as year,
             MIN(p.grant_date) as grant_date,
@@ -142,6 +143,7 @@ def lists_patent_production_researcher_db(researcher_id, year, term, distinct):
         script_sql = f"""
             SELECT
                 p.researcher_id,
+                r.name,
                 p.title as title,
                 (p.development_year) as year,
                 (p.grant_date) as grant_date,
@@ -164,7 +166,7 @@ def lists_patent_production_researcher_db(researcher_id, year, term, distinct):
 
     df_bd = pd.DataFrame(
         reg,
-        columns=["researcher", "title", "year", "grant_date", "patent"],
+        columns=["researcher", "name", "title", "year", "grant_date", "patent"],
     )
     df_bd["grant_date"] = df_bd["grant_date"].astype("str").replace("NaT", "")
 
@@ -832,21 +834,18 @@ def lista_institution_production_db(text, institution, type_):
         )
 
     if type_ == "AREA":
-        filter = util.filterSQLRank(text, ";", "b.name")
-        sql = """
-            SELECT COUNT(distinct b.name) AS qtd, i.id as id,
-                i.name as institution,image , i.id AS institution_id
-            FROM researcher r, institution i, researcher_production rp, 
-                area_expertise AS b, researcher_area_expertise rb
-            WHERE 
-                r.institution_id = i.id 
-                AND r.id = rb.researcher_id
-                AND rb.area_expertise_id = b.id
-                AND acronym IS NOT NULL
-                %s
-                %s
-            GROUP BY i.id, i.name
-                """ % (filter, filterinstitution)
+        filter_ = str()
+        if text:
+            filter_ = util.filterSQLRank(text, ";", "rp.area_specialty")
+
+        sql = f"""
+            SELECT COUNT(rp.researcher_id), i.id, i.name, image, i.id
+            FROM researcher_production rp
+                INNER JOIN researcher r ON r.id = rp.researcher_id
+                INNER JOIN institution i ON i.id = r.institution_id
+            {filter_}
+            GROUP BY i.id;
+        """
 
     reg = sgbdSQL.consultar_db(sql)
     df_bd = pd.DataFrame(

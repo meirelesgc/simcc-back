@@ -376,7 +376,8 @@ def lista_researcher_area_speciality_db(term, institution, graduate_program_id):
             r.orcid AS orcid,
             i.image AS image_university,
             r.graduation AS graduation,
-            to_char(r.last_update,'dd/mm/yyyy') AS lattes_update
+            to_char(r.last_update,'dd/mm/yyyy') AS lattes_update,
+            r.status
         FROM
             researcher r
             LEFT JOIN city c ON c.id = r.city_id
@@ -415,6 +416,7 @@ def lista_researcher_area_speciality_db(term, institution, graduate_program_id):
             "image_university",
             "graduation",
             "lattes_update",
+            "status",
         ],
     )
 
