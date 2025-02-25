@@ -831,11 +831,27 @@ def lista_institution_production_db(text, institution, type_):
             filterinstitution,
         )
 
+    if type_ == "AREA":
+        filter = util.filterSQLRank(text, ";", "b.name")
+        sql = """
+            SELECT COUNT(distinct b.name) AS qtd, i.id as id,
+                i.name as institution,image , i.id AS institution_id
+            FROM researcher r, institution i, researcher_production rp, 
+                area_expertise AS b, researcher_area_expertise rb
+            WHERE 
+                r.institution_id = i.id 
+                AND r.id = rb.researcher_id
+                AND rb.area_expertise_id = b.id
+                AND acronym IS NOT NULL
+                %s
+                %s
+            GROUP BY i.id, i.name
+                """ % (filter, filterinstitution)
+
     reg = sgbdSQL.consultar_db(sql)
     df_bd = pd.DataFrame(
         reg, columns=["qtd", "id", "institution", "image", "institution_id"]
     )
-
     return df_bd
 
 
