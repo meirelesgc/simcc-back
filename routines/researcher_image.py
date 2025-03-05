@@ -57,7 +57,7 @@ def list_researchers():
         FROM researcher r
         LEFT JOIN logs.researcher_routine lrr
             ON r.id = lrr.researcher_id
-            AND lrr.routine_type = 'LATTES_10'
+            AND lrr.type = 'LATTES_10'
         WHERE r.lattes_10_id IS NULL
             OR lrr.created_at < NOW() - INTERVAL '30 days';
         """

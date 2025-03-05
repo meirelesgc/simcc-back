@@ -1,6 +1,6 @@
 services:
   simcc-postgres:
-    image: ankane/pgvector
+    image: pgvector/pgvector:pg17
     container_name: simcc-postgres
     environment:
       POSTGRES_USER: postgres
@@ -10,6 +10,6 @@ services:
       - "5432:5432"
     volumes:
       - simcc-postgres:/var/lib/postgresql/data
-
+    
 volumes:
   simcc-postgres:

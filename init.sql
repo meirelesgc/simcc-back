@@ -714,14 +714,14 @@ CREATE TABLE IF NOT EXISTS public.researcher_professional_experience (
     additional_info TEXT
 );
 CREATE TABLE IF NOT EXISTS logs.routine (
-    routine_type routine_type NOT NULL,
+    type routine_type NOT NULL,
     error BOOLEAN DEFAULT FALSE,
     detail TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 CREATE TABLE IF NOT EXISTS logs.researcher_routine (
     researcher_id uuid NOT NULL,
-    routine_type routine_type NOT NULL,
+    type routine_type NOT NULL,
     error BOOLEAN DEFAULT FALSE,
     detail TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
@@ -849,4 +849,3 @@ CREATE INDEX ON bibliographic_production USING gin (title gin_trgm_ops);
 CREATE INDEX ON brand USING gin (title gin_trgm_ops);
 CREATE INDEX ON software USING gin (title gin_trgm_ops);
 CREATE INDEX ON event_organization USING gin (title gin_trgm_ops);
-

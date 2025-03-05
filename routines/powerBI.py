@@ -910,6 +910,33 @@ def dim_tecnical_production_terms():
     csv.to_csv(csv_path)
 
 
+def dim_logs_routine():
+    SCRIPT_SQL = """
+        SELECT unnest(enum_range(NULL::routine_type)) AS routine_type;
+        """
+    result = conn.select(SCRIPT_SQL)
+
+    columns = ['routine_type']
+    csv = pd.DataFrame(result, columns=columns)
+    csv_path = os.path.join(PATH, 'dim_logs_routine.csv')
+    csv.to_csv(csv_path)
+
+
+def fat_logs_routine():
+    SCRIPT_SQL = """
+        SELECT DISTINCT ON (type) type, error, detail,
+            created_at
+        FROM logs.routine
+        ORDER BY type, created_at DESC;
+        """
+    result = conn.select(SCRIPT_SQL)
+
+    columns = ['type', 'error', 'detail', 'created_at']
+    csv = pd.DataFrame(result, columns=columns)
+    csv_path = os.path.join(PATH, 'fat_logs_routine.csv')
+    csv.to_csv(csv_path)
+
+
 if __name__ == '__main__':
     for directory in [PATH]:
         if not os.path.exists(directory):

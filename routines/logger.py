@@ -1,30 +1,30 @@
 from simcc.repositories import conn
 
 
-def logger_researcher_routine(researcher_id, routine_type, error, detail=None):
+def logger_researcher_routine(researcher_id, type_, error, detail=None):
     params = {
         'researcher_id': researcher_id,
-        'routine_type': routine_type,
+        'type': type_,
         'error': error,
         'detail': detail,
     }
     SCRIPT_SQL = """
         INSERT INTO logs.researcher_routine
-        (researcher_id, routine_type, error, detail)
-        VALUES (%(researcher_id)s, %(routine_type)s, %(error)s, %(detail)s);
+        (researcher_id, type, error, detail)
+        VALUES (%(researcher_id)s, %(type)s, %(error)s, %(detail)s);
         """
     conn.exec(SCRIPT_SQL, params)
 
 
-def logger_routine(routine_type, error, detail=None):
+def logger_routine(type_, error, detail=None):
     params = {
-        'routine_type': routine_type,
+        'type': type_,
         'error': error,
         'detail': detail,
     }
     SCRIPT_SQL = """
         INSERT INTO logs.routine
-        (routine_type, error, detail)
-        VALUES (%(routine_type)s, %(error)s, %(detail)s);
+        (type, error, detail)
+        VALUES (%(type)s, %(error)s, %(detail)s);
         """
     conn.exec(SCRIPT_SQL, params)

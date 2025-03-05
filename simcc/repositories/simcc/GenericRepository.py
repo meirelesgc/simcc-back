@@ -64,10 +64,10 @@ def get_researcher_foment(institution_id: UUID):
 
 def get_logs():
     SCRIPT_SQL = """
-        SELECT DISTINCT ON (routine_type) routine_type, error, detail,
+        SELECT DISTINCT ON (type) type, error, detail,
             created_at
         FROM logs.routine
-        ORDER BY routine_type, created_at DESC;
+        ORDER BY type, created_at DESC;
         """
     result = conn.select(SCRIPT_SQL)
     return result

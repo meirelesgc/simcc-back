@@ -409,3 +409,19 @@ def dim_tecnical_production_terms_csv():
     file_name = 'dim_tecnical_production_terms.csv'
     file_path = os.path.join(STORAGE_PATH, file_name)
     return FileResponse(file_path, filename=file_name)
+
+
+@router.get('/dim_logs_routine.csv')
+def dim_logs_routine_csv():
+    powerBI.dim_logs_routine()
+    file_name = 'dim_logs_routine.csv'
+    file_path = os.path.join(STORAGE_PATH, file_name)
+    return FileResponse(file_path, filename=file_name)
+
+
+@router.get('/fat_logs_routine.csv')
+def fat_logs_routine_csv():
+    powerBI.fat_logs_routine()
+    file_name = 'fat_logs_routine.csv'
+    file_path = os.path.join(STORAGE_PATH, file_name)
+    return FileResponse(file_path, filename=file_name)
