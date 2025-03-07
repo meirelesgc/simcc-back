@@ -763,14 +763,23 @@ def list_distinct_article_production(  # noqa: PLR0914
         filter_dep = 'AND dr.dep_id = %(dep_id)s'
 
     SCRIPT_SQL = f"""
-        SELECT DISTINCT
-            b.id AS id, title, b.year, type, doi, bpa.qualis,
-            periodical_magazine_name AS magazine, r.name AS researcher,
-            r.lattes_10_id, r.lattes_id, jcr AS jif,
-            jcr_link, r.id AS researcher_id, opa.abstract,
-            opa.article_institution, opa.authors,
-            opa.authors_institution, opa.citations_count, bpa.issn, opa.keywords,
-            opa.landing_page_url, opa.language, opa.pdf, b.has_image, b.relevance
+        SELECT NULL AS id, title, MAX(b.year) AS year, MAX(type) AS type,
+            MAX(doi) AS doi, MAX(bpa.qualis) AS qualis,
+            MAX(periodical_magazine_name) AS magazine,
+            ARRAY_AGG(r.name) AS researcher,
+            ARRAY_AGG(r.lattes_10_id) AS lattes_10_id,
+            ARRAY_AGG(r.lattes_id) AS lattes_id, MAX(jcr) AS jif,
+            MAX(jcr_link) AS jcr_link, ARRAY_AGG(r.id) AS researcher_id,
+            MAX(opa.abstract) AS abstract,
+            MAX(opa.article_institution) AS article_institution,
+            MAX(opa.authors) AS authors,
+            MAX(opa.authors_institution) AS authors_institution,
+            MAX(opa.citations_count) AS citations_count,
+            MAX(bpa.issn) AS issn, MAX(opa.keywords) AS keywords,
+            MAX(opa.landing_page_url) AS landing_page_url,
+            MAX(opa.language) AS language, MAX(opa.pdf) AS pdf,
+            ARRAY_AGG(b.has_image) AS has_image,
+            ARRAY_AGG(b.relevance) AS relevance
         FROM bibliographic_production b
             LEFT JOIN bibliographic_production_article bpa
                 ON b.id = bpa.bibliographic_production_id
@@ -793,11 +802,10 @@ def list_distinct_article_production(  # noqa: PLR0914
             {filter_program}
             {filter_university}
             {filter_dep}
-        ORDER BY
-            year DESC
+        GROUP BY b.title
+        ORDER BY year DESC;
         """
     result = conn.select(SCRIPT_SQL, params)
-    print(SCRIPT_SQL, params, result)
     return result
 
 

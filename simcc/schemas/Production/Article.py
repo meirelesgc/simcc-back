@@ -65,20 +65,20 @@ class Article(BaseModel):
 
 
 class ArticleProduction(BaseModel):
-    id: UUID
+    id: UUID | str
     title: str
     year: int
     type: str
     doi: str | None
     qualis: QualisOptions
     magazine: str
-    researcher: str
-    lattes_10_id: str
-    lattes_id: str
+    researcher: str | list[str]
+    lattes_10_id: str | list[str]
+    lattes_id: str | list[str]
     jif: str | None
     jcr_link: str | None
-    researcher_id: UUID
-    lattes_id: str
+    researcher_id: UUID | list[UUID]
+    lattes_id: str | list[str]
 
     abstract: str | None
     article_institution: str | None
@@ -91,5 +91,5 @@ class ArticleProduction(BaseModel):
     language: str | None
     pdf: str | None
 
-    has_image: bool | None
-    relevance: bool | None
+    has_image: bool | list[bool] | None
+    relevance: bool | list[bool] | None

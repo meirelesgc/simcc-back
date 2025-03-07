@@ -160,6 +160,7 @@ def list_article_production(
             lenght,
             dep_id,
         )
+
     else:
         articles = ProductionService.list_article_production(
             terms,
@@ -173,4 +174,5 @@ def list_article_production(
             lenght,
             dep_id,
         )
+    print(len(articles))
     return articles
