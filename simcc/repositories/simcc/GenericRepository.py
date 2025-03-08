@@ -64,7 +64,7 @@ def get_researcher_foment(institution_id: UUID):
 
 def get_logs():
     SCRIPT_SQL = """
-        SELECT DISTINCT ON (type) type, error, detail,
+        SELECT DISTINCT ON (type) type AS routine_type, error, detail,
             created_at
         FROM logs.routine
         ORDER BY type, created_at DESC;
