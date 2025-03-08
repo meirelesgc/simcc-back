@@ -1,3 +1,4 @@
+from datetime import datetime
 import Dao.sgbdSQL as sgbdSQL
 import pandas as pd
 
@@ -122,7 +123,7 @@ def generic_data(year_, graduate_program_id, dep_id):
     else:
         filter_departament = str()
 
-    year = list(range(int(year_), 2025))
+    year = list(range(int(year_), datetime.now().year + 1))
 
     data_frame = pd.DataFrame(year, columns=["year"])
 
@@ -486,7 +487,7 @@ def researcher_foment_db():
 
 
 def generic_researcher_data_data(year_, researcher_id):
-    year = list(range(int(year_), 2025))
+    year = list(range(int(year_), datetime.now().year + 1))
 
     data_frame = pd.DataFrame(year, columns=["year"])
 
