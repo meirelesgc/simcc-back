@@ -15,3 +15,6 @@ source .env
 
 "${SIMCC_HOME}/.venv/bin/python" routines/search_terms.py
 check_error "terms"
+
+"${SIMCC_HOME}/.venv/bin/python" routines/openAlex.py
+check_error "openAlex"
