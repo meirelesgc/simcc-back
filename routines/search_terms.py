@@ -27,13 +27,13 @@ def terms_dataframe() -> pd.DataFrame:
 
         UNION
 
-        SELECT unaccent(LOWER(name)), 1, 'NAME', '0', 
+        SELECT unaccent(LOWER(name)), 1, 'NAME', '0',
             unaccent(LOWER(name)) AS term_normalize
         FROM researcher
 
         UNION
 
-        SELECT AREA, 1, 'AREA', great_area, 
+        SELECT AREA, 1, 'AREA', great_area,
             unaccent(LOWER(great_area)) AS term_normalize
         FROM (SELECT
                 LOWER(

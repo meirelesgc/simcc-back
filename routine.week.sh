@@ -13,5 +13,5 @@ cd "$SIMCC_HOME" || exit 1
 source .venv/bin/activate
 source .env
 
-"${SIMCC_HOME}/.venv/bin/python" routines/terms.py
+"${SIMCC_HOME}/.venv/bin/python" routines/search_terms.py
 check_error "terms"
