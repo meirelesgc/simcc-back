@@ -140,8 +140,10 @@ def report_indprod():
         FROM research_report
         GROUP BY year, researcher_id;
         """
+
+    columns = ['year', 'researcher_id', 'report_prod']
     result = conn.select(SCRIPT_SQL)
-    report = pd.DataFrame(result)
+    report = pd.DataFrame(result, columns=columns)
 
     report['report_prod'] = report['report_count'] * barema.get('REPORT', 0)
     columns = ['year', 'researcher_id', 'report_prod']

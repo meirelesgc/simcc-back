@@ -5,14 +5,14 @@ import pandas as pd
 from simcc.repositories import conn
 
 
-def first_article_metric(year):
+def first_article_metric():
     SCRIPT_SQL = """
         SELECT researcher_id, MIN(year_) AS first_article_year
         FROM bibliographic_production
         WHERE type = 'ARTICLE'
         GROUP BY researcher_id;
         """
-    result = conn.select(SCRIPT_SQL, {'year': year})
+    result = conn.select(SCRIPT_SQL)
     return result
 
 
@@ -125,7 +125,7 @@ def guidance_metrics(year):
         index=['researcher_id'],
         columns='nature',
         values='count_nature',
-        aggfunc='size',
+        aggfunc='sum',
         fill_value=0,
     ).reset_index()
 
@@ -255,7 +255,7 @@ if __name__ == '__main__':
 
     dataframe = dataframe.merge(articles, how='left', on=['researcher_id'])
 
-    first_article = pd.DataFrame(first_article_metric(YEAR_FILTER))
+    first_article = pd.DataFrame(first_article_metric())
     dataframe = dataframe.merge(first_article, how='left', on=['researcher_id'])
 
     patents = pd.DataFrame(patent_metrics(YEAR_FILTER))
@@ -291,6 +291,8 @@ if __name__ == '__main__':
 
     ind_prod = pd.DataFrame(ind_prod_metrics(YEAR_FILTER))
     dataframe = dataframe.merge(ind_prod, how='left', on=['researcher_id'])
+
+    dataframe.columns = [f'{col}_PAQ' for col in dataframe.columns]
 
     dataframe.to_csv(
         f'storage/csv/researcher_class_{YEAR_FILTER}.csv',

@@ -1,3 +1,5 @@
+from uuid import uuid4
+
 import pandas as pd
 from unidecode import unidecode
 
@@ -39,9 +41,11 @@ def article_indprod():
         GROUP BY year, qualis, researcher_id;
         """
     result = conn.select(SCRIPT_SQL)
-    articles = pd.DataFrame(
-        result, columns=['year', 'qualis', 'count_article', 'researcher_id']
-    )
+    if not result:
+        return [{'year': 0000, 'researcher_id': uuid4(), 'article_prod': 0}]
+
+    columns = ['year', 'qualis', 'count_article', 'researcher_id']
+    articles = pd.DataFrame(result, columns=columns)
 
     articles['article_prod'] = (
         articles['qualis'].map(barema) * articles['count_article']
@@ -142,9 +146,12 @@ def report_indprod():
         FROM research_report
         GROUP BY year, researcher_id;
         """
-    result = conn.select(SCRIPT_SQL)
-    report = pd.DataFrame(result)
 
+    result = conn.select(SCRIPT_SQL)
+    if not result:
+        return [{'year': 0000, 'researcher_id': uuid4(), 'report_prod': 0}]
+
+    report = pd.DataFrame(result)
     report['report_prod'] = report['report_count'] * barema.get('REPORT', 0)
     columns = ['year', 'researcher_id', 'report_prod']
     report = report[columns]
