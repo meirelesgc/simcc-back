@@ -781,7 +781,8 @@ def cimatec_graduate_program():
 def dim_research_project():
     SCRIPT_SQL = """
         SELECT id, researcher_id, start_year, end_year, agency_code, agency_name,
-            project_name, status, nature, number_undergraduates, description,
+            TRANSLATE(project_name, ',', ' ') AS project_name, status, nature,
+            number_undergraduates, TRANSLATE(description, ',', ' ') AS description,
             number_specialists, number_academic_masters, number_phd
         FROM research_project;
     """

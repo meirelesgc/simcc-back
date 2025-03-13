@@ -292,7 +292,7 @@ if __name__ == '__main__':
     ind_prod = pd.DataFrame(ind_prod_metrics(YEAR_FILTER))
     dataframe = dataframe.merge(ind_prod, how='left', on=['researcher_id'])
 
-    dataframe.columns = [f'{col}_PAQ' for col in dataframe.columns]
+    dataframe.columns = [f'{col}_PAV' for col in dataframe.columns]
 
     dataframe.to_csv(
         f'storage/csv/researcher_class_{YEAR_FILTER}.csv',

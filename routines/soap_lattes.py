@@ -62,6 +62,7 @@ def download_xml(lattes_id, researcher_id):
     print('Baixando curriculo...')
     try:
         if PROXY:
+            print('Baixando curriculo via proxy')
             PROXY_URL = f'https://simcc.uesc.br/api/getCurriculoCompactado?lattes_id={lattes_id}'
             response = httpx.get(PROXY_URL, verify=False, timeout=None).content
         else:
@@ -69,7 +70,6 @@ def download_xml(lattes_id, researcher_id):
     except httpx.Timeout as E:
         logger_researcher_routine(researcher_id, 'SOAP_LATTES', True, str(E))
         return
-
     try:
         zip_path = os.path.join(HOP_PATH, ZIP_XML_PATH, lattes_id + '.zip')
         with open(zip_path, 'wb') as XML:
