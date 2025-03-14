@@ -1,17 +1,17 @@
 import pandas as pd
 import psycopg
 
-from simcc.repositories import conn
+from simcc.repositories import conn_admin
 
-programs = pd.read_csv('storage/csv/programs.csv')
+programs = pd.read_csv('storage/csv/simcc_programs.csv')
 
 
 def get_institution_id(program):
     SCRIPT_SQL = """
-        SELECT id FROM institution WHERE acronym = %(siglaIes)s;
+        SELECT institution_id AS id FROM institution WHERE acronym = %(siglaIes)s;
         """
     params = program.to_dict()
-    result = conn.select(SCRIPT_SQL, params)
+    result = conn_admin.select(SCRIPT_SQL, params)
     return result[0]['id'] if result else '7477a2a8-3fcb-47ac-8f66-12338ab298df'
 
 
@@ -36,7 +36,7 @@ for _, data in programs.iterrows():
             (%(código)s, %(nome)s, %(nomeAreaAvaliacao)s, %(modalidade)s, %(grau)s,
             %(conceito)s, %(institution_id)s, %(visible)s);
             """
-        conn.exec(SCRIPT_SQL, data.to_dict())
+        conn_admin.exec(SCRIPT_SQL, data.to_dict())
         print(f'Sucesso {_}')
     except psycopg.errors.UniqueViolation:
         try:
@@ -49,7 +49,7 @@ for _, data in programs.iterrows():
                     city = %(cidade)s
                 WHERE code = %(código)s;
                 """
-            conn.exec(SCRIPT_SQL_UPDATE, data.to_dict())
+            conn_admin.exec(SCRIPT_SQL_UPDATE, data.to_dict())
             print(f'Registro atualizado {data}')
         except Exception as e:
             print(f'Erro ao atualizar {data}: {e}')
