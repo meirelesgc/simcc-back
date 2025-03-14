@@ -6,12 +6,13 @@ from simcc.repositories.simcc import (
     GraduateProgramRepository,
     ResearcherRepository,
 )
-from simcc.schemas.GraduateProgram import GraduateProgram
 from simcc.schemas.Researcher import ResearcherArticleProduction
 
 
-def list_graduate_programs() -> GraduateProgram:
-    graduate_programs = GraduateProgramRepository.list_graduate_programs()
+def list_graduate_programs(program_id: UUID = None, university: str = None):
+    graduate_programs = GraduateProgramRepository.list_graduate_programs(
+        program_id, university
+    )
     return graduate_programs
 
 

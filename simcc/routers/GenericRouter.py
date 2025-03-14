@@ -1,6 +1,5 @@
 import os
 from datetime import datetime
-from http import HTTPStatus
 from pathlib import Path
 from typing import Optional
 from uuid import UUID
@@ -41,7 +40,6 @@ def dim_titulacao_xlsx():
 @router.get(
     '/getCurriculoCompactado',
     response_class=FileResponse,
-    status_code=HTTPStatus.OK,
 )
 def lattes_xml(lattes_id: str):
     client = Client('http://servicosweb.cnpq.br/srvcurriculo/WSCurriculo?wsdl')
@@ -61,7 +59,6 @@ def lattes_xml(lattes_id: str):
 @router.get(
     '/getDataAtualizacaoCV',
     response_model=str,
-    status_code=HTTPStatus.OK,
 )
 def current_lattes_date(lattes_id: str):
     client = Client('http://servicosweb.cnpq.br/srvcurriculo/WSCurriculo?wsdl')
@@ -75,7 +72,6 @@ def current_lattes_date(lattes_id: str):
 
 @router.get(
     '/resarcher_barema',
-    status_code=HTTPStatus.OK,
     response_model=list[ResearcherBarema],
 )
 def resarcher_barema(

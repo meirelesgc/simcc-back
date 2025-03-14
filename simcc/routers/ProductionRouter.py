@@ -1,4 +1,3 @@
-from http import HTTPStatus
 from uuid import UUID
 
 from fastapi import APIRouter
@@ -17,7 +16,6 @@ router = APIRouter()
 @router.get(
     '/patent_production_researcher',
     response_model=list[PatentProduction],
-    status_code=HTTPStatus.OK,
 )
 def list_patent_production(
     term: str = None,
@@ -42,7 +40,6 @@ def list_patent_production(
 @router.get(
     '/book_production_researcher',
     response_model=list[BookProduction],
-    status_code=HTTPStatus.OK,
 )
 def list_book_production(
     term: str = None,
@@ -67,7 +64,6 @@ def list_book_production(
 @router.get(
     '/brand_production_researcher',
     response_model=list[BrandProduction],
-    status_code=HTTPStatus.OK,
 )
 def list_brand_production(
     term: str = None,
@@ -86,7 +82,6 @@ def list_brand_production(
 @router.get(
     '/book_chapter_production_researcher',
     response_model=list[BookChapterProduction],
-    status_code=HTTPStatus.OK,
 )
 def list_book_chapter_production(
     term: str = None,
@@ -111,7 +106,6 @@ def list_book_chapter_production(
 @router.get(
     '/bibliographic_production_researcher',
     response_model=list[ArticleProduction],
-    status_code=HTTPStatus.OK,
 )
 def list_bibliographic_production(
     terms: str = None,
@@ -132,7 +126,6 @@ def list_bibliographic_production(
 @router.get(
     '/bibliographic_production_article',
     response_model=list[ArticleProduction],
-    status_code=HTTPStatus.OK,
 )
 def list_article_production(
     terms: str = None,

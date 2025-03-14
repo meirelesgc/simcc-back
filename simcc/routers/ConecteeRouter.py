@@ -15,7 +15,6 @@ STORAGE_PATH.mkdir(parents=True, exist_ok=True)
 @router.get(
     '/researcher',
     response_model=list[ResearcherData],
-    status_code=HTTPStatus.OK,
 )
 def researcher(cpf: str = str(), name: str = str()):
     researcher = ConecteeService.get_researcher_data(cpf, name)
@@ -50,8 +49,6 @@ def save_and_process_files(files: list[UploadFile]):
         )
 
 
-@router.get(
-    '/departament/rt', status_code=HTTPStatus.OK, response_model=RtMetrics
-)
+@router.get('/departament/rt', response_model=RtMetrics)
 def get_departament_rt():
     return ConecteeService.get_departament_rt_data()

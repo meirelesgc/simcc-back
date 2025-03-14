@@ -192,7 +192,8 @@ def search_in_name(
 
     filter_name = str()
     if name:
-        params['name'] = unidecode(name.replace(';', ' ') + '%')
+        name = unidecode(name).replace(';', ' ').replace('-', ' ') + '%'
+        params['name'] = name
         filter_name = """
             AND translate(unaccent(r.name), '-\\.:;''',' ') ILIKE %(name)s
             """

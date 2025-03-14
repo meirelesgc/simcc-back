@@ -20,4 +20,8 @@ class GraduateProgram(BaseModel):
     acronym: Optional[str]
     description: Optional[str]
     visible: Optional[bool]
-    site: Optional[str]
+    site: str | None
+
+    qtd_permanente: int | None
+    qtd_colaborador: int | None
+    qtd_estudantes: int | None

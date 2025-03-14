@@ -1,4 +1,3 @@
-from http import HTTPStatus
 from uuid import UUID
 
 from fastapi import APIRouter
@@ -17,7 +16,6 @@ router = APIRouter()
 @router.get(
     '/researcher',
     response_model=list[Researcher],
-    status_code=HTTPStatus.OK,
 )
 def search_in_abstract_or_article(
     terms: str = None,
@@ -69,7 +67,6 @@ def list_researchers_by_patent(
 
 @router.get(
     '/researcher/co-authorship/{researcher_id}',
-    status_code=HTTPStatus.OK,
     response_model=list[CoAuthorship],
 )
 def co_authorship(researcher_id: UUID):

@@ -1,14 +1,60 @@
+from uuid import UUID
+
 from simcc.repositories import conn
-from simcc.schemas.GraduateProgram import GraduateProgram
 
 
-def list_graduate_programs() -> list[GraduateProgram]:
-    SCRIPT_SQL = """
-        SELECT graduate_program_id, code, name, AREA, modality, type, rating,
-            institution_id, state, city, region, url_image, acronym, description,
-            visible, site
-        FROM public.graduate_program;
+def list_graduate_programs(program_id: UUID, university: str = None):
+    params = {}
+
+    filter_program = str()
+    if program_id:
+        params['program_id'] = program_id
+        filter_program = 'AND gp.graduate_program_id = %(program_id)s'
+
+    filter_university = str()
+    join_university = str()
+    if university:
+        join_university = """
+            LEFT JOIN institution i
+                ON gp.institution_id = i.id
+            """
+        params['university'] = university + '%'
+        filter_university = 'AND i.name ILIKE %(university)s'
+
+    SCRIPT_SQL = f"""
+        WITH permanent AS (
+            SELECT graduate_program_id, COUNT(*) AS qtd_permanente
+            FROM graduate_program_researcher
+            WHERE type_ = 'PERMANENTE'
+            GROUP BY graduate_program_id
+        ),
+        collaborators AS (
+            SELECT graduate_program_id, COUNT(*) AS qtd_colaborador
+            FROM graduate_program_researcher
+            WHERE type_ = 'COLABORADOR'
+            GROUP BY graduate_program_id
+        ),
+        students AS (
+            SELECT graduate_program_id, COUNT(*) AS qtd_estudantes
+            FROM graduate_program_student
+            GROUP BY graduate_program_id
+        )
+        SELECT gp.graduate_program_id, code, gp.name, UPPER(area) AS area,
+            UPPER(modality) AS modality, INITCAP(type) AS type, rating,
+            institution_id, state, INITCAP(city) AS city, region, url_image,
+            gp.acronym, gp.description, visible, site, qtd_permanente,
+            qtd_colaborador, qtd_estudantes
+        FROM public.graduate_program gp
+            LEFT JOIN permanent p
+                ON gp.graduate_program_id = p.graduate_program_id
+            LEFT JOIN students s
+                ON gp.graduate_program_id = s.graduate_program_id
+            LEFT JOIN collaborators c
+                ON gp.graduate_program_id = c.graduate_program_id
+            {join_university}
+        WHERE 1 = 1
+            {filter_program}
+            {filter_university};
         """
-
-    result = conn.select(SCRIPT_SQL)
+    result = conn.select(SCRIPT_SQL, params)
     return result
