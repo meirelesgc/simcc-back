@@ -172,3 +172,23 @@ def professional_experience(
     return ResearcherRepository.professional_experience(
         researcher_id, graduate_program_id, dep_id, year, page, lenght
     )
+
+
+def search_in_patents(
+    term: str = None,
+    graduate_program_id: UUID | str = None,
+    university: str = None,
+    page: int = None,
+    lenght: int = None,
+):
+    researchers = ResearcherRepository.search_in_patents(
+        term, graduate_program_id, university, page, lenght
+    )
+    if not researchers:
+        return []
+
+    researchers = pd.DataFrame(researchers)
+    researchers = merge_researcher_data(researchers)
+
+    researchers = researchers.replace(nan, '')
+    return researchers.to_dict(orient='records')

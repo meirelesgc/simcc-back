@@ -41,7 +41,6 @@ def search_in_abstract_or_article(
 @router.get(
     '/researcherName',
     response_model=list[Researcher],
-    status_code=HTTPStatus.OK,
 )
 def list_researchers(
     name: str = None,
@@ -52,6 +51,19 @@ def list_researchers(
 ):
     return ResearcherService.serch_in_name(
         name, graduate_program_id, dep_id, page, lenght
+    )
+
+
+@router.get('/researcherPatent', response_model=list[Researcher])
+def list_researchers_by_patent(
+    term: str = None,
+    graduate_program_id: UUID | str = None,
+    university: str = None,
+    page: int = None,
+    lenght: int = None,
+):
+    return ResearcherService.search_in_patents(
+        term, graduate_program_id, university, page, lenght
     )
 
 
