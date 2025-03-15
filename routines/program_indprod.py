@@ -141,7 +141,7 @@ def report_indprod():
         GROUP BY year, researcher_id;
         """
 
-    columns = ['year', 'researcher_id', 'report_prod']
+    columns = ['year', 'report_count', 'researcher_id']
     result = conn.select(SCRIPT_SQL)
     report = pd.DataFrame(result, columns=columns)
 

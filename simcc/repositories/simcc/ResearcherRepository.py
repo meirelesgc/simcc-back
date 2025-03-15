@@ -523,7 +523,7 @@ def search_in_patents(
             LEFT JOIN institution i ON i.id = r.institution_id
             LEFT JOIN researcher_production rp ON rp.researcher_id = r.id
             LEFT JOIN openalex_researcher opr ON opr.researcher_id = r.id
-			RIGHT JOIN
+			INNER JOIN
 				(SELECT p.researcher_id, COUNT(*) AS among
 				FROM patent p
 				WHERE 1 = 1
@@ -537,5 +537,6 @@ def search_in_patents(
             among DESC
             {filter_pagination};
         """
+    print(SCRIPT_SQL, params)
     result = conn.select(SCRIPT_SQL, params)
     return result
