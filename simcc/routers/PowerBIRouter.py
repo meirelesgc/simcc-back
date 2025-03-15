@@ -425,3 +425,19 @@ def fat_logs_routine_csv():
     file_name = 'fat_logs_routine.csv'
     file_path = os.path.join(STORAGE_PATH, file_name)
     return FileResponse(file_path, filename=file_name)
+
+
+@router.get('/fat_event_organization.csv')
+def fat_event_organization_csv():
+    powerBI.fat_event_organization()
+    file_name = 'fat_event_organization.csv'
+    file_path = os.path.join(STORAGE_PATH, file_name)
+    return FileResponse(file_path, filename=file_name)
+
+
+@router.get('/fat_participation_events.csv')
+def fat_participation_events_csv():
+    powerBI.fat_participation_events()
+    file_name = 'fat_participation_events.csv'
+    file_path = os.path.join(STORAGE_PATH, file_name)
+    return FileResponse(file_path, filename=file_name)
