@@ -940,7 +940,7 @@ def fat_logs_routine():
 
 def fat_event_organization():
     SCRIPT_SQL = """
-        SELECT id, created_at, title, promoter_institution, nature,
+        SELECT id, title, promoter_institution, nature,
             researcher_id, local, duration_in_weeks, year
         FROM public.event_organization;
         """
@@ -954,7 +954,7 @@ def fat_event_organization():
 
 def fat_participation_events():
     SCRIPT_SQL = """
-        SELECT id, created_at, title, event_name, nature, form_participation,
+        SELECT id, title, event_name, nature, form_participation,
             type_participation, researcher_id, year
         FROM public.participation_events;
         """
