@@ -31,10 +31,10 @@ for _, data in programs.iterrows():
     try:
         SCRIPT_SQL = """
             INSERT INTO graduate_program
-            (code, name, area, modality, TYPE, rating, institution_id, visible)
+            (code, name, area, modality, TYPE, rating, institution_id, visible, city)
             VALUES
             (%(código)s, %(nome)s, %(nomeAreaAvaliacao)s, %(modalidade)s, %(grau)s,
-            %(conceito)s, %(institution_id)s, %(visible)s);
+            %(conceito)s, %(institution_id)s, %(visible)s, %(cidade)s);
             """
         conn_admin.exec(SCRIPT_SQL, data.to_dict())
         print(f'Sucesso {_}')
