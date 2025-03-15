@@ -320,7 +320,7 @@ def list_patent(
             p.has_image, p.relevance,
             r.id AS researcher, r.lattes_id AS lattes_id, r.name
         FROM patent p
-            LEFT JOIN researcher r ON r.id = p.researcher_id
+            INNER JOIN researcher r ON r.id = p.researcher_id
         WHERE 1 = 1
             {filter_id}
             {filter_year}
@@ -330,6 +330,7 @@ def list_patent(
         {filter_pagination};
         """
 
+    print(SCRIPT_SQL, params)
     result = conn.select(SCRIPT_SQL, params)
     return result
 
