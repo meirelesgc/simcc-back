@@ -60,7 +60,7 @@ def search_in_articles(
 
     filter_terms = str()
     if terms:
-        filter_terms, terms = webseatch_filter('b.title', terms)
+        filter_terms, terms = webseatch_filter('bp.title', terms)
         params |= terms
 
     join_program = str()
@@ -92,15 +92,14 @@ def search_in_articles(
             LEFT JOIN institution i ON i.id = r.institution_id
             LEFT JOIN researcher_production rp ON rp.researcher_id = r.id
             LEFT JOIN openalex_researcher opr ON opr.researcher_id = r.id
-			RIGHT JOIN
-				(SELECT p.researcher_id, COUNT(*) AS among
-				FROM patent p
-				WHERE 1 = 1
-					{filter_terms}
-				GROUP BY researcher_id) p ON p.researcher_id = r.id
+            INNER JOIN
+                (SELECT bp.researcher_id, COUNT(*) AS among
+                FROM bibliographic_production bp
+                WHERE 1 = 1
+                    {filter_terms}
+                GROUP BY researcher_id) bp ON bp.researcher_id = r.id
             {join_program}
         WHERE 1 = 1
-            {filter_terms}
             {filter_program}
             {filter_institution}
         ORDER BY
@@ -236,6 +235,7 @@ def search_in_name(
             among DESC
             {filter_pagination};
         """
+    print(SCRIPT_SQL, params)
     result = conn.select(SCRIPT_SQL, params)
     return result
 
