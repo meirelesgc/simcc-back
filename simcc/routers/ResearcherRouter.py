@@ -37,6 +37,14 @@ def search_in_abstract_or_article(
 
 
 @router.get(
+    '/researcher/foment',
+    response_model=list[Researcher],
+)
+def list_foment_researchers():
+    return ResearcherService.list_foment_researchers()
+
+
+@router.get(
     '/researcherName',
     response_model=list[Researcher],
 )

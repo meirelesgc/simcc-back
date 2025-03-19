@@ -192,3 +192,15 @@ def search_in_patents(
 
     researchers = researchers.replace(nan, '')
     return researchers.to_dict(orient='records')
+
+
+def list_foment_researchers():
+    researchers = ResearcherRepository.list_foment_researchers()
+    if not researchers:
+        return []
+
+    researchers = pd.DataFrame(researchers)
+    researchers = merge_researcher_data(researchers)
+
+    researchers = researchers.replace(nan, str())
+    return researchers.to_dict(orient='records')
