@@ -84,7 +84,7 @@ def search_in_articles(
             r.graduation, r.last_update AS lattes_update,
             REPLACE(rp.great_area, '_', ' ') AS area, rp.city,
             i.image AS image_university, i.name AS university,
-            1 AS among, rp.articles, rp.book_chapters, rp.book, rp.patent,
+            bp.among AS among, rp.articles, rp.book_chapters, rp.book, rp.patent,
             rp.software, rp.brand, opr.h_index, opr.relevance_score,
             opr.works_count, opr.cited_by_count, opr.i10_index, opr.scopus,
             opr.openalex, r.classification, r.status, r.institution_id
@@ -96,6 +96,7 @@ def search_in_articles(
                 (SELECT bp.researcher_id, COUNT(*) AS among
                 FROM bibliographic_production bp
                 WHERE 1 = 1
+                    AND TYPE = 'ARTICLE'
                     {filter_terms}
                 GROUP BY researcher_id) bp ON bp.researcher_id = r.id
             {join_program}
@@ -106,7 +107,7 @@ def search_in_articles(
             among DESC
             {filter_pagination};
         """
-
+    print(SCRIPT_SQL, params)
     result = conn.select(SCRIPT_SQL, params)
     return result
 
