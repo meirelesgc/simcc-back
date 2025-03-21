@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from pydantic import BaseModel
 
 
@@ -15,3 +17,13 @@ class GuidanceMetrics(BaseModel):
     e_in_progress: int
     sd_completed: int
     sd_in_progress: int
+
+
+class GuidanceProduction(BaseModel):
+    id: UUID | None
+    title: str | None
+    nature: str
+    oriented: str
+    type: str | None
+    status: str
+    year: int

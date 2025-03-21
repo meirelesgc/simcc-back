@@ -1066,3 +1066,64 @@ def list_distinct_researcher_report(
         """
     result = conn.select(SCRIPT_SQL, params)
     return result
+
+
+def list_distinct_guidance_production(
+    researcher_id: UUID | str = None, year: int | str = 2020
+):
+    params = {}
+
+    filter_id = str()
+    if researcher_id:
+        filter_id = 'AND r.id = %(researcher_id)s'
+        params['researcher_id'] = researcher_id
+
+    filter_year = str()
+    if year:
+        filter_year = 'AND g.year >= %(year)s'
+        params['year'] = year
+
+    SCRIPT_SQL = f"""
+        SELECT NULL AS id, g.title, MAX(nature) AS nature,
+            MAX(g.oriented) AS oriented, MAX(g.type) AS type,
+            MAX(g.status) AS status, MAX(g.year) AS year,
+            ARRAY_AGG(r.name) AS name
+        FROM guidance g
+        LEFT JOIN researcher r ON g.researcher_id = r.id
+        WHERE 1 = 1
+            {filter_year}
+            {filter_id}
+        GROUP BY g.title
+        ORDER BY year desc
+        """
+    result = conn.select(SCRIPT_SQL, params)
+    return result
+
+
+def list_guidance_production(
+    researcher_id: UUID | str = None, year: int | str = 2020
+):
+    params = {}
+
+    filter_id = str()
+    if researcher_id:
+        filter_id = 'AND r.id = %(researcher_id)s'
+        params['researcher_id'] = researcher_id
+
+    filter_year = str()
+    if year:
+        filter_year = 'AND g.year >= %(year)s'
+        params['year'] = year
+
+    SCRIPT_SQL = f"""
+        SELECT g.id, g.title, nature, g.oriented, g.type, g.status,
+            g.year, r.name
+        FROM guidance g
+        LEFT JOIN researcher r ON g.researcher_id = r.id
+        WHERE 1 = 1
+            {filter_year}
+            {filter_id}
+        ORDER BY year desc
+        """
+    result = conn.select(SCRIPT_SQL, params)
+    return result
