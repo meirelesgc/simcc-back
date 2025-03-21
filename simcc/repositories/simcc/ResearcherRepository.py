@@ -3,7 +3,7 @@ from uuid import UUID
 from unidecode import unidecode
 
 from simcc.repositories import conn
-from simcc.repositories.util import pagination, webseatch_filter
+from simcc.repositories.util import names_filter, pagination, webseatch_filter
 from simcc.schemas.Researcher import ResearcherArticleProduction
 
 
@@ -192,11 +192,8 @@ def search_in_name(
 
     filter_name = str()
     if name:
-        name = unidecode(name).replace(';', ' ').replace('-', ' ') + '%'
-        params['name'] = name
-        filter_name = """
-            AND translate(unaccent(r.name), '-\\.:;''',' ') ILIKE %(name)s
-            """
+        filter_name, terms = names_filter('r.name', name)
+        params |= terms
 
     filter_pagination = str()
     if page and lenght:

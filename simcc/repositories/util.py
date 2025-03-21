@@ -66,3 +66,33 @@ def webseatch_filter(column, string_of_terms):
 
     filter_sql = f'AND ({query_terms})'
     return filter_sql, terms_dict
+
+
+def build_query_names(sanitized_names, column):
+    names_dict = {}
+    query_parts = []
+    name_counter = 1
+
+    for name in sanitized_names:
+        if name in {'AND', 'OR', 'AND NOT', '(', ')'}:
+            query_parts.append(name)
+        else:
+            placeholder = f'term{name_counter}'
+            names_dict[placeholder] = name + '%'
+            SCRIPT_SQL = f"""
+                translate(
+                unaccent({column}), '-\\.:;''',' ') ILIKE %({placeholder})s
+                """
+            query_parts.append(SCRIPT_SQL)
+            name_counter += 1
+
+    return ' '.join(query_parts), names_dict
+
+
+def names_filter(column, names: str):
+    names = parse_terms(names)
+    sanitized_names = sanitize_terms(names)
+    query_names, names_dict = build_query_names(sanitized_names, column)
+
+    filter_sql = f'AND ({query_names})'
+    return filter_sql, names_dict
