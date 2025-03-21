@@ -78,7 +78,7 @@ def build_query_names(sanitized_names, column):
             query_parts.append(name)
         else:
             placeholder = f'term{name_counter}'
-            names_dict[placeholder] = name + '%'
+            names_dict[placeholder] = '%' + name + '%'
             SCRIPT_SQL = f"""
                 translate(
                 unaccent({column}), '-\\.:;''',' ') ILIKE %({placeholder})s
