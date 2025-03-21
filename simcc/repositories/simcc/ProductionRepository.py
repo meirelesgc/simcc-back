@@ -1054,7 +1054,46 @@ def list_distinct_researcher_report(
         params['year'] = year
 
     SCRIPT_SQL = f"""
-        SELECT rr.id, r.name, rr.title, rr.year, project_name,  
+        SELECT NULL AS id, ARRAY_AGG(r.name) AS name, rr.title,
+            MIN(rr.year) AS year, MAX(project_name) AS project_name,
+            MAX(financing_institutionc) AS financing
+        FROM research_report rr
+        LEFT JOIN researcher r ON rr.researcher_id = r.id
+        WHERE 1 = 1
+            {filter_id}
+            {filter_year}
+        GROUP BY rr.title
+        ORDER BY year desc
+        {filter_pagination}
+        """
+    result = conn.select(SCRIPT_SQL, params)
+    return result
+
+
+def list_researcher_report(
+    researcher_id: UUID | str = None,
+    year: int | str = 2020,
+    page: int = None,
+    lenght: int = None,
+):
+    params = {}
+
+    filter_pagination = str()
+    if page and lenght:
+        filter_pagination = pagination(page, lenght)
+
+    filter_id = str()
+    if researcher_id:
+        filter_id = 'AND r.id = %(researcher_id)s'
+        params['researcher_id'] = researcher_id
+
+    filter_year = str()
+    if year:
+        filter_year = 'AND rr.year >= %(year)s'
+        params['year'] = year
+
+    SCRIPT_SQL = f"""
+        SELECT rr.id, r.name, rr.title, rr.year, project_name,
             financing_institutionc AS financing
         FROM research_report rr
         LEFT JOIN researcher r ON rr.researcher_id = r.id

@@ -369,6 +369,17 @@ def list_distinct_researcher_report(
     )
 
 
+def list_researcher_report(
+    researcher_id: UUID | str = None,
+    year: int | str = 2020,
+    page: int = None,
+    lenght: int = None,
+):
+    return ProductionRepository.list_researcher_report(
+        researcher_id, year, page, lenght
+    )
+
+
 def list_distinct_guidance_production(
     researcher_id: UUID | str = None, year: int | str = 2020
 ):
