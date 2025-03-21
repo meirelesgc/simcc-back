@@ -107,7 +107,6 @@ def search_in_articles(
             among DESC
             {filter_pagination};
         """
-    print(SCRIPT_SQL, params)
     result = conn.select(SCRIPT_SQL, params)
     return result
 
@@ -233,7 +232,6 @@ def search_in_name(
             among DESC
             {filter_pagination};
         """
-    print(SCRIPT_SQL, params)
     result = conn.select(SCRIPT_SQL, params)
     return result
 
@@ -469,7 +467,6 @@ def professional_experience(
         """
 
     result = conn.select(SCRIPT_SQL, params)
-    print(SCRIPT_SQL, params)
     return result
 
 
@@ -535,7 +532,6 @@ def search_in_patents(
             among DESC
             {filter_pagination};
         """
-    print(SCRIPT_SQL, params)
     result = conn.select(SCRIPT_SQL, params)
     return result
 
