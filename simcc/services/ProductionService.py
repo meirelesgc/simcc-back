@@ -330,3 +330,13 @@ def list_distinct_book_chapter(
     return ProductionRepository.list_distinct_book_chapter(
         term, researcher_id, year, institution_id, page, lenght
     )
+
+
+def list_distinct_software(
+    researcher_id: UUID | str = None, year: int | str = 2020
+):
+    return ProductionRepository.list_distinct_software(researcher_id, year)
+
+
+def list_software(researcher_id: UUID | str = None, year: int | str = 2020):
+    return ProductionRepository.list_software(researcher_id, year)

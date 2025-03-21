@@ -8,6 +8,7 @@ from simcc.schemas.Production.Book import BookProduction
 from simcc.schemas.Production.BookChapter import BookChapterProduction
 from simcc.schemas.Production.Brand import BrandProduction
 from simcc.schemas.Production.Patent import PatentProduction
+from simcc.schemas.Production.Software import SoftwareProduction
 from simcc.services import ProductionService
 
 router = APIRouter()
@@ -124,6 +125,20 @@ def list_bibliographic_production(
 
 
 @router.get(
+    '/software_production_researcher',
+    response_model=list[SoftwareProduction],
+)
+def list_software_production(
+    researcher_id: UUID | str = None,
+    year: int | str = 2020,
+    distinct: int = 1,
+):
+    if distinct:
+        return ProductionService.list_distinct_software(researcher_id, year)
+    return ProductionService.list_software(researcher_id, year)
+
+
+@router.get(
     '/bibliographic_production_article',
     response_model=list[ArticleProduction],
 )
@@ -141,7 +156,7 @@ def list_article_production(
     dep_id: str = None,
 ):
     if distinct:
-        articles = ProductionService.list_distinct_article_production(
+        return ProductionService.list_distinct_article_production(
             terms,
             university,
             researcher_id,
@@ -154,18 +169,15 @@ def list_article_production(
             dep_id,
         )
 
-    else:
-        articles = ProductionService.list_article_production(
-            terms,
-            university,
-            researcher_id,
-            graduate_program_id,
-            year,
-            type,
-            qualis,
-            page,
-            lenght,
-            dep_id,
-        )
-    print(len(articles))
-    return articles
+    return ProductionService.list_article_production(
+        terms,
+        university,
+        researcher_id,
+        graduate_program_id,
+        year,
+        type,
+        qualis,
+        page,
+        lenght,
+        dep_id,
+    )

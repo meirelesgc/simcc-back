@@ -921,3 +921,55 @@ def list_distinct_book_chapter(
 
     result = conn.select(SCRIPT_SQL, params)
     return result
+
+
+def list_distinct_software(
+    researcher_id: UUID | str = None, year: int | str = 2020
+):
+    params = {}
+
+    filter_id = str()
+    if researcher_id:
+        filter_id = 'AND r.id = %(researcher_id)s'
+        params['researcher_id'] = researcher_id
+
+    if year:
+        filter_year = 'AND s.year = %(year)s'
+        params['year'] = year
+
+    SCRIPT_SQL = f"""
+        SELECT s.title, MIN(s.year) AS year, NULL AS has_image,
+            NULL AS relevance, ARRAY_AGG(r.name) AS name
+        FROM software s
+        LEFT JOIN researcher r ON s.researcher_id = r.id
+        WHERE 1 = 1
+            {filter_id}
+            {filter_year}
+        GROUP BY s.title
+        """
+    result = conn.select(SCRIPT_SQL, params)
+    return result
+
+
+def list_software(researcher_id: UUID | str = None, year: int | str = 2020):
+    params = {}
+
+    filter_id = str()
+    if researcher_id:
+        filter_id = 'AND r.id = %(researcher_id)s'
+        params['researcher_id'] = researcher_id
+
+    if year:
+        filter_year = 'AND s.year = %(year)s'
+        params['year'] = year
+
+    SCRIPT_SQL = f"""
+        SELECT s.title, s.year AS year, s.has_image, s.relevance, r.name
+        FROM software s
+        LEFT JOIN researcher r ON s.researcher_id = r.id
+        WHERE 1 = 1
+            {filter_id}
+            {filter_year}
+        """
+    result = conn.select(SCRIPT_SQL, params)
+    return result
