@@ -392,3 +392,19 @@ def list_guidance_production(
     researcher_id: UUID | str = None, year: int | str = 2020
 ):
     return ProductionRepository.list_guidance_production(researcher_id, year)
+
+
+def list_researcher_production_events(
+    researcher_id: UUID | str = None, year: int | str = 2020
+):
+    return ProductionRepository.list_researcher_production_events(
+        researcher_id, year
+    )
+
+
+def list_distinct_researcher_production_events(
+    researcher_id: UUID | str = None, year: int | str = 2020
+):
+    return ProductionRepository.list_distinct_researcher_production_events(
+        researcher_id, year
+    )

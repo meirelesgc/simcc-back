@@ -7,6 +7,7 @@ from simcc.schemas.Production.Article import ArticleProduction
 from simcc.schemas.Production.Book import BookProduction
 from simcc.schemas.Production.BookChapter import BookChapterProduction
 from simcc.schemas.Production.Brand import BrandProduction
+from simcc.schemas.Production.Event import EventProduction
 from simcc.schemas.Production.Guidance import GuidanceProduction
 from simcc.schemas.Production.Patent import PatentProduction
 from simcc.schemas.Production.Report import ReportProduction
@@ -223,3 +224,21 @@ def list_guidance_production(
             researcher_id, year
         )
     return ProductionService.list_guidance_production(researcher_id, year)
+
+
+@router.get(
+    '/researcher_production/events',
+    response_model=list[EventProduction],
+)
+def list_researcher_production_events(
+    researcher_id: UUID | str = None,
+    year: int | str = 2020,
+    distinct: int = 1,
+):
+    if distinct:
+        return ProductionService.list_distinct_researcher_production_events(
+            researcher_id, year
+        )
+    return ProductionService.list_researcher_production_events(
+        researcher_id, year
+    )

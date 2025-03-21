@@ -1166,3 +1166,66 @@ def list_guidance_production(
         """
     result = conn.select(SCRIPT_SQL, params)
     return result
+
+
+def list_researcher_production_events(
+    researcher_id: UUID | str = None, year: int | str = 2020
+):
+    params = {}
+
+    filter_id = str()
+    if researcher_id:
+        filter_id = 'AND r.id = %(researcher_id)s'
+        params['researcher_id'] = researcher_id
+
+    filter_year = str()
+    if year:
+        filter_year = 'AND bp.year_ >= %(year)s'
+        params['year'] = year
+
+    SCRIPT_SQL = f"""
+        SELECT bp.title, bp.title_en, bp.nature, bp.language,
+            bp.means_divulgation, bp.homepage, bp.relevance,
+            bp.scientific_divulgation, bp.authors, bp.year_,
+            r.name
+        FROM bibliographic_production bp
+            LEFT JOIN researcher r ON r.id = bp.researcher_id
+        WHERE type = 'WORK_IN_EVENT'
+            {filter_id}
+            {filter_year}
+        """
+    result = conn.select(SCRIPT_SQL, params)
+    return result
+
+
+def list_distinct_researcher_production_events(
+    researcher_id: UUID | str = None, year: int | str = 2020
+):
+    params = {}
+
+    filter_id = str()
+    if researcher_id:
+        filter_id = 'AND r.id = %(researcher_id)s'
+        params['researcher_id'] = researcher_id
+
+    filter_year = str()
+    if year:
+        filter_year = 'AND bp.year_ >= %(year)s'
+        params['year'] = year
+
+    SCRIPT_SQL = f"""
+        SELECT bp.title, MAX(bp.title_en) AS title_en, MAX(bp.nature) AS nature,
+            MAX(bp.language) AS language, MAX(r.name) AS name,
+            MAX(bp.means_divulgation) AS means_divulgation,
+            MAX(bp.homepage) AS homepage, FALSE AS relevance,
+            BOOL_OR(bp.scientific_divulgation) AS scientific_divulgation,
+            MAX(bp.authors) AS authors, MAX(bp.year_) AS year_
+        FROM bibliographic_production bp
+        LEFT JOIN researcher r ON r.id = bp.researcher_id
+        WHERE type = 'WORK_IN_EVENT'
+            {filter_id}
+            {filter_year}
+        GROUP BY bp.title;
+        """
+    result = conn.select(SCRIPT_SQL, params)
+    return result
