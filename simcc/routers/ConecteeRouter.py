@@ -3,7 +3,7 @@ from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, UploadFile
 
-from simcc.schemas.Conectee import ResearcherData, RtMetrics
+from simcc.schemas.Conectee import ResearcherData, RtMetrics, Technician
 from simcc.services import ConecteeService
 
 router = APIRouter()
@@ -52,3 +52,8 @@ def save_and_process_files(files: list[UploadFile]):
 @router.get('/departament/rt', response_model=RtMetrics)
 def get_departament_rt():
     return ConecteeService.get_departament_rt_data()
+
+
+@router.get('/technician/', response_model=list[Technician])
+def get_technicians():
+    return ConecteeService.get_technician()

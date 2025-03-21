@@ -62,3 +62,14 @@ def list_technicians():
         """
     result = conn.select(SCRIPT_SQL)
     return result
+
+
+def get_technician():
+    SCRIPT_SQL = """
+        SELECT technician_id, matric, ins_ufmg, nome, genero, deno_sit, rt,
+            classe, cargo, nivel, ref, titulacao, setor, detalhe_setor,
+            dting_org, data_prog, semester
+        FROM ufmg.technician;
+        """
+    result = conn.select(SCRIPT_SQL)
+    return result
