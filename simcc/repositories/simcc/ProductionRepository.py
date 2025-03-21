@@ -934,7 +934,7 @@ def list_distinct_software(
         params['researcher_id'] = researcher_id
 
     if year:
-        filter_year = 'AND s.year = %(year)s'
+        filter_year = 'AND s.year >= %(year)s'
         params['year'] = year
 
     SCRIPT_SQL = f"""
@@ -960,7 +960,7 @@ def list_software(researcher_id: UUID | str = None, year: int | str = 2020):
         params['researcher_id'] = researcher_id
 
     if year:
-        filter_year = 'AND s.year = %(year)s'
+        filter_year = 'AND s.year >= %(year)s'
         params['year'] = year
 
     SCRIPT_SQL = f"""
