@@ -54,6 +54,6 @@ def get_departament_rt():
     return ConecteeService.get_departament_rt_data()
 
 
-@router.get('/technician/', response_model=list[Technician])
+@router.get('/technician', response_model=list[Technician])
 def get_technicians():
     return ConecteeService.get_technician()
