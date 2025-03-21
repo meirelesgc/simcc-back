@@ -8,6 +8,7 @@ from simcc.schemas.Production.Book import BookProduction
 from simcc.schemas.Production.BookChapter import BookChapterProduction
 from simcc.schemas.Production.Brand import BrandProduction
 from simcc.schemas.Production.Patent import PatentProduction
+from simcc.schemas.Production.Report import ReportProduction
 from simcc.schemas.Production.Software import SoftwareProduction
 from simcc.services import ProductionService
 
@@ -81,6 +82,26 @@ def list_brand_production(
         )
     return ProductionService.list_brand(
         term, researcher_id, year, institution_id, page, lenght
+    )
+
+
+@router.get(
+    '/researcher_report',
+    response_model=list[ReportProduction],
+)
+def list_researcher_report(
+    researcher_id: UUID | str = None,
+    year: int | str = 2020,
+    distinct: int = 1,
+    page: int = None,
+    lenght: int = None,
+):
+    if distinct:
+        return ProductionService.list_distinct_researcher_report(
+            researcher_id, year, page, lenght
+        )
+    return ProductionService.list_researcher_report(
+        researcher_id, year, page, lenght
     )
 
 

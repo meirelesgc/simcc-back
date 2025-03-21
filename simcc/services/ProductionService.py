@@ -356,3 +356,14 @@ def list_distinct_software(
 
 def list_software(researcher_id: UUID | str = None, year: int | str = 2020):
     return ProductionRepository.list_software(researcher_id, year)
+
+
+def list_distinct_researcher_report(
+    researcher_id: UUID | str = None,
+    year: int | str = 2020,
+    page: int = None,
+    lenght: int = None,
+):
+    return ProductionRepository.list_distinct_researcher_report(
+        researcher_id, year, page, lenght
+    )
