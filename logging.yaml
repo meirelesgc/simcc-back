@@ -16,13 +16,13 @@ handlers:
     class: logging.FileHandler
     level: INFO
     formatter: standard
-    filename: simcc.log
+    filename: logs/simcc.log
 
   error_file:
     class: logging.FileHandler
     level: ERROR
     formatter: standard
-    filename: simcc.error.log
+    filename: logs/simcc.error.log
 
 loggers:
   uvicorn:
