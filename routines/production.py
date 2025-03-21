@@ -1,13 +1,8 @@
-import logging
-import os
-
 import numpy as np
 import pandas as pd
 
 from routines.logger import logger_researcher_routine, logger_routine
 from simcc.repositories import conn
-
-LOG_PATH = 'logs'
 
 
 def list_researchers():
@@ -123,46 +118,38 @@ def list_address():
 
 
 if __name__ == '__main__':
-    log_format = '%(levelname)s | %(asctime)s - %(message)s'
-
-    logging.basicConfig(
-        filename=os.path.join(LOG_PATH, 'production.log'),
-        filemode='w',
-        format=log_format,
-        level=logging.DEBUG,
-    )
-
-    logger = logging.getLogger(__name__)
-
-    for directory in [LOG_PATH]:
-        if not os.path.exists(directory):
-            os.makedirs(directory)
-
     delete_researcher_production()
 
     researchers = list_researchers()
     researchers = pd.DataFrame(researchers)
 
     bibliographic_production = bibliographic_production_count()
+    columns = ['researcher_id', 'book', 'work_in_event', 'article', 'book_chapter']  # fmt: skip  # noqa: E501
     bibliographic_production = pd.DataFrame(bibliographic_production)
 
     area_speciality = list_speciality()
+    columns = ['researcher_id', 'area_specialty']
     area_speciality = pd.DataFrame(area_speciality)
 
     great_area = list_great_area()
+    columns = ['researcher_id', 'area']
     great_area = pd.DataFrame(great_area)
 
     software = list_software()
+    columns = ['researcher_id', 'software']
     software = pd.DataFrame(software)
 
     brand = list_brand()
-    brand = pd.DataFrame(brand)
+    columns = ['researcher_id', 'brand']
+    brand = pd.DataFrame(brand, columns=columns)
 
     patent = list_patent()
-    patent = pd.DataFrame(patent)
+    columns = ['researcher_id', 'patent']
+    patent = pd.DataFrame(patent, columns=columns)
 
     address = list_address()
-    address = pd.DataFrame(address)
+    columns = ['researcher_id', 'city', 'organ']
+    address = pd.DataFrame(address, columns=columns)
 
     # Merge the dataframes
 
