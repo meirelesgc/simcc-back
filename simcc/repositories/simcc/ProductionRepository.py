@@ -387,6 +387,61 @@ def list_brand(
     return result
 
 
+def list_distinct_brand(
+    term: str,
+    researcher_id: UUID,
+    year: int,
+    institution_id: UUID,
+    page: int,
+    lenght: int,
+):
+    params = {}
+
+    filter_institution = str()
+    if institution_id:
+        params['institution_id'] = institution_id
+        filter_institution = 'AND r.institution_id = %(institution_id)s'
+
+    filter_id = str()
+    if researcher_id:
+        params['researcher_id'] = researcher_id
+        filter_id = 'AND b.researcher_id = %(researcher_id)s'
+
+    filter_year = str()
+    if year:
+        params['year'] = year
+        filter_year = 'AND b.year >= %(year)s'
+
+    filter_terms = str()
+    if term:
+        filter_terms, term = webseatch_filter('b.title', term)
+        params |= term
+
+    filter_pagination = str()
+    if page and lenght:
+        filter_pagination = pagination(page, lenght)
+
+    SCRIPT_SQL = f"""
+        SELECT b.title, MIN(b.year) as year, FALSE as has_image,
+            FALSE AS relevance, ARRAY_AGG(r.lattes_id) AS lattes_id,
+            ARRAY_AGG(r.name) AS name
+        FROM brand b
+            LEFT JOIN researcher r
+                ON b.researcher_id = r.id
+        WHERE 1 = 1
+            {filter_id}
+            {filter_year}
+            {filter_terms}
+            {filter_institution}
+        GROUP BY b.title
+        ORDER BY year desc
+        {filter_pagination};
+        """
+
+    result = conn.select(SCRIPT_SQL, params)
+    return result
+
+
 def list_distinct_book(
     term: str,
     researcher_id: UUID,

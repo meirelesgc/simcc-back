@@ -184,6 +184,22 @@ def list_brand(
     return brands
 
 
+def list_distinct_brand(
+    term: str,
+    researcher_id: UUID,
+    year: int,
+    institution_id: UUID,
+    page: int,
+    lenght: int,
+) -> list[BrandProduction]:
+    brands = ProductionRepository.list_distinct_brand(
+        term, researcher_id, year, institution_id, page, lenght
+    )
+    if not brands:
+        return []
+    return brands
+
+
 def list_distinct_book(
     term: str,
     researcher_id: UUID,

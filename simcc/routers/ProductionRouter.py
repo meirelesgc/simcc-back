@@ -71,13 +71,17 @@ def list_brand_production(
     researcher_id: UUID | str = None,
     year: int | str = 2020,
     institution_id: UUID | str = None,
+    distinct: int = 1,
     page: int = None,
     lenght: int = None,
 ):
-    brands = ProductionService.list_brand(
+    if distinct:
+        return ProductionService.list_distinct_brand(
+            term, researcher_id, year, institution_id, page, lenght
+        )
+    return ProductionService.list_brand(
         term, researcher_id, year, institution_id, page, lenght
     )
-    return brands
 
 
 @router.get(
