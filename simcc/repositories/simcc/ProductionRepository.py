@@ -262,12 +262,16 @@ def list_distinct_patent(
 
     SCRIPT_SQL = f"""
         SELECT p.title AS title, MAX(p.development_year) as year,
-            MAX(p.grant_date) AS grant_date, ARRAY_AGG(p.id) AS id,
-            NULL AS has_image, NULL AS relevance,
-            ARRAY_AGG(r.id) AS researcher,
-            ARRAY_AGG(r.lattes_id) AS lattes_id, ARRAY_AGG(r.name) AS name
+            MAX(p.grant_date) AS grant_date, BOOL_OR(p.has_image) AS has_image,
+            BOOL_OR(p.relevance) AS relevance, ARRAY_AGG(r.id) AS researcher,
+            ARRAY_AGG(r.lattes_id) AS lattes_id, ARRAY_AGG(r.name) AS name,
+            ARRAY_REMOVE(ARRAY_AGG(
+                CASE WHEN
+                    p.has_image = true
+                    OR p.relevance = true
+                THEN p.id END), NULL) AS id
         FROM patent p
-            LEFT JOIN researcher r ON r.id = p.researcher_id
+            INNER JOIN researcher r ON r.id = p.researcher_id
         WHERE 1 = 1
             {filter_id}
             {filter_year}
