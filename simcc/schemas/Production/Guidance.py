@@ -20,7 +20,7 @@ class GuidanceMetrics(BaseModel):
 class GuidanceProduction(BaseModel):
     title: str | None
     nature: str
-    oriented: str
+    oriented: str | None
     type: str | None
     status: str
     year: int

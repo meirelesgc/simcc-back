@@ -9,6 +9,7 @@ from simcc.schemas.Production.BookChapter import BookChapterProduction
 from simcc.schemas.Production.Brand import BrandProduction
 from simcc.schemas.Production.Event import EventProduction
 from simcc.schemas.Production.Guidance import GuidanceProduction
+from simcc.schemas.Production.Papers import PapersProduction
 from simcc.schemas.Production.Patent import PatentProduction
 from simcc.schemas.Production.Report import ReportProduction
 from simcc.schemas.Production.ResearchProject import ResearchProjectProduction
@@ -263,3 +264,19 @@ def list_research_project(
     return ProductionService.list_research_projects(
         term, researcher_id, year, graduate_program_id
     )
+
+
+@router.get(
+    '/researcher_production/papers_magazine',
+    response_model=list[PapersProduction],
+)
+def list_papers_magazine(
+    researcher_id: UUID | str = None,
+    year: int = None,
+    distinct: int = 1,
+):
+    if distinct:
+        return ProductionService.list_distinct_papers_magazine(
+            researcher_id, year
+        )
+    return ProductionService.list_papers_magazine(researcher_id, year)

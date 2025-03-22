@@ -1188,7 +1188,7 @@ def list_guidance_production(
         SELECT g.id, g.title, nature, g.oriented, g.type, g.status,
             g.year, r.name
         FROM guidance g
-        INNER JOIN researcher r ON g.researcher_id = r.id
+            INNER JOIN researcher r ON g.researcher_id = r.id
         WHERE 1 = 1
             {filter_year}
             {filter_id}
@@ -1396,6 +1396,72 @@ def list_distinct_research_projects(
             {filter_program}
             {filter_id}
         GROUP BY rp.project_name
+        """
+
+    result = conn.select(SCRIPT_SQL, params)
+    return result
+
+
+def list_papers_magazine(
+    researcher_id: UUID | str = None,
+    year: int | str = 2020,
+):
+    params = {}
+
+    filter_year = str()
+    if year:
+        filter_year = 'AND start_year >= %(year)s'
+        params['year'] = year
+
+    filter_id = str()
+    if researcher_id:
+        filter_id = 'AND r.id = %(researcher_id)s'
+        params['researcher_id'] = researcher_id
+
+    SCRIPT_SQL = f"""
+        SELECT title, title_en, nature, language, means_divulgation, homepage,
+            relevance, scientific_divulgation, authors, year_, r.name
+        FROM public.bibliographic_production bp
+            INNER JOIN researcher r ON bp.researcher_id = r.id
+        WHERE type = 'TEXT_IN_NEWSPAPER_MAGAZINE'
+            {filter_year}
+            {filter_id}
+        """
+
+    result = conn.select(SCRIPT_SQL, params)
+    return result
+
+
+def list_distinct_papers_magazine(
+    researcher_id: UUID | str = None,
+    year: int | str = 2020,
+):
+    params = {}
+
+    filter_year = str()
+    if year:
+        filter_year = 'AND start_year >= %(year)s'
+        params['year'] = year
+
+    filter_id = str()
+    if researcher_id:
+        filter_id = 'AND r.id = %(researcher_id)s'
+        params['researcher_id'] = researcher_id
+
+    SCRIPT_SQL = f"""
+        SELECT bp.title, MAX(bp.title_en) AS title_en, MAX(bp.nature) AS nature,
+            MAX(bp.language) AS language, MAX(bp.means_divulgation)
+            AS means_divulgation, MAX(bp.homepage) AS homepage,
+            BOOL_OR(bp.relevance) AS relevance, ARRAY_AGG(r.id)
+            AS researcher_ids, BOOL_OR(bp.scientific_divulgation)
+            AS scientific_divulgation, ARRAY_AGG(bp.authors) AS authors,
+            MAX(bp.year_) AS year_, ARRAY_AGG(r.name) AS name
+        FROM public.bibliographic_production bp
+            INNER JOIN researcher r ON bp.researcher_id = r.id
+        WHERE bp.type = 'TEXT_IN_NEWSPAPER_MAGAZINE'
+            {filter_year}
+            {filter_id}
+        GROUP BY bp.title
         """
 
     result = conn.select(SCRIPT_SQL, params)
