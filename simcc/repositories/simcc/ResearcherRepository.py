@@ -335,7 +335,7 @@ def list_ufmg_data():
 def list_co_authorship(researcher_id: UUID):
     params = {'researcher_id': researcher_id}
     SCRIPT_SQL = """
-        SELECT r.id, r.name, r.institution_id, COUNT(*) AS among
+        SELECT r.name, i.name AS institution, COUNT(*) AS among
         FROM researcher r
         RIGHT JOIN (
             SELECT UNNEST(ARRAY_AGG(bp.researcher_id)) AS researcher_id
@@ -344,8 +344,9 @@ def list_co_authorship(researcher_id: UUID):
             HAVING COUNT(bp.title) > 1
             AND %(researcher_id)s = ANY(ARRAY_AGG(bp.researcher_id))
         ) co_authorship ON r.id = co_authorship.researcher_id
+        LEFT JOIN institution i ON i.id = r.institution_id
         WHERE r.id != %(researcher_id)s
-        GROUP BY r.id;
+        GROUP BY r.id, i.name;
         """
     result = conn.select(SCRIPT_SQL, params)
     return result
@@ -355,12 +356,14 @@ def list_openalex_co_authorship(researcher_id: UUID):
     params = {'researcher_id': researcher_id}
 
     SCRIPT_SQL = """
-        SELECT unnest(string_to_array(opa.authors, ';')) AS name,
-            unnest(string_to_array(opa.authors_institution, ';')) AS institution
+        SELECT TRIM(unnest(string_to_array(opa.authors, ';'))) AS name,
+            TRIM(unnest(string_to_array(opa.authors_institution, ';')))
+            AS institution, COUNT(*) AS among
         FROM openalex_article opa
         INNER JOIN bibliographic_production bp
             ON opa.article_id = bp.id
-        WHERE bp.researcher_id = %(researcher_id)s;
+        WHERE bp.researcher_id = %(researcher_id)s
+        GROUP BY name, institution;
         """
     result = conn.select(SCRIPT_SQL, params)
     return result
@@ -567,4 +570,14 @@ def list_foment_researchers(
             {filter_pagination};
         """
     result = conn.select(SCRIPT_SQL, params)
+    return result
+
+
+def get_researcher(researcher_id: UUID) -> dict:
+    one = True
+    params = {'researcher_id': researcher_id}
+    SCRIPT_SQL = """
+        SELECT * FROM researcher r WHERE r.id = %(researcher_id)s;
+        """
+    result = conn.select(SCRIPT_SQL, params, one)
     return result

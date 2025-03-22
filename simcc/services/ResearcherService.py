@@ -3,7 +3,7 @@ from uuid import UUID
 import pandas as pd
 from numpy import nan
 
-from simcc.repositories.simcc import ResearcherRepository
+from simcc.repositories.simcc import InstitutionRepository, ResearcherRepository
 from simcc.schemas.Researcher import CoAuthorship, Researcher
 
 
@@ -108,56 +108,36 @@ def serch_in_name(
     return researchers.to_dict(orient='records')
 
 
-def opa_co_authorship(researcher_id: UUID) -> list:
-    co_authorship = ResearcherRepository.list_openalex_co_authorship(
-        researcher_id
-    )
-    if not co_authorship:
-        return []
-
-    co_authorship = pd.DataFrame(co_authorship)
-
-    co_authorship = co_authorship.groupby('name').agg(
-        among=('name', 'size'),
-        institution=('institution', lambda x: x.tolist()),
-    )
-    co_authorship = co_authorship.reset_index()
-
-    co_authorship['institution_id'] = co_authorship['institution'].apply(
-        ResearcherRepository.get_institutions
-    )
-
-    def get_id(name: str) -> UUID:
-        researcher_id = ResearcherRepository.get_id(name)
-        if researcher_id:
-            return researcher_id.get('id')
-        return None
-
-    co_authorship['id'] = co_authorship['name'].apply(get_id)
-
-    return co_authorship.to_dict(orient='records')
-
-
 def list_co_authorship(researcher_id: UUID) -> list[CoAuthorship]:
     co_authorship = ResearcherRepository.list_co_authorship(researcher_id)
-    co_authorship += opa_co_authorship(researcher_id)
+    co_authorship += ResearcherRepository.list_openalex_co_authorship(
+        researcher_id
+    )
 
     if not co_authorship:
         return []
 
-    institution_id = ResearcherRepository.get_institution_id(researcher_id)
-    institution_id = institution_id.get('institution_id', None)
-
     co_authorship = pd.DataFrame(co_authorship)
+    institution = InstitutionRepository.get_institution(
+        researcher_id=researcher_id
+    )
+    researcher = ResearcherRepository.get_researcher(researcher_id)
 
     def co_authorship_type(co_authorship_institution):
-        if co_authorship_institution == institution_id:
+        if co_authorship_institution == institution['name']:
             return 'internal'
         return 'external'
 
-    co_authorship['type'] = co_authorship['institution_id'].apply(
+    co_authorship['type'] = co_authorship['institution'].apply(
         co_authorship_type
     )
+
+    agg_config = {
+        'among': 'sum',
+        'type': lambda x: 'internal' if 'internal' in x.values else 'external',
+    }
+    co_authorship = co_authorship.groupby('name').agg(agg_config).reset_index()
+    co_authorship = co_authorship[co_authorship['name'] != researcher['name']]
     return co_authorship.to_dict(orient='records')
 
 

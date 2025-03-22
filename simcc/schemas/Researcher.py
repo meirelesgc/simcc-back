@@ -96,7 +96,6 @@ class AcademicMetric(BaseModel):
 
 
 class CoAuthorship(BaseModel):
-    id: UUID | None
     name: str
     among: int
     type: str
