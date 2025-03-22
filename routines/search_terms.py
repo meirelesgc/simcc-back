@@ -1,3 +1,5 @@
+from time import sleep, time
+
 import firebase_admin
 import pandas as pd
 from firebase_admin import credentials, firestore
@@ -12,9 +14,9 @@ def terms_dataframe() -> pd.DataFrame:
             unaccent(LOWER(term)) AS term_normalize
         FROM public.research_dictionary d
         WHERE term ~ '^[^0-9]+$'
-                AND CHAR_LENGTH(d.term) >= 4
-                AND frequency >= 8
-                AND type_ NOT IN ('BOOK', 'PATENT')
+            AND CHAR_LENGTH(d.term) >= 4
+            AND frequency >= 24
+            AND type_ NOT IN ('BOOK', 'PATENT')
 
         UNION
 
@@ -65,10 +67,26 @@ if __name__ == '__main__':
 
     dictionary = db.collection(settings.FIREBASE_COLLECTION)
     docs = dictionary.stream()
-    for doc in docs:
+
+    count = 0
+    cooldown = time()
+    for index, doc in enumerate(docs):
+        count += 1
+        if count >= 80 or time() - cooldown >= 90:
+            sleep(10)
+            count = 0
+            cooldown = time()
+
         print(f'Deletando [{doc.get("type_")}]')
         doc.reference.delete()
 
+    count = 0
+    cooldown = time()
     for item in terms_dataframe().to_dict(orient='records'):
+        count += 1
+        if count >= 80 or time() - cooldown >= 90:
+            sleep(10)
+            count = 0
+            cooldown = time()
         print(f'Adicionando [{item.get("type_")}]')
         dictionary.add(item)
