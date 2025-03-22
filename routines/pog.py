@@ -84,4 +84,16 @@ if __name__ == '__main__':
 
     conn.exec(SCRIPT_SQL)
     logger.info('Title updated for publications')
+
+    SCRIPT_SQL = """
+        UPDATE periodical_magazine pm
+        SET JCR = jcr.JIF2019
+        FROM jcr
+        WHERE REPLACE(jcr.issn, '-', '') = pm.issn
+        AND pm.issn IS NOT NULL;
+        """
+
+    conn.exec(SCRIPT_SQL)
+    logger.info('Fill periodical magazine JCR column')
+
     logger_routine('POG', False)
