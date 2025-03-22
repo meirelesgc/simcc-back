@@ -131,12 +131,19 @@ def list_co_authorship(researcher_id: UUID) -> list[CoAuthorship]:
     co_authorship['type'] = co_authorship['institution'].apply(
         co_authorship_type
     )
+    co_authorship['initials'] = (
+        co_authorship['name']
+        .str.replace('.', '', regex=True)
+        .str.split()
+        .apply(lambda x: ''.join(word[0] for word in x))
+    )
 
     agg_config = {
         'among': 'sum',
         'type': lambda x: 'internal' if 'internal' in x.values else 'external',
     }
-    co_authorship = co_authorship.groupby('name').agg(agg_config).reset_index()
+    columns = ['name', 'initials']
+    co_authorship = co_authorship.groupby(columns).agg(agg_config).reset_index()
     co_authorship = co_authorship[co_authorship['name'] != researcher['name']]
     return co_authorship.to_dict(orient='records')
 
