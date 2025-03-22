@@ -7,10 +7,10 @@ class ResearchProjectProduction(BaseModel):
     id: UUID | list[UUID]
     researcher_id: UUID | list[UUID]
     name: str | list[str]
-    start_year: int
+    start_year: int | None
     end_year: int | None
-    agency_code: str
-    agency_name: str
+    agency_code: str | None
+    agency_name: str | None
     project_name: str
     status: str
     nature: str
