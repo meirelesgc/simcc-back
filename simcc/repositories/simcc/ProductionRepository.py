@@ -1128,7 +1128,7 @@ def list_distinct_guidance_production(
             MAX(g.status) AS status, MAX(g.year) AS year,
             ARRAY_AGG(r.name) AS name
         FROM guidance g
-        LEFT JOIN researcher r ON g.researcher_id = r.id
+        INNER JOIN researcher r ON g.researcher_id = r.id
         WHERE 1 = 1
             {filter_year}
             {filter_id}
@@ -1158,7 +1158,7 @@ def list_guidance_production(
         SELECT g.id, g.title, nature, g.oriented, g.type, g.status,
             g.year, r.name
         FROM guidance g
-        LEFT JOIN researcher r ON g.researcher_id = r.id
+        INNER JOIN researcher r ON g.researcher_id = r.id
         WHERE 1 = 1
             {filter_year}
             {filter_id}
@@ -1193,6 +1193,7 @@ def list_researcher_production_events(
         WHERE type = 'WORK_IN_EVENT'
             {filter_id}
             {filter_year}
+        ORDER BY year_ desc;
         """
     result = conn.select(SCRIPT_SQL, params)
     return result
@@ -1225,7 +1226,134 @@ def list_distinct_researcher_production_events(
         WHERE type = 'WORK_IN_EVENT'
             {filter_id}
             {filter_year}
-        GROUP BY bp.title;
+        GROUP BY bp.title
+        ORDER BY year_ desc;
         """
+    result = conn.select(SCRIPT_SQL, params)
+    return result
+
+
+def list_research_projects(
+    term: str = None,
+    researcher_id: UUID | str = None,
+    year: int | str = 2020,
+    program_id: UUID | str = None,
+):
+    params = {}
+
+    filter_terms = str()
+    if term:
+        filter_terms, terms = webseatch_filter('title', term)
+        params |= terms
+
+    filter_year = str()
+    if year:
+        filter_year = 'AND start_year >= %(year)s'
+        params['year'] = year
+
+    filter_program = str()
+    join_program = str()
+    if program_id:
+        params['program_id'] = program_id
+        join_program = """
+            INNER JOIN graduate_program_researcher gpr
+                ON gpr.researcher_id = r.id
+            """
+        filter_program = 'AND gpr.graduate_program_id = %(program_id)s'
+
+    filter_id = str()
+    if researcher_id:
+        filter_id = 'AND r.id = %(researcher_id)s'
+        params['researcher_id'] = researcher_id
+
+    SCRIPT_SQL = f"""
+        SELECT rp.id, rp.researcher_id, r.name, rp.start_year, rp.end_year,
+            rp.agency_code, rp.agency_name, rp.project_name, rp.status,
+            rp.nature, rp.number_undergraduates, rp.number_specialists,
+            rp.number_academic_masters, rp.number_phd, rp.description,
+            rpp.production, rpf.foment, rpc.components
+        FROM public.research_project rp
+            LEFT JOIN researcher r ON r.id = rp.researcher_id
+            LEFT JOIN (SELECT project_id, JSONB_AGG(JSONB_BUILD_OBJECT('title', title, 'type', type)) AS production
+                FROM public.research_project_production
+                WHERE 1 = 1
+                    {filter_terms}
+                GROUP BY project_id) rpp ON rpp.project_id = rp.id
+            LEFT JOIN (SELECT project_id, JSONB_AGG(JSONB_BUILD_OBJECT('agency_name', agency_name, 'agency_code', agency_code, 'nature', nature)) AS foment 
+                FROM public.research_project_foment
+                GROUP BY project_id) rpf ON rpf.project_id = rp.id
+            LEFT JOIN (SELECT project_id, JSONB_AGG(JSONB_BUILD_OBJECT('name', name, 'lattes_id', lattes_id, 'citations', citations)) AS components 
+                FROM public.research_project_components
+                GROUP BY project_id) rpc ON rpc.project_id = rp.id
+            {join_program}
+        WHERE 1 = 1
+            {filter_year}
+            {filter_program}
+            {filter_id}
+        """
+
+    result = conn.select(SCRIPT_SQL, params)
+    return result
+
+
+def list_distinct_research_projects(
+    term: str = None,
+    researcher_id: UUID | str = None,
+    year: int | str = 2020,
+    program_id: UUID | str = None,
+):
+    params = {}
+
+    filter_terms = str()
+    if term:
+        filter_terms, terms = webseatch_filter('title', term)
+        params |= terms
+
+    filter_year = str()
+    if year:
+        filter_year = 'AND start_year >= %(year)s'
+        params['year'] = year
+
+    filter_program = str()
+    join_program = str()
+    if program_id:
+        params['program_id'] = program_id
+        join_program = """
+            INNER JOIN graduate_program_researcher gpr
+                ON gpr.researcher_id = r.id
+            """
+        filter_program = 'AND gpr.graduate_program_id = %(program_id)s'
+
+    filter_id = str()
+    if researcher_id:
+        filter_id = 'AND r.id = %(researcher_id)s'
+        params['researcher_id'] = researcher_id
+
+    SCRIPT_SQL = f"""
+        SELECT rp.id, rp.researcher_id, r.name, rp.start_year, rp.end_year,
+            rp.agency_code, rp.agency_name, rp.project_name, rp.status,
+            rp.nature, rp.number_undergraduates, rp.number_specialists,
+            rp.number_academic_masters, rp.number_phd, rp.description,
+            rpp.production, rpf.foment, rpc.components
+        FROM public.research_project rp
+            LEFT JOIN researcher r ON r.id = rp.researcher_id
+            LEFT JOIN (SELECT project_id, JSONB_AGG(JSONB_BUILD_OBJECT('title', title, 'type', type)) AS production
+                FROM public.research_project_production
+                WHERE 1 = 1
+                    {filter_terms}
+                GROUP BY project_id) rpp ON rpp.project_id = rp.id
+            LEFT JOIN (SELECT project_id, JSONB_AGG(JSONB_BUILD_OBJECT('agency_name', agency_name, 'agency_code', agency_code, 'nature', nature)) AS foment 
+                FROM public.research_project_foment
+                GROUP BY project_id) rpf ON rpf.project_id = rp.id
+            LEFT JOIN (SELECT project_id, JSONB_AGG(JSONB_BUILD_OBJECT('name', name, 'lattes_id', lattes_id, 'citations', citations)) AS components 
+                FROM public.research_project_components
+                GROUP BY project_id) rpc ON rpc.project_id = rp.id
+            {join_program}
+        WHERE 1 = 1
+            {filter_year}
+            {filter_program}
+            {filter_id}
+        """
+
     result = conn.select(SCRIPT_SQL, params)
     return result

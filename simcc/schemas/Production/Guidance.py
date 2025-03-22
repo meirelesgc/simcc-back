@@ -27,3 +27,4 @@ class GuidanceProduction(BaseModel):
     type: str | None
     status: str
     year: int
+    name: str | list[str]
