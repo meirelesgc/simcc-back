@@ -4,7 +4,7 @@ from pydantic import BaseModel
 
 
 class ReportProduction(BaseModel):
-    id: UUID | None
+    id: UUID | list[UUID]
     title: str
     name: str | list[str]
     year: int

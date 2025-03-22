@@ -1,8 +1,7 @@
+from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel
-
-from simcc.schemas import QualisOptions
 
 
 class Qualis(BaseModel):
@@ -65,12 +64,12 @@ class Article(BaseModel):
 
 
 class ArticleProduction(BaseModel):
-    id: UUID | str
+    id: UUID | list[UUID]
     title: str
     year: int
     type: str
     doi: str | None
-    qualis: QualisOptions
+    qualis: Literal['A1', 'A2', 'A3', 'A4', 'B1', 'B2', 'B3', 'B4', 'C', 'SQ']
     magazine: str
     researcher: str | list[str]
     lattes_10_id: str | list[str]

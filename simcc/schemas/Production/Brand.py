@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from pydantic import BaseModel
 
 
@@ -8,3 +10,4 @@ class BrandProduction(BaseModel):
     relevance: bool | None
     lattes_id: str | list[str]
     name: str | list[str]
+    id: UUID | list[UUID]

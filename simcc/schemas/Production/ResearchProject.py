@@ -4,9 +4,9 @@ from pydantic import BaseModel
 
 
 class ResearchProjectProduction(BaseModel):
-    id: UUID
-    researcher_id: UUID
-    name: str
+    id: UUID | list[UUID]
+    researcher_id: UUID | list[UUID]
+    name: str | list[str]
     start_year: int
     end_year: int | None
     agency_code: str

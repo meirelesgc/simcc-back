@@ -374,9 +374,9 @@ def list_brand(
 
     SCRIPT_SQL = f"""
         SELECT DISTINCT b.title as title, b.year as year, b.has_image,
-            b.relevance, r.lattes_id, r.name
+            b.relevance, r.lattes_id, r.name, b.id
         FROM brand b
-            LEFT JOIN researcher r
+            INNER JOIN researcher r
                 ON b.researcher_id = r.id
         WHERE 1 = 1
             {filter_id}
@@ -426,11 +426,16 @@ def list_distinct_brand(
         filter_pagination = pagination(page, lenght)
 
     SCRIPT_SQL = f"""
-        SELECT b.title, MIN(b.year) as year, FALSE as has_image,
-            FALSE AS relevance, ARRAY_AGG(r.lattes_id) AS lattes_id,
-            ARRAY_AGG(r.name) AS name
+        SELECT b.title, MIN(b.year) as year, BOOL_OR(b.has_image) AS has_image,
+            BOOL_OR(b.relevance) AS relevance, ARRAY_AGG(r.lattes_id)
+            AS lattes_id, ARRAY_AGG(r.name) AS name,
+            ARRAY_REMOVE(ARRAY_AGG(
+                CASE WHEN
+                    b.has_image = true
+                    OR b.relevance = true
+                THEN b.id END), NULL) AS id
         FROM brand b
-            LEFT JOIN researcher r
+            INNER JOIN researcher r
                 ON b.researcher_id = r.id
         WHERE 1 = 1
             {filter_id}
@@ -729,11 +734,11 @@ def list_article_production(  # noqa: PLR0914
             opa.authors_institution, opa.citations_count, bpa.issn, opa.keywords,
             opa.landing_page_url, opa.language, opa.pdf, b.has_image, b.relevance
         FROM bibliographic_production b
-            LEFT JOIN bibliographic_production_article bpa
+            INNER JOIN bibliographic_production_article bpa
                 ON b.id = bpa.bibliographic_production_id
-            LEFT JOIN researcher r
+            INNER JOIN researcher r
                 ON r.id = b.researcher_id
-            LEFT JOIN openalex_article opa
+            INNER JOIN openalex_article opa
                 ON opa.article_id = b.id
             {join_university}
             {join_program}
@@ -828,7 +833,7 @@ def list_distinct_article_production(  # noqa: PLR0914
         filter_dep = 'AND dr.dep_id = %(dep_id)s'
 
     SCRIPT_SQL = f"""
-        SELECT NULL AS id, title, MAX(b.year) AS year, MAX(type) AS type,
+        SELECT title, MAX(b.year) AS year, MAX(type) AS type,
             MAX(doi) AS doi, MAX(bpa.qualis) AS qualis,
             MAX(periodical_magazine_name) AS magazine,
             ARRAY_AGG(r.name) AS researcher,
@@ -843,16 +848,21 @@ def list_distinct_article_production(  # noqa: PLR0914
             MAX(bpa.issn) AS issn, MAX(opa.keywords) AS keywords,
             MAX(opa.landing_page_url) AS landing_page_url,
             MAX(opa.language) AS language, MAX(opa.pdf) AS pdf,
-            ARRAY_AGG(b.has_image) AS has_image,
-            ARRAY_AGG(b.relevance) AS relevance
+            BOOL_OR(b.has_image) AS has_image,
+            BOOL_OR(b.relevance) AS relevance,
+            ARRAY_REMOVE(ARRAY_AGG(
+                CASE WHEN
+                    b.has_image = true
+                    OR b.relevance = true
+                THEN b.id END), NULL) AS id
         FROM bibliographic_production b
-            LEFT JOIN bibliographic_production_article bpa
+            INNER JOIN bibliographic_production_article bpa
                 ON b.id = bpa.bibliographic_production_id
-            LEFT JOIN researcher r
+            INNER JOIN researcher r
                 ON r.id = b.researcher_id
-            LEFT JOIN institution i
+            INNER JOIN institution i
                 ON r.institution_id = i.id
-            LEFT JOIN openalex_article opa
+            INNER JOIN openalex_article opa
                 ON opa.article_id = b.id
             {join_program}
             {join_dep}
@@ -966,9 +976,14 @@ def list_distinct_book_chapter(
     SCRIPT_SQL = f"""
         SELECT bp.title, MIN(bp.year) AS year, MAX(bpc.isbn) AS isbn,
             MAX(bpc.publishing_company) AS publishing_company,
-            ARRAY_AGG(bp.researcher_id) AS researcher, ARRAY_AGG(bp.id) AS id,
-            ARRAY_AGG(r.lattes_id) AS lattes_id, NULL AS relevance,
-            NULL AS has_image, ARRAY_AGG(r.name) AS name
+            ARRAY_AGG(bp.researcher_id) AS researcher, ARRAY_AGG(r.lattes_id)
+            AS lattes_id, BOOL_OR(bp.relevance) AS relevance,
+            BOOL_OR(bp.has_image) AS has_image, ARRAY_AGG(r.name) AS name,
+            ARRAY_REMOVE(ARRAY_AGG(
+                CASE WHEN
+                    bp.has_image = true
+                    OR bp.relevance = true
+                THEN bp.id END), NULL) AS id
         FROM bibliographic_production bp
             INNER JOIN bibliographic_production_book_chapter bpc
                 ON bpc.bibliographic_production_id = bp.id
@@ -1003,10 +1018,15 @@ def list_distinct_software(
         params['year'] = year
 
     SCRIPT_SQL = f"""
-        SELECT s.title, MIN(s.year) AS year, NULL AS has_image,
-            NULL AS relevance, ARRAY_AGG(r.name) AS name
+        SELECT s.title, MIN(s.year) AS year, BOOL_OR(s.has_image) AS has_image,
+            BOOL_OR(s.relevance) AS relevance, ARRAY_AGG(r.name) AS name,
+            ARRAY_REMOVE(ARRAY_AGG(
+                CASE WHEN
+                    s.has_image = true
+                    OR s.relevance = true
+                THEN s.id END), NULL) AS id
         FROM software s
-        LEFT JOIN researcher r ON s.researcher_id = r.id
+            INNER JOIN researcher r ON s.researcher_id = r.id
         WHERE 1 = 1
             {filter_id}
             {filter_year}
@@ -1064,7 +1084,7 @@ def list_distinct_researcher_report(
         params['year'] = year
 
     SCRIPT_SQL = f"""
-        SELECT NULL AS id, ARRAY_AGG(r.name) AS name, rr.title,
+        SELECT ARRAY_AGG(rr.id) AS id, ARRAY_AGG(r.name) AS name, rr.title,
             MIN(rr.year) AS year, MAX(project_name) AS project_name,
             MAX(financing_institutionc) AS financing
         FROM research_report rr
@@ -1133,7 +1153,7 @@ def list_distinct_guidance_production(
         params['year'] = year
 
     SCRIPT_SQL = f"""
-        SELECT NULL AS id, g.title, MAX(nature) AS nature,
+        SELECT g.title, MAX(nature) AS nature,
             MAX(g.oriented) AS oriented, MAX(g.type) AS type,
             MAX(g.status) AS status, MAX(g.year) AS year,
             ARRAY_AGG(r.name) AS name
@@ -1226,11 +1246,12 @@ def list_distinct_researcher_production_events(
 
     SCRIPT_SQL = f"""
         SELECT bp.title, MAX(bp.title_en) AS title_en, MAX(bp.nature) AS nature,
-            MAX(bp.language) AS language, MAX(r.name) AS name,
+            MAX(bp.language) AS language, ARRAY_AGG(r.name) AS name,
             MAX(bp.means_divulgation) AS means_divulgation,
-            MAX(bp.homepage) AS homepage, FALSE AS relevance,
-            BOOL_OR(bp.scientific_divulgation) AS scientific_divulgation,
-            MAX(bp.authors) AS authors, MAX(bp.year_) AS year_
+            MAX(bp.homepage) AS homepage, BOOL_OR(bp.relevance) AS relevance,
+            BOOL_OR(bp.has_image) AS has_image, BOOL_OR(bp.scientific_divulgation)
+            AS scientific_divulgation, MAX(bp.authors) AS authors, MAX(bp.year_)
+            AS year_
         FROM bibliographic_production bp
         LEFT JOIN researcher r ON r.id = bp.researcher_id
         WHERE type = 'WORK_IN_EVENT'
@@ -1340,11 +1361,22 @@ def list_distinct_research_projects(
         params['researcher_id'] = researcher_id
 
     SCRIPT_SQL = f"""
-        SELECT rp.id, rp.researcher_id, r.name, rp.start_year, rp.end_year,
-            rp.agency_code, rp.agency_name, rp.project_name, rp.status,
-            rp.nature, rp.number_undergraduates, rp.number_specialists,
-            rp.number_academic_masters, rp.number_phd, rp.description,
-            rpp.production, rpf.foment, rpc.components
+        SELECT
+            rp.project_name, MAX(rp.start_year) AS start_year, MAX(rp.end_year)
+            AS end_year, MAX(rp.agency_code) AS agency_code, MAX(rp.agency_name)
+            AS agency_name, MAX(rp.status) AS status, MAX(rp.nature) AS nature,
+            MAX(rp.number_undergraduates) AS number_undergraduates,
+            MAX(rp.number_specialists) AS number_specialists,
+            MAX(rp.number_academic_masters) AS number_academic_masters,
+            MAX(rp.number_phd) AS number_phd, MAX(rp.description) AS description,
+            ARRAY_AGG(rp.id) AS id, ARRAY_AGG(rp.researcher_id)
+            AS researcher_id, ARRAY_AGG(r.name) AS name,
+            JSONB_AGG(DISTINCT rpp.production)
+                FILTER (WHERE rpp.production IS NOT NULL) AS production,
+            JSONB_AGG(DISTINCT rpf.foment)
+                FILTER (WHERE rpf.foment IS NOT NULL) AS foment,
+            JSONB_AGG(DISTINCT rpc.components)
+                FILTER (WHERE rpc.components IS NOT NULL) AS components
         FROM public.research_project rp
             LEFT JOIN researcher r ON r.id = rp.researcher_id
             LEFT JOIN (SELECT project_id, JSONB_AGG(JSONB_BUILD_OBJECT('title', title, 'type', type)) AS production
@@ -1363,6 +1395,7 @@ def list_distinct_research_projects(
             {filter_year}
             {filter_program}
             {filter_id}
+        GROUP BY rp.project_name
         """
 
     result = conn.select(SCRIPT_SQL, params)

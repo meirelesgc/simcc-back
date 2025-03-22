@@ -1,5 +1,3 @@
-from uuid import UUID
-
 from pydantic import BaseModel
 
 
@@ -20,7 +18,6 @@ class GuidanceMetrics(BaseModel):
 
 
 class GuidanceProduction(BaseModel):
-    id: UUID | None
     title: str | None
     nature: str
     oriented: str

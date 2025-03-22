@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from pydantic import BaseModel
 
 
@@ -13,3 +15,4 @@ class EventProduction(BaseModel):
     authors: str | None
     year_: int
     name: str | list[str]
+    id: UUID | list[UUID]
