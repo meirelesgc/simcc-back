@@ -98,3 +98,7 @@ def get_researcher_foment(institution_id: UUID = None):
 
 def get_logs():
     return GenericRepository.get_logs()
+
+
+def list_words(term: str):
+    return GenericRepository.list_words(term)

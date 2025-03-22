@@ -1,5 +1,7 @@
 from uuid import UUID
 
+import nltk
+
 from simcc.repositories import conn
 from simcc.schemas import YearBarema
 
@@ -70,4 +72,34 @@ def get_logs():
         ORDER BY type, created_at DESC;
         """
     result = conn.select(SCRIPT_SQL)
+    return result
+
+
+def list_words(term: str):
+    params = {'term': term + '%'}
+
+    stopwords = nltk.corpus.stopwords.words('english')
+    stopwords += nltk.corpus.stopwords.words('portuguese')
+
+    params['stopwords'] = stopwords
+
+    SCRIPT_SQL = r"""
+        WITH words AS (
+            SELECT regexp_split_to_table(translate(b.title,'-\.:,;''', ' '), '\s+') AS word
+            FROM bibliographic_production b
+            WHERE type = 'ARTICLE'),
+        words_count AS (
+            SELECT COUNT(*) AS frequency, LOWER(word) AS word
+            FROM words
+            WHERE word ~ '\w+'
+            GROUP BY LOWER(word))
+        SELECT word, frequency AS freq
+        FROM words_count
+        WHERE CHAR_LENGTH(word) > 3
+            AND TRIM(word) <> ALL(%(stopwords)s)
+            AND unaccent(word) ILIKE %(term)s
+        ORDER BY frequency DESC
+        LIMIT 10;
+        """
+    result = conn.select(SCRIPT_SQL, params)
     return result

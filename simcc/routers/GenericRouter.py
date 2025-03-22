@@ -102,3 +102,8 @@ def resarcher_barema(
     )
 
     return GenericService.barema_production(name, lattes_id, year)
+
+
+@router.get('/secondWord')
+def list_words(term: str):
+    return GenericService.list_words(term)
