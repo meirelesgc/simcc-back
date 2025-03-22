@@ -484,8 +484,14 @@ def list_distinct_book(
         SELECT bp.title, year, bpb.isbn AS isbn,
             MAX(bpb.publishing_company) AS publishing_company,
             ARRAY_AGG(bp.researcher_id) AS researcher,
-            ARRAY_AGG(r.lattes_id) AS lattes_id, NULL AS relevance,
-            NULL AS has_image, ARRAY_AGG(bp.id) AS id, ARRAY_AGG(r.name) AS name
+            ARRAY_AGG(r.lattes_id) AS lattes_id, BOOL_OR(bp.relevance)
+            AS relevance, BOOL_OR(bp.has_image) AS has_image, ARRAY_AGG(r.name)
+            AS name,
+            ARRAY_REMOVE(ARRAY_AGG(
+                CASE WHEN
+                    bp.has_image = true
+                    OR bp.relevance = true
+                THEN bp.id END), NULL) AS id
         FROM bibliographic_production bp
             INNER JOIN bibliographic_production_book bpb
                 ON bp.id = bpb.bibliographic_production_id

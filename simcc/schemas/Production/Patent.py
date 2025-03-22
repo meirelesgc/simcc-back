@@ -19,7 +19,7 @@ class PatentProduction(BaseModel):
     name: str | list[str]
 
     # Distinct 0
-    id: UUID | list
+    id: UUID | list[UUID]
     lattes_id: str | list[str]
     patent: None = None
     has_image: bool | None
