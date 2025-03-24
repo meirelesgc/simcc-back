@@ -11,7 +11,7 @@ class EventProduction(BaseModel):
     means_divulgation: str
     homepage: str | None
     relevance: bool = False
-    scientific_divulgation: bool = False
+    scientific_divulgation: bool | None = False
     authors: str | None
     year_: int
     name: str | list[str]
