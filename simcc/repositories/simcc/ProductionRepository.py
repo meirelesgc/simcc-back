@@ -1217,7 +1217,7 @@ def list_researcher_production_events(
         SELECT bp.title, bp.title_en, bp.nature, bp.language,
             bp.means_divulgation, bp.homepage, bp.relevance,
             bp.scientific_divulgation, bp.authors, bp.year_,
-            r.name
+            r.name, bp.id
         FROM bibliographic_production bp
             LEFT JOIN researcher r ON r.id = bp.researcher_id
         WHERE type = 'WORK_IN_EVENT'
@@ -1251,7 +1251,7 @@ def list_distinct_researcher_production_events(
             MAX(bp.homepage) AS homepage, BOOL_OR(bp.relevance) AS relevance,
             BOOL_OR(bp.has_image) AS has_image, BOOL_OR(bp.scientific_divulgation)
             AS scientific_divulgation, MAX(bp.authors) AS authors, MAX(bp.year_)
-            AS year_
+            AS year_, ARRAY_AGG(bp.id) AS id
         FROM bibliographic_production bp
         LEFT JOIN researcher r ON r.id = bp.researcher_id
         WHERE type = 'WORK_IN_EVENT'
