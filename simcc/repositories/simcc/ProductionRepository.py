@@ -1410,7 +1410,7 @@ def list_papers_magazine(
 
     filter_year = str()
     if year:
-        filter_year = 'AND start_year >= %(year)s'
+        filter_year = 'AND year_ >= %(year)s'
         params['year'] = year
 
     filter_id = str()
@@ -1440,7 +1440,7 @@ def list_distinct_papers_magazine(
 
     filter_year = str()
     if year:
-        filter_year = 'AND start_year >= %(year)s'
+        filter_year = 'AND year_ >= %(year)s'
         params['year'] = year
 
     filter_id = str()

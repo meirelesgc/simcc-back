@@ -11,5 +11,5 @@ class PapersProduction(BaseModel):
     homepage: str | None
     relevance: bool
     scientific_divulgation: bool | None
-    authors: str | list
+    authors: str | list | None
     year_: int
