@@ -272,7 +272,7 @@ def list_research_project(
 )
 def list_papers_magazine(
     researcher_id: UUID | str = None,
-    year: int = None,
+    year: int | str = None,
     distinct: int = 1,
 ):
     if distinct:

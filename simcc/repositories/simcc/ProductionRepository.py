@@ -1154,7 +1154,7 @@ def list_distinct_guidance_production(
 
     SCRIPT_SQL = f"""
         SELECT g.title, MAX(nature) AS nature,
-            MAX(g.oriented) AS oriented, MAX(g.type) AS type,
+            g.oriented, MAX(g.type) AS type,
             MAX(g.status) AS status, MAX(g.year) AS year,
             ARRAY_AGG(r.name) AS name
         FROM guidance g
@@ -1162,7 +1162,7 @@ def list_distinct_guidance_production(
         WHERE 1 = 1
             {filter_year}
             {filter_id}
-        GROUP BY g.title
+        GROUP BY g.title, g.oriented
         ORDER BY year desc
         """
     result = conn.select(SCRIPT_SQL, params)

@@ -9,9 +9,13 @@ from simcc.repositories import conn
 
 
 def terms_dataframe() -> pd.DataFrame:
-    SCRIPT_SQL = """
-        SELECT term, frequency, type_, '0' AS great_area,
-            unaccent(LOWER(term)) AS term_normalize
+    SCRIPT_SQL = r"""
+        SELECT 
+            regexp_replace(term, '[^a-zA-Z0-9À-ÿ\s]', '', 'g') AS term,
+            frequency, 
+            type_, 
+            '0' AS great_area,
+            unaccent(LOWER(regexp_replace(term, '[^a-zA-Z0-9À-ÿ\s]', '', 'g'))) AS term_normalize
         FROM public.research_dictionary d
         WHERE term ~ '^[^0-9]+$'
             AND CHAR_LENGTH(d.term) >= 4
@@ -20,18 +24,16 @@ def terms_dataframe() -> pd.DataFrame:
 
         UNION
 
-        SELECT term, frequency, type_, '0',
-            unaccent(LOWER(term)) AS term_normalize
+        SELECT 
+            regexp_replace(term, '[^a-zA-Z0-9À-ÿ\s]', '', 'g') AS term,
+            frequency, 
+            type_, 
+            '0',
+            unaccent(LOWER(regexp_replace(term, '[^a-zA-Z0-9À-ÿ\s]', '', 'g'))) AS term_normalize
         FROM public.research_dictionary d
         WHERE term ~ '^[^0-9]+$'
-                AND CHAR_LENGTH(d.term) >= 4
-                AND type_ IN ('BOOK', 'PATENT')
-
-        UNION
-
-        SELECT unaccent(LOWER(name)), 1, 'NAME', '0',
-            unaccent(LOWER(name)) AS term_normalize
-        FROM researcher
+            AND CHAR_LENGTH(d.term) >= 4
+            AND type_ IN ('BOOK', 'PATENT')
 
         UNION
 
