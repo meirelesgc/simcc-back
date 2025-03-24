@@ -1050,7 +1050,7 @@ def list_software(researcher_id: UUID | str = None, year: int | str = 2020):
         params['year'] = year
 
     SCRIPT_SQL = f"""
-        SELECT s.title, s.year AS year, s.has_image, s.relevance, r.name
+        SELECT s.id, s.title, s.year AS year, s.has_image, s.relevance, r.name
         FROM software s
         LEFT JOIN researcher r ON s.researcher_id = r.id
         WHERE 1 = 1
