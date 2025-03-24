@@ -618,7 +618,7 @@ def list_bibliographic_production(
         filter_pagination = pagination(page, lenght)
 
     SCRIPT_SQL = f"""
-        SELECT DISTINCT
+        SELECT
             b.id AS id, title, year, type, doi, bpa.qualis,
             periodical_magazine_name AS magazine, r.name AS researcher,
             r.lattes_10_id, r.lattes_id, jcr AS jif,
@@ -738,7 +738,7 @@ def list_article_production(  # noqa: PLR0914
                 ON b.id = bpa.bibliographic_production_id
             INNER JOIN researcher r
                 ON r.id = b.researcher_id
-            INNER JOIN openalex_article opa
+            LEFT JOIN openalex_article opa
                 ON opa.article_id = b.id
             {join_university}
             {join_program}
@@ -862,7 +862,7 @@ def list_distinct_article_production(  # noqa: PLR0914
                 ON r.id = b.researcher_id
             INNER JOIN institution i
                 ON r.institution_id = i.id
-            INNER JOIN openalex_article opa
+            LEFT JOIN openalex_article opa
                 ON opa.article_id = b.id
             {join_program}
             {join_dep}
