@@ -278,10 +278,12 @@ def production_general_db(graduate_program_id, year, dep_id):
             FROM researcher r
             WHERE 
             1 = 1
+            AND r.status = true
             AND r.id NOT IN (SELECT researcher_id FROM graduate_program_student)
             {filter_departament_researcher[3:]}
             GROUP BY graduation
             """
+
     reg = sgbdSQL.consultar_db(sql)
 
     if filter != "":

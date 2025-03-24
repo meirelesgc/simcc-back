@@ -129,9 +129,7 @@ def patent_production_researcher():
     list_magazine = []
     magazine_initialis = request.args.get("initials")
     issn = request.args.get("issn")
-
     df_bd = Dao.generalSQL.lists_magazine_db(magazine_initialis, issn)
-
     for i, infos in df_bd.iterrows():
         m = Magazine()
         m.id = str(infos.id)

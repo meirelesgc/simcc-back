@@ -1,7 +1,5 @@
 import Dao.sgbdSQL as sgbdSQL
-import unidecode
 import pandas as pd
-import Dao.util as util
 
 
 # Função que lista  as áreas de expertrize por Iniciais
@@ -12,9 +10,7 @@ def listSecondWord_bd(term):
 
            SELECT   
                   unnest(regexp_matches (unaccent(LOWER(bp.title)), ' %s\s+(\w+)','g')) as word FROM bibliographic_production AS bp where bp.type='ARTICLE'
-         """ % (
-        term
-    )
+         """ % (term)
 
     reg = sgbdSQL.consultar_db(sql)
 
