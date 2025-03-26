@@ -1,5 +1,3 @@
-from time import sleep, time
-
 import firebase_admin
 import pandas as pd
 from firebase_admin import credentials, firestore
@@ -7,6 +5,30 @@ from firebase_admin import credentials, firestore
 from routines.logger import logger_routine
 from simcc.config import settings
 from simcc.repositories import conn
+
+
+def delete_collection(coll_ref, batch_size):
+    docs = coll_ref.limit(batch_size).stream()
+    deleted = 0
+    batch = db.batch()
+    for doc in docs:
+        batch.delete(doc.reference)
+        deleted += 1
+    if deleted > 0:
+        batch.commit()
+        return deleted
+    return 0
+
+
+def insert_data_batch(collection_ref, data_list, batch_size):
+    total_items = len(data_list)
+    for i in range(0, total_items, batch_size):
+        print('INSERTING BATCH: ', i)
+
+        batch = db.batch()
+        for item in data_list[i : i + batch_size]:
+            collection_ref.add(item)
+        batch.commit()
 
 
 def terms_dataframe() -> pd.DataFrame:
@@ -69,31 +91,15 @@ if __name__ == '__main__':
     db = firestore.client()
 
     dictionary = db.collection(settings.FIREBASE_COLLECTION)
-    docs = dictionary.stream()
 
     try:
-        count = 0
-        cooldown = time()
-        for index, doc in enumerate(docs):
-            count += 1
-            if count >= 80 or time() - cooldown >= 90:
-                sleep(10)
-                count = 0
-                cooldown = time()
-
-            print(f'Deletando [{doc.get("type_")}]')
-            doc.reference.delete()
-
-        count = 0
-        cooldown = time()
-        for item in terms_dataframe().to_dict(orient='records'):
-            count += 1
-            if count >= 80 or time() - cooldown >= 90:
-                sleep(10)
-                count = 0
-                cooldown = time()
-            print(f'Adicionando [{item.get("type_")}]')
-            dictionary.add(item)
+        collection_ref = db.collection(settings.FIREBASE_COLLECTION)
+        batch_size = 500
+        while delete_collection(collection_ref, batch_size) > 0:
+            pass
+        data_to_insert = terms_dataframe().to_dict(orient='records')
+        batch_size = 1000
+        insert_data_batch(collection_ref, data_to_insert, batch_size)
 
         logger_routine('SEARCH_TERM', False)
     except Exception as e:
