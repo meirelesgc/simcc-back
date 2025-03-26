@@ -4,16 +4,17 @@ import firebase_admin
 import pandas as pd
 from firebase_admin import credentials, firestore
 
+from routines.logger import logger_routine
 from simcc.config import settings
 from simcc.repositories import conn
 
 
 def terms_dataframe() -> pd.DataFrame:
     SCRIPT_SQL = r"""
-        SELECT 
+        SELECT
             regexp_replace(term, '[^a-zA-Z0-9À-ÿ\s]', '', 'g') AS term,
-            frequency, 
-            type_, 
+            frequency,
+            type_,
             '0' AS great_area,
             unaccent(LOWER(regexp_replace(term, '[^a-zA-Z0-9À-ÿ\s]', '', 'g'))) AS term_normalize
         FROM public.research_dictionary d
@@ -70,25 +71,30 @@ if __name__ == '__main__':
     dictionary = db.collection(settings.FIREBASE_COLLECTION)
     docs = dictionary.stream()
 
-    count = 0
-    cooldown = time()
-    for index, doc in enumerate(docs):
-        count += 1
-        if count >= 80 or time() - cooldown >= 90:
-            sleep(10)
-            count = 0
-            cooldown = time()
+    try:
+        count = 0
+        cooldown = time()
+        for index, doc in enumerate(docs):
+            count += 1
+            if count >= 80 or time() - cooldown >= 90:
+                sleep(10)
+                count = 0
+                cooldown = time()
 
-        print(f'Deletando [{doc.get("type_")}]')
-        doc.reference.delete()
+            print(f'Deletando [{doc.get("type_")}]')
+            doc.reference.delete()
 
-    count = 0
-    cooldown = time()
-    for item in terms_dataframe().to_dict(orient='records'):
-        count += 1
-        if count >= 80 or time() - cooldown >= 90:
-            sleep(10)
-            count = 0
-            cooldown = time()
-        print(f'Adicionando [{item.get("type_")}]')
-        dictionary.add(item)
+        count = 0
+        cooldown = time()
+        for item in terms_dataframe().to_dict(orient='records'):
+            count += 1
+            if count >= 80 or time() - cooldown >= 90:
+                sleep(10)
+                count = 0
+                cooldown = time()
+            print(f'Adicionando [{item.get("type_")}]')
+            dictionary.add(item)
+
+        logger_routine('SEARCH_TERM', False)
+    except Exception as e:
+        logger_routine('SEARCH_TERM', True, str(e))
