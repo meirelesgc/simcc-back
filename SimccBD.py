@@ -70,8 +70,8 @@ def lists_research_groups(group_id):
     script_sql = f"""
         SELECT
             rg.id,
-            name,
-            institution,
+            rg.name,
+            institution || ' - ' || i.name,
             first_leader,
             first_leader_id,
             second_leader,
@@ -86,6 +86,7 @@ def lists_research_groups(group_id):
             category
         FROM
             research_group rg
+            LEFT JOIN institution i ON i.acronym = rg.institution
         WHERE
             (rg.first_leader_id IS NOT NULL OR rg.second_leader_id IS NOT NULL)
             {group_id_filter}
