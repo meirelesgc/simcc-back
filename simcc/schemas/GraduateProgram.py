@@ -14,6 +14,7 @@ class GraduateProgram(BaseModel):
     rating: Optional[str]
     institution_id: UUID
     state: Optional[str]
+    institution: str
     city: Optional[str]
     region: Optional[str]
     url_image: Optional[str]

@@ -21,7 +21,7 @@ PROXY = settings.ALTERNATIVE_CNPQ_SERVICE
 def list_admin_researchers():
     SCRIPT_SQL = """
         SELECT researcher_id, name, lattes_id
-        FROM public.researcher;
+        FROM public.researcher WHERE lattes_id = '1966167015825708';
         """
     result = conn_admin.select(SCRIPT_SQL)
     return result

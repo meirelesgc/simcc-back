@@ -44,12 +44,14 @@ def list_graduate_programs(program_id: UUID, university: str = None):
             FROM graduate_program_researcher gpr
                 LEFT JOIN researcher r ON gpr.researcher_id = r.id
             GROUP BY graduate_program_id
+            HAVING COUNT(r.id) >= 1
         )
         SELECT gp.graduate_program_id, code, gp.name, UPPER(area) AS area,
             UPPER(modality) AS modality, INITCAP(type) AS type, rating,
             institution_id, state, INITCAP(city) AS city, region, url_image,
             gp.acronym, gp.description, visible, site, qtd_permanente,
-            qtd_colaborador, qtd_estudantes, i.name, r.researchers
+            qtd_colaborador, qtd_estudantes, i.name AS institution,
+            COALESCE(r.researchers, ARRAY[]::text[]) AS researchers
         FROM public.graduate_program gp
             LEFT JOIN permanent p
                 ON gp.graduate_program_id = p.graduate_program_id
