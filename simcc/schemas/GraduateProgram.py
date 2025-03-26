@@ -21,6 +21,7 @@ class GraduateProgram(BaseModel):
     description: Optional[str]
     visible: Optional[bool]
     site: str | None
+    researchers: list = []
 
     qtd_permanente: int | None
     qtd_colaborador: int | None

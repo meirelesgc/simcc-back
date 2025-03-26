@@ -38,12 +38,18 @@ def list_graduate_programs(program_id: UUID, university: str = None):
             SELECT graduate_program_id, COUNT(*) AS qtd_estudantes
             FROM graduate_program_student
             GROUP BY graduate_program_id
+        ),
+        researchers AS (
+            SELECT graduate_program_id, ARRAY_AGG(r.name) AS researchers
+            FROM graduate_program_researcher gpr
+                LEFT JOIN researcher r ON gpr.researcher_id = r.id
+            GROUP BY graduate_program_id
         )
         SELECT gp.graduate_program_id, code, gp.name, UPPER(area) AS area,
             UPPER(modality) AS modality, INITCAP(type) AS type, rating,
             institution_id, state, INITCAP(city) AS city, region, url_image,
             gp.acronym, gp.description, visible, site, qtd_permanente,
-            qtd_colaborador, qtd_estudantes
+            qtd_colaborador, qtd_estudantes, i.name, r.researchers
         FROM public.graduate_program gp
             LEFT JOIN permanent p
                 ON gp.graduate_program_id = p.graduate_program_id
@@ -51,6 +57,10 @@ def list_graduate_programs(program_id: UUID, university: str = None):
                 ON gp.graduate_program_id = s.graduate_program_id
             LEFT JOIN collaborators c
                 ON gp.graduate_program_id = c.graduate_program_id
+            LEFT JOIN institution i
+                ON i.id = gp.institution_id
+            LEFT JOIN researchers r
+                ON r.graduate_program_id = gp.graduate_program_id
             {join_university}
         WHERE 1 = 1
             {filter_program}
