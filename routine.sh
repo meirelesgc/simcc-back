@@ -7,6 +7,7 @@ check_error() {
   fi
 }
 
+DATE_FORMAT=$(date '+%Y-%m-%d %H:%M:%S')
 SIMCC_HOME=$(dirname "$(readlink -f "$0")")
 
 cd "$SIMCC_HOME" || exit 1

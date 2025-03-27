@@ -87,6 +87,8 @@ def download_xml(lattes_id, researcher_id):
 
 
 if __name__ == '__main__':
+    raise Exception('This script must be imported')
+
     HOP_PATH = 'config/projects/Jade-Extrator-Hop/metadata/dataset/xml/'
     HOP_PATH = os.path.join(settings.JADE_EXTRATOR_FOLTER, HOP_PATH)
     CURRENT_XML_PATH = os.path.join(HOP_PATH, CURRENT_XML_PATH)
