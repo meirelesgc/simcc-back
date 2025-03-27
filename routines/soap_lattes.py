@@ -57,7 +57,7 @@ def database_att(lattes_id) -> datetime:
 def download_xml(lattes_id, researcher_id):
     if cnpq_att(lattes_id) <= database_att(lattes_id):
         print('Curriculo atualizado!')
-        # return
+        return
 
     print('Baixando curriculo...')
     try:

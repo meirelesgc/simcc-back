@@ -104,7 +104,7 @@ def create_researcher_patent_dictionary():
         SELECT word, frequency, 'PATENT'
         FROM words_count
         WHERE 1 = 1
-            AND CHAR_LENGTH(word) > 3
+            AND CHAR_LENGTH(word) >= 3
             AND TRIM(word) <> ALL(%(stopwords)s)
         ORDER BY frequency;
         """  # noqa: E501
