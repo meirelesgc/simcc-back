@@ -47,15 +47,15 @@ def terms_dataframe() -> pd.DataFrame:
 
         UNION
 
-        SELECT 
+        SELECT
             regexp_replace(term, '[^a-zA-Z0-9À-ÿ\s]', '', 'g') AS term,
-            frequency, 
-            type_, 
+            frequency,
+            type_,
             '0',
             unaccent(LOWER(regexp_replace(term, '[^a-zA-Z0-9À-ÿ\s]', '', 'g'))) AS term_normalize
         FROM public.research_dictionary d
         WHERE term ~ '^[^0-9]+$'
-            AND CHAR_LENGTH(d.term) >= 4
+            AND CHAR_LENGTH(d.term) >= 3
             AND type_ IN ('BOOK', 'PATENT')
 
         UNION

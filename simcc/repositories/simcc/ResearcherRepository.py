@@ -513,7 +513,7 @@ def search_in_patents(
             r.graduation, r.last_update AS lattes_update,
             REPLACE(rp.great_area, '_', ' ') AS area, rp.city,
             i.image AS image_university, i.name AS university,
-            1 AS among, rp.articles, rp.book_chapters, rp.book, rp.patent,
+            p.among, rp.articles, rp.book_chapters, rp.book, rp.patent,
             rp.software, rp.brand, opr.h_index, opr.relevance_score,
             opr.works_count, opr.cited_by_count, opr.i10_index, opr.scopus,
             opr.openalex, r.classification, r.status, r.institution_id
