@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import pandas as pd
 from unidecode import unidecode
 
@@ -186,7 +188,7 @@ def list_researchers():
 
 
 def main():
-    YEAR = range(2008, 2025)
+    YEAR = range(2008, datetime.now().year)
     history = pd.DataFrame(YEAR, columns=['year'])
 
     programs = list_researchers()

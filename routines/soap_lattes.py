@@ -21,7 +21,7 @@ PROXY = settings.ALTERNATIVE_CNPQ_SERVICE
 def list_admin_researchers():
     SCRIPT_SQL = """
         SELECT researcher_id, name, lattes_id
-        FROM public.researcher WHERE lattes_id = '1966167015825708';
+        FROM public.researcher;
         """
     result = conn_admin.select(SCRIPT_SQL)
     return result
@@ -30,7 +30,7 @@ def list_admin_researchers():
 def cnpq_att(lattes_id) -> datetime:
     try:
         if PROXY:
-            PROXY_URL = f'https://simcc.uesc.br/api/getDataAtualizacaoCV?lattes_id={lattes_id}'
+            PROXY_URL = f"""https://simcc.uesc.br/api/getDataAtualizacaoCV?lattes_id={lattes_id}"""
             if response := httpx.get(PROXY_URL, verify=False, timeout=None).json():  # fmt: skip  # noqa: E501
                 return datetime.strptime(response, '%d/%m/%Y %H:%M:%S')
             return datetime.min
@@ -87,8 +87,6 @@ def download_xml(lattes_id, researcher_id):
 
 
 if __name__ == '__main__':
-    raise Exception('This script must be imported')
-
     HOP_PATH = 'config/projects/Jade-Extrator-Hop/metadata/dataset/xml/'
     HOP_PATH = os.path.join(settings.JADE_EXTRATOR_FOLTER, HOP_PATH)
     CURRENT_XML_PATH = os.path.join(HOP_PATH, CURRENT_XML_PATH)

@@ -1,3 +1,4 @@
+from datetime import datetime
 from uuid import uuid4
 
 import pandas as pd
@@ -193,7 +194,7 @@ def list_researchers():
 
 
 def main():
-    YEAR = range(2008, 2026)
+    YEAR = range(2008, datetime.now().year)
     history = pd.DataFrame(YEAR, columns=['year'])
 
     researchers = list_researchers()
