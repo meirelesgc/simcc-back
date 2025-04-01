@@ -647,7 +647,6 @@ def list_bibliographic_production(
         ORDER BY
             year DESC
         """
-    print(SCRIPT_SQL, params)
     result = conn.select(SCRIPT_SQL, params)
     return result
 

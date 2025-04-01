@@ -20,7 +20,6 @@ def parse_terms(string_of_terms):
             term += char
     if term.strip():
         terms.append(term.strip())
-
     return terms
 
 
@@ -28,7 +27,7 @@ def sanitize_terms(terms):
     sanitized = []
     for term in terms:
         if term not in {'AND', 'OR', 'AND NOT', '(', ')'}:
-            sanitized.append(unidecode(term.lower()))
+            sanitized.append(unidecode(term.lower()).replace("'", ''))
         else:
             sanitized.append(term)
     return sanitized
@@ -81,7 +80,7 @@ def build_query_names(sanitized_names, column):
             names_dict[placeholder] = '%' + name + '%'
             SCRIPT_SQL = f"""
                 translate(
-                unaccent({column}), '-\\.:;''',' ') ILIKE %({placeholder})s
+                unaccent({column}), '-\\.:´;''',' ') ILIKE %({placeholder})s
                 """
             query_parts.append(SCRIPT_SQL)
             name_counter += 1
