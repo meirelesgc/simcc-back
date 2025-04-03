@@ -48,7 +48,7 @@ def list_graduate_programs(program_id: UUID, university: str = None):
         )
         SELECT gp.graduate_program_id, code, gp.name, UPPER(area) AS area,
             UPPER(modality) AS modality, INITCAP(type) AS type, rating,
-            institution_id, state, INITCAP(city) AS city, region, url_image,
+            institution_id, state, UPPER(city) AS city, region, url_image,
             gp.acronym, gp.description, visible, site, qtd_permanente,
             qtd_colaborador, qtd_estudantes, i.name AS institution,
             COALESCE(r.researchers, ARRAY[]::text[]) AS researchers
