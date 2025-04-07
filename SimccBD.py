@@ -68,27 +68,13 @@ def lists_research_groups(group_id):
         group_id_filter = str()
 
     script_sql = f"""
-        SELECT
-            rg.id,
-            rg.name,
-            institution || ' - ' || i.name,
-            first_leader,
-            first_leader_id,
-            second_leader,
-            second_leader_id,
-            area,
-            census,
-            start_of_collection,
-            end_of_collection,
-            group_identifier,
-            year,
-            institution_name,
-            category
-        FROM
-            research_group rg
-            LEFT JOIN institution i ON i.acronym = rg.institution
-        WHERE
-            (rg.first_leader_id IS NOT NULL OR rg.second_leader_id IS NOT NULL)
+        SELECT rg.id, rg.name, institution || ' - ' || i.name, first_leader, 
+            first_leader_id, second_leader, second_leader_id, area, census, 
+            start_of_collection, end_of_collection, group_identifier, year, 
+            institution_name, category 
+        FROM research_group rg
+            INNER JOIN institution i ON i.acronym = rg.institution
+        WHERE (rg.first_leader_id IS NOT NULL OR rg.second_leader_id IS NOT NULL)
             {group_id_filter}
         """
 
