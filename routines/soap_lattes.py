@@ -30,14 +30,15 @@ def list_admin_researchers():
 def cnpq_att(lattes_id) -> datetime:
     try:
         if PROXY:
-            PROXY_URL = f"""https://simcc.uesc.br/api/getDataAtualizacaoCV?lattes_id={lattes_id}"""
-            if response := httpx.get(PROXY_URL, verify=False, timeout=None).json():  # fmt: skip  # noqa: E501
+            PROXY_URL = f'https://simcc.uesc.br/api/getDataAtualizacaoCV?lattes_id={lattes_id}'
+            response = httpx.get(PROXY_URL, verify=False, timeout=None).json()
+            if response:
                 return datetime.strptime(response, '%d/%m/%Y %H:%M:%S')
             return datetime.min
         response = client.service.getDataAtualizacaoCV(lattes_id)
         return datetime.strptime(response, '%d/%m/%Y %H:%M:%S')
-    except httpx.Timeout as E:
-        print(f'Erro de timeout: {E}')
+    except (httpx.TimeoutException, TypeError, ValueError) as e:
+        print(f'Erro ao obter data de atualização do Lattes: {e}')
         return datetime.min
 
 
