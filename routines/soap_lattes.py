@@ -39,6 +39,9 @@ def cnpq_att(lattes_id) -> datetime:
     except httpx.Timeout as E:
         print(f'Erro de timeout: {E}')
         return datetime.min
+    except TypeError as E:
+        print(f'Pesquisador não encontrado: {E}')
+        return datetime.min
 
 
 def database_att(lattes_id) -> datetime:
