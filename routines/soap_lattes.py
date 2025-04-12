@@ -30,7 +30,7 @@ def list_admin_researchers():
 def cnpq_att(lattes_id) -> datetime:
     try:
         if PROXY:
-            PROXY_URL = f'https://simcc.uesc.br/api/getDataAtualizacaoCV?lattes_id={lattes_id}'
+            PROXY_URL = f'https://simcc.uesc.br/v3/api/getDataAtualizacaoCV?lattes_id={lattes_id}'
             response = httpx.get(PROXY_URL, verify=False, timeout=None).json()
             if response:
                 return datetime.strptime(response, '%d/%m/%Y %H:%M:%S')
@@ -64,7 +64,7 @@ def download_xml(lattes_id, researcher_id):
     try:
         if PROXY:
             print('Baixando curriculo via proxy')
-            PROXY_URL = f'https://simcc.uesc.br/api/getCurriculoCompactado?lattes_id={lattes_id}'
+            PROXY_URL = f'https://simcc.uesc.br/v3/api/getCurriculoCompactado?lattes_id={lattes_id}'
             response = httpx.get(PROXY_URL, verify=False, timeout=None).content
         else:
             response = client.service.getCurriculoCompactado(lattes_id)
