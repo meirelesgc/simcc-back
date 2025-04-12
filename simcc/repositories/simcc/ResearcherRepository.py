@@ -237,6 +237,104 @@ def search_in_name(
     return result
 
 
+def list_outstanding_researchers(
+    name: str,
+    graduate_program_id: UUID,
+    dep_id: UUID,
+    page: int = None,
+    lenght: int = None,
+):
+    params = {}
+
+    join_departament = str()
+    filter_departament = str()
+    if dep_id:
+        params['dep_id'] = dep_id
+        join_departament = """
+            LEFT JOIN ufmg.departament_researcher dr ON dr.researcher_id = r.id
+            """
+        filter_departament = 'AND dr.dep_id = %(dep_id)s'
+
+    filter_name = str()
+    if name:
+        filter_name, terms = names_filter('r.name', name)
+        params |= terms
+
+    filter_pagination = str()
+    if page and lenght:
+        filter_pagination = pagination(page, lenght)
+
+    join_program = str()
+    filter_program = str()
+    if graduate_program_id:
+        params['graduate_program_id'] = graduate_program_id
+        join_program = """
+            INNER JOIN graduate_program_researcher gpr
+                ON gpr.researcher_id = r.id
+            """
+        filter_program = 'AND gpr.graduate_program_id = %(graduate_program_id)s'
+
+    SCRIPT_SQL = f"""
+        WITH production AS (
+            SELECT researcher_id, COUNT(*) AS among
+            FROM bibliographic_production
+            WHERE created_at >= CURRENT_DATE - INTERVAL '30 days'
+            GROUP BY researcher_id
+
+            UNION ALL
+
+            SELECT researcher_id, COUNT(*) AS among
+            FROM patent
+            WHERE created_at >= CURRENT_DATE - INTERVAL '30 days'
+            GROUP BY researcher_id
+
+            UNION ALL
+
+            SELECT researcher_id, COUNT(*) AS among
+            FROM software
+            WHERE created_at >= CURRENT_DATE - INTERVAL '30 days'
+            GROUP BY researcher_id
+
+            UNION ALL
+
+            SELECT researcher_id, COUNT(*) AS among
+            FROM brand
+            WHERE created_at >= CURRENT_DATE - INTERVAL '30 days'
+            GROUP BY researcher_id),
+        outstanding_researchers AS (
+            SELECT researcher_id, SUM(among) AS among
+            FROM production
+            GROUP BY researcher_id
+            ORDER BY among DESC
+            LIMIT 10)
+        SELECT
+            r.id, r.name, r.lattes_id, r.lattes_10_id, r.abstract, r.orcid,
+            r.graduation, r.last_update AS lattes_update,
+            REPLACE(rp.great_area, '_', ' ') AS area, rp.city,
+            i.image AS image_university, i.name AS university,
+            ors.among, rp.articles, rp.book_chapters, rp.book, rp.patent,
+            rp.software, rp.brand, opr.h_index, opr.relevance_score,
+            opr.works_count, opr.cited_by_count, opr.i10_index, opr.scopus,
+            opr.openalex, r.classification, r.status, r.institution_id
+        FROM researcher r
+            LEFT JOIN institution i ON i.id = r.institution_id
+            LEFT JOIN researcher_production rp ON rp.researcher_id = r.id
+            LEFT JOIN openalex_researcher opr ON opr.researcher_id = r.id
+            RIGHT JOIN outstanding_researchers ors ON r.id = ors.researcher_id
+            {join_program}
+            {join_departament}
+        WHERE 1 = 1
+            {filter_program}
+            {filter_name}
+            {filter_departament}
+        ORDER BY
+            among DESC
+            {filter_pagination};
+        """
+    result = conn.select(SCRIPT_SQL, params)
+    return result
+
+
 def list_graduate_programs():
     SCRIPT_SQL = """
         SELECT gpr.researcher_id AS id,

@@ -60,6 +60,22 @@ def list_researchers(
     )
 
 
+@router.get(
+    '/outstanding_researchers',
+    response_model=list[Researcher],
+)
+def list_outstanding_researchers(
+    name: str = None,
+    graduate_program_id: UUID | str = None,
+    dep_id: str = None,
+    page: int = None,
+    lenght: int = None,
+):
+    return ResearcherService.list_outstanding_researchers(
+        name, graduate_program_id, dep_id, page, lenght
+    )
+
+
 @router.get('/researcherPatent', response_model=list[Researcher])
 def list_researchers_by_patent(
     term: str = None,
