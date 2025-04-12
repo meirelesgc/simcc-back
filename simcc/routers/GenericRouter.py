@@ -5,7 +5,10 @@ from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query
-from fastapi.responses import FileResponse
+from fastapi.responses import (
+    FileResponse,
+    PlainTextResponse,
+)
 from zeep import Client
 
 from simcc.schemas import ResearcherBarema, YearBarema
@@ -37,16 +40,29 @@ def dim_titulacao_xlsx():
     return FileResponse(file_path, filename='dictionary.pdf')
 
 
-@router.get('/getIdentificadorCNPq', response_class=str)
+@router.get('/getIdentificadorCNPq')
 def lattes_id(
     cpf: str = None, nomeCompleto: str = None, dataNascimento: str = None
 ):
-    client = Client('http://servicosweb.cnpq.br/srvcurriculo/WSCurriculo?wsdl')
-    response = client.service.getIdentificadorCNPq(
-        cpf=cpf, nomeCompleto=nomeCompleto, dataNascimento=dataNascimento
-    )
-    if response:
-        return response
+    try:
+        client = Client(
+            'http://servicosweb.cnpq.br/srvcurriculo/WSCurriculo?wsdl'
+        )
+        response_content = client.service.getIdentificadorCNPq(
+            cpf=cpf, nomeCompleto=nomeCompleto, dataNascimento=dataNascimento
+        )
+
+        if response_content:
+            return PlainTextResponse(content=str(response_content))
+        else:
+            return PlainTextResponse(content='', status_code=404)
+
+    except Exception as e:
+        print(f'Erro ao chamar serviço CNPq: {e}')
+        return PlainTextResponse(
+            content=f'Erro interno ao processar a solicitação: {e}',
+            status_code=500,
+        )
 
 
 @router.get(
