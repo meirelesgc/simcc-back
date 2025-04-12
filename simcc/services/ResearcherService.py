@@ -191,3 +191,7 @@ def list_foment_researchers():
 
     researchers = researchers.replace(nan, str())
     return researchers.to_dict(orient='records')
+
+
+def academic_degree():
+    return ResearcherRepository.academic_degree()

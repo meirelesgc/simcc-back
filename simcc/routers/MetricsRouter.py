@@ -6,8 +6,8 @@ from simcc.schemas.Production.Article import ArticleMetric
 from simcc.schemas.Production.Guidance import GuidanceMetrics
 from simcc.schemas.Production.Patent import PatentMetric
 from simcc.schemas.Production.Software import SoftwareMetric
-from simcc.schemas.Researcher import AcademicMetric
-from simcc.services import ProductionService
+from simcc.schemas.Researcher import AcademicDegree, AcademicMetric
+from simcc.services import ProductionService, ResearcherService
 
 router = APIRouter()
 
@@ -109,6 +109,15 @@ def guidance_metrics_graduate_program(program_id: UUID = None, year: int = 2020)
 )
 def academic_degree_metrics(year: int = 2020):
     metrics = ProductionService.list_academic_degree_metrics(None, None, year)
+    return metrics
+
+
+@router.get(
+    '/academic_degree',
+    response_model=list[AcademicDegree],
+)
+def academic_degree():
+    metrics = ResearcherService.academic_degree()
     return metrics
 
 
