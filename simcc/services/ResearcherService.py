@@ -88,6 +88,26 @@ def search_in_abstracts(
     return researchers.to_dict(orient='records')
 
 
+def list_outstanding_researchers(
+    name: str,
+    graduate_program_id: UUID,
+    dep_id: UUID,
+    page: int,
+    lenght: int,
+) -> list[Researcher]:
+    researchers = ResearcherRepository.list_outstanding_researchers(
+        name, graduate_program_id, dep_id, page, lenght
+    )
+    if not researchers:
+        return []
+
+    researchers = pd.DataFrame(researchers)
+    researchers = merge_researcher_data(researchers)
+
+    researchers = researchers.replace(nan, '')
+    return researchers.to_dict(orient='records')
+
+
 def serch_in_name(
     name: str,
     graduate_program_id: UUID,
@@ -110,9 +130,6 @@ def serch_in_name(
 
 def list_co_authorship(researcher_id: UUID) -> list[CoAuthorship]:
     co_authorship = ResearcherRepository.list_co_authorship(researcher_id)
-    co_authorship += ResearcherRepository.list_openalex_co_authorship(
-        researcher_id
-    )
 
     if not co_authorship:
         return []
@@ -191,3 +208,7 @@ def list_foment_researchers():
 
     researchers = researchers.replace(nan, str())
     return researchers.to_dict(orient='records')
+
+
+def academic_degree():
+    return ResearcherRepository.academic_degree()
