@@ -459,11 +459,10 @@ def list_co_authorship(researcher_id: UUID):
             WHERE bp.researcher_id = %(researcher_id)s
             GROUP BY name, institution
         )
-
         SELECT ca.name, ca.institution, ca.among
         FROM co_authorship ca
         JOIN researcher r ON r.id = %(researcher_id)s
-        WHERE similarity(ca.name, r.name) < 0.04;
+        WHERE similarity(ca.name, r.name) < 0.2;
         """
     result = conn.select(SCRIPT_SQL, params)
     return result
