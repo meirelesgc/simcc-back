@@ -434,18 +434,36 @@ def list_ufmg_data():
 def list_co_authorship(researcher_id: UUID):
     params = {'researcher_id': researcher_id}
     SCRIPT_SQL = """
-        SELECT r.name, i.name AS institution, COUNT(*) AS among
-        FROM researcher r
-        RIGHT JOIN (
-            SELECT UNNEST(ARRAY_AGG(bp.researcher_id)) AS researcher_id
-            FROM bibliographic_production bp
-            GROUP BY bp.title
-            HAVING COUNT(bp.title) > 1
-            AND %(researcher_id)s = ANY(ARRAY_AGG(bp.researcher_id))
-        ) co_authorship ON r.id = co_authorship.researcher_id
-        LEFT JOIN institution i ON i.id = r.institution_id
-        WHERE r.id != %(researcher_id)s
-        GROUP BY r.id, i.name;
+        WITH co_authorship AS (
+            SELECT r.name, i.name AS institution, COUNT(*) AS among
+            FROM researcher r
+            RIGHT JOIN (
+                SELECT UNNEST(ARRAY_AGG(bp.researcher_id)) AS researcher_id
+                FROM bibliographic_production bp
+                GROUP BY bp.title
+                HAVING COUNT(bp.title) > 1
+                AND %(researcher_id)s = ANY(ARRAY_AGG(bp.researcher_id))
+            ) co_authorship ON r.id = co_authorship.researcher_id
+            LEFT JOIN institution i ON i.id = r.institution_id
+            WHERE r.id != %(researcher_id)s
+            GROUP BY r.name, i.name
+
+            UNION
+
+            SELECT TRIM(UNNEST(string_to_array(opa.authors, ';'))) AS name,
+                TRIM(UNNEST(string_to_array(opa.authors_institution, ';')))
+                AS institution, COUNT(*) AS among
+            FROM openalex_article opa
+            INNER JOIN bibliographic_production bp
+                ON opa.article_id = bp.id
+            WHERE bp.researcher_id = %(researcher_id)s
+            GROUP BY name, institution
+        )
+
+        SELECT ca.name, ca.institution, ca.among
+        FROM co_authorship ca
+        JOIN researcher r ON r.id = %(researcher_id)s
+        WHERE similarity(ca.name, r.name) < 0.04;
         """
     result = conn.select(SCRIPT_SQL, params)
     return result

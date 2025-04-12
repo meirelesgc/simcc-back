@@ -130,9 +130,6 @@ def serch_in_name(
 
 def list_co_authorship(researcher_id: UUID) -> list[CoAuthorship]:
     co_authorship = ResearcherRepository.list_co_authorship(researcher_id)
-    co_authorship += ResearcherRepository.list_openalex_co_authorship(
-        researcher_id
-    )
 
     if not co_authorship:
         return []
