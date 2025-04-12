@@ -37,6 +37,18 @@ def dim_titulacao_xlsx():
     return FileResponse(file_path, filename='dictionary.pdf')
 
 
+@router.get('/getIdentificadorCNPq', response_class=str)
+def lattes_id(
+    cpf: str = None, nomeCompleto: str = None, dataNascimento: str = None
+):
+    client = Client('http://servicosweb.cnpq.br/srvcurriculo/WSCurriculo?wsdl')
+    response = client.service.getIdentificadorCNPq(
+        cpf=cpf, nomeCompleto=nomeCompleto, dataNascimento=dataNascimento
+    )
+    if response:
+        return response
+
+
 @router.get(
     '/getCurriculoCompactado',
     response_class=FileResponse,
