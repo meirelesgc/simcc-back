@@ -702,7 +702,9 @@ def get_researcher(researcher_id: UUID) -> dict:
 def academic_degree():
     SCRIPT_SQL = """
         SELECT graduation, COUNT(*) as among
-        FROM researcher GROUP BY graduation;
+        FROM researcher
+        WHERE graduation IS NOT NULL
+        GROUP BY graduation;
         """
     result = conn.select(SCRIPT_SQL)
     return result
