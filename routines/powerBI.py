@@ -970,47 +970,48 @@ def materialized_vision():
     SCRIPT_SQL = r"""
         SELECT id AS researcher_id, abstract AS search_term,
             UNACCENT(LOWER(TRANSLATE(abstract, $$-\.:,;'$$, ' ')))
-            AS normalized_search_term, 'ABSTRACT' AS type
+            AS normalized_search_term, 'ABSTRACT' AS type, 0000 AS year
         FROM researcher
             UNION
         SELECT researcher_id, title AS search_term,
             UNACCENT(LOWER(TRANSLATE(title, $$-\.:,;'$$, ' ')))
-            AS normalized_search_term, 'PATENT' AS type
+            AS normalized_search_term, 'PATENT' AS type, development_year::INT
         FROM patent
             UNION
         SELECT researcher_id, title AS search_term,
             UNACCENT(LOWER(TRANSLATE(title, $$-\.:,;'$$, ' ')))
-            AS normalized_search_term, type::VARCHAR
+            AS normalized_search_term, type::VARCHAR, year_
         FROM bibliographic_production
             UNION
         SELECT researcher_id, title AS search_term,
             UNACCENT(LOWER(TRANSLATE(title, $$-\.:,;'$$, ' ')))
-            AS normalized_search_term, 'REPORT' AS type
+            AS normalized_search_term, 'REPORT' AS type, year
         FROM research_report
             UNION
         SELECT researcher_id, title AS search_term,
             UNACCENT(LOWER(TRANSLATE(title, $$-\.:,;'$$, ' ')))
-                AS normalized_search_term, 'SOFTWARE' AS type
+                AS normalized_search_term, 'SOFTWARE' AS type, year
         FROM software
             UNION
         SELECT researcher_id, title AS search_term,
             UNACCENT(LOWER(TRANSLATE(title, $$-\.:,;'$$, ' ')))
-            AS normalized_search_term, 'GUIDANCE' AS type
+            AS normalized_search_term, 'GUIDANCE' AS type, year
         FROM guidance
             UNION
         SELECT researcher_id, title AS search_term,
             UNACCENT(LOWER(TRANSLATE(title, $$-\.:,;'$$, ' ')))
-            AS normalized_search_term, 'BRAND' AS type
+            AS normalized_search_term, 'BRAND' AS type, year
         FROM brand
             UNION
         SELECT researcher_id, title AS search_term,
             UNACCENT(LOWER(TRANSLATE(title, $$-\.:,;'$$, ' ')))
-            AS normalized_search_term, 'EVENT_ORGANIZATION' AS type
+            AS normalized_search_term, 'EVENT_ORGANIZATION' AS type,
+            year
         FROM public.event_organization
             UNION
         SELECT researcher_id, project_name AS search_term,
             UNACCENT(LOWER(TRANSLATE(project_name, $$-\.:,;'$$, ' ')))
-            AS normalized_search_term, 'RESEARCH_PROJECT' AS type
+            AS normalized_search_term, 'RESEARCH_PROJECT' AS type, start_year
         FROM public.research_project;
         """
     result = conn.select(SCRIPT_SQL)
