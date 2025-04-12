@@ -441,3 +441,11 @@ def fat_participation_events_csv():
     file_name = 'fat_participation_events.csv'
     file_path = os.path.join(STORAGE_PATH, file_name)
     return FileResponse(file_path, filename=file_name)
+
+
+@router.get('/materialized_vision.csv')
+def materialized_vision_csv():
+    powerBI.materialized_vision()
+    file_name = 'materialized_vision.csv'
+    file_path = os.path.join(STORAGE_PATH, file_name)
+    return FileResponse(file_path, filename=file_name)
