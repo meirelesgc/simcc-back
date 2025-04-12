@@ -966,6 +966,59 @@ def fat_participation_events():
     csv.to_csv(csv_path)
 
 
+def materialized_vision():
+    SCRIPT_SQL = r"""
+        SELECT id AS researcher_id, abstract AS search_term,
+            UNACCENT(LOWER(TRANSLATE(abstract, $$-\.:,;'$$, ' ')))
+            AS normalized_search_term, 'ABSTRACT' AS type
+        FROM researcher
+            UNION
+        SELECT researcher_id, title AS search_term,
+            UNACCENT(LOWER(TRANSLATE(title, $$-\.:,;'$$, ' ')))
+            AS normalized_search_term, 'PATENT' AS type
+        FROM patent
+            UNION
+        SELECT researcher_id, title AS search_term,
+            UNACCENT(LOWER(TRANSLATE(title, $$-\.:,;'$$, ' ')))
+            AS normalized_search_term, type::VARCHAR
+        FROM bibliographic_production
+            UNION
+        SELECT researcher_id, title AS search_term,
+            UNACCENT(LOWER(TRANSLATE(title, $$-\.:,;'$$, ' ')))
+            AS normalized_search_term, 'REPORT' AS type
+        FROM research_report
+            UNION
+        SELECT researcher_id, title AS search_term,
+            UNACCENT(LOWER(TRANSLATE(title, $$-\.:,;'$$, ' ')))
+                AS normalized_search_term, 'SOFTWARE' AS type
+        FROM software
+            UNION
+        SELECT researcher_id, title AS search_term,
+            UNACCENT(LOWER(TRANSLATE(title, $$-\.:,;'$$, ' ')))
+            AS normalized_search_term, 'GUIDANCE' AS type
+        FROM guidance
+            UNION
+        SELECT researcher_id, title AS search_term,
+            UNACCENT(LOWER(TRANSLATE(title, $$-\.:,;'$$, ' ')))
+            AS normalized_search_term, 'BRAND' AS type
+        FROM brand
+            UNION
+        SELECT researcher_id, title AS search_term,
+            UNACCENT(LOWER(TRANSLATE(title, $$-\.:,;'$$, ' ')))
+            AS normalized_search_term, 'EVENT_ORGANIZATION' AS type
+        FROM public.event_organization
+            UNION
+        SELECT researcher_id, project_name AS search_term,
+            UNACCENT(LOWER(TRANSLATE(project_name, $$-\.:,;'$$, ' ')))
+            AS normalized_search_term, 'RESEARCH_PROJECT' AS type
+        FROM public.research_project;
+        """
+    result = conn.select(SCRIPT_SQL)
+    csv = pd.DataFrame(result)
+    csv_path = os.path.join(PATH, 'materialized_vision.csv')
+    csv.to_csv(csv_path)
+
+
 if __name__ == '__main__':
     for directory in [PATH]:
         if not os.path.exists(directory):
