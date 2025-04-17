@@ -970,7 +970,8 @@ def materialized_vision():
     SCRIPT_SQL = r"""
         SELECT id AS researcher_id, abstract AS search_term,
             UNACCENT(LOWER(TRANSLATE(abstract, $$-\.:,;'$$, ' ')))
-            AS normalized_search_term, 'ABSTRACT' AS type, 0000 AS year
+            AS normalized_search_term, 'ABSTRACT' AS type,
+            EXTRACT(YEAR FROM last_update) AS year
         FROM researcher
             UNION
         SELECT researcher_id, title AS search_term,
