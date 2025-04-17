@@ -1018,7 +1018,7 @@ def materialized_vision():
     result = conn.select(SCRIPT_SQL)
     csv = pd.DataFrame(result)
     csv_path = os.path.join(PATH, 'materialized_vision.csv')
-    csv.to_csv(csv_path)
+    csv.to_csv(csv_path, quoting=csv.QUOTE_ALL)
 
 
 if __name__ == '__main__':
