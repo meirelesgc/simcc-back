@@ -90,8 +90,6 @@ if __name__ == '__main__':
     firebase_admin.initialize_app(credential=cred)
     db = firestore.client()
 
-    dictionary = db.collection(settings.FIREBASE_COLLECTION)
-
     try:
         collection_ref = db.collection(settings.FIREBASE_COLLECTION)
         batch_size = 500
