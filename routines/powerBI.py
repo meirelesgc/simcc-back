@@ -974,6 +974,7 @@ def materialized_vision():
             AS normalized_search_term, 'ABSTRACT' AS type,
             EXTRACT(YEAR FROM last_update) AS year
         FROM researcher
+		WHERE abstract IS NOT NULL
             UNION
         SELECT researcher_id, title AS search_term,
             UNACCENT(LOWER(TRANSLATE(title, $$-\.":,;'$$, ' ')))
