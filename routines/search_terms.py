@@ -34,11 +34,10 @@ def insert_data_batch(collection_ref, data_list, batch_size):
 def terms_dataframe() -> pd.DataFrame:
     SCRIPT_SQL = r"""
         SELECT
-            regexp_replace(term, '[^a-zA-Z0-9À-ÿ\s]', '', 'g') AS term,
-            frequency,
-            type_,
-            '0' AS great_area,
-            unaccent(LOWER(regexp_replace(term, '[^a-zA-Z0-9À-ÿ\s]', '', 'g'))) AS term_normalize
+            INITCAP(TRANSLATE(term, $$-\".:[],;()'$$, ' ')) AS term,
+            frequency, type_, '0' AS great_area,
+            unaccent(LOWER(regexp_replace(term, '[^a-zA-Z0-9À-ÿ\s]', '', 'g')))
+            AS term_normalize
         FROM public.research_dictionary d
         WHERE term ~ '^[^0-9]+$'
             AND CHAR_LENGTH(d.term) >= 4
@@ -48,11 +47,10 @@ def terms_dataframe() -> pd.DataFrame:
         UNION
 
         SELECT
-            regexp_replace(term, '[^a-zA-Z0-9À-ÿ\s]', '', 'g') AS term,
-            frequency,
-            type_,
-            '0',
-            unaccent(LOWER(regexp_replace(term, '[^a-zA-Z0-9À-ÿ\s]', '', 'g'))) AS term_normalize
+            INITCAP(TRANSLATE(term, $$-\".:[],;()'$$, ' ')) AS term,
+            frequency, type_, '0',
+            unaccent(LOWER(regexp_replace(term, '[^a-zA-Z0-9À-ÿ\s]', '', 'g')))
+            AS term_normalize
         FROM public.research_dictionary d
         WHERE term ~ '^[^0-9]+$'
             AND CHAR_LENGTH(d.term) >= 3

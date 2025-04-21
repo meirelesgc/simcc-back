@@ -969,53 +969,51 @@ def fat_participation_events():
 
 def materialized_vision():
     SCRIPT_SQL = r"""
-        SELECT id AS researcher_id, abstract AS search_term,
-            UNACCENT(LOWER(TRANSLATE(abstract, $$-\".:,;'$$, ' ')))
-            AS normalized_search_term, 'ABSTRACT' AS type,
-            EXTRACT(YEAR FROM last_update) AS year
-        FROM researcher
-		WHERE abstract IS NOT NULL
-            UNION
-        SELECT researcher_id, title AS search_term,
-            UNACCENT(LOWER(TRANSLATE(title, $$-\.":,;'$$, ' ')))
-            AS normalized_search_term, 'PATENT' AS type, development_year::INT
-        FROM patent
-            UNION
-        SELECT researcher_id, title AS search_term,
-            UNACCENT(LOWER(TRANSLATE(title, $$-\.":,;'$$, ' ')))
-            AS normalized_search_term, type::VARCHAR, year_
-        FROM bibliographic_production
-            UNION
-        SELECT researcher_id, title AS search_term,
-            UNACCENT(LOWER(TRANSLATE(title, $$-\.:",;'$$, ' ')))
-            AS normalized_search_term, 'REPORT' AS type, year
-        FROM research_report
-            UNION
-        SELECT researcher_id, title AS search_term,
-            UNACCENT(LOWER(TRANSLATE(title, $$-\.:,";'$$, ' ')))
-                AS normalized_search_term, 'SOFTWARE' AS type, year
-        FROM software
-            UNION
-        SELECT researcher_id, title AS search_term,
-            UNACCENT(LOWER(TRANSLATE(title, $$-\.":,;'$$, ' ')))
-            AS normalized_search_term, 'GUIDANCE' AS type, year
-        FROM guidance
-            UNION
-        SELECT researcher_id, title AS search_term,
-            UNACCENT(LOWER(TRANSLATE(title, $$-\.":,;'$$, ' ')))
-            AS normalized_search_term, 'BRAND' AS type, year
-        FROM brand
-            UNION
-        SELECT researcher_id, title AS search_term,
-            UNACCENT(LOWER(TRANSLATE(title, $$-\.":,;'$$, ' ')))
-            AS normalized_search_term, 'EVENT_ORGANIZATION' AS type,
-            year
-        FROM public.event_organization
-            UNION
-        SELECT researcher_id, project_name AS search_term,
-            UNACCENT(LOWER(TRANSLATE(project_name, $$-\".:,;'$$, ' ')))
-            AS normalized_search_term, 'RESEARCH_PROJECT' AS type, start_year
-        FROM public.research_project;
+    SELECT
+        INITCAP(TRANSLATE(term, $$-\".:[],;()'$$, ' ')) AS term,
+        frequency,
+        type_,
+        '0' AS great_area,
+        unaccent(LOWER(regexp_replace(term, '[^a-zA-Z0-9À-ÿ\s]', '', 'g'))) AS term_normalize
+    FROM public.research_dictionary d
+    WHERE term ~ '^[^0-9]+$'
+        AND CHAR_LENGTH(d.term) >= 4
+        AND frequency >= 24
+        AND type_ NOT IN ('BOOK', 'PATENT')
+
+    UNION
+
+    SELECT
+        INITCAP(TRANSLATE(term, $$-\".:[],;()'$$, ' ')) AS term,
+        frequency,
+        type_,
+        '0',
+        unaccent(LOWER(regexp_replace(term, '[^a-zA-Z0-9À-ÿ\s]', '', 'g'))) AS term_normalize
+    FROM public.research_dictionary d
+    WHERE term ~ '^[^0-9]+$'
+        AND CHAR_LENGTH(d.term) >= 3
+        AND type_ IN ('BOOK', 'PATENT')
+
+    UNION
+
+    SELECT AREA, 1, 'AREA', great_area,
+        unaccent(LOWER(great_area)) AS term_normalize
+    FROM (SELECT
+            LOWER(
+            TRIM(
+            STRING_TO_TABLE(
+            SPLIT_PART(area_specialty, '|', 1), ';'))) AS AREA,
+
+            LOWER(
+            TRIM(
+            STRING_TO_TABLE(
+            SPLIT_PART(area_specialty, '|', 2), ';'))) AS great_area
+        FROM public.researcher_production
+        ORDER BY AREA) AS subquery
+    UNION
+
+    SELECT name, '1', 'NAME', '0', unaccent(LOWER(name)) AS term_normalize
+    FROM researcher
         """
     result = conn.select(SCRIPT_SQL)
     csv = pd.DataFrame(result)
