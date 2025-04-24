@@ -756,6 +756,7 @@ def list_article_production(  # noqa: PLR0914
             year DESC
         """
     result = conn.select(SCRIPT_SQL, params)
+    print(result)
     return result
 
 
