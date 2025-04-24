@@ -75,6 +75,7 @@ def lists_research_groups(group_id):
         FROM research_group rg
             INNER JOIN institution i ON i.acronym = rg.institution
         WHERE (rg.first_leader_id IS NOT NULL OR rg.second_leader_id IS NOT NULL)
+            AND i.acronym IS NOT NULL
             {group_id_filter}
         """
 

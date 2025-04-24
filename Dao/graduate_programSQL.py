@@ -117,8 +117,8 @@ def production_general_db(graduate_program_id, year, dep_id):
                    graduate_program_id AS graduate_program_id,
                    gpr.year AS year_pos
             FROM
-            patent p, graduate_program_researcher gpr
-            WHERE gpr.researcher_id = p.researcher_id {filter} AND p.development_year::int >= {year}
+            patent p, graduate_program_researcher gpr, researcher r
+            WHERE gpr.researcher_id = p.researcher_id {filter} AND p.development_year::int >= {year} AND r.id = gpr.researcher_id AND r.status = True
             GROUP BY type, graduate_program_id, gpr.year
 
             UNION
