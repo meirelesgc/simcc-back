@@ -681,6 +681,7 @@ def list_foment_researchers(
             LEFT JOIN openalex_researcher opr ON opr.researcher_id = r.id
             INNER JOIN foment f ON f.researcher_id = r.id
         WHERE 1 = 1
+            AND i.acronym != 'UICL'
         ORDER BY
             among DESC
             {filter_pagination};
