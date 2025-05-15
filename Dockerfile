@@ -1,8 +1,9 @@
-FROM python:3.12-slim
+FROM python:3.12.10-alpine3.20
 
 ENV POETRY_VIRTUALENVS_CREATE=false
 
-RUN apt-get update && apt-get install -y libpq-dev
+RUN apk update && apk upgrade && apk add --no-cache postgresql-dev gcc python3-dev musl-dev linux-headers
+
 
 WORKDIR /app
 COPY . .
