@@ -800,6 +800,13 @@ CREATE TABLE IF NOT EXISTS ufmg.researcher_data(
     tempo_acumulado INT,
     arquivo VARCHAR(255)
 );
+CREATE TABLE IF NOT EXISTS ufmg.mandate(
+    member VARCHAR(255),
+    departament VARCHAR(255),
+    mandate VARCHAR(255),
+    email VARCHAR(255),
+    phone VARCHAR(255)
+);
 CREATE TABLE IF NOT EXISTS embeddings.abstract (
     id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
     reference_id uuid REFERENCES public.researcher(id),

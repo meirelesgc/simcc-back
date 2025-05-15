@@ -194,7 +194,7 @@ def list_researchers():
 
 
 def main():
-    YEAR = range(2008, datetime.now().year)
+    YEAR = range(2008, datetime.now().year + 1)
     history = pd.DataFrame(YEAR, columns=['year'])
 
     researchers = list_researchers()
