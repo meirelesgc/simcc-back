@@ -1,4 +1,4 @@
-FROM python:3.12-slim
+FROM python:3.12.10-alpine3.20
 
 ENV POETRY_VIRTUALENVS_CREATE=false
 
@@ -13,4 +13,4 @@ RUN pip install poetry && \
 
 EXPOSE 8080
 
-CMD ["gunicorn", "-b", "0.0.0.0:8000", "server:app", "--reload", "--log-level", "info", "--access-logfile", "Files/log/access.log", "--error-logfile", "Files/log/error.log"]
+CMD ["gunicorn", "-b", "0.0.0.0:8000", "server:app", "--reload"]
