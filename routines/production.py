@@ -29,7 +29,8 @@ def bibliographic_production_count():
         """
     result = conn.select(SCRIPT_SQL)
 
-    bibliographic_production = pd.DataFrame(result)
+    columns = ['researcher_id', 'type', 'count']
+    bibliographic_production = pd.DataFrame(result, columns=columns)
     bibliographic_production = bibliographic_production.pivot_table(
         index='researcher_id', columns='type', aggfunc='sum', fill_value=0
     )
@@ -125,19 +126,21 @@ if __name__ == '__main__':
 
     bibliographic_production = bibliographic_production_count()
     columns = ['researcher_id', 'book', 'work_in_event', 'article', 'book_chapter']  # fmt: skip  # noqa: E501
-    bibliographic_production = pd.DataFrame(bibliographic_production)
+    bibliographic_production = pd.DataFrame(
+        bibliographic_production, columns=columns
+    )
 
     area_speciality = list_speciality()
     columns = ['researcher_id', 'area_specialty']
-    area_speciality = pd.DataFrame(area_speciality)
+    area_speciality = pd.DataFrame(area_speciality, columns=columns)
 
     great_area = list_great_area()
     columns = ['researcher_id', 'area']
-    great_area = pd.DataFrame(great_area)
+    great_area = pd.DataFrame(great_area, columns=columns)
 
     software = list_software()
     columns = ['researcher_id', 'software']
-    software = pd.DataFrame(software)
+    software = pd.DataFrame(software, columns=columns)
 
     brand = list_brand()
     columns = ['researcher_id', 'brand']

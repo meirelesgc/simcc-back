@@ -112,7 +112,8 @@ def patent_indprod():
         GROUP BY development_year, researcher_id
         """
     result = conn.select(SCRIPT_SQL)
-    patent = pd.DataFrame(result)
+    columns = ['year', 'granted', 'researcher_id', 'count_patent']
+    patent = pd.DataFrame(result, columns=columns)
 
     patent['patent_prod'] = (
         patent['granted'].map(barema) * patent['count_patent']
@@ -224,7 +225,8 @@ def main():
     researchers = researchers.merge(software, on=on, how='left')
 
     patent = patent_indprod()
-    patent = pd.DataFrame(patent)
+    columns = ['researcher_id', 'year', 'patent_prod']
+    patent = pd.DataFrame(patent, columns=columns)
     researchers = researchers.merge(patent, on=on, how='left')
 
     report = report_indprod()
