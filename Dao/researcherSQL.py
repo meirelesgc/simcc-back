@@ -134,7 +134,7 @@ def generic_data(year_, graduate_program_id, dep_id):
             COUNT(CASE WHEN g.status = 'Concluída' THEN 1 ELSE NULL END) as count_concluido,
             COUNT(CASE WHEN g.status = 'Em andamento' THEN 1 ELSE NULL END) as count_andamento
         FROM
-            guidance g
+	        (SELECT DISTINCT title, status, year FROM guidance) g
         WHERE
             g.year >= {year_}
             {filter_graduate_program}
@@ -169,9 +169,8 @@ def generic_data(year_, graduate_program_id, dep_id):
             bp.year,
             COUNT(DISTINCT title) AS count_book
         FROM
-            public.bibliographic_production bp
-        WHERE
-            type = 'BOOK'
+            (SELECT DISTINCT title, year FROM public.bibliographic_production WHERE type = 'BOOK') bp
+        WHERE 1 = 1
             AND bp.year::smallint >= {year_}
             {filter_graduate_program}
             {filter_departament}
@@ -196,9 +195,8 @@ def generic_data(year_, graduate_program_id, dep_id):
             bp.year,
             COUNT(DISTINCT title) AS count_book_chapter
         FROM
-            public.bibliographic_production bp
-        WHERE
-            type = 'BOOK_CHAPTER'
+            (SELECT DISTINCT title, year FROM public.bibliographic_production WHERE type = 'BOOK_CHAPTER') bp
+        WHERE 1 = 1
             AND bp.year::smallint >= {year_}
             {filter_graduate_program}
             {filter_departament}
@@ -224,7 +222,7 @@ def generic_data(year_, graduate_program_id, dep_id):
             COUNT(CASE WHEN p.grant_date IS NOT NULL THEN 1 ELSE NULL END) as count_granted_patent,
             COUNT(*) as count_total
         FROM
-            patent p
+            (SELECT DISTINCT p.title, p.development_year, p.grant_date FROM patent p) p
         WHERE
             p.development_year::smallint >= {year_}
             {filter_graduate_program}
@@ -258,7 +256,7 @@ def generic_data(year_, graduate_program_id, dep_id):
             sw.year,
             COUNT(DISTINCT title) as count_software
         FROM
-            public.software sw
+            (SELECT sw.title, sw.year FROM public.software sw) sw
         WHERE
             sw.year::smallint >= {year_}
             {filter_graduate_program}
