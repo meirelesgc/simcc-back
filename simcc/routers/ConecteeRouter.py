@@ -57,3 +57,8 @@ def get_departament_rt():
 @router.get('/technician', response_model=list[Technician])
 def get_technicians():
     return ConecteeService.get_technician()
+
+
+@router.post('/congregation')
+def post_congregation(file: UploadFile):
+    return ConecteeService.post_congregation(file)

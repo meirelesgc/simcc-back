@@ -1,4 +1,5 @@
 import pandas as pd
+
 from simcc.repositories import conn
 
 columns = ['MEMBRO', 'DEPARTAMENTO', 'MANDATO', 'EMAIL', 'TELEFONE']
@@ -6,15 +7,10 @@ columns = ['MEMBRO', 'DEPARTAMENTO', 'MANDATO', 'EMAIL', 'TELEFONE']
 mandates = pd.read_excel('storage/conectee/congregacao.xls', skiprows=2)
 
 
-# Função para remover "PROF." e converter para maiúsculas
 def clean_member_name(name):
     if pd.notna(name) and isinstance(name, str):
-        if (
-            'PROF.' in name.upper()
-        ):  # Garantindo que a verificação seja em maiúsculas
-            name = name.split('.', 1)[
-                -1
-            ].strip()  # Pegando apenas a segunda parte
+        if 'PROF.' in name.upper():
+            name = name.split('.', 1)[-1].strip()
         return name.upper()
     return name
 

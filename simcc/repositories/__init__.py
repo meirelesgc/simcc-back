@@ -22,6 +22,19 @@ class Connection:
             print(f'Error: {e}')
             raise
 
+    def execmany(self, query, params=None):
+        try:
+            with self.pool.connection() as conn:
+                with conn.cursor(row_factory=psycopg.rows.dict_row) as cur:
+                    cur.executemany(query, params)
+                    conn.commit()
+                    return cur.rowcount
+        except Exception as e:
+            print(f'Error executing query: {query}')
+            print(f'With parameters: {params}')
+            print(f'Error: {e}')
+            raise
+
     def select(self, query, params=None, one=False) -> list:
         try:
             with self.pool.connection() as conn:

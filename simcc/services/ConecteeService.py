@@ -1,10 +1,13 @@
 import re
 from datetime import datetime
-
+from fastapi import UploadFile
 import numpy as np
 import pandas as pd
 import pdfplumber
-
+from fastapi import UploadFile, File, APIRouter
+import os
+from pathlib import Path
+import shutil
 from simcc.repositories.conectee import ConecteeRepository
 from simcc.schemas.Conectee import ResearcherData
 
@@ -153,3 +156,30 @@ def get_departament_rt_data():
 
 def get_technician():
     return ConecteeRepository.get_technician()
+
+
+def clean_member_name(name):
+    if pd.notna(name) and isinstance(name, str):
+        if 'PROF.' in name.upper():
+            name = name.split('.', 1)[-1].strip()
+        return name.upper()
+    return name
+
+
+def process_and_insert_mandates(filepath: Path):
+    df = pd.read_excel(filepath, skiprows=2)
+    df['MEMBRO'] = df['MEMBRO'].apply(clean_member_name)
+    df = df.where(pd.notna(df), None)
+    df = df.dropna(how='all')
+    ConecteeRepository.post_congregation(df.to_dict(orient='records'))
+
+
+def post_congregation(file: UploadFile):
+    storage_dir = Path('storage/conectee')
+    storage_dir.mkdir(parents=True, exist_ok=True)
+    file_path = storage_dir / file.filename
+
+    with file_path.open('wb') as buffer:
+        shutil.copyfileobj(file.file, buffer)
+    process_and_insert_mandates(file_path)
+    return {'filename': file.filename}

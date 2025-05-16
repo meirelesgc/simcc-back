@@ -2,6 +2,14 @@ from simcc.repositories import conn
 from simcc.schemas.Conectee import ResearcherData
 
 
+def post_congregation(congregation: list):
+    SCRIPT_SQL = """
+        INSERT INTO ufmg.mandate(member, departament, mandate, email, phone)
+        VALUES (%(MEMBRO)s, %(DEPARTAMENTO)s, %(MANDATO)s, %(E-MAIL)s, %(TELEFONE)s);
+        """
+    conn.execmany(SCRIPT_SQL, congregation)
+
+
 def get_researcher(cpf=None, name=None):
     params = {}
     cpf_filter = str()
