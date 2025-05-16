@@ -162,6 +162,14 @@ def graduate_program_researcher_year_unnest_csv():
     return FileResponse(file_path, filename=file_name)
 
 
+@router.get('/graduate_program_student_year_unnest.csv')
+def graduate_program_student_year_unnest():
+    powerBI.graduate_program_student_year_unnest()
+    file_name = 'graduate_program_student_year_unnest.csv'
+    file_path = os.path.join(STORAGE_PATH, file_name)
+    return FileResponse(file_path, filename=file_name)
+
+
 @router.get('/dim_departament_technician.csv')
 def dim_departament_technician_csv():
     powerBI.dim_departament_technician()
