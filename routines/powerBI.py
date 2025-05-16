@@ -611,13 +611,17 @@ def production_year_distinct():
 def production_year():
     SCRIPT_SQL = """
         SELECT DISTINCT
-            title, b.type AS tipo, b.researcher_id, year, 'institution'
-        FROM bibliographic_production AS b, researcher r
-        WHERE 1 = 1
-            AND b.researcher_id IS NOT NULL
-            AND r.id = b.researcher_id
-        GROUP BY title, tipo, b.researcher_id, year
-        ORDER BY year, tipo DESC
+            b.title,
+            b.type AS tipo,
+            b.researcher_id,
+            b.year,
+            i.name AS institution
+        FROM bibliographic_production AS b
+        LEFT JOIN researcher r ON r.id = b.researcher_id
+        LEFT JOIN institution i ON i.id = r.institution_id
+        WHERE b.researcher_id IS NOT NULL
+        GROUP BY b.title, b.type, b.researcher_id, b.year, i.name
+        ORDER BY b.year, b.type DESC;
         """
     result = conn.select(SCRIPT_SQL)
     csv = pd.DataFrame(result)
