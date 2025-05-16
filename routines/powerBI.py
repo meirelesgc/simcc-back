@@ -573,7 +573,7 @@ def article_qualis_year():
     SCRIPT_SQL = """
         SELECT DISTINCT
             title, bar.qualis, year, r.id AS researcher_id,
-            r.name AS researcher, 'institution', 'city',
+            r.name AS researcher, i.name AS institution, c.name AS city,
             pm.name AS name_magazine, pm.issn AS issn, bar.jcr as jcr,
             bar.jcr_link as jcr_link, b.type as type
         FROM bibliographic_production b
@@ -582,6 +582,8 @@ def article_qualis_year():
                     ON pm.id = bar.periodical_magazine_id)
                 ON b.id = bar.bibliographic_production_id,
             researcher r
+            LEFT JOIN institution i ON i.id = r.institution_id
+            LEFT JOIN city c ON c.id = r.city_id
         WHERE r.id =  b.researcher_id;
         """
     result = conn.select(SCRIPT_SQL)
