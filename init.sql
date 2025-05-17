@@ -429,6 +429,15 @@ CREATE TABLE IF NOT EXISTS public.graduate_program_student(
     FOREIGN KEY (researcher_id) REFERENCES researcher (id),
     FOREIGN KEY (graduate_program_id) REFERENCES graduate_program (graduate_program_id)
 );
+CREATE TABLE IF NOT EXISTS public.research_lines_programs (
+    graduate_program_id uuid NOT NULL DEFAULT uuid_generate_v4(),
+    name TEXT NOT NULL,
+    area VARCHAR(255) NOT NULL,
+    start_year INT,
+    end_year INT,
+    PRIMARY KEY (graduate_program_id, name),
+    FOREIGN KEY (graduate_program_id) REFERENCES graduate_program (graduate_program_id)
+);
 CREATE TABLE IF NOT EXISTS public.JCR (
     rank character varying,
     journalName character varying,

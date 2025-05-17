@@ -3,7 +3,7 @@ import psycopg
 
 from simcc.repositories import conn_admin
 
-programs = pd.read_csv('storage/csv/simcc_programs.csv')
+programs = pd.read_csv('storage/csv/001_programs.csv')
 
 
 def get_institution_id(program):

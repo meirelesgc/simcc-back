@@ -4,7 +4,7 @@ import unidecode
 
 from simcc.repositories import conn_admin
 
-researchers = pd.read_csv('storage/csv/simcc_program_researchers.csv')
+researchers = pd.read_csv('storage/csv/001_program_researchers.csv')
 
 
 for _, researcher in researchers.iterrows():
@@ -16,6 +16,7 @@ for _, researcher in researchers.iterrows():
         WHERE REPLACE(UNACCENT(name), ' ', '') ILIKE %(name)s
         """
     researcher_data = researcher.to_dict()
+
     if db_data := conn_admin.select(SCRIPT_SQL, researcher_data, one=True):
         researcher_data = {**db_data, **researcher_data}
         try:
