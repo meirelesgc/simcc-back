@@ -3,6 +3,39 @@ from uuid import UUID
 from simcc.core.connection import Connection
 
 
+async def get_research_lines(
+    conn: Connection, program_id: UUID, university: str = None
+):
+    params = {}
+
+    filter_program = str()
+    if program_id:
+        params['program_id'] = program_id
+        filter_program = 'AND gp.graduate_program_id = %(program_id)s'
+
+    filter_university = str()
+    join_university = str()
+    if university:
+        join_university = """
+            LEFT JOIN institution i
+                ON gp.institution_id = i.id
+            """
+        params['university'] = university + '%'
+        filter_university = 'AND i.name ILIKE %(university)s'
+
+    SCRIPT_SQL = f"""
+        SELECT lgp.graduate_program_id, lgp.name, lgp.area, start_year, end_year
+        FROM public.research_lines_programs lgp
+            LEFT JOIN graduate_program gp
+                ON gp.graduate_program_id = lgp.graduate_program_id
+            {join_university}
+        WHERE 1 = 1
+            {filter_program}
+            {filter_university}
+        """
+    return await conn.select(SCRIPT_SQL, params)
+
+
 async def list_graduate_programs(
     conn: Connection, program_id: UUID, university: str = None
 ):

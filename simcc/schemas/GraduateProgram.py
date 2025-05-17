@@ -4,6 +4,14 @@ from uuid import UUID
 from pydantic import BaseModel
 
 
+class ResearchLines(BaseModel):
+    graduate_program_id: UUID
+    name: str
+    area: str
+    start_year: int | None = None
+    end_year: int | None = None
+
+
 class GraduateProgram(BaseModel):
     graduate_program_id: UUID
     code: Optional[str]

@@ -10,6 +10,14 @@ from simcc.repositories.simcc import (
 from simcc.schemas.Researcher import ResearcherArticleProduction
 
 
+async def get_research_lines(
+    conn: Connection, program_id: UUID = None, university: str = None
+):
+    return await GraduateProgramRepository.get_research_lines(
+        conn, program_id, university
+    )
+
+
 async def list_graduate_programs(
     conn: Connection, program_id: UUID = None, university: str = None
 ):

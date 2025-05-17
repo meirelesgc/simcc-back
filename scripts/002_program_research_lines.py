@@ -67,6 +67,6 @@ for _, line in lines.iterrows():
 SCRIPT_SQL = """
     UPDATE research_lines_programs SET
         name = INITCAP(name),
-        area = UPPER(name);
+        area = UPPER(area);
     """
 conn.exec(SCRIPT_SQL)
