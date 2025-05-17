@@ -1,6 +1,7 @@
 import ast
-import unicodedata
 import json
+import unicodedata
+
 import pandas as pd
 
 from simcc.repositories import conn_admin

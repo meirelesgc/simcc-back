@@ -1,8 +1,10 @@
+import unicodedata
+
 import pandas as pd
 import psycopg
-from simcc.repositories import conn
-import unicodedata
 from numpy import nan
+
+from simcc.repositories import conn
 
 
 def normalize_string(s):

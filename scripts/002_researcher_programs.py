@@ -1,5 +1,6 @@
-import pandas as pd
 import unicodedata
+
+import pandas as pd
 from psycopg2.errors import UniqueViolation
 
 from simcc.repositories import conn_admin
