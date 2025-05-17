@@ -15,6 +15,7 @@ async def get_research_lines(
 
     filter_university = str()
     join_university = str()
+
     if university:
         join_university = """
             LEFT JOIN institution i
