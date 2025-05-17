@@ -26,8 +26,11 @@ class Settings(BaseSettings):
         env_file = '.env'
         env_file_encoding = 'utf-8'
 
-    def get_simcc_connection_string(self) -> str:
+    def get_connection_string(self) -> str:
         return f'postgresql://{self.PG_USER}:{self.PASSWORD}@{self.HOST}:{self.PORT}/{self.DATABASE}'
+
+    def _get_connection_string(self) -> str:
+        return f'postgresql+psycopg://{self.PG_USER}:{self.PASSWORD}@{self.HOST}:{self.PORT}/{self.DATABASE}'
 
     def get_simcc_admin_connection_string(self) -> str:
         return f'postgresql://{self.ADMIN_PG_USER}:{self.ADMIN_PASSWORD}@{self.ADMIN_HOST}:{self.ADMIN_PORT}/{self.ADMIN_DATABASE}'

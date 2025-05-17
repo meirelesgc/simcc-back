@@ -2,6 +2,7 @@ from uuid import UUID
 
 import pandas as pd
 
+from simcc.core.connection import Connection
 from simcc.repositories.simcc import (
     GraduateProgramRepository,
     ResearcherRepository,
@@ -9,11 +10,12 @@ from simcc.repositories.simcc import (
 from simcc.schemas.Researcher import ResearcherArticleProduction
 
 
-def list_graduate_programs(program_id: UUID = None, university: str = None):
-    graduate_programs = GraduateProgramRepository.list_graduate_programs(
-        program_id, university
+async def list_graduate_programs(
+    conn: Connection, program_id: UUID = None, university: str = None
+):
+    return await GraduateProgramRepository.list_graduate_programs(
+        conn, program_id, university
     )
-    return graduate_programs
 
 
 def list_article_production(

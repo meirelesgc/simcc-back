@@ -1,7 +1,9 @@
 from uuid import UUID
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
+from simcc.core.connection import Connection
+from simcc.core.database import get_conn
 from simcc.schemas.GraduateProgram import GraduateProgram
 from simcc.schemas.Researcher import ResearcherArticleProduction
 from simcc.services import GraduateProgramService
@@ -13,14 +15,14 @@ router = APIRouter()
     '/graduate_program/',
     response_model=list[GraduateProgram],
 )
-def list_graduate_programs(
+async def list_graduate_programs(
     graduate_program_id: UUID | str = None,
     university: str = None,
+    conn: Connection = Depends(get_conn),
 ):
-    graduate_programs = GraduateProgramService.list_graduate_programs(
-        graduate_program_id, university
+    return await GraduateProgramService.list_graduate_programs(
+        conn, graduate_program_id, university
     )
-    return graduate_programs
 
 
 @router.get(

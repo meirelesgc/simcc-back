@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from http import HTTPStatus
 
 import httpx
@@ -5,50 +6,35 @@ from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
-from simcc.config import settings
+from simcc.config import Settings
+from simcc.core.database import conn
 from simcc.routers import (
-    ConecteeRouter,
-    GenericRouter,
-    GraduateProgramRouter,
-    MetricsRouter,
-    PowerBIRouter,
-    ProductionRouter,
-    ResearcherRouter,
-)
-
-app = FastAPI(root_path=settings.ROOT_PATH)
-
-app.include_router(
-    GraduateProgramRouter.router,
-    tags=['Graduate Program'],
-)
-app.include_router(
-    ProductionRouter.router,
-    tags=['Production'],
-)
-app.include_router(
-    ResearcherRouter.router,
-    tags=['Researcher'],
-)
-app.include_router(
-    PowerBIRouter.router,
-    tags=['PowerBI Data'],
-)
-app.include_router(
-    MetricsRouter.router,
-)
-app.include_router(
-    ConecteeRouter.router,
-    prefix='/ufmg',
-    tags=['Conectee'],
-)
-app.include_router(
-    GenericRouter.router,
-    tags=['Generic'],
+    conectee,
+    graduate_program,
+    metrics,
+    powerBI,
+    production,
+    researcher,
 )
 
 
-PROXY_URL = settings.PROXY_URL
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await conn.connect()
+    yield
+    await conn.disconnect()
+
+
+app = FastAPI(
+    root_path=Settings().ROOT_PATH, lifespan=lifespan, docs_url='/swagger'
+)
+
+app.include_router(production.router, tags=['Production'])
+app.include_router(researcher.router, tags=['Researcher'])
+app.include_router(powerBI.router, tags=['PowerBI Data'])
+app.include_router(metrics.router, tags=['Metrics'])
+app.include_router(conectee.router, prefix='/ufmg', tags=['Conectee'])
+app.include_router(graduate_program.router, tags=['Graduate Program'])
 
 
 app.add_middleware(
@@ -68,7 +54,7 @@ async def reverse_proxy(request: Request, call_next):
         async with httpx.AsyncClient() as client:
             proxy_response = await client.request(
                 method=request.method,
-                url=f'{PROXY_URL}{request.url.path}',
+                url=f'{Settings().PROXY_URL}{request.url.path}',
                 params=request.query_params,
                 headers=dict(request.headers),
                 content=await request.body(),

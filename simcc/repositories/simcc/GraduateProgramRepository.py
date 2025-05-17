@@ -1,9 +1,11 @@
 from uuid import UUID
 
-from simcc.repositories import conn
+from simcc.core.connection import Connection
 
 
-def list_graduate_programs(program_id: UUID, university: str = None):
+async def list_graduate_programs(
+    conn: Connection, program_id: UUID, university: str = None
+):
     params = {}
 
     filter_program = str()
@@ -68,5 +70,4 @@ def list_graduate_programs(program_id: UUID, university: str = None):
             {filter_program}
             {filter_university};
         """
-    result = conn.select(SCRIPT_SQL, params)
-    return result
+    return await conn.select(SCRIPT_SQL, params)

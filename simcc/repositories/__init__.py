@@ -53,5 +53,5 @@ class Connection:
         self.pool.close()
 
 
-conn = Connection(settings.get_simcc_connection_string())
+conn = Connection(settings.get_connection_string())
 conn_admin = Connection(settings.get_simcc_admin_connection_string())
