@@ -1310,10 +1310,10 @@ def list_research_projects(
                 WHERE 1 = 1
                     {filter_terms}
                 GROUP BY project_id) rpp ON rpp.project_id = rp.id
-            LEFT JOIN (SELECT project_id, JSONB_AGG(JSONB_BUILD_OBJECT('agency_name', agency_name, 'agency_code', agency_code, 'nature', nature)) AS foment 
+            LEFT JOIN (SELECT project_id, JSONB_AGG(JSONB_BUILD_OBJECT('agency_name', agency_name, 'agency_code', agency_code, 'nature', nature)) AS foment
                 FROM public.research_project_foment
                 GROUP BY project_id) rpf ON rpf.project_id = rp.id
-            LEFT JOIN (SELECT project_id, JSONB_AGG(JSONB_BUILD_OBJECT('name', name, 'lattes_id', lattes_id, 'citations', citations)) AS components 
+            LEFT JOIN (SELECT project_id, JSONB_AGG(JSONB_BUILD_OBJECT('name', name, 'lattes_id', lattes_id, 'citations', citations)) AS components
                 FROM public.research_project_components
                 GROUP BY project_id) rpc ON rpc.project_id = rp.id
             {join_program}
@@ -1384,10 +1384,10 @@ def list_distinct_research_projects(
                 WHERE 1 = 1
                     {filter_terms}
                 GROUP BY project_id) rpp ON rpp.project_id = rp.id
-            LEFT JOIN (SELECT project_id, JSONB_AGG(JSONB_BUILD_OBJECT('agency_name', agency_name, 'agency_code', agency_code, 'nature', nature)) AS foment 
+            LEFT JOIN (SELECT project_id, JSONB_AGG(JSONB_BUILD_OBJECT('agency_name', agency_name, 'agency_code', agency_code, 'nature', nature)) AS foment
                 FROM public.research_project_foment
                 GROUP BY project_id) rpf ON rpf.project_id = rp.id
-            LEFT JOIN (SELECT project_id, JSONB_AGG(JSONB_BUILD_OBJECT('name', name, 'lattes_id', lattes_id, 'citations', citations)) AS components 
+            LEFT JOIN (SELECT project_id, JSONB_AGG(JSONB_BUILD_OBJECT('name', name, 'lattes_id', lattes_id, 'citations', citations)) AS components
                 FROM public.research_project_components
                 GROUP BY project_id) rpc ON rpc.project_id = rp.id
             {join_program}

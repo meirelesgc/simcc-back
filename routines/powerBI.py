@@ -504,10 +504,10 @@ def production_tecnical_year():
         SELECT researcher_id,title,YEAR,'SOFTWARE'
         from software
         UNION
-        SELECT researcher_id,title,YEAR,'BRAND' 
+        SELECT researcher_id,title,YEAR,'BRAND'
         from brand
         UNION
-        SELECT researcher_id,title,YEAR,'REPORT' 
+        SELECT researcher_id,title,YEAR,'REPORT'
         from research_report
         """
     result = conn.select(SCRIPT_SQL)

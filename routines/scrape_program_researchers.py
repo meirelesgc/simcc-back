@@ -79,7 +79,7 @@ with open(
                 if char == ')':
                     break
                 if bool:
-                    id_programa = id_programa + char
+                    id_programa += char
                 if char == '(':
                     bool = True
             ####

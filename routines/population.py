@@ -79,7 +79,7 @@ def create_researcher_book_chapter_dictionary():
             GROUP BY normalized_word
         ),
         biggest_frequency AS (
-            SELECT DISTINCT ON (w.normalized_word) 
+            SELECT DISTINCT ON (w.normalized_word)
                 wc.word, wc.frequency, w.normalized_word
             FROM words_count wc
             JOIN words w ON wc.word = w.word
@@ -134,7 +134,7 @@ def create_researcher_patent_dictionary():
             GROUP BY normalized_word
         ),
         biggest_frequency AS (
-            SELECT DISTINCT ON (w.normalized_word) 
+            SELECT DISTINCT ON (w.normalized_word)
                 wc.word, wc.frequency, w.normalized_word
             FROM words_count wc
             JOIN words w ON wc.word = w.word
@@ -189,7 +189,7 @@ def create_researcher_event_dictionary():
             GROUP BY normalized_word
         ),
         biggest_frequency AS (
-            SELECT DISTINCT ON (w.normalized_word) 
+            SELECT DISTINCT ON (w.normalized_word)
                 wc.word, wc.frequency, w.normalized_word
             FROM words_count wc
             JOIN words w ON wc.word = w.word
@@ -244,7 +244,7 @@ def create_researcher_abstract_dictionary():
             GROUP BY normalized_word
         ),
         biggest_frequency AS (
-            SELECT DISTINCT ON (w.normalized_word) 
+            SELECT DISTINCT ON (w.normalized_word)
                 wc.word, wc.frequency, w.normalized_word
             FROM words_count wc
             JOIN words w ON wc.word = w.word
@@ -299,7 +299,7 @@ def create_researcher_book_dictionary():
             GROUP BY normalized_word
         ),
         biggest_frequency AS (
-            SELECT DISTINCT ON (w.normalized_word) 
+            SELECT DISTINCT ON (w.normalized_word)
                 wc.word, wc.frequency, w.normalized_word
             FROM words_count wc
             JOIN words w ON wc.word = w.word

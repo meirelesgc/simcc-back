@@ -1,13 +1,13 @@
 import re
+import shutil
 from datetime import datetime
-from fastapi import UploadFile
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import pdfplumber
-from fastapi import UploadFile, File, APIRouter
-import os
-from pathlib import Path
-import shutil
+from fastapi import UploadFile
+
 from simcc.repositories.conectee import ConecteeRepository
 from simcc.schemas.Conectee import ResearcherData
 
