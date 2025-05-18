@@ -62,20 +62,21 @@ class Researcher(BaseModel):
     departments: list | str
     graduate_programs: list | str
 
-    # UFMG
-    matric: str
-    inscufmg: str
-    genero: str
-    situacao: str
-    rt: str
-    clas: str
-    cargo: str
-    classe: str
-    ref: str
-    titulacao: str
-    entradanaufmg: datetime | str
-    progressao: datetime | str
-    semester: str
+    ufmg: dict | str
+    # # UFMG
+    # matric: str
+    # inscufmg: str
+    # genero: str
+    # situacao: str
+    # rt: str
+    # clas: str
+    # cargo: str
+    # classe: str
+    # ref: str
+    # titulacao: str
+    # entradanaufmg: datetime | str
+    # progressao: datetime | str
+    # semester: str
 
     class Config:
         json_encoders = {datetime: lambda v: v.strftime('%d/%m/%Y')}

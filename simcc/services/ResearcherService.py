@@ -24,26 +24,11 @@ def merge_researcher_data(researchers: pd.DataFrame) -> pd.DataFrame:
 
     ufmg_data = ResearcherRepository.list_ufmg_data()
     if ufmg_data:
-        dataframe = pd.DataFrame(ufmg_data)
-        researchers = researchers.merge(dataframe, on='id', how='left')
+        ufmg_df = pd.DataFrame(ufmg_data)[['id']]
+        ufmg_df['ufmg'] = ufmg_data
+        researchers = researchers.merge(ufmg_df, on='id', how='left')
     else:
-        columns = [
-            'matric',
-            'inscufmg',
-            'genero',
-            'situacao',
-            'rt',
-            'clas',
-            'cargo',
-            'classe',
-            'ref',
-            'titulacao',
-            'entradanaufmg',
-            'progressao',
-            'semester',
-        ]
-        for column in columns:
-            researchers[column] = None
+        researchers['ufmg'] = None
 
     return researchers
 
