@@ -1,7 +1,10 @@
+from typing import Literal
 from uuid import UUID
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
+from simcc.core.connection import Connection
+from simcc.core.database import get_conn
 from simcc.schemas.Production.Article import ArticleMetric
 from simcc.schemas.Production.Guidance import GuidanceMetrics
 from simcc.schemas.Production.Patent import PatentMetric
@@ -10,6 +13,28 @@ from simcc.schemas.Researcher import AcademicDegree, AcademicMetric
 from simcc.services import ProductionService, ResearcherService
 
 router = APIRouter()
+
+
+@router.get(
+    '/researcher_metrics',
+    tags=['Metrics'],
+)
+async def get_researcher_metrics(
+    term: str = None,
+    year: int = 2020,
+    type: Literal['BOOK', 'ARTICLE'] = None,
+    distinct: int = 1,
+    institution: str = None,
+    conn: Connection = Depends(get_conn),
+):
+    return await ProductionService.get_researcher_metrics(
+        conn=conn,
+        term=term,
+        year=year,
+        type=type,
+        distinct=distinct,
+        institution=institution,
+    )
 
 
 @router.get(

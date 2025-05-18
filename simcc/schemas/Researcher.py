@@ -4,6 +4,9 @@ from uuid import UUID
 from pydantic import BaseModel
 
 
+class ResearcherMetric(BaseModel): ...
+
+
 class ResearcherArticleProduction(BaseModel):
     name: str
     A1: int

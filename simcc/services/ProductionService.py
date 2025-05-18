@@ -1,8 +1,10 @@
 from collections import Counter
+from typing import Literal
 from uuid import UUID
 
 import pandas as pd
 
+from simcc.core.connection import Connection
 from simcc.repositories.simcc import ProductionRepository
 from simcc.schemas import ArticleOptions, QualisOptions
 from simcc.schemas.Production.Article import ArticleMetric, ArticleProduction
@@ -11,6 +13,19 @@ from simcc.schemas.Production.Brand import BrandProduction
 from simcc.schemas.Production.Guidance import GuidanceMetrics
 from simcc.schemas.Production.Patent import PatentMetric, PatentProduction
 from simcc.schemas.Researcher import AcademicMetric
+
+
+async def get_researcher_metrics(
+    conn: Connection,
+    term: str = None,
+    year: int = 2020,
+    type: Literal['BOOK', 'ARTICLE'] = None,
+    distinct: int = 1,
+    institution: str = None,
+):
+    return await ProductionRepository.get_researcher_metrics(
+        conn, term, year, type, distinct, institution
+    )
 
 
 def list_article_metrics(

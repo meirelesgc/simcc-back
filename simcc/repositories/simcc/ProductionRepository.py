@@ -1,11 +1,58 @@
+from typing import Literal
 from uuid import UUID
 
+from simcc.core.connection import Connection
 from simcc.repositories import conn
 from simcc.repositories.util import pagination, webseatch_filter
 from simcc.schemas import ArticleOptions, QualisOptions
 from simcc.schemas.Production.Article import (
     ArticleMetric,
 )
+
+
+async def get_researcher_metrics(
+    conn: Connection,
+    term: str = None,
+    year: int = 2020,
+    type: Literal['BOOK', 'ARTICLE', 'ABSTRACT'] = 'ABSTRACT',
+    distinct: int = 1,
+    institution: str = None,
+):
+    params = {}
+
+    join_filter = str()
+    type_filter = str()
+
+    match type:
+        case 'ABSTRACT':
+            type_filter, term = webseatch_filter('r.abstract', term)
+            params |= term
+        case 'BOOK':
+            ...
+        case 'ARTICLE':
+            ...
+        case _:
+            ...
+
+    filter_institution = str()
+    if institution:
+        params['institution'] = institution + '%'
+        filter_institution = """
+            AND r.institution_id = (
+            SELECT id FROM institution WHERE name ILIKE %(institution)s)
+            """
+
+    SCRIPT_SQL = f"""
+        SELECT COUNT(*) AS researcher_count,
+            COUNT(DISTINCT r.orcid) AS orcid_count,
+            COUNT(DISTINCT opr.scopus) AS scopus_count
+        FROM researcher r
+        LEFT JOIN openalex_researcher opr ON opr.researcher_id = r.id
+        WHERE 1 = 1
+            {type_filter}
+            {filter_institution}
+        """
+    return await conn.select(SCRIPT_SQL, params)
 
 
 def list_article_metrics(

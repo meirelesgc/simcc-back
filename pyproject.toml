@@ -37,7 +37,7 @@ ruff = "^0.8.4"
 [tool.ruff]
 line-length = 81
 extend-exclude = ['migrations']
-ignore = ['PLR0913', 'PLR0917', 'PLR2004']
+ignore = ['PLR0913', 'PLR0917', 'PLR2004', 'E501']
 
 [tool.ruff.lint]
 preview = true
