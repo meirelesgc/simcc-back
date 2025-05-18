@@ -7,8 +7,8 @@ from simcc.repositories.simcc import InstitutionRepository, ResearcherRepository
 from simcc.schemas.Researcher import CoAuthorship, Researcher
 
 
-async def get_researcher_metrics(conn):
-    return await ResearcherRepository.get_researcher_metrics(conn)
+async def get_researcher_filter(conn):
+    return await ResearcherRepository.get_researcher_filter(conn)
 
 
 def merge_researcher_data(researchers: pd.DataFrame) -> pd.DataFrame:

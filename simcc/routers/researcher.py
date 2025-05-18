@@ -15,11 +15,11 @@ from simcc.services import ResearcherService
 router = APIRouter()
 
 
-@router.get('researcher_metrics')
-async def get_researcher_metrics(
+@router.get('/researcher_filter')
+async def get_researcher_filter(
     conn: Connection = Depends(get_conn),
 ):
-    return await ResearcherService.get_researcher_metrics(conn)
+    return await ResearcherService.get_researcher_filter(conn)
 
 
 @router.get(

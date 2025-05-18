@@ -7,11 +7,63 @@ from simcc.repositories.util import names_filter, pagination, webseatch_filter
 from simcc.schemas.Researcher import ResearcherArticleProduction
 
 
-async def get_researcher_metrics(conn):
+async def get_researcher_filter(conn):
+    filters = {}
+
     SCRIPT_SQL = """
-        
-        """
-    return await conn.select(SCRIPT_SQL)
+        SELECT ARRAY_AGG(DISTINCT gae.name) as area
+        FROM great_area_expertise gae
+            INNER JOIN researcher_area_expertise r
+                ON gae.id = r.great_area_expertise_id;
+    """
+    filters['area'] = await conn.select(SCRIPT_SQL, one=True)
+    filters['area'] = filters['area'].get('area')
+
+    SCRIPT_SQL = """
+        SELECT ARRAY_AGG(DISTINCT graduation) AS graduation
+        FROM researcher;
+    """
+    filters['graduation'] = await conn.select(SCRIPT_SQL, one=True)
+    filters['graduation'] = filters['graduation'].get('graduation')
+
+    SCRIPT_SQL = """
+        SELECT ARRAY_AGG(DISTINCT city.name) AS city
+        FROM researcher
+        INNER JOIN city
+            ON city.id = researcher.city_id;
+    """
+    filters['city'] = await conn.select(SCRIPT_SQL, one=True)
+    filters['city'] = filters['city'].get('city')
+
+    SCRIPT_SQL = """
+        SELECT ARRAY_AGG(DISTINCT institution.name) AS institution
+        FROM institution
+        INNER JOIN researcher 
+            ON researcher.institution_id = institution.id;
+    """
+    filters['institution'] = await conn.select(SCRIPT_SQL, one=True)
+    filters['institution'] = filters['institution'].get('institution')
+
+    SCRIPT_SQL = """
+        SELECT ARRAY_AGG(DISTINCT modality_name) AS modality
+        FROM foment;
+    """
+    filters['modality'] = await conn.select(SCRIPT_SQL, one=True)
+    filters['modality'] = filters['modality'].get('modality')
+
+    SCRIPT_SQL = """
+        SELECT ARRAY_AGG(DISTINCT graduate_program.name) AS graduate_program
+        FROM graduate_program
+        INNER JOIN graduate_program_researcher
+            ON graduate_program_researcher.graduate_program_id =
+               graduate_program.graduate_program_id;
+    """
+    filters['graduate_program'] = await conn.select(SCRIPT_SQL, one=True)
+    filters['graduate_program'] = filters['graduate_program'].get(
+        'graduate_program'
+    )
+
+    return filters
 
 
 def list_article_production(
