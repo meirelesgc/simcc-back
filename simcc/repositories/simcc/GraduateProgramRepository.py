@@ -1,10 +1,11 @@
 from uuid import UUID
 
 from simcc.core.connection import Connection
+from simcc.repositories.util import webseatch_filter
 
 
 async def get_research_lines(
-    conn: Connection, program_id: UUID, university: str = None
+    conn: Connection, program_id: UUID, university: str = None, term: str = None
 ):
     params = {}
 
@@ -12,6 +13,11 @@ async def get_research_lines(
     if program_id:
         params['program_id'] = program_id
         filter_program = 'AND gp.graduate_program_id = %(program_id)s'
+
+    filter_terms = str()
+    if term:
+        filter_terms, term = webseatch_filter('lgp.name', term)
+        params |= term
 
     filter_university = str()
     join_university = str()
@@ -33,6 +39,7 @@ async def get_research_lines(
         WHERE 1 = 1
             {filter_program}
             {filter_university}
+            {filter_terms}
         """
     return await conn.select(SCRIPT_SQL, params)
 

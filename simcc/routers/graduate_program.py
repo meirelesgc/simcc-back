@@ -31,10 +31,11 @@ async def list_graduate_programs(
 async def get_research_lines(
     graduate_program_id: UUID | str = None,
     university: str = None,
+    term: str = None,
     conn: Connection = Depends(get_conn),
 ):
     return await GraduateProgramService.get_research_lines(
-        conn, graduate_program_id, university
+        conn, graduate_program_id, university, term
     )
 
 
