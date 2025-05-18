@@ -28,12 +28,7 @@ async def get_researcher_metrics(
     conn: Connection = Depends(get_conn),
 ):
     return await ProductionService.get_researcher_metrics(
-        conn=conn,
-        term=term,
-        year=year,
-        type=type,
-        distinct=distinct,
-        institution=institution,
+        conn, term, year, type, distinct, institution
     )
 
 
