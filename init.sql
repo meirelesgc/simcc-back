@@ -748,41 +748,72 @@ CREATE TABLE IF NOT EXISTS ufmg.departament (
     PRIMARY KEY (dep_id)
 );
 CREATE TABLE IF NOT EXISTS ufmg.researcher (
-    researcher_id uuid,
-    matric character varying(255),
-    inscUFMG character varying(255),
-    nome character varying(255),
-    genero character varying(255),
-    situacao character varying(255),
-    rt character varying(255),
-    clas character varying(255),
-    cargo character varying(255),
-    classe character varying(255),
-    ref character varying(255),
-    titulacao character varying(255),
-    entradaNaUFMG DATE,
-    progressao DATE,
-    semester character varying(6)
+    researcher_id UUID PRIMARY KEY REFERENCES public.researcher(researcher_id),
+    
+    -- Campos comuns
+    full_name VARCHAR(255),
+    gender VARCHAR(255),
+    status_code VARCHAR(255),
+    work_regime VARCHAR(255),
+    job_class CHAR,
+    job_title VARCHAR(255),
+    job_rank VARCHAR(255),
+    job_reference_code VARCHAR(255),
+    academic_degree VARCHAR(255),
+    organization_entry_date DATE,
+    last_promotion_date DATE,
+    
+    -- Novos campos
+    employment_status_description VARCHAR(255),
+    department_name VARCHAR(255),
+    career_category VARCHAR(255),
+    academic_unit VARCHAR(255),
+    unit_code VARCHAR(255),
+    function_code VARCHAR(255),
+    position_code VARCHAR(255),
+    leadership_start_date DATE,
+    leadership_end_date DATE,
+    current_function_name VARCHAR(255),
+    function_location VARCHAR(255),
+    
+    -- Campos que estavam só na tabela antiga
+    registration_number VARCHAR(200),           
+    ufmg_registration_number VARCHAR(200),      
+    semester_reference VARCHAR(6)               
 );
 CREATE TABLE IF NOT EXISTS ufmg.technician (
-    technician_id uuid,
-    matric INT UNIQUE,
-    ins_ufmg VARCHAR(255),
-    nome VARCHAR(255),
-    genero VARCHAR(255),
-    deno_sit VARCHAR(255),
-    rt VARCHAR(255),
-    classe VARCHAR(255),
-    cargo VARCHAR(255),
-    nivel VARCHAR(255),
-    ref VARCHAR(255),
-    titulacao VARCHAR(255),
-    setor VARCHAR(255),
-    detalhe_setor VARCHAR(255),
-    dting_org DATE,
-    data_prog DATE,
-    semester character varying(255),
-    PRIMARY KEY (technician_id)
+    technician_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+
+    -- Campos comuns
+    full_name VARCHAR(255),
+    gender VARCHAR(255),
+    status_code VARCHAR(255),
+    work_regime VARCHAR(255),
+    job_class CHAR,
+    job_title VARCHAR(255),
+    job_rank VARCHAR(255),
+    job_reference_code VARCHAR(255),
+    academic_degree VARCHAR(255),
+    organization_entry_date DATE,
+    last_promotion_date DATE,
+
+    -- Novos campos
+    employment_status_description VARCHAR(255),
+    department_name VARCHAR(255),
+    career_category VARCHAR(255),
+    academic_unit VARCHAR(255),
+    unit_code VARCHAR(255),
+    function_code VARCHAR(255),
+    position_code VARCHAR(255),
+    leadership_start_date DATE,
+    leadership_end_date DATE,
+    current_function_name VARCHAR(255),
+    function_location VARCHAR(255),
+
+    -- Campos antigos
+    registration_number VARCHAR(255),
+    ufmg_registration_number VARCHAR(255),
+    semester_reference VARCHAR(6)
 );
 CREATE TABLE IF NOT EXISTS ufmg.departament_technician (
     dep_id character varying(255),

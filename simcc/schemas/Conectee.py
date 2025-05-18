@@ -24,19 +24,28 @@ class RtMetrics(BaseModel):
 
 class Technician(BaseModel):
     technician_id: UUID
-    matric: int | None
-    ins_ufmg: Optional[str] = None
-    nome: Optional[str] = None
-    genero: Optional[str] = None
-    deno_sit: Optional[str] = None
-    rt: Optional[str] = None
-    classe: Optional[str] = None
-    cargo: Optional[str] = None
-    nivel: Optional[str] = None
-    ref: Optional[str] = None
-    titulacao: Optional[str] = None
-    setor: Optional[str] = None
-    detalhe_setor: Optional[str] = None
-    dting_org: Optional[date] = None
-    data_prog: Optional[date] = None
-    semester: Optional[str] = None
+    full_name: Optional[str] = None
+    gender: Optional[str] = None
+    status_code: Optional[str] = None
+    work_regime: Optional[str] = None
+    job_class: Optional[str] = None
+    job_title: Optional[str] = None
+    job_rank: Optional[str] = None
+    job_reference_code: Optional[str] = None
+    academic_degree: Optional[str] = None
+    organization_entry_date: Optional[date] = None
+    last_promotion_date: Optional[date] = None
+    employment_status_description: Optional[str] = None
+    department_name: Optional[str] = None
+    career_category: Optional[str] = None
+    academic_unit: Optional[str] = None
+    unit_code: Optional[str] = None
+    function_code: Optional[str] = None
+    position_code: Optional[str] = None
+    leadership_start_date: Optional[date] = None
+    leadership_end_date: Optional[date] = None
+    current_function_name: Optional[str] = None
+    function_location: Optional[str] = None
+    registration_number: Optional[str] = None
+    ufmg_registration_number: Optional[str] = None
+    semester_reference: Optional[str] = None

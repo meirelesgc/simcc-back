@@ -1,4 +1,5 @@
-from datetime import datetime
+from datetime import date, datetime
+from typing import Any, Optional
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -21,6 +22,35 @@ class ResearcherArticleProduction(BaseModel):
     SQ: int
     citations: int
     year: int
+
+
+class ResearcherUFMG(BaseModel):
+    researcher_id: UUID
+    full_name: Optional[str] = None
+    gender: Optional[str] = None
+    status_code: Optional[str] = None
+    work_regime: Optional[str] = None
+    job_class: Optional[int] = None
+    job_title: Optional[str] = None
+    job_rank: Optional[str] = None
+    job_reference_code: Optional[str] = None
+    academic_degree: Optional[str] = None
+    organization_entry_date: Optional[date] = None
+    last_promotion_date: Optional[date] = None
+    employment_status_description: Optional[str] = None
+    department_name: Optional[str] = None
+    career_category: Optional[str] = None
+    academic_unit: Optional[str] = None
+    unit_code: Optional[str] = None
+    function_code: Optional[str] = None
+    position_code: Optional[str] = None
+    leadership_start_date: Optional[date] = None
+    leadership_end_date: Optional[date] = None
+    current_function_name: Optional[str] = None
+    function_location: Optional[str] = None
+    registration_number: Optional[str] = None
+    ufmg_registration_number: Optional[str] = None
+    semester_reference: Optional[str] = None
 
 
 class Researcher(BaseModel):
@@ -65,7 +95,7 @@ class Researcher(BaseModel):
     departments: list | str
     graduate_programs: list | str
 
-    ufmg: dict | str
+    ufmg: ResearcherUFMG | Any
     # # UFMG
     # matric: str
     # inscufmg: str

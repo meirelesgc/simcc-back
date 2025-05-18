@@ -489,7 +489,6 @@ def list_ufmg_data():
         FROM ufmg.researcher;
         """
     result = conn.select(SCRIPT_SQL)
-    print(result)
     return result
 
 
