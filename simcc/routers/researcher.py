@@ -1,7 +1,9 @@
 from uuid import UUID
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
+from simcc.core.connection import Connection
+from simcc.core.database import get_conn
 from simcc.schemas import ResearcherOptions
 from simcc.schemas.Researcher import (
     CoAuthorship,
@@ -11,6 +13,13 @@ from simcc.schemas.Researcher import (
 from simcc.services import ResearcherService
 
 router = APIRouter()
+
+
+@router.get('researcher_metrics')
+async def get_researcher_metrics(
+    conn: Connection = Depends(get_conn),
+):
+    return await ResearcherService.get_researcher_metrics(conn)
 
 
 @router.get(

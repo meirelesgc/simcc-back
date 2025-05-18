@@ -7,6 +7,13 @@ from simcc.repositories.util import names_filter, pagination, webseatch_filter
 from simcc.schemas.Researcher import ResearcherArticleProduction
 
 
+async def get_researcher_metrics(conn):
+    SCRIPT_SQL = """
+        
+        """
+    return await conn.select(SCRIPT_SQL)
+
+
 def list_article_production(
     program_id: UUID, year: int
 ) -> list[ResearcherArticleProduction]:
