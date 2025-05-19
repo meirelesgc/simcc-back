@@ -748,7 +748,7 @@ CREATE TABLE IF NOT EXISTS ufmg.departament (
     PRIMARY KEY (dep_id)
 );
 CREATE TABLE IF NOT EXISTS ufmg.researcher (
-    researcher_id UUID PRIMARY KEY REFERENCES public.researcher(researcher_id),
+    researcher_id UUID PRIMARY KEY REFERENCES public.researcher(id),
     
     -- Campos comuns
     full_name VARCHAR(255),

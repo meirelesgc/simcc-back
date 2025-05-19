@@ -51,8 +51,9 @@ def article_production(program_id: UUID, year: int = 2020):
     '/graduate_program_profnit',
     response_model=list[GraduateProgram.GraduateProgram],
 )
-def list_programs(
+async def list_programs(
     id: UUID | str = None,
     university: str = None,
+    conn: Connection = Depends(get_conn),
 ):
-    return GraduateProgramService.list_graduate_programs(id, university)
+    return await GraduateProgramService.list_graduate_programs(id, university)
