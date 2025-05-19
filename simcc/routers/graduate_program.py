@@ -56,4 +56,6 @@ async def list_programs(
     university: str = None,
     conn: Connection = Depends(get_conn),
 ):
-    return await GraduateProgramService.list_graduate_programs(id, university)
+    return await GraduateProgramService.list_graduate_programs(
+        conn, id, university
+    )
