@@ -22,7 +22,17 @@ router = APIRouter()
 async def get_researcher_metrics(
     term: str = None,
     year: int = 2020,
-    type: Literal['BOOK', 'ARTICLE'] = None,
+    type: Literal[
+        'BOOK',
+        'BOOK_CHAPTER',
+        'ARTICLE',
+        'WORK_IN_EVENT',
+        'TEXT_IN_NEWSPAPER_MAGAZINE',
+        'ABSTRACT',
+        'PATENT',
+        'AREA',
+        'EVENT',
+    ] = None,
     distinct: int = 1,
     institution: str = None,
     conn: Connection = Depends(get_conn),

@@ -14,7 +14,17 @@ async def get_researcher_metrics(
     conn: Connection,
     term: str = None,
     year: int = 2020,
-    type: Literal['BOOK', 'ARTICLE', 'ABSTRACT'] = 'ABSTRACT',
+    type: Literal[
+        'BOOK',
+        'BOOK_CHAPTER',
+        'ARTICLE',
+        'WORK_IN_EVENT',
+        'TEXT_IN_NEWSPAPER_MAGAZINE',
+        'ABSTRACT',
+        'PATENT',
+        'AREA',
+        'EVENT',
+    ] = 'ABSTRACT',
     distinct: int = 1,
     institution: str = None,
 ):
@@ -28,9 +38,51 @@ async def get_researcher_metrics(
             type_filter, term = webseatch_filter('r.abstract', term)
             params |= term
         case 'BOOK':
-            ...
+            join_filter = """
+                INNER JOIN bibliographic_production bp
+                    ON bp.researcher_id = r.id AND bp.type = 'BOOK'
+                """
+            type_filter, term = webseatch_filter('bp.title', term)
+            params |= term
+        case 'BOOK_CHAPTER':
+            join_filter = """
+                INNER JOIN bibliographic_production bp
+                    ON bp.researcher_id = r.id AND bp.type = 'BOOK_CHAPTER'
+                    """
+            type_filter, term = webseatch_filter('bp.title', term)
+            params |= term
         case 'ARTICLE':
-            ...
+            join_filter = """
+                INNER JOIN bibliographic_production bp
+                    ON bp.researcher_id = r.id AND bp.type = 'ARTICLE'
+                """
+            type_filter, term = webseatch_filter('bp.title', term)
+            params |= term
+        case 'WORK_IN_EVENT':
+            join_filter = """
+                INNER JOIN bibliographic_production bp
+                    ON bp.researcher_id = r.id AND bp.type = 'WORK_IN_EVENT'
+                """
+            type_filter, term = webseatch_filter('bp.title', term)
+            params |= term
+        case 'TEXT_IN_NEWSPAPER_MAGAZINE':
+            join_filter = "INNER JOIN bibliographic_production bp ON bp.researcher_id = r.id AND bp.type = 'TEXT_IN_NEWSPAPER_MAGAZINE'"
+            type_filter, term = webseatch_filter('bp.title', term)
+            params |= term
+        case 'PATENT':
+            join_filter = 'INNER JOIN patent p ON p.researcher_id = r.id'
+            type_filter, term = webseatch_filter('p.title', term)
+            params |= term
+        case 'AREA':
+            join_filter = """INNER JOIN researcher_production rp ON rp.researcher_id = r.id"""
+            type_filter, term = webseatch_filter('rp.great_area', term)
+            params |= term
+        case 'EVENT':
+            join_filter = """
+                INNER JOIN event_organization e
+                    ON e.researcher_id = r.id"""
+            type_filter, term = webseatch_filter('e.title', term)
+            params |= term
         case _:
             ...
 
@@ -38,16 +90,17 @@ async def get_researcher_metrics(
     if institution:
         params['institution'] = institution + '%'
         filter_institution = """
-            AND r.institution_id = (
+            AND r.institution_id IN (
             SELECT id FROM institution WHERE name ILIKE %(institution)s)
             """
 
     SCRIPT_SQL = f"""
-        SELECT COUNT(*) AS researcher_count,
+        SELECT COUNT(DISTINCT r.id) AS researcher_count,
             COUNT(DISTINCT r.orcid) AS orcid_count,
             COUNT(DISTINCT opr.scopus) AS scopus_count
         FROM researcher r
-        LEFT JOIN openalex_researcher opr ON opr.researcher_id = r.id
+            LEFT JOIN openalex_researcher opr ON opr.researcher_id = r.id
+            {join_filter}
         WHERE 1 = 1
             {type_filter}
             {filter_institution}

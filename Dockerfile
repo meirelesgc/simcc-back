@@ -14,4 +14,4 @@ RUN poetry run python -m nltk.downloader stopwords
 
 EXPOSE 8000
 
-CMD ["poetry", "run", "uvicorn", "--host", "0.0.0.0", "simcc:app"]
+CMD ["poetry", "run", "uvicorn", "--host", "0.0.0.0", "simcc.app:app"]
