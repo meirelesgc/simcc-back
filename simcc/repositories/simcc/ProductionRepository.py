@@ -109,11 +109,18 @@ async def get_researcher_metrics(
 
 
 def list_article_metrics(
+    term: str,
     researcher_id: UUID,
     program_id: UUID,
     year: int,
 ) -> list[ArticleMetric]:
     params = {}
+
+    term_filter = str()
+    if term:
+        term_filter, term = webseatch_filter('bp.title', term)
+        params |= term
+
     filter_id = str()
     if researcher_id:
         params['researcher_id'] = researcher_id
@@ -147,6 +154,7 @@ def list_article_metrics(
             LEFT JOIN openalex_article opa ON opa.article_id = bp.id
             {program_join}
         WHERE 1 = 1
+            {term_filter}
             {program_filter}
             {year_filter}
             {filter_id}
@@ -158,8 +166,13 @@ def list_article_metrics(
     return result
 
 
-def list_patent_metrics(researcher_id: UUID, program_id: UUID, year: int):
+def list_patent_metrics(term, researcher_id: UUID, program_id: UUID, year: int):
     params = {}
+
+    term_filter = str()
+    if term:
+        term_filter, term = webseatch_filter('p.title', term)
+        params |= term
 
     filter_id = str()
     if researcher_id:
@@ -189,6 +202,7 @@ def list_patent_metrics(researcher_id: UUID, program_id: UUID, year: int):
             {join_program}
         WHERE 1 = 1
             {filter_id}
+            {term_filter}
             {filter_year}
             {filter_program}
         GROUP BY development_year;
@@ -198,8 +212,15 @@ def list_patent_metrics(researcher_id: UUID, program_id: UUID, year: int):
     return result
 
 
-def list_guidance_metrics(researcher_id: UUID, program_id: UUID, year: int):
+def list_guidance_metrics(
+    term, researcher_id: UUID, program_id: UUID, year: int
+):
     params = {}
+
+    term_filter = str()
+    if term:
+        term_filter, term = webseatch_filter('g.title', term)
+        params |= term
 
     filter_id = str()
     if researcher_id:
@@ -230,6 +251,7 @@ def list_guidance_metrics(researcher_id: UUID, program_id: UUID, year: int):
         WHERE 1 = 1
             {filter_id}
             {filter_year}
+            {term_filter}
             {filter_program}
         GROUP BY g.year, nature, g.status;
         """
@@ -290,8 +312,15 @@ def list_academic_degree_metrics(
     return result
 
 
-def list_software_metrics(researcher_id: UUID, program_id: UUID, year: int):
+def list_software_metrics(
+    term, researcher_id: UUID, program_id: UUID, year: int
+):
     params = {}
+
+    term_filter = str()
+    if term:
+        term_filter, term = webseatch_filter('s.title', term)
+        params |= term
 
     filter_id = str()
     if researcher_id:
@@ -319,6 +348,7 @@ def list_software_metrics(researcher_id: UUID, program_id: UUID, year: int):
             {join_program}
         WHERE 1 = 1
             {filter_id}
+            {term_filter}
             {filter_year}
             {filter_program}
         GROUP BY s.year;

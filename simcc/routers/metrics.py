@@ -47,8 +47,10 @@ async def get_researcher_metrics(
     response_model=list[ArticleMetric],
     tags=['Metrics'],
 )
-def article_metrics(program_id: UUID = None, year: int = 2020):
-    metrics = ProductionService.list_article_metrics(None, program_id, year)
+def article_metrics(term: str = None, program_id: UUID = None, year: int = 2020):
+    metrics = ProductionService.list_article_metrics(
+        term, None, program_id, year
+    )
     return metrics
 
 
@@ -57,8 +59,12 @@ def article_metrics(program_id: UUID = None, year: int = 2020):
     response_model=list[ArticleMetric],
     tags=['Researcher'],
 )
-def article_metrics_researcher(researcher_id: UUID = None, year: int = 2020):
-    metrics = ProductionService.list_article_metrics(researcher_id, None, year)
+def article_metrics_researcher(
+    term: str = None, researcher_id: UUID = None, year: int = 2020
+):
+    metrics = ProductionService.list_article_metrics(
+        term, researcher_id, None, year
+    )
     return metrics
 
 
@@ -67,8 +73,12 @@ def article_metrics_researcher(researcher_id: UUID = None, year: int = 2020):
     response_model=list[ArticleMetric],
     tags=['Graduate Program'],
 )
-def article_metrics_graduate_program(program_id: UUID = None, year: int = 2020):
-    metrics = ProductionService.list_article_metrics(None, program_id, year)
+def article_metrics_graduate_program(
+    term: str = None, program_id: UUID = None, year: int = 2020
+):
+    metrics = ProductionService.list_article_metrics(
+        term, None, program_id, year
+    )
     return metrics
 
 
@@ -77,8 +87,8 @@ def article_metrics_graduate_program(program_id: UUID = None, year: int = 2020):
     response_model=list[PatentMetric],
     tags=['Metrics'],
 )
-def patent_metrics(year: int = 2020):
-    metrics = ProductionService.list_patent_metrics(None, None, year)
+def patent_metrics(term: str = None, year: int = 2020):
+    metrics = ProductionService.list_patent_metrics(term, None, None, year)
     return metrics
 
 
@@ -87,8 +97,12 @@ def patent_metrics(year: int = 2020):
     response_model=list[PatentMetric],
     tags=['Researcher'],
 )
-def patent_metrics_researcher(researcher_id: UUID = None, year: int = 2020):
-    metrics = ProductionService.list_patent_metrics(researcher_id, None, year)
+def patent_metrics_researcher(
+    term: str = None, researcher_id: UUID = None, year: int = 2020
+):
+    metrics = ProductionService.list_patent_metrics(
+        term, researcher_id, None, year
+    )
     return metrics
 
 
@@ -97,8 +111,10 @@ def patent_metrics_researcher(researcher_id: UUID = None, year: int = 2020):
     response_model=list[PatentMetric],
     tags=['Graduate Program'],
 )
-def patent_metrics_graduate_program(program_id: UUID = None, year: int = 2020):
-    metrics = ProductionService.list_patent_metrics(None, program_id, year)
+def patent_metrics_graduate_program(
+    term: str = None, program_id: UUID = None, year: int = 2020
+):
+    metrics = ProductionService.list_patent_metrics(term, None, program_id, year)
     return metrics
 
 
@@ -107,8 +123,8 @@ def patent_metrics_graduate_program(program_id: UUID = None, year: int = 2020):
     response_model=list[GuidanceMetrics],
     tags=['Metrics'],
 )
-def guidance_metrics(year: int = 2020):
-    metrics = ProductionService.list_guidance_metrics(None, None, year)
+def guidance_metrics(term: str = None, year: int = 2020):
+    metrics = ProductionService.list_guidance_metrics(term, None, None, year)
     return metrics
 
 
@@ -117,8 +133,12 @@ def guidance_metrics(year: int = 2020):
     response_model=list[GuidanceMetrics],
     tags=['Researcher'],
 )
-def guidance_metrics_researcher(researcher_id: UUID = None, year: int = 2020):
-    metrics = ProductionService.list_guidance_metrics(researcher_id, None, year)
+def guidance_metrics_researcher(
+    term: str = None, researcher_id: UUID = None, year: int = 2020
+):
+    metrics = ProductionService.list_guidance_metrics(
+        term, researcher_id, None, year
+    )
     return metrics
 
 
@@ -127,8 +147,12 @@ def guidance_metrics_researcher(researcher_id: UUID = None, year: int = 2020):
     response_model=list[GuidanceMetrics],
     tags=['Graduate Program'],
 )
-def guidance_metrics_graduate_program(program_id: UUID = None, year: int = 2020):
-    metrics = ProductionService.list_guidance_metrics(None, program_id, year)
+def guidance_metrics_graduate_program(
+    term: str = None, program_id: UUID = None, year: int = 2020
+):
+    metrics = ProductionService.list_guidance_metrics(
+        term, None, program_id, year
+    )
     return metrics
 
 
@@ -184,8 +208,8 @@ def academic_degree_metrics_graduate_program(
     response_model=list[SoftwareMetric],
     tags=['Metrics'],
 )
-def software_metrics(year: int = 2020):
-    metrics = ProductionService.list_software_metrics(None, None, year)
+def software_metrics(term: str = None, year: int = 2020):
+    metrics = ProductionService.list_software_metrics(term, None, None, year)
     return metrics
 
 
@@ -194,8 +218,12 @@ def software_metrics(year: int = 2020):
     response_model=list[SoftwareMetric],
     tags=['Researcher'],
 )
-def software_metrics_researcher(researcher_id: UUID = None, year: int = 2020):
-    metrics = ProductionService.list_software_metrics(researcher_id, None, year)
+def software_metrics_researcher(
+    term: str = None, researcher_id: UUID = None, year: int = 2020
+):
+    metrics = ProductionService.list_software_metrics(
+        term, researcher_id, None, year
+    )
     return metrics
 
 
@@ -204,6 +232,10 @@ def software_metrics_researcher(researcher_id: UUID = None, year: int = 2020):
     response_model=list[SoftwareMetric],
     tags=['Graduate Program'],
 )
-def software_metrics_graduate_program(program_id: UUID = None, year: int = 2020):
-    metrics = ProductionService.list_software_metrics(None, program_id, year)
+def software_metrics_graduate_program(
+    term: str = None, program_id: UUID = None, year: int = 2020
+):
+    metrics = ProductionService.list_software_metrics(
+        term, None, program_id, year
+    )
     return metrics
