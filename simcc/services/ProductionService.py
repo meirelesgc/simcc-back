@@ -15,6 +15,28 @@ from simcc.schemas.Production.Patent import PatentMetric, PatentProduction
 from simcc.schemas.Researcher import AcademicMetric
 
 
+def get_book_metrics(
+    term: str,
+    researcher_id: UUID,
+    program_id: UUID,
+    year: int,
+):
+    return ProductionRepository.get_book_metrics(
+        term, researcher_id, program_id, year
+    )
+
+
+def get_book_chapter_metrics(
+    term: str,
+    researcher_id: UUID,
+    program_id: UUID,
+    year: int,
+):
+    return ProductionRepository.get_book_chapter_metrics(
+        term, researcher_id, program_id, year
+    )
+
+
 async def get_researcher_metrics(
     conn: Connection,
     term: str = None,

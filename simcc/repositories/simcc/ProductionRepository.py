@@ -10,6 +10,116 @@ from simcc.schemas.Production.Article import (
 )
 
 
+def get_book_metrics(
+    term: str,
+    researcher_id: UUID,
+    program_id: UUID,
+    year: int,
+):
+    params = {}
+
+    term_filter = str()
+    if term:
+        term_filter, term = webseatch_filter('bp.title', term)
+        params |= term
+
+    filter_id = str()
+    if researcher_id:
+        params['researcher_id'] = researcher_id
+        filter_id = 'AND bp.researcher_id = %(researcher_id)s'
+
+    program_join = str()
+    program_filter = str()
+    if program_id:
+        params['program_id'] = program_id
+        program_join = """
+            LEFT JOIN graduate_program_researcher gpr ON gpr.researcher_id = r.id
+            """
+        program_filter = """
+            AND gpr.graduate_program_id = %(program_id)s
+            AND gpr.type_ = 'PERMANENTE'
+            """
+
+    year_filter = str()
+    if year:
+        params['year'] = year
+        year_filter = 'AND bp.year::int >= %(year)s'
+
+    SCRIPT_SQL = f"""
+        SELECT bp.year, COUNT(*) AS among
+        FROM researcher r
+            LEFT JOIN bibliographic_production bp ON bp.researcher_id = r.id
+            LEFT JOIN openalex_article opa ON opa.article_id = bp.id
+            {program_join}
+        WHERE 1 = 1
+            AND type = 'BOOK'
+            {term_filter}
+            {program_filter}
+            {year_filter}
+            {filter_id}
+        GROUP BY
+            bp.year;
+            """
+
+    result = conn.select(SCRIPT_SQL, params)
+    return result
+
+
+def get_book_chapter_metrics(
+    term: str,
+    researcher_id: UUID,
+    program_id: UUID,
+    year: int,
+):
+    params = {}
+
+    term_filter = str()
+    if term:
+        term_filter, term = webseatch_filter('bp.title', term)
+        params |= term
+
+    filter_id = str()
+    if researcher_id:
+        params['researcher_id'] = researcher_id
+        filter_id = 'AND bp.researcher_id = %(researcher_id)s'
+
+    program_join = str()
+    program_filter = str()
+    if program_id:
+        params['program_id'] = program_id
+        program_join = """
+            LEFT JOIN graduate_program_researcher gpr ON gpr.researcher_id = r.id
+            """
+        program_filter = """
+            AND gpr.graduate_program_id = %(program_id)s
+            AND gpr.type_ = 'PERMANENTE'
+            """
+
+    year_filter = str()
+    if year:
+        params['year'] = year
+        year_filter = 'AND bp.year::int >= %(year)s'
+
+    SCRIPT_SQL = f"""
+        SELECT bp.year, COUNT(*) AS among
+        FROM researcher r
+            LEFT JOIN bibliographic_production bp ON bp.researcher_id = r.id
+            LEFT JOIN openalex_article opa ON opa.article_id = bp.id
+            {program_join}
+        WHERE 1 = 1
+            AND type = 'BOOK_CHAPTER'
+            {term_filter}
+            {program_filter}
+            {year_filter}
+            {filter_id}
+        GROUP BY
+            bp.year;
+            """
+
+    result = conn.select(SCRIPT_SQL, params)
+    return result
+
+
 async def get_researcher_metrics(
     conn: Connection,
     term: str = None,

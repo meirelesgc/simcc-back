@@ -15,6 +15,22 @@ from simcc.services import ProductionService, ResearcherService
 router = APIRouter()
 
 
+@router.get('/book_metrics', tags=['Metrics'])
+def get_book_metrics(
+    term: str = None, researcher_id: UUID = None, year: int = 2020
+):
+    return ProductionService.get_book_metrics(term, researcher_id, None, year)
+
+
+@router.get('/book_chapter_metrics', tags=['Metrics'])
+def get_book_chapter_metrics(
+    term: str = None, researcher_id: UUID = None, year: int = 2020
+):
+    return ProductionService.get_book_chapter_metrics(
+        term, researcher_id, None, year
+    )
+
+
 @router.get(
     '/researcher_metrics',
     tags=['Metrics'],
