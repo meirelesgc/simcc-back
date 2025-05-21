@@ -64,7 +64,7 @@ def insert_researcher(researcher: ResearcherData):
 
 def list_researchers():
     SCRIPT_SQL = """
-        SELECT rt, COUNT(rt)
+        SELECT work_regime AS rt, COUNT(*)
         FROM ufmg.researcher
         GROUP BY rt
         """
@@ -74,7 +74,7 @@ def list_researchers():
 
 def list_technicians():
     SCRIPT_SQL = """
-        SELECT rt, COUNT(rt)
+        SELECT work_regime AS rt, COUNT(*)
         FROM ufmg.technician
         GROUP BY rt
         """

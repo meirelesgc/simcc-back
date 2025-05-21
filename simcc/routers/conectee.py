@@ -12,11 +12,6 @@ STORAGE_PATH = Path('storage/conectee')
 STORAGE_PATH.mkdir(parents=True, exist_ok=True)
 
 
-@router.get('/departament/rt')
-def get_work_regime():
-    return ConecteeService.get_work_regime()
-
-
 @router.get(
     '/researcher',
     response_model=list[ResearcherData],
