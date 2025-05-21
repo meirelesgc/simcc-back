@@ -10,6 +10,7 @@ from simcc.config import Settings
 from simcc.core.database import conn
 from simcc.routers import (
     conectee,
+    generic,
     graduate_program,
     metrics,
     powerBI,
@@ -35,7 +36,7 @@ app.include_router(powerBI.router, tags=['PowerBI Data'])
 app.include_router(metrics.router, tags=['Metrics'])
 app.include_router(conectee.router, prefix='/ufmg', tags=['Conectee'])
 app.include_router(graduate_program.router, tags=['Graduate Program'])
-
+app.include_router(generic.router, tags=['Generic'])
 
 app.add_middleware(
     CORSMiddleware,
