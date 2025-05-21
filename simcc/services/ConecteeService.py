@@ -12,6 +12,10 @@ from simcc.repositories.conectee import ConecteeRepository
 from simcc.schemas.Conectee import ResearcherData
 
 
+def get_work_regime():
+    return ConecteeRepository.get_work_regime()
+
+
 def get_researcher_data(cpf: str, name: str) -> list[ResearcherData]:
     researcher = ConecteeRepository.get_researcher(cpf, name)
     if not researcher:

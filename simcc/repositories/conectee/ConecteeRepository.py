@@ -2,6 +2,16 @@ from simcc.repositories import conn
 from simcc.schemas.Conectee import ResearcherData
 
 
+def get_work_regime():
+    SCRIPT_SQL = """
+        SELECT work_regime AS rt, COUNT(*)
+        FROM ufmg.researcher
+        GROUP BY rt
+        """
+    result = conn.select(SCRIPT_SQL)
+    return result
+
+
 def post_congregation(congregation: list):
     SCRIPT_SQL = """
         INSERT INTO ufmg.mandate(member, departament, mandate, email, phone)
