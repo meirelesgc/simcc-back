@@ -18,8 +18,8 @@ class ResearcherData(BaseModel):
 
 
 class RtMetrics(BaseModel):
-    teachers: list
-    technician: list
+    researchers: list
+    technicians: list
 
 
 class Technician(BaseModel):
