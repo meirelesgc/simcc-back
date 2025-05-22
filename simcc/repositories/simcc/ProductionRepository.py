@@ -15,8 +15,13 @@ def get_book_metrics(
     researcher_id: UUID,
     program_id: UUID,
     year: int,
+    distinct: int = 0,
 ):
     params = {}
+
+    filter_distinct = str()
+    if distinct:
+        filter_distinct = 'DISTINCT'
 
     term_filter = str()
     if term:
@@ -46,10 +51,9 @@ def get_book_metrics(
         year_filter = 'AND bp.year::int >= %(year)s'
 
     SCRIPT_SQL = f"""
-        SELECT bp.year, COUNT(*) AS among
+        SELECT bp.year, COUNT({filter_distinct} bp.title) AS among
         FROM researcher r
             LEFT JOIN bibliographic_production bp ON bp.researcher_id = r.id
-            LEFT JOIN openalex_article opa ON opa.article_id = bp.id
             {program_join}
         WHERE 1 = 1
             AND type = 'BOOK'
@@ -60,7 +64,7 @@ def get_book_metrics(
         GROUP BY
             bp.year;
             """
-
+    print(SCRIPT_SQL, params)
     result = conn.select(SCRIPT_SQL, params)
     return result
 
@@ -70,9 +74,13 @@ def get_book_chapter_metrics(
     researcher_id: UUID,
     program_id: UUID,
     year: int,
+    distinct: int = 1,
 ):
     params = {}
 
+    distinct_filter = str()
+    if distinct:
+        distinct_filter = 'DISTINCT'
     term_filter = str()
     if term:
         term_filter, term = webseatch_filter('bp.title', term)
@@ -101,7 +109,7 @@ def get_book_chapter_metrics(
         year_filter = 'AND bp.year::int >= %(year)s'
 
     SCRIPT_SQL = f"""
-        SELECT bp.year, COUNT(*) AS among
+        SELECT bp.year, COUNT({distinct_filter} bp.title) AS among
         FROM researcher r
             LEFT JOIN bibliographic_production bp ON bp.researcher_id = r.id
             LEFT JOIN openalex_article opa ON opa.article_id = bp.id
@@ -139,82 +147,74 @@ async def get_researcher_metrics(
     institution: str = None,
 ):
     params = {}
-
-    join_filter = str()
-    type_filter = str()
+    join_filter = ''
+    type_filter = ''
+    year_filter = ''
 
     match type:
         case 'ABSTRACT':
-            type_filter, term = webseatch_filter('r.abstract', term)
-            params |= term
-        case 'BOOK':
-            join_filter = """
+            type_filter, term_params = webseatch_filter('r.abstract', term)
+            params |= term_params
+        case (
+            'BOOK'
+            | 'BOOK_CHAPTER'
+            | 'ARTICLE'
+            | 'WORK_IN_EVENT'
+            | 'TEXT_IN_NEWSPAPER_MAGAZINE'
+        ):
+            join_filter = f"""
                 INNER JOIN bibliographic_production bp
-                    ON bp.researcher_id = r.id AND bp.type = 'BOOK'
-                """
-            type_filter, term = webseatch_filter('bp.title', term)
-            params |= term
-        case 'BOOK_CHAPTER':
-            join_filter = """
-                INNER JOIN bibliographic_production bp
-                    ON bp.researcher_id = r.id AND bp.type = 'BOOK_CHAPTER'
-                    """
-            type_filter, term = webseatch_filter('bp.title', term)
-            params |= term
-        case 'ARTICLE':
-            join_filter = """
-                INNER JOIN bibliographic_production bp
-                    ON bp.researcher_id = r.id AND bp.type = 'ARTICLE'
-                """
-            type_filter, term = webseatch_filter('bp.title', term)
-            params |= term
-        case 'WORK_IN_EVENT':
-            join_filter = """
-                INNER JOIN bibliographic_production bp
-                    ON bp.researcher_id = r.id AND bp.type = 'WORK_IN_EVENT'
-                """
-            type_filter, term = webseatch_filter('bp.title', term)
-            params |= term
-        case 'TEXT_IN_NEWSPAPER_MAGAZINE':
-            join_filter = "INNER JOIN bibliographic_production bp ON bp.researcher_id = r.id AND bp.type = 'TEXT_IN_NEWSPAPER_MAGAZINE'"
-            type_filter, term = webseatch_filter('bp.title', term)
-            params |= term
+                    ON bp.researcher_id = r.id AND bp.type = '{type}'
+            """
+            type_filter, term_params = webseatch_filter('bp.title', term)
+            year_filter = 'AND bp.year::int >= %(year)s'
+            params |= term_params
+            params['year'] = year
         case 'PATENT':
             join_filter = 'INNER JOIN patent p ON p.researcher_id = r.id'
-            type_filter, term = webseatch_filter('p.title', term)
-            params |= term
+            type_filter, term_params = webseatch_filter('p.title', term)
+            year_filter = 'AND p.year::int >= %(year)s'
+            params |= term_params
+            params['year'] = year
         case 'AREA':
-            join_filter = """INNER JOIN researcher_production rp ON rp.researcher_id = r.id"""
-            type_filter, term = webseatch_filter('rp.great_area', term)
-            params |= term
+            join_filter = (
+                'INNER JOIN researcher_production rp ON rp.researcher_id = r.id'
+            )
+            type_filter, term_params = webseatch_filter('rp.great_area', term)
+            params |= term_params
         case 'EVENT':
-            join_filter = """
-                INNER JOIN event_organization e
-                    ON e.researcher_id = r.id"""
-            type_filter, term = webseatch_filter('e.title', term)
-            params |= term
+            join_filter = (
+                'INNER JOIN event_organization e ON e.researcher_id = r.id'
+            )
+            type_filter, term_params = webseatch_filter('e.title', term)
+            year_filter = 'AND e.year::int >= %(year)s'
+            params |= term_params
+            params['year'] = year
         case _:
             ...
 
-    filter_institution = str()
+    filter_institution = ''
     if institution:
         params['institution'] = institution + '%'
         filter_institution = """
             AND r.institution_id IN (
-            SELECT id FROM institution WHERE name ILIKE %(institution)s)
-            """
+                SELECT id FROM institution WHERE name ILIKE %(institution)s
+            )
+        """
 
     SCRIPT_SQL = f"""
         SELECT COUNT(DISTINCT r.id) AS researcher_count,
-            COUNT(DISTINCT r.orcid) AS orcid_count,
-            COUNT(DISTINCT opr.scopus) AS scopus_count
+               COUNT(DISTINCT r.orcid) AS orcid_count,
+               COUNT(DISTINCT opr.scopus) AS scopus_count
         FROM researcher r
-            LEFT JOIN openalex_researcher opr ON opr.researcher_id = r.id
-            {join_filter}
+        LEFT JOIN openalex_researcher opr ON opr.researcher_id = r.id
+        {join_filter}
         WHERE 1 = 1
             {type_filter}
             {filter_institution}
-        """
+            {year_filter}
+    """
+
     return await conn.select(SCRIPT_SQL, params)
 
 
@@ -223,8 +223,14 @@ def list_article_metrics(
     researcher_id: UUID,
     program_id: UUID,
     year: int,
+    distinct: int = 1,
 ) -> list[ArticleMetric]:
     params = {}
+
+    distinct_filter = str()
+
+    if distinct:
+        distinct_filter = 'DISTINCT'
 
     term_filter = str()
     if term:
@@ -256,10 +262,10 @@ def list_article_metrics(
     SCRIPT_SQL = f"""
         SELECT bp.year, SUM(opa.citations_count) AS citations,
             ARRAY_AGG(bpa.qualis) AS qualis, ARRAY_AGG(bpa.jcr) AS jcr,
-            COUNT(*) AS among
+            COUNT({distinct_filter} bp.title) AS among
         FROM researcher r
             LEFT JOIN bibliographic_production bp ON bp.researcher_id = r.id
-            RIGHT JOIN bibliographic_production_article bpa
+            INNER JOIN bibliographic_production_article bpa
                 ON bpa.bibliographic_production_id = bp.id
             LEFT JOIN openalex_article opa ON opa.article_id = bp.id
             {program_join}
@@ -271,14 +277,21 @@ def list_article_metrics(
         GROUP BY
             bp.year;
             """
-
     result = conn.select(SCRIPT_SQL, params)
     return result
 
 
-def list_patent_metrics(term, researcher_id: UUID, program_id: UUID, year: int):
+def list_patent_metrics(
+    term,
+    researcher_id: UUID,
+    program_id: UUID,
+    year: int,
+    distinct: int = 1,
+):
     params = {}
-
+    distinct_filter = str()
+    if distinct:
+        distinct_filter = 'DISTINCT'
     term_filter = str()
     if term:
         term_filter, term = webseatch_filter('p.title', term)
@@ -306,8 +319,8 @@ def list_patent_metrics(term, researcher_id: UUID, program_id: UUID, year: int):
 
     SCRIPT_SQL = f"""
         SELECT development_year AS year,
-            COUNT(*) FILTER (WHERE p.grant_date IS NULL) AS NOT_GRANTED,
-            COUNT(*) FILTER (WHERE p.grant_date IS NOT NULL) AS GRANTED
+            COUNT({distinct_filter} p.title) FILTER (WHERE p.grant_date IS NULL) AS NOT_GRANTED,
+            COUNT({distinct_filter} p.title) FILTER (WHERE p.grant_date IS NOT NULL) AS GRANTED
         FROM patent p
             {join_program}
         WHERE 1 = 1
@@ -323,9 +336,17 @@ def list_patent_metrics(term, researcher_id: UUID, program_id: UUID, year: int):
 
 
 def list_guidance_metrics(
-    term, researcher_id: UUID, program_id: UUID, year: int
+    term,
+    researcher_id: UUID,
+    program_id: UUID,
+    year: int,
+    distinct: int = 1,
 ):
     params = {}
+
+    distinct_filter = str()
+    if distinct:
+        distinct_filter = 'DISTINCT'
 
     term_filter = str()
     if term:
@@ -355,7 +376,7 @@ def list_guidance_metrics(
     SCRIPT_SQL = f"""
         SELECT g.year AS year,
             unaccent(lower((g.nature || ' ' || g.status))) AS nature,
-            COUNT(*) as count_nature
+            COUNT({distinct_filter} g.oriented) as count_nature
         FROM guidance g
             {join_program}
         WHERE 1 = 1
@@ -423,9 +444,16 @@ def list_academic_degree_metrics(
 
 
 def list_software_metrics(
-    term, researcher_id: UUID, program_id: UUID, year: int
+    term,
+    researcher_id: UUID,
+    program_id: UUID,
+    year: int,
+    distinct: int = 1,
 ):
     params = {}
+    distinct_filter = str()
+    if distinct:
+        distinct_filter = 'DISTINCT'
 
     term_filter = str()
     if term:
@@ -453,7 +481,7 @@ def list_software_metrics(
         filter_program = 'AND gpr.graduate_program_id = %(program_id)s'
 
     SCRIPT_SQL = f"""
-        SELECT s.year, COUNT(*) among
+        SELECT s.year, COUNT({distinct_filter} s.title) among
         FROM public.software s
             {join_program}
         WHERE 1 = 1

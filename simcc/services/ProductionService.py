@@ -20,9 +20,10 @@ def get_book_metrics(
     researcher_id: UUID,
     program_id: UUID,
     year: int,
+    distinct: int = 0,
 ):
     return ProductionRepository.get_book_metrics(
-        term, researcher_id, program_id, year
+        term, researcher_id, program_id, year, distinct
     )
 
 
@@ -31,9 +32,10 @@ def get_book_chapter_metrics(
     researcher_id: UUID,
     program_id: UUID,
     year: int,
+    distinct: int = 1,
 ):
     return ProductionRepository.get_book_chapter_metrics(
-        term, researcher_id, program_id, year
+        term, researcher_id, program_id, year, distinct
     )
 
 
@@ -65,9 +67,10 @@ def list_article_metrics(
     researcher_id: UUID,
     program_id: UUID,
     year: int,
+    distinct: int = 1,
 ) -> list[ArticleMetric]:
     article_metrics = ProductionRepository.list_article_metrics(
-        term, researcher_id, program_id, year
+        term, researcher_id, program_id, year, distinct
     )
     if not article_metrics:
         return []
@@ -98,10 +101,14 @@ def list_article_metrics(
 
 
 def list_patent_metrics(
-    term: str, researcher_id: UUID, program_id: UUID, year: int
+    term: str,
+    researcher_id: UUID,
+    program_id: UUID,
+    year: int,
+    distinct: int = 1,
 ) -> list[PatentMetric]:
     patent_metrics = ProductionRepository.list_patent_metrics(
-        term, researcher_id, program_id, year
+        term, researcher_id, program_id, year, distinct
     )
     if not patent_metrics:
         return []
@@ -109,10 +116,14 @@ def list_patent_metrics(
 
 
 def list_guidance_metrics(
-    term: str, researcher_id: UUID, program_id: UUID, year: int
+    term: str,
+    researcher_id: UUID,
+    program_id: UUID,
+    year: int,
+    distinct: int = 1,
 ) -> list[GuidanceMetrics]:
     guidance_metrics = ProductionRepository.list_guidance_metrics(
-        term, researcher_id, program_id, year
+        term, researcher_id, program_id, year, distinct
     )
     if not guidance_metrics:
         return []
@@ -178,10 +189,14 @@ def list_academic_degree_metrics(
 
 
 def list_software_metrics(
-    term: str, researcher_id: UUID, program_id: UUID, year: int
+    term: str,
+    researcher_id: UUID,
+    program_id: UUID,
+    year: int,
+    distinct: int = 1,
 ):
     metrics = ProductionRepository.list_software_metrics(
-        term, researcher_id, program_id, year
+        term, researcher_id, program_id, year, distinct
     )
     return metrics
 
