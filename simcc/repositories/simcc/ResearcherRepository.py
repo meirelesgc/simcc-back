@@ -63,6 +63,12 @@ async def get_researcher_filter(conn):
         'graduate_program'
     )
 
+    SCRIPT_SQL = """
+        SELECT ARRAY_AGG(DISTINCT dep_nom) AS departament FROM ufmg.departament;
+        """
+    filters['departament'] = await conn.select(SCRIPT_SQL, one=True)
+    filters['departament'] = filters['departament'].get('departament')
+
     return filters
 
 
@@ -291,7 +297,6 @@ def search_in_name(
             among DESC
             {filter_pagination};
         """
-    print(SCRIPT_SQL, params)
     result = conn.select(SCRIPT_SQL, params)
     return result
 

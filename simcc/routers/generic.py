@@ -12,7 +12,7 @@ from fastapi.responses import (
 from zeep import Client
 
 from simcc.schemas import ResearcherBarema, YearBarema
-from simcc.services import GenericService
+from simcc.services import ConecteeService, GenericService
 
 STORAGE_PATH = Path('storage/dictionary')
 STORAGE_PATH.mkdir(parents=True, exist_ok=True)
@@ -22,6 +22,11 @@ router = APIRouter()
 
 @router.get('/logs_researcher')
 def get_researcher_logs(): ...
+
+
+@router.get('/departament/rt')
+def get_departament_rt():
+    return ConecteeService.get_departament_rt_data()
 
 
 @router.get('/logs')
