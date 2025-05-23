@@ -38,7 +38,7 @@ async def get_researcher_filter(conn):
     SCRIPT_SQL = """
         SELECT ARRAY_AGG(DISTINCT institution.name) AS institution
         FROM institution
-        INNER JOIN researcher 
+        INNER JOIN researcher
             ON researcher.institution_id = institution.id;
     """
     filters['institution'] = await conn.select(SCRIPT_SQL, one=True)
@@ -245,11 +245,30 @@ def search_in_name(
     area: str = None,
     graduate_program: str = None,
     city: str = None,
+    institution: str = None,
+    modality: str = None,
 ):
     params = {}
     distinct = str()
     filter_area = str()
     filter_city = str()
+    filter_institution = str()
+
+    join_modality = str()
+    filter_modality = str()
+    if modality:
+        params['modality'] = modality.split(';')
+        join_modality = """
+            INNER JOIN foment f
+                ON f.researcher_id = r.id
+            """
+        filter_modality = """
+            AND modality_name = ANY(%(modality)s)
+            """
+
+    if institution:
+        params['institution'] = institution.split(';')
+        filter_institution = 'AND i.name = ANY(%(institution)s)'
 
     if city:
         params['city'] = city.split(';')
@@ -317,9 +336,12 @@ def search_in_name(
             LEFT JOIN openalex_researcher opr ON opr.researcher_id = r.id
             {join_program}
             {join_departament}
+            {join_modality}
         WHERE 1 = 1
             {filter_program}
+            {filter_modality}
             {filter_city}
+            {filter_institution}
             {filter_name}
             {filter_area}
             {filter_departament}
