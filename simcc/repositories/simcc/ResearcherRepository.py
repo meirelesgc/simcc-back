@@ -242,9 +242,16 @@ def search_in_name(
     dep_id: UUID,
     page: int = None,
     lenght: int = None,
+    area: str = None,
 ):
     params = {}
 
+    filter_area = str()
+    if area:
+        params['area'] = area.replace(' ', '_').split(';')
+        filter_area = """
+            AND STRING_TO_ARRAY(REPLACE(rp.great_area, ' ', '_'), ';') && %(area)s
+        """
     join_departament = str()
     filter_departament = str()
     if dep_id:
@@ -292,6 +299,7 @@ def search_in_name(
         WHERE 1 = 1
             {filter_program}
             {filter_name}
+            {filter_area}
             {filter_departament}
         ORDER BY
             among DESC

@@ -63,9 +63,10 @@ def list_researchers(
     dep_id: str = None,
     page: int = None,
     lenght: int = None,
+    area: str = None,
 ):
     return ResearcherService.serch_in_name(
-        name, graduate_program_id, dep_id, page, lenght
+        name, graduate_program_id, dep_id, page, lenght, area
     )
 
 
