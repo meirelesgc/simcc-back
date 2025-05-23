@@ -104,9 +104,18 @@ def serch_in_name(
     page: int,
     lenght: int,
     area: str,
+    graduate_program: str,
+    city: str,
 ) -> list[Researcher]:
     researchers = ResearcherRepository.search_in_name(
-        name, graduate_program_id, dep_id, page, lenght, area
+        name,
+        graduate_program_id,
+        dep_id,
+        page,
+        lenght,
+        area,
+        graduate_program,
+        city,
     )
     if not researchers:
         return []

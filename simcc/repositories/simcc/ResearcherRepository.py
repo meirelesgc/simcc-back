@@ -243,15 +243,38 @@ def search_in_name(
     page: int = None,
     lenght: int = None,
     area: str = None,
+    graduate_program: str = None,
+    city: str = None,
 ):
     params = {}
-
+    distinct = str()
     filter_area = str()
+    filter_city = str()
+
+    if city:
+        params['city'] = city.split(';')
+        filter_city = 'AND rp.city = ANY(%(city)s)'
+
     if area:
         params['area'] = area.replace(' ', '_').split(';')
         filter_area = """
             AND STRING_TO_ARRAY(REPLACE(rp.great_area, ' ', '_'), ';') && %(area)s
         """
+
+    join_program = str()
+    filter_program = str()
+
+    if graduate_program:
+        distinct = 'DISTINCT'
+        params['graduate_program'] = graduate_program.split(';')
+        join_program = """
+            INNER JOIN graduate_program_researcher gpr
+                ON gpr.researcher_id = r.id
+            INNER JOIN graduate_program gp
+                ON gpr.graduate_program_id = gp.graduate_program_id
+            """
+        filter_program = 'AND gp.name = ANY(%(graduate_program)s)'
+
     join_departament = str()
     filter_departament = str()
     if dep_id:
@@ -270,8 +293,6 @@ def search_in_name(
     if page and lenght:
         filter_pagination = pagination(page, lenght)
 
-    join_program = str()
-    filter_program = str()
     if graduate_program_id:
         params['graduate_program_id'] = graduate_program_id
         join_program = """
@@ -281,7 +302,7 @@ def search_in_name(
         filter_program = 'AND gpr.graduate_program_id = %(graduate_program_id)s'
 
     SCRIPT_SQL = f"""
-        SELECT
+        SELECT {distinct}
             r.id, r.name, r.lattes_id, r.lattes_10_id, r.abstract, r.orcid,
             r.graduation, r.last_update AS lattes_update,
             REPLACE(rp.great_area, '_', ' ') AS area, rp.city,
@@ -298,6 +319,7 @@ def search_in_name(
             {join_departament}
         WHERE 1 = 1
             {filter_program}
+            {filter_city}
             {filter_name}
             {filter_area}
             {filter_departament}
@@ -305,6 +327,8 @@ def search_in_name(
             among DESC
             {filter_pagination};
         """
+
+    print(SCRIPT_SQL, params)
     result = conn.select(SCRIPT_SQL, params)
     return result
 
