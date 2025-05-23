@@ -11,7 +11,7 @@ async def get_researcher_filter(conn):
     filters = {}
 
     SCRIPT_SQL = """
-        SELECT ARRAY_AGG(DISTINCT gae.name) as area
+        SELECT ARRAY_AGG(DISTINCT REPLACE(gae.name, '_', ' ')) as area
         FROM great_area_expertise gae
             INNER JOIN researcher_area_expertise r
                 ON gae.id = r.great_area_expertise_id;
