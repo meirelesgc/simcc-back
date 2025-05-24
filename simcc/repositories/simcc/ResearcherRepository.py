@@ -542,7 +542,6 @@ def search_in_articles(
             among DESC
             {filter_pagination};
         """
-    print(SCRIPT_SQL, params)
     result = conn.select(SCRIPT_SQL, params)
     return result
 
