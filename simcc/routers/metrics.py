@@ -255,8 +255,24 @@ def software_metrics(
     term: str = None,
     year: int = 2020,
     distinct: int = 1,
+    institution: str = None,
+    graduate_program: str = None,
+    city: str = None,
+    area: str = None,
+    modality: str = None,
+    graduation: str = None,
 ):
     metrics = ProductionService.list_software_metrics(
-        term, None, None, year, distinct
+        term,
+        None,
+        None,
+        year,
+        distinct,
+        institution,
+        graduate_program,
+        city,
+        area,
+        modality,
+        graduation,
     )
     return metrics
