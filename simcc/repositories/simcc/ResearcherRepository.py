@@ -247,15 +247,21 @@ def search_in_name(
     city: str = None,
     institution: str = None,
     modality: str = None,
+    graduation: str = None,
 ):
     params = {}
     distinct = str()
     filter_area = str()
     filter_city = str()
     filter_institution = str()
-
     join_modality = str()
     filter_modality = str()
+    filter_graduation = str()
+
+    if graduation:
+        params['graduation'] = graduation.split(';')
+        filter_graduation = 'AND r.graduation = ANY(%(graduation)s)'
+
     if modality:
         params['modality'] = modality.split(';')
         join_modality = """
@@ -342,6 +348,7 @@ def search_in_name(
             {filter_modality}
             {filter_city}
             {filter_institution}
+            {filter_graduation}
             {filter_name}
             {filter_area}
             {filter_departament}

@@ -68,6 +68,7 @@ def list_researchers(
     city: str = None,
     institution: str = None,
     modality: str = None,
+    graduation: str = None,
 ):
     return ResearcherService.serch_in_name(
         name,
@@ -80,6 +81,7 @@ def list_researchers(
         city,
         institution,
         modality,
+        graduation,
     )
 
 
