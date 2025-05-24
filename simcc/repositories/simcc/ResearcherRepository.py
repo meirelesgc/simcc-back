@@ -347,6 +347,7 @@ async def get_city_filter(conn):
     sql = """
         SELECT ARRAY_AGG(DISTINCT bp.city) AS city
         FROM researcher_production bp
+        WHERE bp.city IS NOT NULL;
     """
     result = await conn.select(sql, one=True)
     return result.get('city')
