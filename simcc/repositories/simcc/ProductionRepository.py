@@ -15,26 +15,28 @@ def get_book_metrics(
     researcher_id: UUID,
     program_id: UUID,
     year: int,
-    distinct: int = 0,
+    distinct: int = 1,
+    institution: str = None,
+    graduate_program: str = None,
+    city: str = None,
+    area: str = None,
+    modality: str = None,
+    graduation: str = None,
 ):
     params = {}
-
-    filter_distinct = str()
-    if distinct:
-        filter_distinct = 'DISTINCT'
-
-    term_filter = str()
+    filter_distinct = 'DISTINCT' if distinct else ''
+    term_filter = ''
     if term:
-        term_filter, term = webseatch_filter('bp.title', term)
-        params |= term
+        term_filter, terms_dict = webseatch_filter('bp.title', term)
+        params.update(terms_dict)
 
-    filter_id = str()
+    filter_id = ''
     if researcher_id:
         params['researcher_id'] = researcher_id
         filter_id = 'AND bp.researcher_id = %(researcher_id)s'
 
-    program_join = str()
-    program_filter = str()
+    program_join = ''
+    program_filter = ''
     if program_id:
         params['program_id'] = program_id
         program_join = """
@@ -45,25 +47,80 @@ def get_book_metrics(
             AND gpr.type_ = 'PERMANENTE'
             """
 
-    year_filter = str()
+    year_filter = ''
     if year:
         params['year'] = year
         year_filter = 'AND bp.year::int >= %(year)s'
+
+    # Novos filtros
+    filter_institution = ''
+    if institution:
+        params['institution'] = institution.split(';')
+        filter_institution = 'AND i.name = ANY(%(institution)s)'
+
+    join_graduate_program = ''
+    filter_graduate_program = ''
+    if graduate_program:
+        params['graduate_program'] = graduate_program.split(';')
+        join_graduate_program = """
+            INNER JOIN graduate_program_researcher gpr_gp
+                ON gpr_gp.researcher_id = r.id
+            INNER JOIN graduate_program gp
+                ON gpr_gp.graduate_program_id = gp.graduate_program_id
+            """
+        filter_graduate_program = 'AND gp.name = ANY(%(graduate_program)s)'
+
+    filter_city = ''
+    if city:
+        params['city'] = city.split(';')
+        filter_city = 'AND rp.city = ANY(%(city)s)'
+
+    filter_area = ''
+    if area:
+        params['area'] = area.replace(' ', '_').split(';')
+        filter_area = """
+            AND STRING_TO_ARRAY(REPLACE(rp.great_area, ' ', '_'), ';') && %(area)s
+            """
+
+    join_modality = ''
+    filter_modality = ''
+    if modality:
+        params['modality'] = modality.split(';')
+        join_modality = """
+            INNER JOIN foment f
+                ON f.researcher_id = r.id
+            """
+        filter_modality = 'AND modality_name = ANY(%(modality)s)'
+
+    filter_graduation = ''
+    if graduation:
+        params['graduation'] = graduation.split(';')
+        filter_graduation = 'AND r.graduation = ANY(%(graduation)s)'
 
     SCRIPT_SQL = f"""
         SELECT bp.year, COUNT({filter_distinct} bp.title) AS among
         FROM researcher r
             LEFT JOIN bibliographic_production bp ON bp.researcher_id = r.id
+            LEFT JOIN institution i ON i.id = r.institution_id  -- Adicionado para filtro de instituição
+            LEFT JOIN researcher_production rp ON rp.researcher_id = r.id -- Adicionado para filtros de cidade e área
             {program_join}
+            {join_graduate_program}
+            {join_modality}
         WHERE 1 = 1
             AND type = 'BOOK'
             {term_filter}
             {program_filter}
             {year_filter}
             {filter_id}
+            {filter_institution}
+            {filter_graduate_program}
+            {filter_city}
+            {filter_area}
+            {filter_modality}
+            {filter_graduation}
         GROUP BY
-            bp.year;
-            """
+            bp.year
+        """
     result = conn.select(SCRIPT_SQL, params)
     return result
 

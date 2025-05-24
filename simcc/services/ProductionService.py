@@ -20,10 +20,26 @@ def get_book_metrics(
     researcher_id: UUID,
     program_id: UUID,
     year: int,
-    distinct: int = 0,
+    distinct: int = 1,
+    institution: str = None,
+    graduate_program: str = None,
+    city: str = None,
+    area: str = None,
+    modality: str = None,
+    graduation: str = None,
 ):
     return ProductionRepository.get_book_metrics(
-        term, researcher_id, program_id, year, distinct
+        term,
+        researcher_id,
+        program_id,
+        year,
+        distinct,
+        institution,
+        graduate_program,
+        city,
+        area,
+        modality,
+        graduation,
     )
 
 

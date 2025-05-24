@@ -343,10 +343,8 @@ async def get_researcher_filter(conn):
     filters['graduation'] = filters['graduation'].get('graduation')
 
     SCRIPT_SQL = """
-        SELECT ARRAY_AGG(DISTINCT city.name) AS city
-        FROM researcher
-        INNER JOIN city
-            ON city.id = researcher.city_id;
+        SELECT ARRAY_AGG(DISTINCT bp.city) AS city
+        FROM researcher_production bp
     """
     filters['city'] = await conn.select(SCRIPT_SQL, one=True)
     filters['city'] = filters['city'].get('city')
@@ -525,6 +523,7 @@ def search_in_articles(
             among DESC
             {filter_pagination};
         """
+    print(SCRIPT_SQL, params)
     result = conn.select(SCRIPT_SQL, params)
     return result
 
