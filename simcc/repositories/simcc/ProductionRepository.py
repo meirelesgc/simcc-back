@@ -142,7 +142,6 @@ def get_book_metrics(
         GROUP BY
             bp.year;
             """
-    print(SCRIPT_SQL, params)
     result = conn.select(SCRIPT_SQL, params)
     return result
 
@@ -220,26 +219,27 @@ async def get_researcher_metrics(
         'PATENT',
         'AREA',
         'EVENT',
-    ] = 'ABSTRACT',
+    ] = None,
     distinct: int = 1,
     institution: str = None,
+    graduate_program: str = None,
+    city: str = None,
+    area: str = None,
+    modality: str = None,
+    graduation: str = None,
 ):
     params = {}
-    join_filter = ''
-    type_filter = ''
-    year_filter = ''
+    join_filter = str()
+    type_filter = str()
+    year_filter = str()
+    join_extra = str()
+    where_extra = str()
 
     match type:
         case 'ABSTRACT':
             type_filter, term_params = webseatch_filter('r.abstract', term)
             params |= term_params
-        case (
-            'BOOK'
-            | 'BOOK_CHAPTER'
-            | 'ARTICLE'
-            | 'WORK_IN_EVENT'
-            | 'TEXT_IN_NEWSPAPER_MAGAZINE'
-        ):
+        case ('BOOK' | 'BOOK_CHAPTER' | 'ARTICLE' | 'WORK_IN_EVENT' | 'TEXT_IN_NEWSPAPER_MAGAZINE'):  # fmt: skip
             join_filter = f"""
                 INNER JOIN bibliographic_production bp
                     ON bp.researcher_id = r.id AND bp.type = '{type}'
@@ -268,8 +268,6 @@ async def get_researcher_metrics(
             year_filter = 'AND e.year::int >= %(year)s'
             params |= term_params
             params['year'] = year
-        case _:
-            ...
 
     filter_institution = ''
     if institution:
@@ -280,6 +278,44 @@ async def get_researcher_metrics(
             )
         """
 
+    if graduate_program:
+        params['graduate_program'] = graduate_program.split(';')
+        join_extra += """
+            INNER JOIN graduate_program_researcher gpr ON gpr.researcher_id = r.id
+            INNER JOIN graduate_program gp ON gpr.graduate_program_id = gp.graduate_program_id
+        """
+        where_extra += """
+            AND gp.name = ANY(%(graduate_program)s)
+            AND gpr.type_ = 'PERMANENTE'
+        """
+
+    if city:
+        params['city'] = city.split(';')
+        join_extra += """
+            LEFT JOIN researcher_production rp_city ON rp_city.researcher_id = r.id
+        """
+        where_extra += 'AND rp_city.city = ANY(%(city)s)'
+
+    if area:
+        params['area'] = area.replace(' ', '_').split(';')
+        join_extra += """
+            LEFT JOIN researcher_production rp_area ON rp_area.researcher_id = r.id
+        """
+        where_extra += """
+            AND STRING_TO_ARRAY(REPLACE(rp_area.great_area, ' ', '_'), ';') && %(area)s
+        """
+
+    if modality:
+        params['modality'] = modality.split(';')
+        join_extra += """
+            INNER JOIN foment f ON f.researcher_id = r.id
+        """
+        where_extra += 'AND f.modality_name = ANY(%(modality)s)'
+
+    if graduation:
+        params['graduation'] = graduation.split(';')
+        where_extra += 'AND r.graduation = ANY(%(graduation)s)'
+
     SCRIPT_SQL = f"""
         SELECT COUNT(DISTINCT r.id) AS researcher_count,
                COUNT(DISTINCT r.orcid) AS orcid_count,
@@ -287,10 +323,12 @@ async def get_researcher_metrics(
         FROM researcher r
         LEFT JOIN openalex_researcher opr ON opr.researcher_id = r.id
         {join_filter}
+        {join_extra}
         WHERE 1 = 1
             {type_filter}
             {filter_institution}
             {year_filter}
+            {where_extra}
     """
 
     return await conn.select(SCRIPT_SQL, params)

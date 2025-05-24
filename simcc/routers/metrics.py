@@ -49,9 +49,25 @@ def get_book_chapter_metrics(
     researcher_id: UUID = None,
     year: int = 2020,
     distinct: int = 1,
+    institution: str = None,
+    graduate_program: str = None,
+    city: str = None,
+    area: str = None,
+    modality: str = None,
+    graduation: str = None,
 ):
     return ProductionService.get_book_chapter_metrics(
-        term, researcher_id, None, year, distinct
+        term,
+        researcher_id,
+        None,
+        year,
+        distinct,
+        institution,
+        graduate_program,
+        city,
+        area,
+        modality,
+        graduation,
     )
 
 
@@ -75,10 +91,25 @@ async def get_researcher_metrics(
     ] = None,
     distinct: int = 1,
     institution: str = None,
+    graduate_program: str = None,
+    city: str = None,
+    area: str = None,
+    modality: str = None,
+    graduation: str = None,
     conn: Connection = Depends(get_conn),
 ):
     return await ProductionService.get_researcher_metrics(
-        conn, term, year, type, distinct, institution
+        conn,
+        term,
+        year,
+        type,
+        distinct,
+        institution,
+        graduate_program,
+        city,
+        area,
+        modality,
+        graduation,
     )
 
 
