@@ -214,8 +214,26 @@ def guidance_metrics(
     response_model=list[AcademicMetric],
     tags=['Metrics'],
 )
-def academic_degree_metrics(year: int = 2020):
-    metrics = ProductionService.list_academic_degree_metrics(None, None, year)
+def academic_degree_metrics(
+    year: int = 2020,
+    institution: str = None,
+    graduate_program: str = None,
+    city: str = None,
+    area: str = None,
+    modality: str = None,
+    graduation: str = None,
+):
+    metrics = ProductionService.list_academic_degree_metrics(
+        None,
+        None,
+        year,
+        institution,
+        graduate_program,
+        city,
+        area,
+        modality,
+        graduation,
+    )
     return metrics
 
 

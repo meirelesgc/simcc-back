@@ -741,7 +741,15 @@ def list_guidance_metrics(
 
 
 def list_academic_degree_metrics(
-    researcher_id: UUID, program_id: UUID, year: int
+    researcher_id: UUID,
+    program_id: UUID,
+    year: int,
+    institution: str = None,
+    graduate_program: str = None,
+    city: str = None,
+    area: str = None,
+    modality: str = None,
+    graduation: str = None,
 ):
     params = {}
 
@@ -755,40 +763,128 @@ def list_academic_degree_metrics(
         params['year'] = year
         filter_year = """
             AND (e.education_start >= %(year)s OR e.education_end >= %(year)s)
-            """
+        """
 
     filter_program = str()
     if program_id:
         params['program_id'] = program_id
-
         filter_program = """
-             AND e.researcher_id IN
-             (SELECT researcher_id
-             FROM graduate_program_researcher
-             WHERE graduate_program_id = %(program_id)s)
-             """
+            AND e.researcher_id IN (
+                SELECT researcher_id
+                FROM graduate_program_researcher
+                WHERE graduate_program_id = %(program_id)s
+            )
+        """
+
+    join_graduate_program = str()
+    filter_graduate_program = str()
+    if graduate_program:
+        params['graduate_program'] = graduate_program.split(';')
+        join_graduate_program = """
+            INNER JOIN graduate_program_researcher gpg ON gpg.researcher_id = e.researcher_id
+            INNER JOIN graduate_program gp ON gpg.graduate_program_id = gp.graduate_program_id
+        """
+        filter_graduate_program = """
+            AND gp.name = ANY(%(graduate_program)s)
+            AND gpg.type_ = 'PERMANENTE'
+        """
+
+    join_institution = str()
+    filter_institution = str()
+    if institution:
+        params['institution'] = institution + '%'
+        join_institution = """
+            LEFT JOIN researcher r ON r.id = e.researcher_id
+            LEFT JOIN institution i ON r.institution_id = i.id
+        """
+        filter_institution = 'AND i.name ILIKE %(institution)s'
+
+    join_city = str()
+    filter_city = str()
+    if city:
+        params['city'] = city.split(';')
+        join_city = """
+            LEFT JOIN researcher_production rp ON rp.researcher_id = e.researcher_id
+        """
+        filter_city = 'AND rp.city = ANY(%(city)s)'
+
+    join_area = str()
+    filter_area = str()
+    if area:
+        params['area'] = area.replace(' ', '_').split(';')
+        join_area = """
+            LEFT JOIN researcher_production ra ON ra.researcher_id = e.researcher_id
+        """
+        filter_area = """
+            AND STRING_TO_ARRAY(REPLACE(ra.great_area, ' ', '_'), ';') && %(area)s
+        """
+
+    join_modality = str()
+    filter_modality = str()
+    if modality:
+        params['modality'] = modality.split(';')
+        join_modality = """
+            INNER JOIN foment f ON f.researcher_id = e.researcher_id
+        """
+        filter_modality = 'AND f.modality_name = ANY(%(modality)s)'
+
+    join_graduation = str()
+    filter_graduation = str()
+    if graduation:
+        join_graduation = """
+            LEFT JOIN researcher rg ON rg.id = e.researcher_id
+        """
+        params['graduation'] = graduation.split(';')
+        filter_graduation = 'AND rg.graduation = ANY(%(graduation)s)'
 
     SCRIPT_SQL = f"""
-        SELECT e.education_start AS year, COUNT(e.degree) AS among,
-            REPLACE(degree || '-START', '-', '_') as degree
+        SELECT e.education_start AS year,
+            COUNT(e.degree) AS among,
+            REPLACE(degree || '-START', '-', '_') AS degree
         FROM education e
+            {join_graduate_program}
+            {join_institution}
+            {join_city}
+            {join_area}
+            {join_modality}
+            {join_graduation}
         WHERE 1 = 1
             {filter_year}
             {filter_id}
             {filter_program}
+            {filter_graduate_program}
+            {filter_institution}
+            {filter_city}
+            {filter_area}
+            {filter_modality}
+            {filter_graduation}
         GROUP BY year, degree
 
         UNION
 
-        SELECT e.education_end AS year, COUNT(e.degree) AS among,
-            REPLACE(degree || '-END', '-', '_') as degree
+        SELECT e.education_end AS year,
+            COUNT(e.degree) AS among,
+            REPLACE(degree || '-END', '-', '_') AS degree
         FROM education e
+            {join_graduate_program}
+            {join_institution}
+            {join_city}
+            {join_area}
+            {join_modality}
+            {join_graduation}
         WHERE 1 = 1
             {filter_year}
             {filter_id}
             {filter_program}
+            {filter_graduate_program}
+            {filter_institution}
+            {filter_city}
+            {filter_area}
+            {filter_modality}
+            {filter_graduation}
         GROUP BY year, degree
-        """
+    """
+
     result = conn.select(SCRIPT_SQL, params)
     return result
 

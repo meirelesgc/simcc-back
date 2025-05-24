@@ -242,10 +242,26 @@ def list_guidance_metrics(
 
 
 def list_academic_degree_metrics(
-    researcher_id: UUID, program_id: UUID, year: int
+    researcher_id: UUID,
+    program_id: UUID,
+    year: int,
+    institution: str = None,
+    graduate_program: str = None,
+    city: str = None,
+    area: str = None,
+    modality: str = None,
+    graduation: str = None,
 ) -> list[AcademicMetric]:
     degree_metrics = ProductionRepository.list_academic_degree_metrics(
-        researcher_id, program_id, year
+        researcher_id,
+        program_id,
+        year,
+        institution,
+        graduate_program,
+        city,
+        area,
+        modality,
+        graduation,
     )
     if not degree_metrics:
         return []
