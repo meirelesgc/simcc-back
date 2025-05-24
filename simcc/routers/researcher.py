@@ -53,6 +53,34 @@ def search_in_participation_event(
 
 
 @router.get(
+    '/researcherArea_specialty',
+    response_model=list[Researcher],
+)
+def search_in_area_specialty(
+    area_specialty: str = None,
+    graduate_program_id: UUID | str = None,
+    university: str = None,
+    page: int = None,
+    lenght: int = None,
+    city: str = None,
+    area: str = None,
+    modality: str = None,
+    graduation: str = None,
+):
+    return ResearcherService.search_in_area_specialty(
+        area_specialty,
+        graduate_program_id,
+        university,
+        page,
+        lenght,
+        city,
+        area,
+        modality,
+        graduation,
+    )
+
+
+@router.get(
     '/researcherBook',
     response_model=list[Researcher],
 )

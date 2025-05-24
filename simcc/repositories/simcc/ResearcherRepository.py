@@ -7,6 +7,102 @@ from simcc.repositories.util import names_filter, pagination, webseatch_filter
 from simcc.schemas.Researcher import ResearcherArticleProduction
 
 
+def search_in_area_specialty(
+    term: str = None,
+    graduate_program_id: UUID | str = None,
+    university: str = None,
+    page: int = None,
+    lenght: int = None,
+    city: str = None,
+    area: str = None,
+    modality: str = None,
+    graduation: str = None,
+):
+    params = {}
+    filter_terms = str()
+    filter_graduation = str()
+    filter_pagination = str()
+
+    if graduation:
+        params['graduation'] = graduation.split(';')
+        filter_graduation = 'AND r.graduation = ANY(%(graduation)s)'
+
+    if term:
+        filter_terms, term = webseatch_filter('rp.area_specialty', term)
+        params |= term
+
+    if page and lenght:
+        filter_pagination = pagination(page, lenght)
+
+    join_modality = str()
+    filter_modality = str()
+    if modality:
+        params['modality'] = modality.split(';')
+        join_modality = """
+            INNER JOIN foment f
+                ON f.researcher_id = r.id
+        """
+        filter_modality = 'AND modality_name = ANY(%(modality)s)'
+
+    join_program = str()
+    filter_program = str()
+    if graduate_program_id and graduate_program_id != '0':
+        params['graduate_program_id'] = graduate_program_id
+        join_program = """
+            INNER JOIN graduate_program_researcher gpr
+                ON gpr.researcher_id = r.id
+        """
+        filter_program = 'AND gpr.graduate_program_id = %(graduate_program_id)s'
+
+    filter_institution = str()
+    if university:
+        params['institution'] = university
+        filter_institution = 'AND i.name = %(institution)s'
+
+    filter_city = str()
+    if city:
+        params['city'] = city.split(';')
+        filter_city = 'AND rp.city = ANY(%(city)s)'
+
+    filter_area = str()
+    if area:
+        params['area'] = area.replace(' ', '_').split(';')
+        filter_area = """
+            AND STRING_TO_ARRAY(REPLACE(rp.great_area, ' ', '_'), ';') && %(area)s
+        """
+
+    SCRIPT_SQL = f"""
+        SELECT
+            r.id, r.name, r.lattes_id, r.lattes_10_id, r.abstract, r.orcid,
+            r.graduation, r.last_update AS lattes_update,
+            REPLACE(rp.great_area, '_', ' ') AS area, rp.city,
+            i.image AS image_university, i.name AS university,
+            1 AS among, rp.articles, rp.book_chapters, rp.book, rp.patent,
+            rp.software, rp.brand, opr.h_index, opr.relevance_score,
+            opr.works_count, opr.cited_by_count, opr.i10_index, opr.scopus,
+            opr.openalex, r.classification, r.status, r.institution_id
+        FROM researcher r
+            LEFT JOIN institution i ON i.id = r.institution_id
+            LEFT JOIN researcher_production rp ON rp.researcher_id = r.id
+            LEFT JOIN openalex_researcher opr ON opr.researcher_id = r.id
+            {join_modality}
+            {join_program}
+        WHERE 1 = 1
+            {filter_graduation}
+            {filter_modality}
+            {filter_terms}
+            {filter_program}
+            {filter_institution}
+            {filter_city}
+            {filter_area}
+        ORDER BY
+            among DESC
+            {filter_pagination};
+    """
+    result = conn.select(SCRIPT_SQL, params)
+    return result
+
+
 def search_in_participation_event(
     term: str = None,
     graduate_program_id: UUID | str = None,

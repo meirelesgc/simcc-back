@@ -11,6 +11,38 @@ async def get_researcher_filter(conn):
     return await ResearcherRepository.get_researcher_filter(conn)
 
 
+def search_in_area_specialty(
+    term: str = None,
+    graduate_program_id: UUID | str = None,
+    university: str = None,
+    page: int = None,
+    lenght: int = None,
+    city: str = None,
+    area: str = None,
+    modality: str = None,
+    graduation: str = None,
+):
+    researchers = ResearcherRepository.search_in_area_specialty(
+        term,
+        graduate_program_id,
+        university,
+        page,
+        lenght,
+        city,
+        area,
+        modality,
+        graduation,
+    )
+    if not researchers:
+        return []
+
+    researchers = pd.DataFrame(researchers)
+    researchers = merge_researcher_data(researchers)
+
+    researchers = researchers.replace(nan, '')
+    return researchers.to_dict(orient='records')
+
+
 def search_in_participation_event(
     term: str = None,
     graduate_program_id: UUID | str = None,
