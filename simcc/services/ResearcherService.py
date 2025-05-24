@@ -43,9 +43,21 @@ def search_in_articles(
     university: str = None,
     page: int = None,
     lenght: int = None,
+    city: str = None,
+    area: str = None,
+    modality: str = None,
+    graduation: str = None,
 ) -> list[Researcher]:
     researchers = ResearcherRepository.search_in_articles(
-        terms, graduate_program_id, university, page, lenght
+        terms,
+        graduate_program_id,
+        university,
+        page,
+        lenght,
+        city,
+        area,
+        modality,
+        graduation,
     )
     if not researchers:
         return []
@@ -63,9 +75,21 @@ def search_in_abstracts(
     university: str,
     page: int = None,
     lenght: int = None,
+    city: str = None,
+    area: str = None,
+    modality: str = None,
+    graduation: str = None,
 ) -> list[Researcher]:
     researchers = ResearcherRepository.search_in_abstracts(
-        terms, graduate_program_id, university, page, lenght
+        terms,
+        graduate_program_id,
+        university,
+        page,
+        lenght,
+        city,
+        area,
+        modality,
+        graduation,
     )
     if not researchers:
         return []

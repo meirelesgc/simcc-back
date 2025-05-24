@@ -116,6 +116,10 @@ def search_in_articles(
     university: str,
     page: int,
     lenght: int,
+    city: str = None,
+    area: str = None,
+    modality: str = None,
+    graduation: str = None,
 ):
     params = {}
 
@@ -140,8 +144,35 @@ def search_in_articles(
 
     filter_institution = str()
     if university:
-        params['institution']
+        params['institution'] = university
         filter_institution = 'AND i.name = %(institution)s'
+
+    filter_city = str()
+    if city:
+        params['city'] = city.split(';')
+        filter_city = 'AND rp.city = ANY(%(city)s)'
+
+    filter_area = str()
+    if area:
+        params['area'] = area.replace(' ', '_').split(';')
+        filter_area = """
+            AND STRING_TO_ARRAY(REPLACE(rp.great_area, ' ', '_'), ';') && %(area)s
+        """
+
+    join_modality = str()
+    filter_modality = str()
+    if modality:
+        params['modality'] = modality.split(';')
+        join_modality = """
+            INNER JOIN foment f
+                ON f.researcher_id = r.id
+            """
+        filter_modality = 'AND modality_name = ANY(%(modality)s)'
+
+    filter_graduation = str()
+    if graduation:
+        params['graduation'] = graduation.split(';')
+        filter_graduation = 'AND r.graduation = ANY(%(graduation)s)'
 
     SCRIPT_SQL = f"""
         SELECT
@@ -157,17 +188,23 @@ def search_in_articles(
             LEFT JOIN institution i ON i.id = r.institution_id
             LEFT JOIN researcher_production rp ON rp.researcher_id = r.id
             LEFT JOIN openalex_researcher opr ON opr.researcher_id = r.id
-            INNER JOIN
-                (SELECT bp.researcher_id, COUNT(*) AS among
+            {join_modality}
+            INNER JOIN (
+                SELECT bp.researcher_id, COUNT(*) AS among
                 FROM bibliographic_production bp
                 WHERE 1 = 1
                     AND TYPE = 'ARTICLE'
                     {filter_terms}
-                GROUP BY researcher_id) bp ON bp.researcher_id = r.id
+                GROUP BY researcher_id
+            ) bp ON bp.researcher_id = r.id
             {join_program}
         WHERE 1 = 1
             {filter_program}
             {filter_institution}
+            {filter_city}
+            {filter_area}
+            {filter_modality}
+            {filter_graduation}
         ORDER BY
             among DESC
             {filter_pagination};
@@ -182,6 +219,10 @@ def search_in_abstracts(
     university: str,
     page: int = None,
     lenght: int = None,
+    city: str = None,
+    area: str = None,
+    modality: str = None,
+    graduation: str = None,
 ):
     params = {}
 
@@ -206,8 +247,35 @@ def search_in_abstracts(
 
     filter_institution = str()
     if university:
-        params['institution']
+        params['institution'] = university
         filter_institution = 'AND i.name = %(institution)s'
+
+    filter_city = str()
+    if city:
+        params['city'] = city.split(';')
+        filter_city = 'AND rp.city = ANY(%(city)s)'
+
+    filter_area = str()
+    if area:
+        params['area'] = area.replace(' ', '_').split(';')
+        filter_area = """
+            AND STRING_TO_ARRAY(REPLACE(rp.great_area, ' ', '_'), ';') && %(area)s
+        """
+
+    join_modality = str()
+    filter_modality = str()
+    if modality:
+        params['modality'] = modality.split(';')
+        join_modality = """
+            INNER JOIN foment f
+                ON f.researcher_id = r.id
+            """
+        filter_modality = 'AND modality_name = ANY(%(modality)s)'
+
+    filter_graduation = str()
+    if graduation:
+        params['graduation'] = graduation.split(';')
+        filter_graduation = 'AND r.graduation = ANY(%(graduation)s)'
 
     SCRIPT_SQL = f"""
         SELECT
@@ -223,11 +291,16 @@ def search_in_abstracts(
             LEFT JOIN institution i ON i.id = r.institution_id
             LEFT JOIN researcher_production rp ON rp.researcher_id = r.id
             LEFT JOIN openalex_researcher opr ON opr.researcher_id = r.id
+            {join_modality}
             {join_program}
         WHERE 1 = 1
             {filter_terms}
             {filter_program}
             {filter_institution}
+            {filter_city}
+            {filter_area}
+            {filter_modality}
+            {filter_graduation}
         ORDER BY
             among DESC
             {filter_pagination};
@@ -357,7 +430,6 @@ def search_in_name(
             {filter_pagination};
         """
 
-    print(SCRIPT_SQL, params)
     result = conn.select(SCRIPT_SQL, params)
     return result
 

@@ -33,14 +33,34 @@ def search_in_abstract_or_article(
     university: str = None,
     page: int = None,
     lenght: int = None,
+    city: str = None,
+    area: str = None,
+    modality: str = None,
+    graduation: str = None,
 ):
     if type == 'ARTICLE':
         researchers = ResearcherService.search_in_articles(
-            terms, graduate_program_id, university, page, lenght
+            terms,
+            graduate_program_id,
+            university,
+            page,
+            lenght,
+            city,
+            area,
+            modality,
+            graduation,
         )
     elif type == 'ABSTRACT':
         researchers = ResearcherService.search_in_abstracts(
-            terms, graduate_program_id, university
+            terms,
+            graduate_program_id,
+            university,
+            page,
+            lenght,
+            city,
+            area,
+            modality,
+            graduation,
         )
     return researchers
 
