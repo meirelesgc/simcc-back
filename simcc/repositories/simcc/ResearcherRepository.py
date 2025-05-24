@@ -323,67 +323,85 @@ def search_in_book(
     return result
 
 
-async def get_researcher_filter(conn):
-    filters = {}
-
-    SCRIPT_SQL = """
+async def get_area_filter(conn):
+    sql = """
         SELECT ARRAY_AGG(DISTINCT REPLACE(gae.name, '_', ' ')) as area
         FROM great_area_expertise gae
             INNER JOIN researcher_area_expertise r
                 ON gae.id = r.great_area_expertise_id;
     """
-    filters['area'] = await conn.select(SCRIPT_SQL, one=True)
-    filters['area'] = filters['area'].get('area')
+    result = await conn.select(sql, one=True)
+    return result.get('area')
 
-    SCRIPT_SQL = """
+
+async def get_graduation_filter(conn):
+    sql = """
         SELECT ARRAY_AGG(DISTINCT graduation) AS graduation
         FROM researcher;
     """
-    filters['graduation'] = await conn.select(SCRIPT_SQL, one=True)
-    filters['graduation'] = filters['graduation'].get('graduation')
+    result = await conn.select(sql, one=True)
+    return result.get('graduation')
 
-    SCRIPT_SQL = """
+
+async def get_city_filter(conn):
+    sql = """
         SELECT ARRAY_AGG(DISTINCT bp.city) AS city
         FROM researcher_production bp
     """
-    filters['city'] = await conn.select(SCRIPT_SQL, one=True)
-    filters['city'] = filters['city'].get('city')
+    result = await conn.select(sql, one=True)
+    return result.get('city')
 
-    SCRIPT_SQL = """
+
+async def get_institution_filter(conn):
+    sql = """
         SELECT ARRAY_AGG(DISTINCT institution.name) AS institution
         FROM institution
         INNER JOIN researcher
             ON researcher.institution_id = institution.id;
     """
-    filters['institution'] = await conn.select(SCRIPT_SQL, one=True)
-    filters['institution'] = filters['institution'].get('institution')
+    result = await conn.select(sql, one=True)
+    return result.get('institution')
 
-    SCRIPT_SQL = """
+
+async def get_modality_filter(conn):
+    sql = """
         SELECT ARRAY_AGG(DISTINCT modality_name) AS modality
         FROM foment;
     """
-    filters['modality'] = await conn.select(SCRIPT_SQL, one=True)
-    filters['modality'] = filters['modality'].get('modality')
+    result = await conn.select(sql, one=True)
+    return result.get('modality')
 
-    SCRIPT_SQL = """
+
+async def get_graduate_program_filter(conn):
+    sql = """
         SELECT ARRAY_AGG(DISTINCT graduate_program.name) AS graduate_program
         FROM graduate_program
         INNER JOIN graduate_program_researcher
             ON graduate_program_researcher.graduate_program_id =
                graduate_program.graduate_program_id;
     """
-    filters['graduate_program'] = await conn.select(SCRIPT_SQL, one=True)
-    filters['graduate_program'] = filters['graduate_program'].get(
-        'graduate_program'
-    )
+    result = await conn.select(sql, one=True)
+    return result.get('graduate_program')
 
-    SCRIPT_SQL = """
+
+async def get_departament_filter(conn):
+    sql = """
         SELECT ARRAY_AGG(DISTINCT dep_nom) AS departament FROM ufmg.departament;
-        """
-    filters['departament'] = await conn.select(SCRIPT_SQL, one=True)
-    filters['departament'] = filters['departament'].get('departament')
+    """
+    result = await conn.select(sql, one=True)
+    return result.get('departament')
 
-    return filters
+
+async def get_researcher_filter(conn):
+    return {
+        'area': await get_area_filter(conn),
+        'graduation': await get_graduation_filter(conn),
+        'city': await get_city_filter(conn),
+        'institution': await get_institution_filter(conn),
+        'modality': await get_modality_filter(conn),
+        'graduate_program': await get_graduate_program_filter(conn),
+        'departament': await get_departament_filter(conn),
+    }
 
 
 def list_article_production(
