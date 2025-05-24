@@ -23,6 +23,66 @@ async def get_researcher_filter(
 
 
 @router.get(
+    '/researcherParticipationEvent',
+    response_model=list[Researcher],
+)
+def search_in_participation_event(
+    term: str = None,
+    graduate_program_id: UUID | str = None,
+    university: str = None,
+    type: str = None,
+    page: int = None,
+    lenght: int = None,
+    city: str = None,
+    area: str = None,
+    modality: str = None,
+    graduation: str = None,
+):
+    return ResearcherService.search_in_participation_event(
+        term,
+        graduate_program_id,
+        university,
+        type,
+        page,
+        lenght,
+        city,
+        area,
+        modality,
+        graduation,
+    )
+
+
+@router.get(
+    '/researcherBook',
+    response_model=list[Researcher],
+)
+def search_in_book(
+    term: str = None,
+    graduate_program_id: UUID | str = None,
+    university: str = None,
+    type: str = None,
+    page: int = None,
+    lenght: int = None,
+    city: str = None,
+    area: str = None,
+    modality: str = None,
+    graduation: str = None,
+):
+    return ResearcherService.search_in_book(
+        term,
+        graduate_program_id,
+        university,
+        type,
+        page,
+        lenght,
+        city,
+        area,
+        modality,
+        graduation,
+    )
+
+
+@router.get(
     '/researcher',
     response_model=list[Researcher],
 )
