@@ -848,6 +848,7 @@ def list_bibliographic_production(
     institution_id: UUID = None,
     page: int = None,
     lenght: int = None,
+    fresh: bool = False,
 ):
     params = {}
 
@@ -884,6 +885,10 @@ def list_bibliographic_production(
     if page and lenght:
         filter_pagination = pagination(page, lenght)
 
+    filter_fresh = str()
+    if fresh:
+        filter_fresh = 'created_at,'
+
     SCRIPT_SQL = f"""
         SELECT
             b.id AS id, title, year, type, doi, bpa.qualis,
@@ -893,7 +898,7 @@ def list_bibliographic_production(
             opa.article_institution, opa.authors, opa.authors_institution,
             COALESCE (opa.citations_count, 0) AS citations_count, bpa.issn,
             opa.keywords, opa.landing_page_url, opa.language, opa.pdf,
-            b.has_image, b.relevance
+            b.has_image, b.relevance, bpa.created_at AS created_at
         FROM bibliographic_production b
             LEFT JOIN bibliographic_production_article bpa
                 ON b.id = bpa.bibliographic_production_id
@@ -910,9 +915,10 @@ def list_bibliographic_production(
             {filter_type}
             {filter_qualis}
             {filter_institution}
-            {filter_pagination}
         ORDER BY
+            {filter_fresh}
             year DESC
+        {filter_pagination}
         """
     result = conn.select(SCRIPT_SQL, params)
     return result
@@ -1015,12 +1021,12 @@ def list_article_production(  # noqa: PLR0914
             {filter_terms}
             {filter_type}
             {filter_qualis}
-            {filter_pagination}
             {filter_program}
             {filter_university}
             {filter_dep}
         ORDER BY
             year DESC
+        {filter_pagination}
         """
     result = conn.select(SCRIPT_SQL, params)
     return result
@@ -1139,12 +1145,12 @@ def list_distinct_article_production(  # noqa: PLR0914
             {filter_terms}
             {filter_type}
             {filter_qualis}
-            {filter_pagination}
             {filter_program}
             {filter_university}
             {filter_dep}
         GROUP BY b.title
-        ORDER BY year DESC;
+        ORDER BY year DESC
+            {filter_pagination}
         """
     result = conn.select(SCRIPT_SQL, params)
     return result
@@ -1194,11 +1200,11 @@ def list_book_chapter(
                 ON r.id = bp.researcher_id
         WHERE 1 = 1
             {filter_id}
-            {filter_pagination}
             {filter_year}
             {filter_institution}
             {filter_terms}
-        ORDER BY bp.year DESC;
+        ORDER BY bp.year DESC
+        {filter_pagination};
         """
 
     result = conn.select(SCRIPT_SQL, params)

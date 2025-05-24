@@ -306,9 +306,18 @@ def list_bibliographic_production(
     institution_id: UUID | str = None,
     page: int = None,
     lenght: int = None,
+    fresh: bool = False,
 ) -> list[ArticleProduction]:
     production = ProductionRepository.list_bibliographic_production(
-        terms, researcher_id, year, type, qualis, institution_id, page, lenght
+        terms,
+        researcher_id,
+        year,
+        type,
+        qualis,
+        institution_id,
+        page,
+        lenght,
+        fresh,
     )
 
     if not production:

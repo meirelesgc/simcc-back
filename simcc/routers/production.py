@@ -134,6 +134,17 @@ def list_book_chapter_production(
 
 
 @router.get(
+    '/outstanding_articles',
+    response_model=list[ArticleProduction],
+)
+def list_outstanding_articles():
+    articles = ProductionService.list_bibliographic_production(
+        None, None, None, 'ARTICLE', None, None, 1, 20, True
+    )
+    return articles
+
+
+@router.get(
     '/bibliographic_production_researcher',
     response_model=list[ArticleProduction],
 )
