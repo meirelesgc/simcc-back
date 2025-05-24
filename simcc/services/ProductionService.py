@@ -99,9 +99,25 @@ def list_article_metrics(
     program_id: UUID,
     year: int,
     distinct: int = 1,
+    institution: str = None,
+    graduate_program: str = None,
+    city: str = None,
+    area: str = None,
+    modality: str = None,
+    graduation: str = None,
 ) -> list[ArticleMetric]:
     article_metrics = ProductionRepository.list_article_metrics(
-        term, researcher_id, program_id, year, distinct
+        term,
+        researcher_id,
+        program_id,
+        year,
+        distinct,
+        institution,
+        graduate_program,
+        city,
+        area,
+        modality,
+        graduation,
     )
     if not article_metrics:
         return []
@@ -137,9 +153,25 @@ def list_patent_metrics(
     program_id: UUID,
     year: int,
     distinct: int = 1,
+    institution: str = None,
+    graduate_program: str = None,
+    city: str = None,
+    area: str = None,
+    modality: str = None,
+    graduation: str = None,
 ) -> list[PatentMetric]:
     patent_metrics = ProductionRepository.list_patent_metrics(
-        term, researcher_id, program_id, year, distinct
+        term,
+        researcher_id,
+        program_id,
+        year,
+        distinct,
+        institution,
+        graduate_program,
+        city,
+        area,
+        modality,
+        graduation,
     )
     if not patent_metrics:
         return []

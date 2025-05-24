@@ -120,12 +120,27 @@ async def get_researcher_metrics(
 )
 def article_metrics(
     term: str = None,
-    program_id: UUID = None,
     year: int = 2020,
     distinct: int = 1,
+    institution: str = None,
+    graduate_program: str = None,
+    city: str = None,
+    area: str = None,
+    modality: str = None,
+    graduation: str = None,
 ):
     metrics = ProductionService.list_article_metrics(
-        term, None, program_id, year, distinct
+        term,
+        None,
+        None,
+        year,
+        distinct,
+        institution,
+        graduate_program,
+        city,
+        area,
+        modality,
+        graduation,
     )
     return metrics
 
@@ -137,12 +152,28 @@ def article_metrics(
 )
 def article_metrics_researcher(
     term: str = None,
-    researcher_id: UUID = None,
     year: int = 2020,
+    researcher_id: UUID = None,
     distinct: int = 1,
+    institution: str = None,
+    graduate_program: str = None,
+    city: str = None,
+    area: str = None,
+    modality: str = None,
+    graduation: str = None,
 ):
     metrics = ProductionService.list_article_metrics(
-        term, researcher_id, None, year, distinct
+        term,
+        researcher_id,
+        None,
+        year,
+        distinct,
+        institution,
+        graduate_program,
+        city,
+        area,
+        modality,
+        graduation,
     )
     return metrics
 
@@ -154,12 +185,28 @@ def article_metrics_researcher(
 )
 def article_metrics_graduate_program(
     term: str = None,
-    program_id: UUID = None,
     year: int = 2020,
+    graduate_program_id: UUID = None,
     distinct: int = 1,
+    institution: str = None,
+    graduate_program: str = None,
+    city: str = None,
+    area: str = None,
+    modality: str = None,
+    graduation: str = None,
 ):
     metrics = ProductionService.list_article_metrics(
-        term, None, program_id, year
+        term,
+        None,
+        graduate_program_id,
+        year,
+        distinct,
+        institution,
+        graduate_program,
+        city,
+        area,
+        modality,
+        graduation,
     )
     return metrics
 
@@ -173,9 +220,25 @@ def patent_metrics(
     term: str = None,
     year: int = 2020,
     distinct: int = 1,
+    institution: str = None,
+    graduate_program: str = None,
+    city: str = None,
+    area: str = None,
+    modality: str = None,
+    graduation: str = None,
 ):
     metrics = ProductionService.list_patent_metrics(
-        term, None, None, year, distinct
+        term,
+        None,
+        None,
+        year,
+        distinct,
+        institution,
+        graduate_program,
+        city,
+        area,
+        modality,
+        graduation,
     )
     return metrics
 
