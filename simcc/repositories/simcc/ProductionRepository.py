@@ -314,6 +314,10 @@ def get_book_chapter_metrics(
 async def get_researcher_metrics(
     conn: Connection,
     term: str = None,
+    researcher_id: UUID = None,
+    graduate_program_id: UUID = None,
+    dep_id: str = None,
+    dep: str = None,
     year: int = 2020,
     type: Literal[
         'BOOK',
@@ -340,6 +344,8 @@ async def get_researcher_metrics(
     year_filter = str()
     join_extra = str()
     where_extra = str()
+    join_program = str()
+    filter_program = str()
 
     match type:
         case 'ABSTRACT':
@@ -374,6 +380,47 @@ async def get_researcher_metrics(
             year_filter = 'AND e.year::int >= %(year)s'
             params |= term_params
             params['year'] = year
+
+    join_dep = str()
+    filter_dep = str()
+    if dep_id:
+        params['dep_id'] = dep_id.split(';')
+        join_dep = """
+            INNER JOIN ufmg.departament_researcher dpr
+                ON dpr.researcher_id = r.id
+            INNER JOIN ufmg.departament dp
+                ON dp.dep_id = dpr.dep_id
+            """
+        filter_dep = """
+            AND dp.dep_id = ANY(%(dep_id)s)
+            """
+
+    if graduate_program_id:
+        params['program_id'] = graduate_program_id
+        join_program = """
+            LEFT JOIN graduate_program_researcher gpr ON gpr.researcher_id = r.id
+            """
+        filter_program = """
+            AND gpr.graduate_program_id = %(program_id)s
+            AND gpr.type_ = 'PERMANENTE'
+            """
+
+    filter_id = str()
+    if researcher_id:
+        params['researcher_id'] = researcher_id
+        filter_id = 'AND r.id = %(researcher_id)s'
+
+    if dep:
+        params['dep'] = dep.split(';')
+        join_dep = """
+            INNER JOIN ufmg.departament_researcher dpr
+                ON dpr.researcher_id = r.id
+            INNER JOIN ufmg.departament dp
+                ON dp.dep_id = dpr.dep_id
+            """
+        filter_dep = """
+            AND dp.dep_nom = ANY(%(dep)s)
+            """
 
     filter_institution = ''
     if institution:
@@ -429,9 +476,14 @@ async def get_researcher_metrics(
         FROM researcher r
         LEFT JOIN openalex_researcher opr ON opr.researcher_id = r.id
         {join_filter}
+        {join_dep}
         {join_extra}
+        {join_program}
         WHERE 1 = 1
             {type_filter}
+            {filter_program}
+            {filter_dep}
+            {filter_id}
             {filter_institution}
             {year_filter}
             {where_extra}
