@@ -19,6 +19,9 @@ router = APIRouter()
 def get_book_metrics(
     term: str = None,
     researcher_id: UUID = None,
+    graduate_program_id: UUID = None,
+    dep_id: str = None,
+    dep: str = None,
     year: int = 2020,
     distinct: int = 1,
     institution: str = None,
@@ -31,7 +34,9 @@ def get_book_metrics(
     return ProductionService.get_book_metrics(
         term,
         researcher_id,
-        None,
+        graduate_program_id,
+        dep_id,
+        dep,
         year,
         distinct,
         institution,
@@ -47,6 +52,9 @@ def get_book_metrics(
 def get_book_chapter_metrics(
     term: str = None,
     researcher_id: UUID = None,
+    graduate_program_id: UUID = None,
+    dep_id: str = None,
+    dep: str = None,
     year: int = 2020,
     distinct: int = 1,
     institution: str = None,
@@ -59,7 +67,9 @@ def get_book_chapter_metrics(
     return ProductionService.get_book_chapter_metrics(
         term,
         researcher_id,
-        None,
+        graduate_program_id,
+        dep_id,
+        dep,
         year,
         distinct,
         institution,

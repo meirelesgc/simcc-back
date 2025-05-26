@@ -14,6 +14,8 @@ def get_book_metrics(
     term: str,
     researcher_id: UUID,
     program_id: UUID,
+    dep_id: UUID,
+    dep: str,
     year: int,
     distinct: int = 1,
     institution: str = None,
@@ -24,6 +26,34 @@ def get_book_metrics(
     graduation: str = None,
 ):
     params = {}
+
+    join_dep = str()
+    filter_dep = str()
+    if dep_id:
+        distinct = 'DISTINCT'
+        params['dep_id'] = dep_id.split(';')
+        join_dep = """
+            INNER JOIN ufmg.departament_researcher dpr
+                ON dpr.researcher_id = r.id
+            INNER JOIN ufmg.departament dp
+                ON dp.dep_id = dpr.dep_id
+            """
+        filter_dep = """
+            AND dp.dep_id = ANY(%(dep_id)s)
+            """
+
+    if dep:
+        distinct = 'DISTINCT'
+        params['dep'] = dep.split(';')
+        join_dep = """
+            INNER JOIN ufmg.departament_researcher dpr
+                ON dpr.researcher_id = r.id
+            INNER JOIN ufmg.departament dp
+                ON dp.dep_id = dpr.dep_id
+            """
+        filter_dep = """
+            AND dp.dep_nom = ANY(%(dep)s)
+            """
 
     join_program = str()
     filter_program = str()
@@ -127,10 +157,12 @@ def get_book_metrics(
             {join_modality}
             {join_institution}
             {join_city}
+            {join_dep}
             {join_area}
         WHERE 1 = 1
             AND bp.type = 'BOOK'
             {term_filter}
+            {filter_dep}
             {filter_institution}
             {filter_area}
             {filter_city}
@@ -149,15 +181,24 @@ def get_book_metrics(
 def get_book_chapter_metrics(
     term: str,
     researcher_id: UUID,
-    program_id: UUID,
-    year: int,
+    graduate_program_id: UUID = None,
+    dep_id: str = None,
+    dep: str = None,
+    year: int = 2020,
     distinct: int = 1,
+    institution: str = None,
+    graduate_program: str = None,
+    city: str = None,
+    area: str = None,
+    modality: str = None,
+    graduation: str = None,
 ):
     params = {}
 
     distinct_filter = str()
     if distinct:
         distinct_filter = 'DISTINCT'
+
     term_filter = str()
     if term:
         term_filter, term = webseatch_filter('bp.title', term)
@@ -170,20 +211,78 @@ def get_book_chapter_metrics(
 
     program_join = str()
     program_filter = str()
-    if program_id:
-        params['program_id'] = program_id
+    if graduate_program_id:
+        params['program_id'] = graduate_program_id
         program_join = """
             LEFT JOIN graduate_program_researcher gpr ON gpr.researcher_id = r.id
-            """
+        """
         program_filter = """
             AND gpr.graduate_program_id = %(program_id)s
             AND gpr.type_ = 'PERMANENTE'
-            """
+        """
 
     year_filter = str()
     if year:
         params['year'] = year
         year_filter = 'AND bp.year::int >= %(year)s'
+
+    join_dep = str()
+    filter_dep = str()
+    if dep_id:
+        distinct_filter = 'DISTINCT'
+        params['dep_id'] = dep_id.split(';')
+        join_dep = """
+            INNER JOIN ufmg.departament_researcher dpr ON dpr.researcher_id = r.id
+            INNER JOIN ufmg.departament dp ON dp.dep_id = dpr.dep_id
+        """
+        filter_dep = 'AND dp.dep_id = ANY(%(dep_id)s)'
+
+    if dep:
+        distinct_filter = 'DISTINCT'
+        params['dep'] = dep.split(';')
+        join_dep = """
+            INNER JOIN ufmg.departament_researcher dpr ON dpr.researcher_id = r.id
+            INNER JOIN ufmg.departament dp ON dp.dep_id = dpr.dep_id
+        """
+        filter_dep = 'AND dp.dep_nom = ANY(%(dep)s)'
+
+    filter_institution = str()
+    if institution:
+        params['institution'] = institution + '%'
+        filter_institution = """
+            AND r.institution_id IN (
+                SELECT id FROM institution WHERE name ILIKE %(institution)s
+            )
+        """
+
+    filter_graduate_program = str()
+    if graduate_program:
+        params['graduate_program'] = graduate_program + '%'
+        filter_graduate_program = """
+            AND r.graduate_program_id IN (
+                SELECT id FROM graduate_program WHERE name ILIKE %(graduate_program)s
+            )
+        """
+
+    filter_city = str()
+    if city:
+        params['city'] = city + '%'
+        filter_city = 'AND r.city ILIKE %(city)s'
+
+    filter_area = str()
+    if area:
+        params['area'] = area + '%'
+        filter_area = 'AND r.area ILIKE %(area)s'
+
+    filter_modality = str()
+    if modality:
+        params['modality'] = modality + '%'
+        filter_modality = 'AND r.modality ILIKE %(modality)s'
+
+    filter_graduation = str()
+    if graduation:
+        params['graduation'] = graduation + '%'
+        filter_graduation = 'AND r.graduation ILIKE %(graduation)s'
 
     SCRIPT_SQL = f"""
         SELECT bp.year, COUNT({distinct_filter} bp.title) AS among
@@ -191,15 +290,22 @@ def get_book_chapter_metrics(
             LEFT JOIN bibliographic_production bp ON bp.researcher_id = r.id
             LEFT JOIN openalex_article opa ON opa.article_id = bp.id
             {program_join}
+            {join_dep}
         WHERE 1 = 1
             AND type = 'BOOK_CHAPTER'
             {term_filter}
             {program_filter}
             {year_filter}
             {filter_id}
-        GROUP BY
-            bp.year;
-            """
+            {filter_dep}
+            {filter_institution}
+            {filter_graduate_program}
+            {filter_city}
+            {filter_area}
+            {filter_modality}
+            {filter_graduation}
+        GROUP BY bp.year;
+    """
 
     result = conn.select(SCRIPT_SQL, params)
     return result
