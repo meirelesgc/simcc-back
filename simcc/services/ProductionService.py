@@ -185,9 +185,11 @@ def list_article_metrics(
 
 def list_patent_metrics(
     term: str,
-    researcher_id: UUID,
-    program_id: UUID,
-    year: int,
+    researcher_id: UUID = None,
+    graduate_program_id: UUID = None,
+    dep_id: str = None,
+    departament: str = None,
+    year: int = None,
     distinct: int = 1,
     institution: str = None,
     graduate_program: str = None,
@@ -199,7 +201,9 @@ def list_patent_metrics(
     patent_metrics = ProductionRepository.list_patent_metrics(
         term,
         researcher_id,
-        program_id,
+        graduate_program_id,
+        dep_id,
+        departament,
         year,
         distinct,
         institution,

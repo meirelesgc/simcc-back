@@ -662,9 +662,11 @@ def list_article_metrics(
 
 def list_patent_metrics(
     term,
-    researcher_id: UUID,
-    program_id: UUID,
-    year: int,
+    researcher_id: UUID = None,
+    program_id: UUID = None,
+    dep_id: str = None,
+    departament: str = None,
+    year: int = None,
     distinct: int = 1,
     institution: str = None,
     graduate_program: str = None,
@@ -674,6 +676,34 @@ def list_patent_metrics(
     graduation: str = None,
 ):
     params = {}
+
+    join_dep = str()
+    filter_dep = str()
+    if dep_id:
+        filter_distinct = 'DISTINCT'
+        params['dep_id'] = dep_id.split(';')
+        join_dep = """
+            INNER JOIN ufmg.departament_researcher dpr
+                ON dpr.researcher_id = p.researcher_id
+            INNER JOIN ufmg.departament dp
+                ON dp.dep_id = dpr.dep_id
+            """
+        filter_dep = """
+            AND dp.dep_id = ANY(%(dep_id)s)
+            """
+
+    if departament:
+        filter_distinct = 'DISTINCT'
+        params['dep'] = departament.split(';')
+        join_dep = """
+            INNER JOIN ufmg.departament_researcher dpr
+                ON dpr.researcher_id = p.researcher_id
+            INNER JOIN ufmg.departament dp
+                ON dp.dep_id = dpr.dep_id
+            """
+        filter_dep = """
+            AND dp.dep_nom = ANY(%(dep)s)
+            """
 
     filter_distinct = str()
     if distinct:
@@ -776,9 +806,11 @@ def list_patent_metrics(
             {join_city}
             {join_area}
             {join_modality}
+            {join_dep}
             {join_graduation}
         WHERE 1 = 1
             {filter_id}
+            {filter_dep}
             {term_filter}
             {filter_year}
             {filter_program}
