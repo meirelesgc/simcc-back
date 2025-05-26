@@ -829,9 +829,11 @@ def list_patent_metrics(
 
 def list_guidance_metrics(
     term,
-    researcher_id: UUID,
-    program_id: UUID,
-    year: int,
+    researcher_id: UUID = None,
+    program_id: UUID = None,
+    dep_id: str = None,
+    departament: str = None,
+    year: int = None,
     distinct: int = 1,
     institution: str = None,
     graduate_program: str = None,
@@ -841,7 +843,34 @@ def list_guidance_metrics(
     graduation: str = None,
 ):
     params = {}
+    join_dep = str()
+    filter_dep = str()
 
+    if departament:
+        distinct = 'DISTINCT'
+        params['dep'] = departament.split(';')
+        join_dep = """
+            INNER JOIN ufmg.departament_researcher dpr
+                ON dpr.researcher_id = g.researcher_id
+            INNER JOIN ufmg.departament dp
+                ON dp.dep_id = dpr.dep_id
+            """
+        filter_dep = """
+            AND dp.dep_nom = ANY(%(dep)s)
+            """
+
+    if dep_id:
+        filter_distinct = 'DISTINCT'
+        params['dep_id'] = dep_id.split(';')
+        join_dep = """
+            INNER JOIN ufmg.departament_researcher dpr
+                ON dpr.researcher_id = g.researcher_id
+            INNER JOIN ufmg.departament dp
+                ON dp.dep_id = dpr.dep_id
+            """
+        filter_dep = """
+            AND dp.dep_id = ANY(%(dep_id)s)
+            """
     filter_distinct = str()
     if distinct:
         filter_distinct = 'DISTINCT'
@@ -940,6 +969,7 @@ def list_guidance_metrics(
             {join_program}
             {join_graduate_program}
             {join_institution}
+            {join_dep}
             {join_city}
             {join_area}
             {join_modality}
@@ -948,6 +978,7 @@ def list_guidance_metrics(
             {filter_id}
             {filter_year}
             {term_filter}
+            {filter_dep}
             {filter_program}
             {filter_graduate_program}
             {filter_institution}
