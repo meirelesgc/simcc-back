@@ -127,9 +127,11 @@ async def get_researcher_metrics(
 
 def list_article_metrics(
     term: str,
-    researcher_id: UUID,
-    program_id: UUID,
-    year: int,
+    researcher_id: UUID = None,
+    graduate_program_id: UUID = None,
+    dep_id: str = None,
+    departament: str = None,
+    year: int = None,
     distinct: int = 1,
     institution: str = None,
     graduate_program: str = None,
@@ -141,7 +143,9 @@ def list_article_metrics(
     article_metrics = ProductionRepository.list_article_metrics(
         term,
         researcher_id,
-        program_id,
+        graduate_program_id,
+        dep_id,
+        departament,
         year,
         distinct,
         institution,

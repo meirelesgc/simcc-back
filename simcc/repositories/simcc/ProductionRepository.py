@@ -496,6 +496,8 @@ def list_article_metrics(
     term: str,
     researcher_id: UUID,
     program_id: UUID,
+    dep_id: str,
+    departament: str,
     year: int,
     distinct: int = 1,
     institution: str = None,
@@ -506,10 +508,38 @@ def list_article_metrics(
     graduation: str = None,
 ) -> list[ArticleMetric]:
     params = {}
-
+    join_dep = str()
+    filter_dep = str()
     filter_distinct = str()
+
     if distinct:
         filter_distinct = 'DISTINCT'
+
+    if departament:
+        distinct = 'DISTINCT'
+        params['dep'] = departament.split(';')
+        join_dep = """
+            INNER JOIN ufmg.departament_researcher dpr
+                ON dpr.researcher_id = r.id
+            INNER JOIN ufmg.departament dp
+                ON dp.dep_id = dpr.dep_id
+            """
+        filter_dep = """
+            AND dp.dep_nom = ANY(%(dep)s)
+            """
+
+    if dep_id:
+        filter_distinct = 'DISTINCT'
+        params['dep_id'] = dep_id.split(';')
+        join_dep = """
+            INNER JOIN ufmg.departament_researcher dpr
+                ON dpr.researcher_id = r.id
+            INNER JOIN ufmg.departament dp
+                ON dp.dep_id = dpr.dep_id
+            """
+        filter_dep = """
+            AND dp.dep_id = ANY(%(dep_id)s)
+            """
 
     term_filter = str()
     if term:
@@ -610,11 +640,13 @@ def list_article_metrics(
             {join_institution}
             {join_city}
             {join_area}
+            {join_dep}
         WHERE 1 = 1
             {term_filter}
             {filter_program}
             {filter_graduate_program}
             {filter_modality}
+            {filter_dep}
             {filter_institution}
             {filter_city}
             {filter_area}
