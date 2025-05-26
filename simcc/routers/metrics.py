@@ -295,6 +295,10 @@ def academic_degree():
 )
 def software_metrics(
     term: str = None,
+    researcher_id: UUID = None,
+    graduate_program_id: UUID = None,
+    dep_id: str = None,
+    departament: str = None,
     year: int = 2020,
     distinct: int = 1,
     institution: str = None,
@@ -306,8 +310,10 @@ def software_metrics(
 ):
     metrics = ProductionService.list_software_metrics(
         term,
-        None,
-        None,
+        researcher_id,
+        graduate_program_id,
+        dep_id,
+        departament,
         year,
         distinct,
         institution,

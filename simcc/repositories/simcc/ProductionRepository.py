@@ -1172,16 +1172,17 @@ def list_academic_degree_metrics(
             {filter_graduation}
         GROUP BY year, degree
     """
-    print(SCRIPT_SQL, params)
     result = conn.select(SCRIPT_SQL, params)
     return result
 
 
 def list_software_metrics(
     term,
-    researcher_id: UUID,
-    program_id: UUID,
-    year: int,
+    researcher_id: UUID = None,
+    program_id: UUID = None,
+    dep_id: str = None,
+    departament: str = None,
+    year: int = None,
     distinct: int = 1,
     institution: str = None,
     graduate_program: str = None,
@@ -1191,9 +1192,38 @@ def list_software_metrics(
     graduation: str = None,
 ):
     params = {}
-    distinct_filter = str()
+    filter_distinct = str()
+    join_dep = str()
+    filter_dep = str()
+
+    if departament:
+        filter_distinct = 'DISTINCT'
+        params['dep'] = departament.split(';')
+        join_dep = """
+            INNER JOIN ufmg.departament_researcher dpr
+                ON dpr.researcher_id = s.researcher_id
+            INNER JOIN ufmg.departament dp
+                ON dp.dep_id = dpr.dep_id
+            """
+        filter_dep = """
+            AND dp.dep_nom = ANY(%(dep)s)
+            """
+
+    if dep_id:
+        filter_distinct = 'DISTINCT'
+        params['dep_id'] = dep_id.split(';')
+        join_dep = """
+            INNER JOIN ufmg.departament_researcher dpr
+                ON dpr.researcher_id = s.researcher_id
+            INNER JOIN ufmg.departament dp
+                ON dp.dep_id = dpr.dep_id
+            """
+        filter_dep = """
+            AND dp.dep_id = ANY(%(dep_id)s)
+            """
+
     if distinct:
-        distinct_filter = 'DISTINCT'
+        filter_distinct = 'DISTINCT'
 
     term_filter = str()
     if term:
@@ -1282,11 +1312,12 @@ def list_software_metrics(
         filter_graduation = 'AND rg.graduation = ANY(%(graduation)s)'
 
     SCRIPT_SQL = f"""
-        SELECT s.year, COUNT({distinct_filter} s.title) among
+        SELECT s.year, COUNT({filter_distinct} s.title) among
         FROM public.software s
             {join_program}
             {join_graduate_program}
             {join_institution}
+            {join_dep}
             {join_city}
             {join_area}
             {join_modality}
@@ -1296,6 +1327,7 @@ def list_software_metrics(
             {term_filter}
             {filter_year}
             {filter_program}
+            {filter_dep}
             {filter_graduate_program}
             {filter_institution}
             {filter_city}

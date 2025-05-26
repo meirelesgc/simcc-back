@@ -333,9 +333,11 @@ def list_academic_degree_metrics(
 
 def list_software_metrics(
     term: str,
-    researcher_id: UUID,
-    program_id: UUID,
-    year: int,
+    researcher_id: UUID = None,
+    program_id: UUID = None,
+    dep_id: str = None,
+    departament: str = None,
+    year: int = None,
     distinct: int = 1,
     institution: str = None,
     graduate_program: str = None,
@@ -348,6 +350,8 @@ def list_software_metrics(
         term,
         researcher_id,
         program_id,
+        dep_id,
+        departament,
         year,
         distinct,
         institution,
