@@ -508,15 +508,16 @@ def list_article_metrics(
     graduation: str = None,
 ) -> list[ArticleMetric]:
     params = {}
-    join_dep = str()
-    filter_dep = str()
     filter_distinct = str()
 
     if distinct:
         filter_distinct = 'DISTINCT'
 
+    join_dep = str()
+    filter_dep = str()
+
     if departament:
-        distinct = 'DISTINCT'
+        filter_distinct = 'DISTINCT'
         params['dep'] = departament.split(';')
         join_dep = """
             INNER JOIN ufmg.departament_researcher dpr
@@ -994,9 +995,11 @@ def list_guidance_metrics(
 
 
 def list_academic_degree_metrics(
-    researcher_id: UUID,
-    program_id: UUID,
-    year: int,
+    researcher_id: UUID = None,
+    program_id: UUID = None,
+    dep_id: str = None,
+    departament: str = None,
+    year: int = None,
     institution: str = None,
     graduate_program: str = None,
     city: str = None,
@@ -1005,6 +1008,34 @@ def list_academic_degree_metrics(
     graduation: str = None,
 ):
     params = {}
+
+    join_dep = str()
+    filter_dep = str()
+
+    if departament:
+        params['dep'] = departament.split(';')
+        join_dep = """
+            INNER JOIN ufmg.departament_researcher dpr
+                ON dpr.researcher_id = e.researcher_id
+            INNER JOIN ufmg.departament dp
+                ON dp.dep_id = dpr.dep_id
+            """
+        filter_dep = """
+            AND dp.dep_nom = ANY(%(dep)s)
+            """
+
+    if dep_id:
+        print(dep_id)
+        params['dep_id'] = dep_id.split(';')
+        join_dep = """
+            INNER JOIN ufmg.departament_researcher dpr
+                ON dpr.researcher_id = e.researcher_id
+            INNER JOIN ufmg.departament dp
+                ON dp.dep_id = dpr.dep_id
+            """
+        filter_dep = """
+            AND dp.dep_id = ANY(%(dep_id)s)
+            """
 
     filter_id = str()
     if researcher_id:
@@ -1099,10 +1130,12 @@ def list_academic_degree_metrics(
             {join_institution}
             {join_city}
             {join_area}
+            {join_dep}
             {join_modality}
             {join_graduation}
         WHERE 1 = 1
             {filter_year}
+            {filter_dep}
             {filter_id}
             {filter_program}
             {filter_graduate_program}
@@ -1122,6 +1155,7 @@ def list_academic_degree_metrics(
             {join_graduate_program}
             {join_institution}
             {join_city}
+            {join_dep}
             {join_area}
             {join_modality}
             {join_graduation}
@@ -1131,13 +1165,14 @@ def list_academic_degree_metrics(
             {filter_program}
             {filter_graduate_program}
             {filter_institution}
+            {filter_dep}
             {filter_city}
             {filter_area}
             {filter_modality}
             {filter_graduation}
         GROUP BY year, degree
     """
-
+    print(SCRIPT_SQL, params)
     result = conn.select(SCRIPT_SQL, params)
     return result
 

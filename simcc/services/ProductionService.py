@@ -286,9 +286,11 @@ def list_guidance_metrics(
 
 
 def list_academic_degree_metrics(
-    researcher_id: UUID,
-    program_id: UUID,
-    year: int,
+    researcher_id: UUID = None,
+    program_id: UUID = None,
+    dep_id: str = None,
+    departament: str = None,
+    year: int = None,
     institution: str = None,
     graduate_program: str = None,
     city: str = None,
@@ -299,6 +301,8 @@ def list_academic_degree_metrics(
     degree_metrics = ProductionRepository.list_academic_degree_metrics(
         researcher_id,
         program_id,
+        dep_id,
+        departament,
         year,
         institution,
         graduate_program,

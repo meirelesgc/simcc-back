@@ -251,6 +251,10 @@ def guidance_metrics(
     tags=['Metrics'],
 )
 def academic_degree_metrics(
+    researcher_id: UUID = None,
+    graduate_program_id: UUID = None,
+    dep_id: str = None,
+    departament: str = None,
     year: int = 2020,
     institution: str = None,
     graduate_program: str = None,
@@ -260,8 +264,10 @@ def academic_degree_metrics(
     graduation: str = None,
 ):
     metrics = ProductionService.list_academic_degree_metrics(
-        None,
-        None,
+        researcher_id,
+        graduate_program_id,
+        dep_id,
+        departament,
         year,
         institution,
         graduate_program,
