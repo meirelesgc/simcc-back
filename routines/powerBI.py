@@ -130,28 +130,38 @@ def dim_city():
 
 def ufmg_researcher():
     SCRIPT_SQL = """
-        SELECT researcher_id, matric, inscufmg, nome, genero, situacao, rt, clas,
-            cargo, classe, ref, titulacao, entradanaufmg, progressao, semester
+        SELECT 
         FROM ufmg.researcher;
         """
     result = conn.select(SCRIPT_SQL)
     csv = pd.DataFrame(result)
     columns = [
         'researcher_id',
-        'matric',
-        'inscufmg',
-        'nome',
-        'genero',
-        'situacao',
-        'rt',
-        'clas',
-        'cargo',
-        'classe',
-        'ref',
-        'titulacao',
-        'entradanaufmg',
-        'progressao',
-        'semester',
+        'full_name',
+        'gender',
+        'status_code',
+        'work_regime',
+        'job_class',
+        'job_title',
+        'job_rank',
+        'job_reference_code',
+        'academic_degree',
+        'organization_entry_date',
+        'last_promotion_date',
+        'employment_status_description',
+        'department_name',
+        'career_category',
+        'academic_unit',
+        'unit_code',
+        'function_code',
+        'position_code',
+        'leadership_start_date',
+        'leadership_end_date',
+        'current_function_name',
+        'function_location',
+        'registration_number',
+        'ufmg_registration_number',
+        'semester_reference',
     ]
     csv = csv.reindex(columns, axis='columns', fill_value=0)
     csv_path = os.path.join(PATH, 'ufmg_researcher.csv')
