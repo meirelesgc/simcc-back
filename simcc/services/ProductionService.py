@@ -399,12 +399,20 @@ def list_software_metrics(
 
 
 def list_distinct_patent(
-    term: str,
-    researcher_id: UUID,
-    year: int,
-    institution_id: UUID,
-    page: int,
-    lenght: int,
+    term,
+    researcher_id,
+    graduate_program_id,
+    dep_id,
+    departament,
+    year,
+    institution,
+    graduate_program,
+    city,
+    area,
+    modality,
+    graduation,
+    page,
+    lenght,
 ) -> list[PatentProduction]:
     patents = ProductionRepository.list_distinct_patent(
         term, researcher_id, year, institution_id, page, lenght
@@ -415,15 +423,36 @@ def list_distinct_patent(
 
 
 def list_patent(
-    term: str,
-    researcher_id: UUID,
-    year: int,
-    institution_id: UUID,
-    page: int,
-    lenght: int,
+    term,
+    researcher_id,
+    graduate_program_id,
+    dep_id,
+    departament,
+    year,
+    institution,
+    graduate_program,
+    city,
+    area,
+    modality,
+    graduation,
+    page,
+    lenght,
 ) -> list[PatentProduction]:
     patents = ProductionRepository.list_patent(
-        term, researcher_id, year, institution_id, page, lenght
+        term,
+        researcher_id,
+        graduate_program_id,
+        dep_id,
+        departament,
+        year,
+        institution,
+        graduate_program,
+        city,
+        area,
+        modality,
+        graduation,
+        page,
+        lenght,
     )
     if not patents:
         return []
@@ -479,15 +508,38 @@ def list_distinct_book(
 
 
 def list_book(
-    term: str,
-    researcher_id: UUID,
-    year: int,
-    institution_id: UUID,
-    page: int,
-    lenght: int,
+    term,
+    researcher_id,
+    graduate_program_id,
+    dep_id,
+    departament,
+    year,
+    distinct,
+    institution,
+    graduate_program,
+    city,
+    area,
+    modality,
+    graduation,
+    page,
+    lenght,
 ):
     patents = ProductionRepository.list_book(
-        term, researcher_id, year, institution_id, page, lenght
+        term,
+        researcher_id,
+        graduate_program_id,
+        dep_id,
+        departament,
+        year,
+        distinct,
+        institution,
+        graduate_program,
+        city,
+        area,
+        modality,
+        graduation,
+        page,
+        lenght,
     )
     if not patents:
         return []

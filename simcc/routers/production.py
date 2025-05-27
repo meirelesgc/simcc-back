@@ -67,19 +67,39 @@ def get_professional_experience(
 def list_patent_production(
     term: str = None,
     researcher_id: UUID | str = None,
-    year: int | str = 2020,
+    graduate_program_id: UUID | str = None,
+    dep_id: str = None,
+    departament: str = None,
+    year: int = 2020,
     distinct: int = 1,
-    institution_id: UUID | str = None,
+    institution: str = None,
+    graduate_program: str = None,
+    city: str = None,
+    area: str = None,
+    modality: str = None,
+    graduation: str = None,
     page: int = None,
     lenght: int = None,
 ):
     if distinct:
-        patents = ProductionService.list_distinct_patent(
-            term, researcher_id, year, institution_id, page, lenght
-        )
+        # DEBITO
+        pass
     else:
         patents = ProductionService.list_patent(
-            term, researcher_id, year, institution_id, page, lenght
+            term,
+            researcher_id,
+            graduate_program_id,
+            dep_id,
+            departament,
+            year,
+            institution,
+            graduate_program,
+            city,
+            area,
+            modality,
+            graduation,
+            page,
+            lenght,
         )
     return patents
 
@@ -91,19 +111,40 @@ def list_patent_production(
 def list_book_production(
     term: str = None,
     researcher_id: UUID | str = None,
-    year: int | str = 2020,
+    graduate_program_id: UUID | str = None,
+    dep_id: str = None,
+    departament: str = None,
+    year: int = 2020,
     distinct: int = 1,
-    institution_id: UUID | str = None,
+    institution: str = None,
+    graduate_program: str = None,
+    city: str = None,
+    area: str = None,
+    modality: str = None,
+    graduation: str = None,
     page: int = None,
     lenght: int = None,
 ):
     if distinct:
-        books = ProductionService.list_distinct_book(
-            term, researcher_id, year, institution_id, page, lenght
-        )
+        # DEBITO
+        pass
     else:
         books = ProductionService.list_book(
-            term, researcher_id, year, institution_id, page, lenght
+            term,
+            researcher_id,
+            graduate_program_id,
+            dep_id,
+            departament,
+            year,
+            distinct,
+            institution,
+            graduate_program,
+            city,
+            area,
+            modality,
+            graduation,
+            page,
+            lenght,
         )
     return books
 
