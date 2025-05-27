@@ -871,10 +871,38 @@ def list_guidance_production(
 
 
 def list_researcher_production_events(
-    researcher_id: UUID | str = None, year: int | str = 2020
+    term,
+    researcher_id,
+    graduate_program_id,
+    dep_id,
+    departament,
+    year,
+    institution,
+    graduate_program,
+    city,
+    area,
+    modality,
+    graduation,
+    page,
+    lenght,
+    distinct,
 ):
     return ProductionRepository.list_researcher_production_events(
-        researcher_id, year
+        term,
+        researcher_id,
+        graduate_program_id,
+        dep_id,
+        departament,
+        year,
+        institution,
+        graduate_program,
+        city,
+        area,
+        modality,
+        graduation,
+        page,
+        lenght,
+        distinct,
     )
 
 

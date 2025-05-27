@@ -467,16 +467,41 @@ def list_guidance_production(
     response_model=list[EventProduction],
 )
 def list_researcher_production_events(
+    term: str = None,
     researcher_id: UUID | str = None,
-    year: int | str = 2020,
+    graduate_program_id: UUID | str = None,
+    dep_id: str = None,
+    departament: str = None,
+    year: int = 2020,
+    institution: str = None,
+    graduate_program: str = None,
+    city: str = None,
+    area: str = None,
+    modality: str = None,
+    graduation: str = None,
+    page: int = None,
+    lenght: int = None,
     distinct: int = 1,
 ):
     if distinct:
-        return ProductionService.list_distinct_researcher_production_events(
-            researcher_id, year
-        )
+        # DEBITO
+        pass
     return ProductionService.list_researcher_production_events(
-        researcher_id, year
+        term,
+        researcher_id,
+        graduate_program_id,
+        dep_id,
+        departament,
+        year,
+        institution,
+        graduate_program,
+        city,
+        area,
+        modality,
+        graduation,
+        page,
+        lenght,
+        distinct,
     )
 
 
