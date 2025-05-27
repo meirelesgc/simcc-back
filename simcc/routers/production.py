@@ -424,15 +424,42 @@ def list_article_production(
     response_model=list[GuidanceProduction],
 )
 def list_guidance_production(
+    term: str = None,
     researcher_id: UUID | str = None,
-    year: int | str = 2020,
+    graduate_program_id: UUID | str = None,
+    dep_id: str = None,
+    departament: str = None,
+    year: int = 2020,
+    institution: str = None,
+    graduate_program: str = None,
+    city: str = None,
+    area: str = None,
+    modality: str = None,
+    graduation: str = None,
+    page: int = None,
+    lenght: int = None,
     distinct: int = 1,
 ):
     if distinct:
-        return ProductionService.list_distinct_guidance_production(
-            researcher_id, year
-        )
-    return ProductionService.list_guidance_production(researcher_id, year)
+        # DEBITO
+        pass
+    return ProductionService.list_guidance_production(
+        term,
+        researcher_id,
+        graduate_program_id,
+        dep_id,
+        departament,
+        year,
+        institution,
+        graduate_program,
+        city,
+        area,
+        modality,
+        graduation,
+        page,
+        lenght,
+        distinct,
+    )
 
 
 @router.get(
