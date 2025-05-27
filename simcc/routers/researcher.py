@@ -112,19 +112,19 @@ def search_in_book(
     lenght: int = None,
 ):
     return ResearcherService.search_in_book(
-type
-term
-graduate_program_id
-dep_id
-departament
-institution
-graduate_program
-city
-area
-modality
-graduation
-page
-lenght
+        type,
+        term,
+        graduate_program_id,
+        dep_id,
+        departament,
+        institution,
+        graduate_program,
+        city,
+        area,
+        modality,
+        graduation,
+        page,
+        lenght,
     )
 
 
