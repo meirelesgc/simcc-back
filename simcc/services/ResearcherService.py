@@ -252,30 +252,32 @@ def list_outstanding_researchers(
 
 
 def serch_in_name(
-    name: str,
-    graduate_program_id: UUID,
-    dep_id: UUID,
-    page: int,
-    lenght: int,
-    area: str,
-    graduate_program: str,
-    city: str,
-    institution: str,
-    modality: str,
-    graduation: str,
+    name,
+    graduate_program_id,
+    dep_id,
+    departament,
+    institution,
+    graduate_program,
+    city,
+    area,
+    modality,
+    graduation,
+    page,
+    lenght,
 ) -> list[Researcher]:
     researchers = ResearcherRepository.search_in_name(
         name,
         graduate_program_id,
         dep_id,
-        page,
-        lenght,
-        area,
+        departament,
+        institution,
         graduate_program,
         city,
-        institution,
+        area,
         modality,
         graduation,
+        page,
+        lenght,
     )
     if not researchers:
         return []
