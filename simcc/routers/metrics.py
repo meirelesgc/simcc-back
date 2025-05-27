@@ -18,8 +18,8 @@ router = APIRouter()
 @router.get('/book_metrics', tags=['Metrics'])
 def get_book_metrics(
     term: str = None,
-    researcher_id: UUID = None,
-    graduate_program_id: UUID = None,
+    researcher_id: UUID | str = None,
+    graduate_program_id: UUID | str = None,
     dep_id: str = None,
     departament: str = None,
     year: int = 2020,
@@ -51,8 +51,8 @@ def get_book_metrics(
 @router.get('/book_chapter_metrics', tags=['Metrics'])
 def get_book_chapter_metrics(
     term: str = None,
-    researcher_id: UUID = None,
-    graduate_program_id: UUID = None,
+    researcher_id: UUID | str = None,
+    graduate_program_id: UUID | str = None,
     dep_id: str = None,
     departament: str = None,
     year: int = 2020,
@@ -87,8 +87,8 @@ def get_book_chapter_metrics(
 )
 async def get_researcher_metrics(
     term: str = None,
-    researcher_id: UUID = None,
-    graduate_program_id: UUID = None,
+    researcher_id: UUID | str = None,
+    graduate_program_id: UUID | str = None,
     dep_id: str = None,
     departament: str = None,
     year: int = 2020,
@@ -138,8 +138,8 @@ async def get_researcher_metrics(
 )
 def article_metrics(
     term: str = None,
-    researcher_id: UUID = None,
-    graduate_program_id: UUID = None,
+    researcher_id: UUID | str = None,
+    graduate_program_id: UUID | str = None,
     dep_id: str = None,
     departament: str = None,
     year: int = 2020,
@@ -176,8 +176,8 @@ def article_metrics(
 )
 def patent_metrics(
     term: str = None,
-    researcher_id: UUID = None,
-    graduate_program_id: UUID = None,
+    researcher_id: UUID | str = None,
+    graduate_program_id: UUID | str = None,
     dep_id: str = None,
     departament: str = None,
     year: int = 2020,
@@ -214,8 +214,8 @@ def patent_metrics(
 )
 def guidance_metrics(
     term: str = None,
-    researcher_id: UUID = None,
-    graduate_program_id: UUID = None,
+    researcher_id: UUID | str = None,
+    graduate_program_id: UUID | str = None,
     dep_id: str = None,
     departament: str = None,
     year: int = 2020,
@@ -251,8 +251,8 @@ def guidance_metrics(
     tags=['Metrics'],
 )
 def academic_degree_metrics(
-    researcher_id: UUID = None,
-    graduate_program_id: UUID = None,
+    researcher_id: UUID | str = None,
+    graduate_program_id: UUID | str = None,
     dep_id: str = None,
     departament: str = None,
     year: int = 2020,
@@ -295,8 +295,8 @@ def academic_degree():
 )
 def software_metrics(
     term: str = None,
-    researcher_id: UUID = None,
-    graduate_program_id: UUID = None,
+    researcher_id: UUID | str = None,
+    graduate_program_id: UUID | str = None,
     dep_id: str = None,
     departament: str = None,
     year: int = 2020,
