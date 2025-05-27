@@ -733,8 +733,40 @@ def list_distinct_software(
     return ProductionRepository.list_distinct_software(researcher_id, year)
 
 
-def list_software(researcher_id: UUID | str = None, year: int | str = 2020):
-    return ProductionRepository.list_software(researcher_id, year)
+def list_software(
+    term,
+    researcher_id,
+    graduate_program_id,
+    dep_id,
+    departament,
+    year,
+    institution,
+    graduate_program,
+    city,
+    area,
+    modality,
+    graduation,
+    page,
+    lenght,
+    distinct,
+):
+    return ProductionRepository.list_software(
+        term,
+        researcher_id,
+        graduate_program_id,
+        dep_id,
+        departament,
+        year,
+        institution,
+        graduate_program,
+        city,
+        area,
+        modality,
+        graduation,
+        page,
+        lenght,
+        distinct,
+    )
 
 
 def list_distinct_researcher_report(
