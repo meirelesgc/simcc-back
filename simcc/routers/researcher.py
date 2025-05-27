@@ -133,40 +133,49 @@ def search_in_book(
     response_model=list[Researcher],
 )
 def search_in_abstract_or_article(
-    terms: str = None,
     type: ResearcherOptions = 'ABSTRACT',
+    terms: str = None,
     graduate_program_id: UUID | str = None,
-    university: str = None,
-    page: int = None,
-    lenght: int = None,
+    dep_id: str = None,
+    departament: str = None,
+    institution: str = None,
+    graduate_program: str = None,
     city: str = None,
     area: str = None,
     modality: str = None,
     graduation: str = None,
+    page: int = None,
+    lenght: int = None,
 ):
     if type == 'ARTICLE':
         researchers = ResearcherService.search_in_articles(
             terms,
             graduate_program_id,
-            university,
-            page,
-            lenght,
+            dep_id,
+            departament,
+            institution,
+            graduate_program,
             city,
             area,
             modality,
             graduation,
+            page,
+            lenght,
         )
     elif type == 'ABSTRACT':
         researchers = ResearcherService.search_in_abstracts(
             terms,
             graduate_program_id,
-            university,
-            page,
-            lenght,
+            dep_id,
+            departament,
+            institution,
+            graduate_program,
             city,
             area,
             modality,
             graduation,
+            page,
+            lenght,
         )
     return researchers
 
