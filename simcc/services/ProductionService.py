@@ -667,15 +667,36 @@ def list_distinct_article_production(
 
 
 def list_book_chapter(
-    term: str = None,
-    researcher_id: UUID | str = None,
-    year: int | str = 2020,
-    institution_id: UUID = None,
-    page: int = None,
-    lenght: int = None,
+    term,
+    researcher_id,
+    graduate_program_id,
+    dep_id,
+    departament,
+    year,
+    institution,
+    graduate_program,
+    city,
+    area,
+    modality,
+    graduation,
+    page,
+    lenght,
 ):
     return ProductionRepository.list_book_chapter(
-        term, researcher_id, year, institution_id, page, lenght
+        term,
+        researcher_id,
+        graduate_program_id,
+        dep_id,
+        departament,
+        year,
+        institution,
+        graduate_program,
+        city,
+        area,
+        modality,
+        graduation,
+        page,
+        lenght,
     )
 
 
