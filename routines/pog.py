@@ -96,4 +96,9 @@ if __name__ == '__main__':
     conn.exec(SCRIPT_SQL)
     logger.info('Fill periodical magazine JCR column')
 
+    SCRIPT_SQL = """
+        UPDATE researcher_production
+            SET great_area_ = STRING_TO_ARRAY(great_area, ';')
+        """
+
     logger_routine('POG', False)

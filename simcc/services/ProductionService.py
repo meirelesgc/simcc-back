@@ -15,6 +15,40 @@ from simcc.schemas.Production.Patent import PatentMetric, PatentProduction
 from simcc.schemas.Researcher import AcademicMetric
 
 
+def professional_experience(
+    researcher_id,
+    graduate_program_id,
+    dep_id,
+    departament,
+    year,
+    distinct,
+    institution,
+    graduate_program,
+    city,
+    area,
+    modality,
+    graduation,
+    page,
+    lenght,
+):
+    return ProductionRepository.professional_experience(
+        researcher_id,
+        graduate_program_id,
+        dep_id,
+        departament,
+        year,
+        distinct,
+        institution,
+        graduate_program,
+        city,
+        area,
+        modality,
+        graduation,
+        page,
+        lenght,
+    )
+
+
 def get_book_metrics(
     term: str,
     researcher_id: UUID,

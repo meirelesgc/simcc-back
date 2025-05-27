@@ -7,7 +7,6 @@ from simcc.core.database import get_conn
 from simcc.schemas import ResearcherOptions
 from simcc.schemas.Researcher import (
     CoAuthorship,
-    ProfessionalExperience,
     Researcher,
 )
 from simcc.services import ResearcherService
@@ -275,20 +274,3 @@ def list_researchers_by_patent(
 )
 def co_authorship(researcher_id: UUID):
     return ResearcherService.list_co_authorship(researcher_id)
-
-
-@router.get(
-    '/professional_experience',
-    response_model=list[ProfessionalExperience],
-)
-def get_professional_experience(
-    researcher_id: UUID = None,
-    graduate_program_id: UUID | str = None,
-    dep_id: str = None,
-    year: int = None,
-    page: int = None,
-    lenght: int = None,
-):
-    return ResearcherService.professional_experience(
-        researcher_id, graduate_program_id, dep_id, year, page, lenght
-    )

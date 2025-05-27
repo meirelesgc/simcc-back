@@ -11,12 +11,53 @@ from simcc.schemas.Production.Event import EventProduction
 from simcc.schemas.Production.Guidance import GuidanceProduction
 from simcc.schemas.Production.Papers import PapersProduction
 from simcc.schemas.Production.Patent import PatentProduction
+from simcc.schemas.Production.ProfessionalExperience import (
+    ProfessionalExperience,
+)
 from simcc.schemas.Production.Report import ReportProduction
 from simcc.schemas.Production.ResearchProject import ResearchProjectProduction
 from simcc.schemas.Production.Software import SoftwareProduction
 from simcc.services import ProductionService
 
 router = APIRouter()
+
+
+@router.get(
+    '/professional_experience',
+    response_model=list[ProfessionalExperience],
+)
+def get_professional_experience(
+    researcher_id: UUID | str = None,
+    graduate_program_id: UUID | str = None,
+    dep_id: str = None,
+    departament: str = None,
+    year: int = 2020,
+    distinct: int = 1,
+    institution: str = None,
+    graduate_program: str = None,
+    city: str = None,
+    area: str = None,
+    modality: str = None,
+    graduation: str = None,
+    page: int = None,
+    lenght: int = None,
+):
+    return ProductionService.professional_experience(
+        researcher_id,
+        graduate_program_id,
+        dep_id,
+        departament,
+        year,
+        distinct,
+        institution,
+        graduate_program,
+        city,
+        area,
+        modality,
+        graduation,
+        page,
+        lenght,
+    )
 
 
 @router.get(

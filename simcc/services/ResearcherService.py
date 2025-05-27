@@ -326,19 +326,6 @@ def list_co_authorship(researcher_id: UUID) -> list[CoAuthorship]:
     return co_authorship.to_dict(orient='records')
 
 
-def professional_experience(
-    researcher_id,
-    graduate_program_id: UUID | str = None,
-    dep_id: str = None,
-    year: int = None,
-    page: int = None,
-    lenght: int = None,
-):
-    return ResearcherRepository.professional_experience(
-        researcher_id, graduate_program_id, dep_id, year, page, lenght
-    )
-
-
 def search_in_patents(
     term,
     graduate_program_id,
