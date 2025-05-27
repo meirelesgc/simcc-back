@@ -25,11 +25,12 @@ def search_in_area_specialty(
     filter_terms = str()
     filter_graduation = str()
     filter_pagination = str()
+    filter_distinct = str()
 
     join_program = str()
     filter_program = str()
     if graduate_program:
-        distinct = 'DISTINCT'
+        filter_distinct = 'DISTINCT'
         params['graduate_program'] = graduate_program.split(';')
         join_program = """
             INNER JOIN graduate_program_researcher gpr
@@ -52,7 +53,7 @@ def search_in_area_specialty(
     join_dep = str()
     filter_dep = str()
     if dep_id:
-        distinct = 'DISTINCT'
+        filter_distinct = 'DISTINCT'
         params['dep_id'] = dep_id.split(';')
         join_dep = """
             INNER JOIN ufmg.departament_researcher dpr
@@ -65,7 +66,7 @@ def search_in_area_specialty(
             """
 
     if dep:
-        distinct = 'DISTINCT'
+        filter_distinct = 'DISTINCT'
         params['dep'] = dep.split(';')
         join_dep = """
             INNER JOIN ufmg.departament_researcher dpr
@@ -119,7 +120,7 @@ def search_in_area_specialty(
         """
 
     SCRIPT_SQL = f"""
-        SELECT {distinct}
+        SELECT {filter_distinct}
             r.id, r.name, r.lattes_id, r.lattes_10_id, r.abstract, r.orcid,
             r.graduation, r.last_update AS lattes_update,
             REPLACE(rp.great_area, '_', ' ') AS area, rp.city,
@@ -171,11 +172,12 @@ def search_in_participation_event(
     filter_terms = str()
     filter_graduation = str()
     filter_pagination = str()
-
     join_program = str()
     filter_program = str()
+    filter_distinct = str()
+
     if graduate_program:
-        distinct = 'DISTINCT'
+        filter_distinct = 'DISTINCT'
         params['graduate_program'] = graduate_program.split(';')
         join_program = """
             INNER JOIN graduate_program_researcher gpr
@@ -191,7 +193,7 @@ def search_in_participation_event(
     join_dep = str()
     filter_dep = str()
     if dep_id:
-        distinct = 'DISTINCT'
+        filter_distinct = 'DISTINCT'
         params['dep_id'] = dep_id.split(';')
         join_dep = """
             INNER JOIN ufmg.departament_researcher dpr
@@ -204,7 +206,7 @@ def search_in_participation_event(
             """
 
     if dep:
-        distinct = 'DISTINCT'
+        filter_distinct = 'DISTINCT'
         params['dep'] = dep.split(';')
         join_dep = """
             INNER JOIN ufmg.departament_researcher dpr
@@ -270,7 +272,7 @@ def search_in_participation_event(
         filter_type = 'AND bp.type = ANY(%(type)s)'
 
     SCRIPT_SQL = f"""
-        SELECT {distinct}
+        SELECT {filter_distinct}
             r.id, r.name, r.lattes_id, r.lattes_10_id, r.abstract, r.orcid,
             r.graduation, r.last_update AS lattes_update,
             REPLACE(rp.great_area, '_', ' ') AS area, rp.city,
@@ -333,6 +335,7 @@ def search_in_book(
     join_dep = str()
     filter_dep = str()
     filter_institution = str()
+    filter_distinct = str()
 
     if institution:
         params['institution'] = institution.split(';')
@@ -341,7 +344,7 @@ def search_in_book(
             """
 
     if dep_id:
-        distinct = 'DISTINCT'
+        filter_distinct = 'DISTINCT'
         params['dep_id'] = dep_id.split(';')
         join_dep = """
             INNER JOIN ufmg.departament_researcher dpr
@@ -354,7 +357,7 @@ def search_in_book(
             """
 
     if dep:
-        distinct = 'DISTINCT'
+        filter_distinct = 'DISTINCT'
         params['dep'] = dep.split(';')
         join_dep = """
             INNER JOIN ufmg.departament_researcher dpr
@@ -397,7 +400,7 @@ def search_in_book(
         filter_program = 'AND gpr.graduate_program_id = %(graduate_program_id)s'
 
     if graduate_program:
-        distinct = 'DISTINCT'
+        filter_distinct = 'DISTINCT'
         params['graduate_program'] = graduate_program.split(';')
         join_program = """
             INNER JOIN graduate_program_researcher gpr
@@ -428,7 +431,7 @@ def search_in_book(
         filter_type = 'AND bp.type = ANY(%(type)s)'
 
     SCRIPT_SQL = f"""
-        SELECT {distinct}
+        SELECT {filter_distinct}
             r.id, r.name, r.lattes_id, r.lattes_10_id, r.abstract, r.orcid,
             r.graduation, r.last_update AS lattes_update,
             REPLACE(rp.great_area, '_', ' ') AS area, rp.city,
