@@ -340,14 +340,32 @@ def professional_experience(
 
 
 def search_in_patents(
-    term: str = None,
-    graduate_program_id: UUID | str = None,
-    university: str = None,
-    page: int = None,
-    lenght: int = None,
+    term,
+    graduate_program_id,
+    dep_id,
+    departament,
+    institution,
+    graduate_program,
+    city,
+    area,
+    modality,
+    graduation,
+    page,
+    lenght,
 ):
     researchers = ResearcherRepository.search_in_patents(
-        term, graduate_program_id, university, page, lenght
+        term,
+        graduate_program_id,
+        dep_id,
+        departament,
+        institution,
+        graduate_program,
+        city,
+        area,
+        modality,
+        graduation,
+        page,
+        lenght,
     )
     if not researchers:
         return []

@@ -242,12 +242,30 @@ def list_outstanding_researchers(
 def list_researchers_by_patent(
     term: str = None,
     graduate_program_id: UUID | str = None,
-    university: str = None,
+    dep_id: str = None,
+    departament: str = None,
+    institution: str = None,
+    graduate_program: str = None,
+    city: str = None,
+    area: str = None,
+    modality: str = None,
+    graduation: str = None,
     page: int = None,
     lenght: int = None,
 ):
     return ResearcherService.search_in_patents(
-        term, graduate_program_id, university, page, lenght
+        term,
+        graduate_program_id,
+        dep_id,
+        departament,
+        institution,
+        graduate_program,
+        city,
+        area,
+        modality,
+        graduation,
+        page,
+        lenght,
     )
 
 

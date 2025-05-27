@@ -1394,13 +1394,100 @@ def professional_experience(
 
 
 def search_in_patents(
-    term: str = None,
-    graduate_program_id: UUID | str = None,
-    university: str = None,
-    page: int = None,
-    lenght: int = None,
+    term,
+    graduate_program_id,
+    dep_id,
+    dep,
+    institution,
+    graduate_program,
+    city,
+    area,
+    modality,
+    graduation,
+    page,
+    lenght,
 ):
     params = {}
+    join_dep = str()
+    filter_dep = str()
+    join_program = str()
+    filter_program = str()
+
+    if graduate_program:
+        filter_distinct = 'DISTINCT'
+        params['graduate_program'] = graduate_program.split(';')
+        join_program = """
+            INNER JOIN graduate_program_researcher gpr
+                ON gpr.researcher_id = r.id
+            INNER JOIN graduate_program gp
+                ON gpr.graduate_program_id = gp.graduate_program_id
+            """
+        filter_program = """
+            AND gp.name = ANY(%(graduate_program)s)
+            AND gpr.type_ = 'PERMANENTE'
+            """
+
+    filter_city = str()
+    if city:
+        params['city'] = city.split(';')
+        filter_city = 'AND rp.city = ANY(%(city)s)'
+    filter_area = str()
+    if area:
+        params['area'] = area.replace(' ', '_').split(';')
+        filter_area = """
+            AND STRING_TO_ARRAY(REPLACE(rp.great_area, ' ', '_'), ';') && %(area)s
+        """
+
+    filter_institution = str()
+
+    join_modality = str()
+    filter_modality = str()
+    if modality:
+        params['modality'] = modality.split(';')
+        join_modality = """
+            INNER JOIN foment f
+                ON f.researcher_id = r.id
+        """
+        filter_modality = 'AND modality_name = ANY(%(modality)s)'
+
+    if institution:
+        params['institution'] = institution.split(';')
+        filter_institution = """
+            AND i.name = ANY(%(institution)s)
+            """
+
+    filter_distinct = str()
+
+    if dep_id:
+        filter_distinct = 'DISTINCT'
+        params['dep_id'] = dep_id.split(';')
+        join_dep = """
+            INNER JOIN ufmg.departament_researcher dpr
+                ON dpr.researcher_id = r.id
+            INNER JOIN ufmg.departament dp
+                ON dp.dep_id = dpr.dep_id
+            """
+        filter_dep = """
+            AND dp.dep_id = ANY(%(dep_id)s)
+            """
+
+    if dep:
+        filter_distinct = 'DISTINCT'
+        params['dep'] = dep.split(';')
+        join_dep = """
+            INNER JOIN ufmg.departament_researcher dpr
+                ON dpr.researcher_id = r.id
+            INNER JOIN ufmg.departament dp
+                ON dp.dep_id = dpr.dep_id
+            """
+        filter_dep = """
+            AND dp.dep_nom = ANY(%(dep)s)
+            """
+
+    filter_graduation = str()
+    if graduation:
+        params['graduation'] = graduation.split(';')
+        filter_graduation = 'AND r.graduation = ANY(%(graduation)s)'
 
     filter_pagination = str()
     if page and lenght:
@@ -1422,13 +1509,8 @@ def search_in_patents(
             """
         filter_program = 'AND gpr.graduate_program_id = %(graduate_program_id)s'
 
-    filter_institution = str()
-    if university:
-        params['institution']
-        filter_institution = 'AND i.name = %(institution)s'
-
     SCRIPT_SQL = f"""
-        SELECT
+        SELECT {filter_distinct}
             r.id, r.name, r.lattes_id, r.lattes_10_id, r.abstract, r.orcid,
             r.graduation, r.last_update AS lattes_update,
             REPLACE(rp.great_area, '_', ' ') AS area, rp.city,
@@ -1448,9 +1530,18 @@ def search_in_patents(
 					{filter_terms}
 				GROUP BY researcher_id) p ON p.researcher_id = r.id
             {join_program}
+            {join_dep}
+            {join_modality}
+            {join_program}
         WHERE 1 = 1
+            {filter_dep}
             {filter_program}
+            {filter_modality}
+            {filter_program}
+            {filter_area}
             {filter_institution}
+            {filter_graduation}
+            {filter_city}
         ORDER BY
             among DESC
             {filter_pagination};
