@@ -1687,7 +1687,7 @@ def list_patent(
                 ON rp.researcher_id = p.researcher_id
             """
         filters += """
-            AND rp.great_area_ ANY(%(area)s)
+            AND rp.great_area_ && %(area)s
             """
 
     if modality:
@@ -1848,7 +1848,7 @@ def list_brand(
                 ON rp.researcher_id = b.researcher_id
             """
         filters += """
-            AND rp.great_area_ ANY(%(area)s)
+            AND rp.great_area_ && %(area)s
             """
 
     if modality:
@@ -2308,7 +2308,7 @@ def list_bibliographic_production(
                 ON rp.researcher_id = b.researcher_id
             """
         filters += """
-            AND rp.great_area_ ANY(%(area)s)
+            AND rp.great_area_ && %(area)s
             """
 
     if modality:
@@ -2365,79 +2365,144 @@ def list_bibliographic_production(
 
 
 def list_article_production(  # noqa: PLR0914
-    terms: str = None,
-    university: str = None,
-    researcher_id: UUID | str = None,
-    graduate_program_id: UUID | str = None,
-    year: int | str = 2020,
-    type: ArticleOptions = 'ARTICLE',
-    qualis: QualisOptions = None,
-    page: int = None,
-    lenght: int = None,
-    dep_id: str = None,
+    term,
+    researcher_id,
+    graduate_program_id,
+    dep_id,
+    departament,
+    year,
+    institution,
+    graduate_program,
+    city,
+    area,
+    modality,
+    graduation,
+    page,
+    lenght,
+    distinct,
 ):
     params = {}
-
-    filter_university = str()
-    join_university = str()
-    if university:
-        join_university = """
-            LEFT JOIN institution i
-                ON r.institution_id = i.id
-            """
-        filter_university = 'AND i.name = %(university)s'
-        params['university'] = university
-
-    filter_program = str()
+    join_researcher_production = str()
+    join_foment = str()
     join_program = str()
-    if graduate_program_id:
-        params['program_id'] = graduate_program_id
-        join_program = """
-            INNER JOIN graduate_program_researcher gpr
-                ON r.id = gpr.researcher_id
-            """
-        filter_program = 'AND gpr.graduate_program_id = %(program_id)s'
+    join_departament = str()
 
-    filter_type = str()
-    if type == 'ARTICLE':
-        filter_type = "AND type = 'ARTICLE'"
+    filter_distinct = str()
+    filters = str()
+    filter_pagination = str()
 
-    filter_id = str()
-    if researcher_id:
-        params['researcher_id'] = researcher_id
-        filter_id = 'AND r.id = %(researcher_id)s'
+    if term:
+        filter_terms_str, term_params = webseatch_filter('b.title', term)
+        filters += filter_terms_str
+        params.update(term_params)
 
-    filter_year = str()
     if year:
         params['year'] = year
-        filter_year = 'AND year_ >= %(year)s'
+        filters += """
+            AND b.year::INT >= %(year)s
+            """
 
-    filter_terms = str()
-    if terms:
-        filter_terms, terms = webseatch_filter('b.title', terms)
-        params |= terms
+    if dep_id or departament:
+        join_departament = """
+            INNER JOIN ufmg.departament_researcher dpr
+                ON dpr.researcher_id = b.researcher_id
+            INNER JOIN ufmg.departament dp
+                ON dp.dep_id = dpr.dep_id
+            """
+    if dep_id:
+        params['dep_id'] = dep_id
+        filters += """
+            AND dp.dep_id = %(dep_id)s
+            """
 
-    filter_qualis = str()
-    if qualis:
-        params['qualis'] = qualis.split(';')
-        filter_qualis = 'AND bpa.qualis = ANY(%(qualis)s)'
+    if departament:
+        params['departament'] = departament.split(';')
+        filters += """
+            AND dp.dep_nom = ANY(%(departament)s)
+            """
 
-    filter_pagination = str()
+    if distinct:
+        filter_distinct = 'DISTINCT'
+
+    if researcher_id:
+        params['researcher_id'] = researcher_id
+        filters += """
+            AND b.researcher_id = %(researcher_id)s
+            """
+
+    if institution:
+        params['institution'] = institution.split(';')
+        filters += """
+            AND i.name = ANY(%(institution)s)
+            """
+
+    if graduate_program_id:
+        filter_distinct = 'DISTINCT'
+        params['graduate_program_id'] = graduate_program_id
+        join_program = """
+            INNER JOIN graduate_program_researcher gpr
+                ON gpr.researcher_id = b.researcher_id
+            INNER JOIN graduate_program gp
+                ON gpr.graduate_program_id = gp.graduate_program_id
+            """
+        filters += """
+            AND gpr.graduate_program_id = %(graduate_program_id)s
+            """
+
+    if graduate_program:
+        filter_distinct = 'DISTINCT'
+        params['graduate_program'] = graduate_program.split(';')
+        join_program = """
+            INNER JOIN graduate_program_researcher gpr
+                ON gpr.researcher_id = b.researcher_id
+            INNER JOIN graduate_program gp
+                ON gpr.graduate_program_id = gp.graduate_program_id
+            """
+        filters += """
+            AND gp.name = ANY(%(graduate_program)s)
+            """
+
+    if city:
+        params['city'] = city.split(';')
+        join_researcher_production = """
+            LEFT JOIN researcher_production rp
+                ON rp.researcher_id = b.researcher_id
+            """
+        filters += """
+            AND rp.city = ANY(%(city)s)
+            """
+    if area:
+        params['area'] = area.replace(' ', '_').split(';')
+        join_researcher_production = """
+            LEFT JOIN researcher_production rp
+                ON rp.researcher_id = b.researcher_id
+            """
+        filters += """
+            AND rp.great_area_ && %(area)s
+            """
+
+    if modality:
+        filter_distinct = 'DISTINCT'
+        params['modality'] = modality.split(';')
+        join_foment = """
+            INNER JOIN foment f
+                ON f.researcher_id = b.researcher_id
+            """
+        filters += """
+            AND f.modality_name = ANY(%(modality)s)
+            """
+
+    if graduation:
+        params['graduation'] = graduation.split(';')
+        filters += """
+            AND r.graduation = ANY(%(graduation)s)
+            """
+
     if page and lenght:
         filter_pagination = pagination(page, lenght)
 
-    filter_dep = str()
-    join_dep = str()
-    if dep_id:
-        params['dep_id'] = dep_id
-        join_dep = """
-            INNER JOIN ufmg.departament_researcher dr
-                ON r.id = dr.researcher_id
-            """
-        filter_dep = 'AND dr.dep_id = %(dep_id)s'
-
     SCRIPT_SQL = f"""
-        SELECT
+        SELECT {filter_distinct}
             b.id AS id, title, b.year, type, doi, bpa.qualis,
             periodical_magazine_name AS magazine, r.name AS researcher,
             r.lattes_10_id, r.lattes_id, jcr AS jif,
@@ -2450,23 +2515,19 @@ def list_article_production(  # noqa: PLR0914
                 ON b.id = bpa.bibliographic_production_id
             INNER JOIN researcher r
                 ON r.id = b.researcher_id
+            LEFT JOIN institution i
+                ON r.institution_id = i.id
             LEFT JOIN openalex_article opa
                 ON opa.article_id = b.id
-            {join_university}
+            {join_researcher_production}
+            {join_foment}
             {join_program}
-            {join_dep}
+            {join_departament}
         WHERE 1 = 1
-            {filter_id}
-            {filter_year}
-            {filter_terms}
-            {filter_type}
-            {filter_qualis}
-            {filter_program}
-            {filter_university}
-            {filter_dep}
+            {filters}
         ORDER BY
-            year DESC
-        {filter_pagination}
+            b.year DESC
+        {filter_pagination};
         """
     result = conn.select(SCRIPT_SQL, params)
     return result
@@ -2711,7 +2772,7 @@ def list_book_chapter(
                 ON rp.researcher_id = bp.researcher_id
             """
         filters += """
-            AND rp.great_area_ ANY(%(area)s)
+            AND rp.great_area_ && %(area)s
             """
 
     if modality:
@@ -2976,7 +3037,7 @@ def list_software(
                 ON rp.researcher_id = s.researcher_id
             """
         filters += """
-            AND rp.great_area_ ANY(%(area)s)
+            AND rp.great_area_ && %(area)s
             """
 
     if modality:
@@ -3139,7 +3200,7 @@ def list_researcher_report(
                 ON rp.researcher_id = rr.researcher_id
             """
         filters += """
-            AND rp.great_area_ ANY(%(area)s)
+            AND rp.great_area_ && %(area)s
             """
 
     if modality:

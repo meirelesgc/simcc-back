@@ -380,43 +380,42 @@ def list_software_production(
     response_model=list[ArticleProduction],
 )
 def list_article_production(
-    terms: str = None,
-    university: str = None,
+    term: str = None,
     researcher_id: UUID | str = None,
     graduate_program_id: UUID | str = None,
-    year: int | str = 2020,
-    type: ArticleOptions = 'ARTICLE',
-    qualis: QualisOptions | str = str(),
-    distinct: int = 1,
+    dep_id: str = None,
+    departament: str = None,
+    year: int = 2020,
+    institution: str = None,
+    graduate_program: str = None,
+    city: str = None,
+    area: str = None,
+    modality: str = None,
+    graduation: str = None,
     page: int = None,
     lenght: int = None,
-    dep_id: str = None,
+    distinct: int = 1,
 ):
     if distinct:
-        return ProductionService.list_distinct_article_production(
-            terms,
-            university,
-            researcher_id,
-            graduate_program_id,
-            year,
-            type,
-            qualis,
-            page,
-            lenght,
-            dep_id,
-        )
+        # DEBITO
+        pass
 
     return ProductionService.list_article_production(
-        terms,
-        university,
+        term,
         researcher_id,
         graduate_program_id,
+        dep_id,
+        departament,
         year,
-        type,
-        qualis,
+        institution,
+        graduate_program,
+        city,
+        area,
+        modality,
+        graduation,
         page,
         lenght,
-        dep_id,
+        distinct,
     )
 
 
