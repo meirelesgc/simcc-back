@@ -196,18 +196,41 @@ def list_brand_production(
     response_model=list[ReportProduction],
 )
 def list_researcher_report(
+    term: str = None,
     researcher_id: UUID | str = None,
-    year: int | str = 2020,
+    graduate_program_id: UUID | str = None,
+    dep_id: str = None,
+    departament: str = None,
+    year: int = 2020,
     distinct: int = 1,
+    institution: str = None,
+    graduate_program: str = None,
+    city: str = None,
+    area: str = None,
+    modality: str = None,
+    graduation: str = None,
     page: int = None,
     lenght: int = None,
 ):
     if distinct:
-        return ProductionService.list_distinct_researcher_report(
-            researcher_id, year, page, lenght
-        )
+        # DEBITO
+        pass
     return ProductionService.list_researcher_report(
-        researcher_id, year, page, lenght
+        term,
+        researcher_id,
+        graduate_program_id,
+        dep_id,
+        departament,
+        year,
+        distinct,
+        institution,
+        graduate_program,
+        city,
+        area,
+        modality,
+        graduation,
+        page,
+        lenght,
     )
 
 

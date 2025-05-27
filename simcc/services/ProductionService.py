@@ -714,13 +714,38 @@ def list_distinct_researcher_report(
 
 
 def list_researcher_report(
-    researcher_id: UUID | str = None,
-    year: int | str = 2020,
-    page: int = None,
-    lenght: int = None,
+    term,
+    researcher_id,
+    graduate_program_id,
+    dep_id,
+    departament,
+    year,
+    distinct,
+    institution,
+    graduate_program,
+    city,
+    area,
+    modality,
+    graduation,
+    page,
+    lenght,
 ):
     return ProductionRepository.list_researcher_report(
-        researcher_id, year, page, lenght
+        term,
+        researcher_id,
+        graduate_program_id,
+        dep_id,
+        departament,
+        year,
+        distinct,
+        institution,
+        graduate_program,
+        city,
+        area,
+        modality,
+        graduation,
+        page,
+        lenght,
     )
 
 
