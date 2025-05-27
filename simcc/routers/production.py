@@ -156,18 +156,38 @@ def list_book_production(
 def list_brand_production(
     term: str = None,
     researcher_id: UUID | str = None,
-    year: int | str = 2020,
-    institution_id: UUID | str = None,
+    graduate_program_id: UUID | str = None,
+    dep_id: str = None,
+    departament: str = None,
+    year: int = 2020,
     distinct: int = 1,
+    institution: str = None,
+    graduate_program: str = None,
+    city: str = None,
+    area: str = None,
+    modality: str = None,
+    graduation: str = None,
     page: int = None,
     lenght: int = None,
 ):
     if distinct:
-        return ProductionService.list_distinct_brand(
-            term, researcher_id, year, institution_id, page, lenght
-        )
+        # DEBITO
+        pass
     return ProductionService.list_brand(
-        term, researcher_id, year, institution_id, page, lenght
+        term,
+        researcher_id,
+        graduate_program_id,
+        dep_id,
+        departament,
+        year,
+        institution,
+        graduate_program,
+        city,
+        area,
+        modality,
+        graduation,
+        page,
+        lenght,
     )
 
 
