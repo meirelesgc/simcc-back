@@ -294,17 +294,40 @@ def list_outstanding_articles():
     response_model=list[ArticleProduction],
 )
 def list_bibliographic_production(
-    terms: str = None,
-    researcher_id: UUID | str = None,
-    year: int | str = 2020,
     type: ArticleOptions = 'ARTICLE',
     qualis: QualisOptions | str = str(),
-    institution_id: UUID | str = None,
+    term: str = None,
+    researcher_id: UUID | str = None,
+    graduate_program_id: UUID | str = None,
+    dep_id: str = None,
+    departament: str = None,
+    year: int = 2020,
+    institution: str = None,
+    graduate_program: str = None,
+    city: str = None,
+    area: str = None,
+    modality: str = None,
+    graduation: str = None,
     page: int = None,
     lenght: int = None,
 ):
     articles = ProductionService.list_bibliographic_production(
-        terms, researcher_id, year, type, qualis, institution_id, page, lenght
+        type,
+        qualis,
+        term,
+        researcher_id,
+        graduate_program_id,
+        dep_id,
+        departament,
+        year,
+        institution,
+        graduate_program,
+        city,
+        area,
+        modality,
+        graduation,
+        page,
+        lenght,
     )
     return articles
 
