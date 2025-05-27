@@ -27,28 +27,34 @@ async def get_researcher_filter(
     response_model=list[Researcher],
 )
 def search_in_participation_event(
+    type: str = None,
     term: str = None,
     graduate_program_id: UUID | str = None,
-    university: str = None,
-    type: str = None,
-    page: int = None,
-    lenght: int = None,
+    dep_id: str = None,
+    departament: str = None,
+    institution: str = None,
+    graduate_program: str = None,
     city: str = None,
     area: str = None,
     modality: str = None,
     graduation: str = None,
+    page: int = None,
+    lenght: int = None,
 ):
     return ResearcherService.search_in_participation_event(
+        type,
         term,
         graduate_program_id,
-        university,
-        type,
-        page,
-        lenght,
+        dep_id,
+        departament,
+        institution,
+        graduate_program,
         city,
         area,
         modality,
         graduation,
+        page,
+        lenght,
     )
 
 
@@ -59,24 +65,30 @@ def search_in_participation_event(
 def search_in_area_specialty(
     area_specialty: str = None,
     graduate_program_id: UUID | str = None,
-    university: str = None,
-    page: int = None,
-    lenght: int = None,
+    dep_id: str = None,
+    departament: str = None,
+    institution: str = None,
+    graduate_program: str = None,
     city: str = None,
     area: str = None,
     modality: str = None,
     graduation: str = None,
+    page: int = None,
+    lenght: int = None,
 ):
     return ResearcherService.search_in_area_specialty(
         area_specialty,
         graduate_program_id,
-        university,
-        page,
-        lenght,
+        dep_id,
+        departament,
+        institution,
+        graduate_program,
         city,
         area,
         modality,
         graduation,
+        page,
+        lenght,
     )
 
 
@@ -85,28 +97,34 @@ def search_in_area_specialty(
     response_model=list[Researcher],
 )
 def search_in_book(
+    type: str = None,
     term: str = None,
     graduate_program_id: UUID | str = None,
-    university: str = None,
-    type: str = None,
-    page: int = None,
-    lenght: int = None,
+    dep_id: str = None,
+    departament: str = None,
+    institution: str = None,
+    graduate_program: str = None,
     city: str = None,
     area: str = None,
     modality: str = None,
     graduation: str = None,
+    page: int = None,
+    lenght: int = None,
 ):
     return ResearcherService.search_in_book(
-        term,
-        graduate_program_id,
-        university,
-        type,
-        page,
-        lenght,
-        city,
-        area,
-        modality,
-        graduation,
+type
+term
+graduate_program_id
+dep_id
+departament
+institution
+graduate_program
+city
+area
+modality
+graduation
+page
+lenght
     )
 
 

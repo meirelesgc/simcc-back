@@ -12,26 +12,32 @@ async def get_researcher_filter(conn):
 
 
 def search_in_area_specialty(
-    term: str = None,
-    graduate_program_id: UUID | str = None,
-    university: str = None,
-    page: int = None,
-    lenght: int = None,
-    city: str = None,
-    area: str = None,
-    modality: str = None,
-    graduation: str = None,
+    area_specialty,
+    graduate_program_id,
+    dep_id,
+    departament,
+    institution,
+    graduate_program,
+    city,
+    area,
+    modality,
+    graduation,
+    page,
+    lenght,
 ):
     researchers = ResearcherRepository.search_in_area_specialty(
-        term,
+        area_specialty,
         graduate_program_id,
-        university,
-        page,
-        lenght,
+        dep_id,
+        departament,
+        institution,
+        graduate_program,
         city,
         area,
         modality,
         graduation,
+        page,
+        lenght,
     )
     if not researchers:
         return []
@@ -44,28 +50,34 @@ def search_in_area_specialty(
 
 
 def search_in_participation_event(
+    type: str = None,
     term: str = None,
     graduate_program_id: UUID | str = None,
-    university: str = None,
-    type: str = None,
-    page: int = None,
-    lenght: int = None,
+    dep_id: str = None,
+    departament: str = None,
+    institution: str = None,
+    graduate_program: str = None,
     city: str = None,
     area: str = None,
     modality: str = None,
     graduation: str = None,
+    page: int = None,
+    lenght: int = None,
 ):
     researchers = ResearcherRepository.search_in_participation_event(
+        type,
         term,
         graduate_program_id,
-        university,
-        type,
-        page,
-        lenght,
+        dep_id,
+        departament,
+        institution,
+        graduate_program,
         city,
         area,
         modality,
         graduation,
+        page,
+        lenght,
     )
     if not researchers:
         return []
@@ -78,28 +90,34 @@ def search_in_participation_event(
 
 
 def search_in_book(
-    term: str = None,
-    graduate_program_id: UUID | str = None,
-    university: str = None,
-    type: str = None,
-    page: int = None,
-    lenght: int = None,
-    city: str = None,
-    area: str = None,
-    modality: str = None,
-    graduation: str = None,
+    type,
+    term,
+    graduate_program_id,
+    dep_id,
+    departament,
+    institution,
+    graduate_program,
+    city,
+    area,
+    modality,
+    graduation,
+    page,
+    lenght,
 ):
     researchers = ResearcherRepository.search_in_book(
+        type,
         term,
         graduate_program_id,
-        university,
-        type,
-        page,
-        lenght,
+        dep_id,
+        departament,
+        institution,
+        graduate_program,
         city,
         area,
         modality,
         graduation,
+        page,
+        lenght,
     )
     if not researchers:
         return []

@@ -8,20 +8,74 @@ from simcc.schemas.Researcher import ResearcherArticleProduction
 
 
 def search_in_area_specialty(
-    term: str = None,
-    graduate_program_id: UUID | str = None,
-    university: str = None,
-    page: int = None,
-    lenght: int = None,
-    city: str = None,
-    area: str = None,
-    modality: str = None,
-    graduation: str = None,
+    term,
+    graduate_program_id,
+    dep_id,
+    dep,
+    institution,
+    graduate_program,
+    city,
+    area,
+    modality,
+    graduation,
+    page,
+    lenght,
 ):
     params = {}
     filter_terms = str()
     filter_graduation = str()
     filter_pagination = str()
+
+    join_program = str()
+    filter_program = str()
+    if graduate_program:
+        distinct = 'DISTINCT'
+        params['graduate_program'] = graduate_program.split(';')
+        join_program = """
+            INNER JOIN graduate_program_researcher gpr
+                ON gpr.researcher_id = r.id
+            INNER JOIN graduate_program gp
+                ON gpr.graduate_program_id = gp.graduate_program_id
+            """
+        filter_program = """
+            AND gp.name = ANY(%(graduate_program)s)
+            AND gpr.type_ = 'PERMANENTE'
+            """
+
+    filter_institution = str()
+    if institution:
+        params['institution'] = institution.split(';')
+        filter_institution = """
+            AND i.name = ANY(%(institution)s)
+            """
+
+    join_dep = str()
+    filter_dep = str()
+    if dep_id:
+        distinct = 'DISTINCT'
+        params['dep_id'] = dep_id.split(';')
+        join_dep = """
+            INNER JOIN ufmg.departament_researcher dpr
+                ON dpr.researcher_id = r.id
+            INNER JOIN ufmg.departament dp
+                ON dp.dep_id = dpr.dep_id
+            """
+        filter_dep = """
+            AND dp.dep_id = ANY(%(dep_id)s)
+            """
+
+    if dep:
+        distinct = 'DISTINCT'
+        params['dep'] = dep.split(';')
+        join_dep = """
+            INNER JOIN ufmg.departament_researcher dpr
+                ON dpr.researcher_id = r.id
+            INNER JOIN ufmg.departament dp
+                ON dp.dep_id = dpr.dep_id
+            """
+        filter_dep = """
+            AND dp.dep_nom = ANY(%(dep)s)
+            """
 
     if graduation:
         params['graduation'] = graduation.split(';')
@@ -44,8 +98,6 @@ def search_in_area_specialty(
         """
         filter_modality = 'AND modality_name = ANY(%(modality)s)'
 
-    join_program = str()
-    filter_program = str()
     if graduate_program_id and graduate_program_id != '0':
         params['graduate_program_id'] = graduate_program_id
         join_program = """
@@ -53,11 +105,6 @@ def search_in_area_specialty(
                 ON gpr.researcher_id = r.id
         """
         filter_program = 'AND gpr.graduate_program_id = %(graduate_program_id)s'
-
-    filter_institution = str()
-    if university:
-        params['institution'] = university
-        filter_institution = 'AND i.name = %(institution)s'
 
     filter_city = str()
     if city:
@@ -72,7 +119,7 @@ def search_in_area_specialty(
         """
 
     SCRIPT_SQL = f"""
-        SELECT
+        SELECT {distinct}
             r.id, r.name, r.lattes_id, r.lattes_10_id, r.abstract, r.orcid,
             r.graduation, r.last_update AS lattes_update,
             REPLACE(rp.great_area, '_', ' ') AS area, rp.city,
@@ -87,12 +134,14 @@ def search_in_area_specialty(
             LEFT JOIN openalex_researcher opr ON opr.researcher_id = r.id
             {join_modality}
             {join_program}
+            {join_dep}
         WHERE 1 = 1
             {filter_graduation}
             {filter_modality}
+            {filter_institution}
+            {filter_dep}
             {filter_terms}
             {filter_program}
-            {filter_institution}
             {filter_city}
             {filter_area}
         ORDER BY
@@ -104,21 +153,75 @@ def search_in_area_specialty(
 
 
 def search_in_participation_event(
+    type: str = None,
     term: str = None,
     graduate_program_id: UUID | str = None,
-    university: str = None,
-    type: str = None,
-    page: int = None,
-    lenght: int = None,
+    dep_id: str = None,
+    dep: str = None,
+    institution: str = None,
+    graduate_program: str = None,
     city: str = None,
     area: str = None,
     modality: str = None,
     graduation: str = None,
+    page: int = None,
+    lenght: int = None,
 ):
     params = {}
     filter_terms = str()
     filter_graduation = str()
     filter_pagination = str()
+
+    join_program = str()
+    filter_program = str()
+    if graduate_program:
+        distinct = 'DISTINCT'
+        params['graduate_program'] = graduate_program.split(';')
+        join_program = """
+            INNER JOIN graduate_program_researcher gpr
+                ON gpr.researcher_id = r.id
+            INNER JOIN graduate_program gp
+                ON gpr.graduate_program_id = gp.graduate_program_id
+            """
+        filter_program = """
+            AND gp.name = ANY(%(graduate_program)s)
+            AND gpr.type_ = 'PERMANENTE'
+            """
+
+    join_dep = str()
+    filter_dep = str()
+    if dep_id:
+        distinct = 'DISTINCT'
+        params['dep_id'] = dep_id.split(';')
+        join_dep = """
+            INNER JOIN ufmg.departament_researcher dpr
+                ON dpr.researcher_id = r.id
+            INNER JOIN ufmg.departament dp
+                ON dp.dep_id = dpr.dep_id
+            """
+        filter_dep = """
+            AND dp.dep_id = ANY(%(dep_id)s)
+            """
+
+    if dep:
+        distinct = 'DISTINCT'
+        params['dep'] = dep.split(';')
+        join_dep = """
+            INNER JOIN ufmg.departament_researcher dpr
+                ON dpr.researcher_id = r.id
+            INNER JOIN ufmg.departament dp
+                ON dp.dep_id = dpr.dep_id
+            """
+        filter_dep = """
+            AND dp.dep_nom = ANY(%(dep)s)
+            """
+
+    filter_institution = str()
+    if institution:
+        params['institution'] = institution.split(';')
+        filter_institution = """
+            AND i.name = ANY(%(institution)s)
+            """
 
     if graduation:
         params['graduation'] = graduation.split(';')
@@ -141,8 +244,6 @@ def search_in_participation_event(
         """
         filter_modality = 'AND modality_name = ANY(%(modality)s)'
 
-    join_program = str()
-    filter_program = str()
     if graduate_program_id and graduate_program_id != '0':
         params['graduate_program_id'] = graduate_program_id
         join_program = """
@@ -150,11 +251,6 @@ def search_in_participation_event(
                 ON gpr.researcher_id = r.id
         """
         filter_program = 'AND gpr.graduate_program_id = %(graduate_program_id)s'
-
-    filter_institution = str()
-    if university:
-        params['institution'] = university
-        filter_institution = 'AND i.name = %(institution)s'
 
     filter_city = str()
     if city:
@@ -174,7 +270,7 @@ def search_in_participation_event(
         filter_type = 'AND bp.type = ANY(%(type)s)'
 
     SCRIPT_SQL = f"""
-        SELECT
+        SELECT {distinct}
             r.id, r.name, r.lattes_id, r.lattes_10_id, r.abstract, r.orcid,
             r.graduation, r.last_update AS lattes_update,
             REPLACE(rp.great_area, '_', ' ') AS area, rp.city,
@@ -189,6 +285,7 @@ def search_in_participation_event(
             LEFT JOIN openalex_researcher opr ON opr.researcher_id = r.id
             {join_modality}
             {join_program}
+            {join_dep}
             INNER JOIN (
                 SELECT pe.researcher_id, COUNT(*) AS among
                 FROM participation_events pe
@@ -203,6 +300,7 @@ def search_in_participation_event(
             {filter_modality}
             {filter_program}
             {filter_institution}
+            {filter_dep}
             {filter_city}
             {filter_area}
         ORDER BY
@@ -214,22 +312,59 @@ def search_in_participation_event(
 
 
 def search_in_book(
-    term: str = None,
-    graduate_program_id: UUID | str = None,
-    university: str = None,
-    type: str = None,
-    page: int = None,
-    lenght: int = None,
-    city: str = None,
-    area: str = None,
-    modality: str = None,
-    graduation: str = None,
+    type,
+    term,
+    graduate_program_id,
+    dep_id,
+    dep,
+    institution,
+    graduate_program,
+    city,
+    area,
+    modality,
+    graduation,
+    page,
+    lenght,
 ):
     params = {}
     filter_terms = str()
     filter_graduation = str()
     filter_pagination = str()
+    join_dep = str()
+    filter_dep = str()
+    filter_institution = str()
 
+    if institution:
+        params['institution'] = institution.split(';')
+        filter_institution = """
+            AND i.name = ANY(%(institution)s)
+            """
+
+    if dep_id:
+        distinct = 'DISTINCT'
+        params['dep_id'] = dep_id.split(';')
+        join_dep = """
+            INNER JOIN ufmg.departament_researcher dpr
+                ON dpr.researcher_id = r.id
+            INNER JOIN ufmg.departament dp
+                ON dp.dep_id = dpr.dep_id
+            """
+        filter_dep = """
+            AND dp.dep_id = ANY(%(dep_id)s)
+            """
+
+    if dep:
+        distinct = 'DISTINCT'
+        params['dep'] = dep.split(';')
+        join_dep = """
+            INNER JOIN ufmg.departament_researcher dpr
+                ON dpr.researcher_id = r.id
+            INNER JOIN ufmg.departament dp
+                ON dp.dep_id = dpr.dep_id
+            """
+        filter_dep = """
+            AND dp.dep_nom = ANY(%(dep)s)
+            """
     if graduation:
         params['graduation'] = graduation.split(';')
         filter_graduation = 'AND r.graduation = ANY(%(graduation)s)'
@@ -261,10 +396,19 @@ def search_in_book(
         """
         filter_program = 'AND gpr.graduate_program_id = %(graduate_program_id)s'
 
-    filter_institution = str()
-    if university:
-        params['institution'] = university
-        filter_institution = 'AND i.name = %(institution)s'
+    if graduate_program:
+        distinct = 'DISTINCT'
+        params['graduate_program'] = graduate_program.split(';')
+        join_program = """
+            INNER JOIN graduate_program_researcher gpr
+                ON gpr.researcher_id = r.id
+            INNER JOIN graduate_program gp
+                ON gpr.graduate_program_id = gp.graduate_program_id
+            """
+        filter_program = """
+            AND gp.name = ANY(%(graduate_program)s)
+            AND gpr.type_ = 'PERMANENTE'
+            """
 
     filter_city = str()
     if city:
@@ -284,7 +428,7 @@ def search_in_book(
         filter_type = 'AND bp.type = ANY(%(type)s)'
 
     SCRIPT_SQL = f"""
-        SELECT
+        SELECT {distinct}
             r.id, r.name, r.lattes_id, r.lattes_10_id, r.abstract, r.orcid,
             r.graduation, r.last_update AS lattes_update,
             REPLACE(rp.great_area, '_', ' ') AS area, rp.city,
@@ -299,6 +443,7 @@ def search_in_book(
             LEFT JOIN openalex_researcher opr ON opr.researcher_id = r.id
             {join_modality}
             {join_program}
+            {join_dep}
             INNER JOIN (
                 SELECT bp.researcher_id, COUNT(*) AS among
                 FROM bibliographic_production bp
@@ -306,13 +451,14 @@ def search_in_book(
                     AND TYPE = 'BOOK'
                     {filter_terms}
                     {filter_type}
+                    {filter_institution}
                 GROUP BY researcher_id
             ) bp ON bp.researcher_id = r.id
         WHERE 1 = 1
             {filter_graduation}
+            {filter_dep}
             {filter_modality}
             {filter_program}
-            {filter_institution}
             {filter_city}
             {filter_area}
         ORDER BY
