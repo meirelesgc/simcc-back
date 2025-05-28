@@ -2364,7 +2364,8 @@ def list_bibliographic_production(
     return result
 
 
-def list_article_production(  # noqa: PLR0914
+def list_article_production(
+    qualis,
     term,
     researcher_id,
     graduate_program_id,
@@ -2390,6 +2391,10 @@ def list_article_production(  # noqa: PLR0914
     filter_distinct = str()
     filters = str()
     filter_pagination = str()
+
+    if qualis:
+        params['qualis'] = qualis.split(';')
+        filters += 'AND bpa.qualis = ANY(%(qualis)s)'
 
     if term:
         filter_terms_str, term_params = webseatch_filter('b.title', term)

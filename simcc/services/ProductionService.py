@@ -614,6 +614,7 @@ def list_bibliographic_production(
 
 
 def list_article_production(
+    qualis,
     term,
     researcher_id,
     graduate_program_id,
@@ -631,6 +632,7 @@ def list_article_production(
     distinct,
 ):
     production = ProductionRepository.list_article_production(
+        qualis,
         term,
         researcher_id,
         graduate_program_id,

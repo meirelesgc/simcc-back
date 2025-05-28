@@ -375,6 +375,7 @@ def list_software_production(
     response_model=list[ArticleProduction],
 )
 def list_article_production(
+    qualis: str = None,
     term: str = None,
     researcher_id: UUID | str = None,
     graduate_program_id: UUID | str = None,
@@ -396,6 +397,7 @@ def list_article_production(
         pass
 
     return ProductionService.list_article_production(
+        qualis,
         term,
         researcher_id,
         graduate_program_id,
