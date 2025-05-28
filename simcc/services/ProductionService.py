@@ -414,9 +414,7 @@ def list_distinct_patent(
     page,
     lenght,
 ) -> list[PatentProduction]:
-    patents = ProductionRepository.list_distinct_patent(
-        term, researcher_id, year, institution_id, page, lenght
-    )
+    patents = ProductionRepository.list_distinct_patent(...)
     if not patents:
         return []
     return patents

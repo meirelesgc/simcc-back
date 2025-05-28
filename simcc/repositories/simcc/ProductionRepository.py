@@ -556,6 +556,8 @@ async def get_researcher_metrics(
             params['year'] = year
         case 'NAME':
             filter_name, params['name'] = names_filter('r.name', term)
+        case _:
+            ...
 
     join_dep = str()
     filter_dep = str()
@@ -631,7 +633,7 @@ async def get_researcher_metrics(
             LEFT JOIN researcher_production rp_area ON rp_area.researcher_id = r.id
         """
         where_extra += """
-            AND STRING_TO_ARRAY(REPLACE(rp_area.great_area, ' ', '_'), ';') && %(area)s
+            AND great_area_ && %(area)s
         """
 
     if modality:
@@ -652,6 +654,7 @@ async def get_researcher_metrics(
         FROM researcher r
         LEFT JOIN openalex_researcher opr
             ON opr.researcher_id = r.id
+
             {join_filter}
             {join_dep}
             {join_extra}
@@ -1202,7 +1205,6 @@ def list_academic_degree_metrics(
             """
 
     if dep_id:
-        print(dep_id)
         params['dep_id'] = dep_id.split(';')
         join_dep = """
             INNER JOIN ufmg.departament_researcher dpr
@@ -1592,7 +1594,6 @@ def list_patent(
     lenght,
 ):
     params = {}
-    join_researcher = str()
     join_researcher_production = str()
     join_foment = str()
     join_program = str()
