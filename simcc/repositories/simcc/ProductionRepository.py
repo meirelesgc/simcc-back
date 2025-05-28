@@ -3639,40 +3639,151 @@ def list_distinct_researcher_production_events(
 
 
 def list_research_projects(
-    term: str = None,
-    researcher_id: UUID | str = None,
-    year: int | str = 2020,
-    program_id: UUID | str = None,
+    term,
+    researcher_id,
+    graduate_program_id,
+    dep_id,
+    departament,
+    year,
+    institution,
+    graduate_program,
+    city,
+    area,
+    modality,
+    graduation,
+    page,
+    lenght,
+    distinct,
 ):
     params = {}
 
-    filter_terms = str()
-    if term:
-        filter_terms, terms = webseatch_filter('title', term)
-        params |= terms
-
-    filter_year = str()
-    if year:
-        filter_year = 'AND start_year >= %(year)s'
-        params['year'] = year
-
-    filter_program = str()
+    join_researcher_production = str()
+    join_foment = str()
     join_program = str()
-    if program_id:
-        params['program_id'] = program_id
+    join_institution = str()
+    join_departament = str()
+
+    filter_distinct = str()
+    filters = str()
+    filter_pagination = str()
+
+    if term:
+        filter_terms_str, term_params = webseatch_filter('rp.project_name', term)
+        filters += filter_terms_str
+        params.update(term_params)
+
+    if year:
+        params['year'] = year
+        filters += """
+            AND rp.start_year >= %(year)s
+            """
+
+    if dep_id or departament:
+        join_departament = """
+            INNER JOIN ufmg.departament_researcher dpr
+                ON dpr.researcher_id = rp.researcher_id
+            INNER JOIN ufmg.departament dp
+                ON dp.dep_id = dpr.dep_id
+            """
+    if dep_id:
+        params['dep_id'] = dep_id
+        filters += """
+            AND dp.dep_id = %(dep_id)s
+            """
+
+    if departament:
+        params['departament'] = departament.split(';')
+        filters += """
+            AND dp.dep_nom = ANY(%(departament)s)
+            """
+
+    if distinct:
+        filter_distinct = 'DISTINCT'
+
+    if researcher_id:
+        params['researcher_id'] = researcher_id
+        filters += """
+            AND rp.researcher_id = %(researcher_id)s
+            """
+
+    if institution:
+        params['institution'] = institution.split(';')
+        join_institution = """
+            INNER JOIN institution i
+                ON r.institution_id = i.id
+            """
+        filters += """
+            AND i.name = ANY(%(institution)s)
+            """
+
+    if graduate_program_id:
+        filter_distinct = 'DISTINCT'
+        params['graduate_program_id'] = graduate_program_id
         join_program = """
             INNER JOIN graduate_program_researcher gpr
-                ON gpr.researcher_id = r.id
+                ON gpr.researcher_id = rp.researcher_id
+            INNER JOIN graduate_program gp
+                ON gpr.graduate_program_id = gp.graduate_program_id
             """
-        filter_program = 'AND gpr.graduate_program_id = %(program_id)s'
+        filters += """
+            AND gpr.graduate_program_id = %(graduate_program_id)s
+            """
 
-    filter_id = str()
-    if researcher_id:
-        filter_id = 'AND r.id = %(researcher_id)s'
-        params['researcher_id'] = researcher_id
+    if graduate_program:
+        filter_distinct = 'DISTINCT'
+        params['graduate_program'] = graduate_program.split(';')
+        join_program = """
+            INNER JOIN graduate_program_researcher gpr
+                ON gpr.researcher_id = rp.researcher_id
+            INNER JOIN graduate_program gp
+                ON gpr.graduate_program_id = gp.graduate_program_id
+            """
+        filters += """
+            AND gp.name = ANY(%(graduate_program)s)
+            """
+
+    if city:
+        params['city'] = city.split(';')
+        join_researcher_production = """
+            LEFT JOIN researcher_production rp_prod
+                ON rp_prod.researcher_id = rp.researcher_id
+            """
+        filters += """
+            AND rp_prod.city = ANY(%(city)s)
+            """
+    if area:
+        params['area'] = area.replace(' ', '_').split(';')
+        join_researcher_production = """
+            LEFT JOIN researcher_production rp_prod
+                ON rp_prod.researcher_id = rp.researcher_id
+            """
+        filters += """
+            AND rp_prod.great_area_ && %(area)s
+            """
+
+    if modality:
+        filter_distinct = 'DISTINCT'
+        params['modality'] = modality.split(';')
+        join_foment = """
+            INNER JOIN foment f
+                ON f.researcher_id = rp.researcher_id
+            """
+        filters += """
+            AND f.modality_name = ANY(%(modality)s)
+            """
+
+    if graduation:
+        params['graduation'] = graduation.split(';')
+        filters += """
+            AND r.graduation = ANY(%(graduation)s)
+            """
+
+    if page and lenght:
+        filter_pagination = pagination(page, lenght)
 
     SCRIPT_SQL = f"""
-        SELECT rp.id, rp.researcher_id, r.name, rp.start_year, rp.end_year,
+        SELECT {filter_distinct}
+            rp.id, rp.researcher_id, r.name, rp.start_year, rp.end_year,
             rp.agency_code, rp.agency_name, rp.project_name, rp.status,
             rp.nature, rp.number_undergraduates, rp.number_specialists,
             rp.number_academic_masters, rp.number_phd, rp.description,
@@ -3681,8 +3792,6 @@ def list_research_projects(
             LEFT JOIN researcher r ON r.id = rp.researcher_id
             LEFT JOIN (SELECT project_id, JSONB_AGG(JSONB_BUILD_OBJECT('title', title, 'type', type)) AS production
                 FROM public.research_project_production
-                WHERE 1 = 1
-                    {filter_terms}
                 GROUP BY project_id) rpp ON rpp.project_id = rp.id
             LEFT JOIN (SELECT project_id, JSONB_AGG(JSONB_BUILD_OBJECT('agency_name', agency_name, 'agency_code', agency_code, 'nature', nature)) AS foment
                 FROM public.research_project_foment
@@ -3690,11 +3799,15 @@ def list_research_projects(
             LEFT JOIN (SELECT project_id, JSONB_AGG(JSONB_BUILD_OBJECT('name', name, 'lattes_id', lattes_id, 'citations', citations)) AS components
                 FROM public.research_project_components
                 GROUP BY project_id) rpc ON rpc.project_id = rp.id
+            {join_researcher_production}
+            {join_foment}
             {join_program}
+            {join_departament}
+            {join_institution}
         WHERE 1 = 1
-            {filter_year}
-            {filter_program}
-            {filter_id}
+            {filters}
+        ORDER BY rp.start_year DESC
+        {filter_pagination};
         """
 
     result = conn.select(SCRIPT_SQL, params)

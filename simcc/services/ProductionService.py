@@ -915,13 +915,38 @@ def list_distinct_researcher_production_events(
 
 
 def list_research_projects(
-    term: str = None,
-    researcher_id: UUID | str = None,
-    year: int | str = 2020,
-    graduate_program_id: UUID | str = None,
+    term,
+    researcher_id,
+    graduate_program_id,
+    dep_id,
+    departament,
+    year,
+    institution,
+    graduate_program,
+    city,
+    area,
+    modality,
+    graduation,
+    page,
+    lenght,
+    distinct,
 ):
     return ProductionRepository.list_research_projects(
-        term, researcher_id, year, graduate_program_id
+        term,
+        researcher_id,
+        graduate_program_id,
+        dep_id,
+        departament,
+        year,
+        institution,
+        graduate_program,
+        city,
+        area,
+        modality,
+        graduation,
+        page,
+        lenght,
+        distinct,
     )
 
 
