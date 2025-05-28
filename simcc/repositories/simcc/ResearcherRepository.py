@@ -373,7 +373,7 @@ def search_in_book(
         filter_graduation = 'AND r.graduation = ANY(%(graduation)s)'
 
     if term:
-        filter_terms, term = webseatch_filter('pe.title', term)
+        filter_terms, term = webseatch_filter('bp.title', term)
         params |= term
 
     if page and lenght:

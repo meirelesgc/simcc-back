@@ -3,7 +3,7 @@ from uuid import UUID
 
 from simcc.core.connection import Connection
 from simcc.repositories import conn
-from simcc.repositories.util import pagination, webseatch_filter
+from simcc.repositories.util import names_filter, pagination, webseatch_filter
 from simcc.schemas import ArticleOptions, QualisOptions
 from simcc.schemas.Production.Article import (
     ArticleMetric,
@@ -518,6 +518,7 @@ async def get_researcher_metrics(
     where_extra = str()
     join_program = str()
     filter_program = str()
+    filter_name = str()
 
     match type:
         case 'ABSTRACT':
@@ -545,13 +546,16 @@ async def get_researcher_metrics(
             type_filter, term_params = webseatch_filter('rp.great_area', term)
             params |= term_params
         case 'EVENT':
-            join_filter = (
-                'INNER JOIN event_organization e ON e.researcher_id = r.id'
-            )
+            join_filter = """
+                INNER JOIN event_organization e
+                    ON e.researcher_id = r.id
+                """
             type_filter, term_params = webseatch_filter('e.title', term)
             year_filter = 'AND e.year::int >= %(year)s'
             params |= term_params
             params['year'] = year
+        case 'NAME':
+            filter_name, params['name'] = names_filter('r.name', term)
 
     join_dep = str()
     filter_dep = str()
@@ -646,21 +650,22 @@ async def get_researcher_metrics(
                COUNT(DISTINCT r.orcid) AS orcid_count,
                COUNT(DISTINCT opr.scopus) AS scopus_count
         FROM researcher r
-        LEFT JOIN openalex_researcher opr ON opr.researcher_id = r.id
-        {join_filter}
-        {join_dep}
-        {join_extra}
-        {join_program}
+        LEFT JOIN openalex_researcher opr
+            ON opr.researcher_id = r.id
+            {join_filter}
+            {join_dep}
+            {join_extra}
+            {join_program}
         WHERE 1 = 1
             {type_filter}
             {filter_program}
             {filter_dep}
             {filter_id}
+            {filter_name}
             {filter_institution}
             {year_filter}
             {where_extra}
     """
-
     return await conn.select(SCRIPT_SQL, params)
 
 

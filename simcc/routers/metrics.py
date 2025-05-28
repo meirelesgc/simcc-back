@@ -91,7 +91,7 @@ async def get_researcher_metrics(
     graduate_program_id: UUID | str = None,
     dep_id: str = None,
     departament: str = None,
-    year: int = 2020,
+    year: int = 0,
     type: Literal[
         'BOOK',
         'BOOK_CHAPTER',
@@ -102,6 +102,7 @@ async def get_researcher_metrics(
         'PATENT',
         'AREA',
         'EVENT',
+        'NAME',
     ] = None,
     distinct: int = 1,
     institution: str = None,
