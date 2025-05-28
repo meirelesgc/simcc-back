@@ -962,10 +962,39 @@ def list_distinct_research_projects(
 
 
 def list_papers_magazine(
-    researcher_id: UUID | str = None,
-    year: int | str = 2020,
+    term,
+    researcher_id,
+    graduate_program_id,
+    dep_id,
+    departament,
+    year,
+    institution,
+    graduate_program,
+    city,
+    area,
+    modality,
+    graduation,
+    page,
+    lenght,
+    distinct,
 ):
-    return ProductionRepository.list_papers_magazine(researcher_id, year)
+    return ProductionRepository.list_papers_magazine(
+        term,
+        researcher_id,
+        graduate_program_id,
+        dep_id,
+        departament,
+        year,
+        institution,
+        graduate_program,
+        city,
+        area,
+        modality,
+        graduation,
+        page,
+        lenght,
+        distinct,
+    )
 
 
 def list_distinct_papers_magazine(
