@@ -84,24 +84,22 @@ def list_patent_production(
     if distinct:
         # DEBITO
         pass
-    else:
-        patents = ProductionService.list_patent(
-            term,
-            researcher_id,
-            graduate_program_id,
-            dep_id,
-            departament,
-            year,
-            institution,
-            graduate_program,
-            city,
-            area,
-            modality,
-            graduation,
-            page,
-            lenght,
-        )
-    return patents
+    return ProductionService.list_patent(
+        term,
+        researcher_id,
+        graduate_program_id,
+        dep_id,
+        departament,
+        year,
+        institution,
+        graduate_program,
+        city,
+        area,
+        modality,
+        graduation,
+        page,
+        lenght,
+    )
 
 
 @router.get(
@@ -128,25 +126,23 @@ def list_book_production(
     if distinct:
         # DEBITO
         pass
-    else:
-        books = ProductionService.list_book(
-            term,
-            researcher_id,
-            graduate_program_id,
-            dep_id,
-            departament,
-            year,
-            distinct,
-            institution,
-            graduate_program,
-            city,
-            area,
-            modality,
-            graduation,
-            page,
-            lenght,
-        )
-    return books
+    return ProductionService.list_book(
+        term,
+        researcher_id,
+        graduate_program_id,
+        dep_id,
+        departament,
+        year,
+        distinct,
+        institution,
+        graduate_program,
+        city,
+        area,
+        modality,
+        graduation,
+        page,
+        lenght,
+    )
 
 
 @router.get(
@@ -258,24 +254,23 @@ def list_book_chapter_production(
     if distinct:
         # DEBITO
         pass
-    else:
-        books = ProductionService.list_book_chapter(
-            term,
-            researcher_id,
-            graduate_program_id,
-            dep_id,
-            departament,
-            year,
-            institution,
-            graduate_program,
-            city,
-            area,
-            modality,
-            graduation,
-            page,
-            lenght,
-        )
-    return books
+
+    return ProductionService.list_book_chapter(
+        term,
+        researcher_id,
+        graduate_program_id,
+        dep_id,
+        departament,
+        year,
+        institution,
+        graduate_program,
+        city,
+        area,
+        modality,
+        graduation,
+        page,
+        lenght,
+    )
 
 
 @router.get(
