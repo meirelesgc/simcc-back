@@ -10,6 +10,162 @@ from simcc.schemas.Production.Article import (
 )
 
 
+def get_papers_magazine_metrics(
+    term,
+    researcher_id,
+    graduate_program_id,
+    dep_id,
+    departament,
+    year,
+    distinct,
+    institution,
+    graduate_program,
+    city,
+    area,
+    modality,
+    graduation,
+):
+    params = {}
+
+    join_researcher = str()
+    join_researcher_production = str()
+    join_foment = str()
+    join_program = str()
+    join_institution = str()
+    join_departament = str()
+
+    filters = str()
+
+    if term:
+        filter_terms_str, term_params = webseatch_filter('bp.title', term)
+        filters += filter_terms_str
+        params.update(term_params)
+
+    if year:
+        params['year'] = year
+        filters += """
+            AND bp.year_ >= %(year)s
+            """
+
+    if dep_id or departament:
+        join_departament = """
+            INNER JOIN ufmg.departament_researcher dpr
+                ON dpr.researcher_id = bp.researcher_id
+            INNER JOIN ufmg.departament dp
+                ON dp.dep_id = dpr.dep_id
+            """
+    if dep_id:
+        params['dep_id'] = dep_id
+        filters += """
+            AND dp.dep_id = %(dep_id)s
+            """
+
+    if departament:
+        params['departament'] = departament.split(';')
+        filters += """
+            AND dp.dep_nom = ANY(%(departament)s)
+            """
+
+    if researcher_id:
+        params['researcher_id'] = researcher_id
+        filters += """
+            AND bp.researcher_id = %(researcher_id)s
+            """
+
+    if institution:
+        params['institution'] = institution.split(';')
+        join_researcher = """
+            INNER JOIN researcher r
+                ON bp.researcher_id = r.id
+            """
+        join_institution = """
+            INNER JOIN institution i
+                ON r.institution_id = i.id
+            """
+        filters += """
+            AND i.name = ANY(%(institution)s)
+            """
+
+    if graduate_program_id:
+        params['graduate_program_id'] = graduate_program_id
+        join_program = """
+            INNER JOIN graduate_program_researcher gpr
+                ON gpr.researcher_id = bp.researcher_id
+            INNER JOIN graduate_program gp
+                ON gpr.graduate_program_id = gp.graduate_program_id
+            """
+        filters += """
+            AND gpr.graduate_program_id = %(graduate_program_id)s
+            """
+
+    if graduate_program:
+        params['graduate_program'] = graduate_program.split(';')
+        join_program = """
+            INNER JOIN graduate_program_researcher gpr
+                ON gpr.researcher_id = bp.researcher_id
+            INNER JOIN graduate_program gp
+                ON gpr.graduate_program_id = gp.graduate_program_id
+            """
+        filters += """
+            AND gp.name = ANY(%(graduate_program)s)
+            """
+
+    if city:
+        params['city'] = city.split(';')
+        join_researcher_production = """
+            LEFT JOIN researcher_production rp
+                ON rp.researcher_id = bp.researcher_id
+            """
+        filters += """
+            AND rp.city = ANY(%(city)s)
+            """
+    if area:
+        params['area'] = area.replace(' ', '_').split(';')
+        join_researcher_production = """
+            LEFT JOIN researcher_production rp
+                ON rp.researcher_id = bp.researcher_id
+            """
+        filters += """
+            AND rp.great_area_ && %(area)s
+            """
+
+    if modality:
+        params['modality'] = modality.split(';')
+        join_foment = """
+            INNER JOIN foment f
+                ON f.researcher_id = bp.researcher_id
+            """
+        filters += """
+            AND f.modality_name = ANY(%(modality)s)
+            """
+
+    if graduation:
+        join_researcher = """
+            INNER JOIN researcher r
+                ON bp.researcher_id = r.id
+            """
+        params['graduation'] = graduation.split(';')
+        filters += """
+            AND r.graduation = ANY(%(graduation)s)
+            """
+
+    SCRIPT_SQL = f"""
+        SELECT title, title_en, nature, language, means_divulgation, homepage,
+            relevance, scientific_divulgation, authors, year_
+        FROM public.bibliographic_production bp
+            {join_researcher}
+            {join_researcher_production}
+            {join_foment}
+            {join_program}
+            {join_departament}
+            {join_institution}
+        WHERE type = 'TEXT_IN_NEWSPAPER_MAGAZINE'
+            {filters}
+        """
+    result = conn.select(SCRIPT_SQL, params)
+    return result
+
+
 def get_speaker_metrics(
     term,
     researcher_id,
@@ -157,8 +313,7 @@ def get_speaker_metrics(
             SUM(CASE WHEN nature = 'Outra' THEN 1 ELSE 0 END) AS other,
             SUM(CASE WHEN nature = 'Seminário' THEN 1 ELSE 0 END) AS seminar,
             SUM(CASE WHEN nature = 'Simpósio' THEN 1 ELSE 0 END) AS symposium
-        FROM
-            public.participation_events pe
+        FROM public.participation_events pe
             {join_researcher}
             {join_researcher_production}
             {join_foment}
