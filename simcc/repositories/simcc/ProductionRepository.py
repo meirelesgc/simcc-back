@@ -555,7 +555,8 @@ async def get_researcher_metrics(
             params |= term_params
             params['year'] = year
         case 'NAME':
-            filter_name, params['name'] = names_filter('r.name', term)
+            filter_name, _ = names_filter('r.name', term)
+            params.update(_)
         case _:
             ...
 
@@ -654,7 +655,6 @@ async def get_researcher_metrics(
         FROM researcher r
         LEFT JOIN openalex_researcher opr
             ON opr.researcher_id = r.id
-
             {join_filter}
             {join_dep}
             {join_extra}
@@ -669,6 +669,7 @@ async def get_researcher_metrics(
             {year_filter}
             {where_extra}
     """
+    print(SCRIPT_SQL, params)
     return await conn.select(SCRIPT_SQL, params)
 
 
