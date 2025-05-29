@@ -1,8 +1,9 @@
-import unidecode
-from flask import jsonify, request, Blueprint
-import Dao.areaFlowSQL as areaFlowSQL
 from http import HTTPStatus
 
+import unidecode
+from flask import Blueprint, jsonify, request
+
+import Dao.areaFlowSQL as areaFlowSQL
 
 areaRest = Blueprint("areaRest", __name__)
 

@@ -1,6 +1,7 @@
 import nltk
 import pandas as pd
 import unidecode
+
 import Dao.sgbdSQL as sgbdSQL
 import Dao.util as util
 
@@ -755,11 +756,11 @@ def lista_institution_production_db(text, institution, type_):
         sql = """SELECT  COUNT(distinct r.id) AS qtd,i.id as id, i.name as institution,image, i.id AS institution_id
                   FROM  researcher r , institution i, researcher_production rp,   participation_events AS b 
                            WHERE 
-                            r.institution_id = i.id 
+                           r.institution_id = i.id 
                            AND r.id = b.researcher_id 
                            AND rp.researcher_id = r.id 
                            AND acronym IS NOT NULL
-
+                        
                            AND type_participation in ('Apresentação Oral','Conferencista','Moderador','Simposista') 
                            
                            %s

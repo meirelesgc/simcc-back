@@ -1,6 +1,7 @@
-import Dao.sgbdSQL as sgbdSQL
-import unidecode
 import pandas as pd
+import unidecode
+
+import Dao.sgbdSQL as sgbdSQL
 import Dao.util as util
 
 
@@ -473,8 +474,7 @@ def lista_researcher_participation_event_db(term, institution, graduate_program_
             LEFT JOIN researcher_production rp ON r.id = rp.researcher_id
             RIGHT JOIN participation_events p ON p.researcher_id = r.id
         WHERE
-            type_participation in ('Apresentação Oral',
-                                   'Conferencista','Moderador','Simposista')
+            type_participation in ('Apresentação Oral', 'Conferencista','Moderador','Simposista')
             AND {term_filter}
             {institution_filter}
             {filter_graduate_program}

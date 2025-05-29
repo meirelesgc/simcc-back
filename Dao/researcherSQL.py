@@ -1,6 +1,8 @@
 from datetime import datetime
-import Dao.sgbdSQL as sgbdSQL
+
 import pandas as pd
+
+import Dao.sgbdSQL as sgbdSQL
 
 
 def researcher_search_city(city_id: str = None):
