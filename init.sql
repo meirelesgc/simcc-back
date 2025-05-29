@@ -1,3 +1,5 @@
+BEGIN;
+
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 create EXTENSION fuzzystrmatch;
 create EXTENSION pg_trgm;
@@ -50,7 +52,7 @@ CREATE TABLE IF NOT EXISTS public.city (
     updated_at timestamp without time zone,
     deleted_at timestamp without time zone,
     CONSTRAINT "PK_b222f51ce26f7e5ca86944a6739" PRIMARY KEY (id),
-    CONSTRAINT "FKCountryCity" FOREIGN KEY (country_id) REFERENCES public.country (id) ON UPDATE CASCADE ON DELETE CASCADE
+    CONSTRAINT "FKCountryCity" FOREIGN KEY (country_id) REFERENCES public.country (id) ON UPDATE CASCADE ON DELETE CASCADE,
     CONSTRAINT "FKStateCity" FOREIGN KEY (state_id) REFERENCES public.state (id) ON UPDATE CASCADE ON DELETE CASCADE
 );
 CREATE TABLE IF NOT EXISTS public.institution (
@@ -151,8 +153,8 @@ CREATE TABLE IF NOT EXISTS public.researcher (
     CONSTRAINT "PK_7b53850398061862ebe70d4ce44" PRIMARY KEY (id),
     CONSTRAINT "UQ_cd7166a27f090d19d4e985592db" UNIQUE (lattes_10_id),
     CONSTRAINT "UQ_fdf2bde0f46501e3e84ec154c32" UNIQUE (lattes_id),
-    CONSTRAINT "FKCityResearcher" FOREIGN KEY (city_id) REFERENCES public.city (id) ON UPDATE CASCADE ON DELETE CASCADE
-    CONSTRAINT "FKCountryResearcher" FOREIGN KEY (country_id) REFERENCES public.country (id) ON UPDATE CASCADE ON DELETE CASCADE
+    CONSTRAINT "FKCityResearcher" FOREIGN KEY (city_id) REFERENCES public.city (id) ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT "FKCountryResearcher" FOREIGN KEY (country_id) REFERENCES public.country (id) ON UPDATE CASCADE ON DELETE CASCADE,
     CONSTRAINT "FKInstitutionResearcher" FOREIGN KEY (institution_id) REFERENCES public.institution (id) ON UPDATE CASCADE ON DELETE CASCADE
 );
 CREATE TABLE IF NOT EXISTS public.researcher_address (
@@ -189,10 +191,10 @@ CREATE TABLE IF NOT EXISTS public.researcher_area_expertise (
     great_area_expertise_id uuid,
     area_specialty_id uuid,
     CONSTRAINT "PK_35338c2e178fa10e7b30966a4fc" PRIMARY KEY (id),
-    CONSTRAINT "FKResearcherAreaExpertise" FOREIGN KEY (researcher_id) REFERENCES public.researcher (id) ON UPDATE CASCADE ON DELETE CASCADE
-    CONSTRAINT "FKSubAreaExpertise" FOREIGN KEY (sub_area_expertise_id) REFERENCES public.sub_area_expertise (id) ON UPDATE CASCADE ON DELETE CASCADE
-    CONSTRAINT "FkAreaExpertise" FOREIGN KEY (area_expertise_id) REFERENCES public.area_expertise (id) ON UPDATE CASCADE ON DELETE CASCADE
-    CONSTRAINT "FkAreaSpecialty" FOREIGN KEY (area_specialty_id) REFERENCES public.area_specialty (id) ON UPDATE CASCADE ON DELETE CASCADE
+    CONSTRAINT "FKResearcherAreaExpertise" FOREIGN KEY (researcher_id) REFERENCES public.researcher (id) ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT "FKSubAreaExpertise" FOREIGN KEY (sub_area_expertise_id) REFERENCES public.sub_area_expertise (id) ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT "FkAreaExpertise" FOREIGN KEY (area_expertise_id) REFERENCES public.area_expertise (id) ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT "FkAreaSpecialty" FOREIGN KEY (area_specialty_id) REFERENCES public.area_specialty (id) ON UPDATE CASCADE ON DELETE CASCADE,
     CONSTRAINT "FkGreatAreaExpertise" FOREIGN KEY (great_area_expertise_id) REFERENCES public.great_area_expertise (id) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
@@ -877,3 +879,7 @@ CREATE INDEX ON bibliographic_production USING gin (title gin_trgm_ops);
 CREATE INDEX ON brand USING gin (title gin_trgm_ops);
 CREATE INDEX ON software USING gin (title gin_trgm_ops);
 CREATE INDEX ON event_organization USING gin (title gin_trgm_ops);
+
+COMMIT;
+
+ROLLBACK;
