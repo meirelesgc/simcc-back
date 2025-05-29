@@ -48,6 +48,39 @@ def get_speaker_metrics(
     )
 
 
+@router.get('/researcher_report_metrics', tags=['Metrics'])
+def get_researcher_report_metrics(
+    term: str = None,
+    researcher_id: UUID | str = None,
+    graduate_program_id: UUID | str = None,
+    dep_id: str = None,
+    departament: str = None,
+    year: int = 2020,
+    distinct: int = 1,
+    institution: str = None,
+    graduate_program: str = None,
+    city: str = None,
+    area: str = None,
+    modality: str = None,
+    graduation: str = None,
+):
+    return ProductionService.get_researcher_report_metrics(
+        term,
+        researcher_id,
+        graduate_program_id,
+        dep_id,
+        departament,
+        year,
+        distinct,
+        institution,
+        graduate_program,
+        city,
+        area,
+        modality,
+        graduation,
+    )
+
+
 @router.get('/papers_magazine_metrics', tags=['Metrics'])
 def get_papers_magazine_metrics(
     term: str = None,
