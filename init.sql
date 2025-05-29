@@ -454,7 +454,7 @@ CREATE TABLE IF NOT EXISTS public.JCR (
     citableItems character varying,
     citedHalfLife character varying,
     citingHalfLife character varying,
-    jif2019 character varying,
+    jif2019 double precision,
     url_revista character varying
 );
 CREATE TABLE IF NOT EXISTS public.researcher_production (
