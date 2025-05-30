@@ -171,7 +171,7 @@ def get_events_metrics(
     return result
 
 
-def get_researcher_report_metrics(
+def get_research_report_metrics(
     term,
     researcher_id,
     graduate_program_id,
@@ -842,8 +842,10 @@ def get_book_metrics(
 
     join_dep = str()
     filter_dep = str()
+    filter_distinct = str()
+
     if dep_id:
-        distinct = 'DISTINCT'
+        filter_distinct = 'DISTINCT'
         params['dep_id'] = dep_id.split(';')
         join_dep = """
             INNER JOIN ufmg.departament_researcher dpr
@@ -856,7 +858,7 @@ def get_book_metrics(
             """
 
     if dep:
-        distinct = 'DISTINCT'
+        filter_distinct = 'DISTINCT'
         params['dep'] = dep.split(';')
         join_dep = """
             INNER JOIN ufmg.departament_researcher dpr
@@ -871,7 +873,7 @@ def get_book_metrics(
     join_program = str()
     filter_program = str()
     if graduate_program:
-        distinct = 'DISTINCT'
+        filter_distinct = 'DISTINCT'
         params['graduate_program'] = graduate_program.split(';')
         join_program = """
             INNER JOIN graduate_program_researcher gpr
@@ -933,7 +935,6 @@ def get_book_metrics(
         params['graduation'] = graduation.split(';')
         filter_graduation = 'AND r.graduation = ANY(%(graduation)s)'
 
-    filter_distinct = str()
     if distinct:
         filter_distinct = 'DISTINCT'
 

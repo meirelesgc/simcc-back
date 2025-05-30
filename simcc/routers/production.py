@@ -124,8 +124,23 @@ def list_book_production(
     lenght: int = None,
 ):
     if distinct:
-        # DEBITO
-        pass
+        return ProductionService.list_book(
+            term,
+            researcher_id,
+            graduate_program_id,
+            dep_id,
+            departament,
+            year,
+            distinct,
+            institution,
+            graduate_program,
+            city,
+            area,
+            modality,
+            graduation,
+            page,
+            lenght,
+        )
     return ProductionService.list_book(
         term,
         researcher_id,
