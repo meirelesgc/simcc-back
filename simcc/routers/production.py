@@ -102,6 +102,45 @@ def list_patent_production(
     )
 
 
+@router.get('/pevent_researcher')
+def get_pevent_researcher(
+    term: str = None,
+    researcher_id: UUID | str = None,
+    graduate_program_id: UUID | str = None,
+    dep_id: str = None,
+    departament: str = None,
+    year: int = 2020,
+    nature: str = None,
+    distinct: int = 1,
+    institution: str = None,
+    graduate_program: str = None,
+    city: str = None,
+    area: str = None,
+    modality: str = None,
+    graduation: str = None,
+    page: int = None,
+    lenght: int = None,
+):
+    return ProductionService.get_pevent_researcher(
+        term,
+        researcher_id,
+        graduate_program_id,
+        dep_id,
+        departament,
+        year,
+        nature,
+        distinct,
+        institution,
+        graduate_program,
+        city,
+        area,
+        modality,
+        graduation,
+        page,
+        lenght,
+    )
+
+
 @router.get(
     '/book_production_researcher',
     response_model=list[BookProduction],
