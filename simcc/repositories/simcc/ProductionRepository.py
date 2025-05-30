@@ -2257,7 +2257,6 @@ def list_patent(
     filter_pagination = str()
 
     if term:
-        # Assumindo que webseatch_filter retorna uma tupla (filter_string, params_dict)
         filter_terms_str, term_params = webseatch_filter('p.title', term)
         filters += filter_terms_str
         params.update(term_params)

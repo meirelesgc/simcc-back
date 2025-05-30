@@ -416,8 +416,32 @@ def academic_degree_metrics(
     '/academic_degree',
     response_model=list[AcademicDegree],
 )
-def academic_degree():
-    metrics = ResearcherService.academic_degree()
+def academic_degree(
+    researcher_id: UUID | str = None,
+    graduate_program_id: UUID | str = None,
+    dep_id: str = None,
+    departament: str = None,
+    year: int = 2020,
+    institution: str = None,
+    graduate_program: str = None,
+    city: str = None,
+    area: str = None,
+    modality: str = None,
+    graduation: str = None,
+):
+    metrics = ResearcherService.academic_degree(
+        researcher_id,
+        graduate_program_id,
+        dep_id,
+        departament,
+        year,
+        institution,
+        graduate_program,
+        city,
+        area,
+        modality,
+        graduation,
+    )
     return metrics
 
 
