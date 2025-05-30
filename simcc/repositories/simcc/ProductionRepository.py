@@ -151,11 +151,8 @@ def get_researcher_report_metrics(
 
     SCRIPT_SQL = f"""
         SELECT
-            rr.id AS id,
-            rr.title AS title,
-            rr.year AS year,
-            rr.project_name,
-            rr.financing_institutionc
+            COUNT(*) as among,
+            year
         FROM
             public.research_report rr
             {join_researcher}
@@ -166,6 +163,7 @@ def get_researcher_report_metrics(
             {join_institution}
         WHERE 1=1
             {filters}
+        GROUP BY year
         ORDER BY
             year DESC
         """
