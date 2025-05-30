@@ -1618,7 +1618,8 @@ async def get_researcher_metrics(
         join_extra += """
             INNER JOIN foment f ON f.researcher_id = r.id
         """
-        where_extra += 'AND f.modality_name = ANY(%(modality)s)'
+        if modality != '*':
+            where_extra += 'AND f.modality_name = ANY(%(modality)s)'
 
     if graduation:
         params['graduation'] = graduation.split(';')
