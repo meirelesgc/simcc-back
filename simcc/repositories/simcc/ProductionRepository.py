@@ -1001,12 +1001,15 @@ async def get_researcher_metrics(
     join_program = str()
     filter_program = str()
     filter_name = str()
+    count_among = str()
 
     match type:
         case 'ABSTRACT':
             type_filter, term_params = webseatch_filter('r.abstract', term)
             params |= term_params
+            count_among = 'COUNT(*) AS among'
         case ('BOOK' | 'BOOK_CHAPTER' | 'ARTICLE' | 'WORK_IN_EVENT' | 'TEXT_IN_NEWSPAPER_MAGAZINE'):  # fmt: skip
+            count_among = 'COUNT(bp.title) AS among'
             join_filter = f"""
                 INNER JOIN bibliographic_production bp
                     ON bp.researcher_id = r.id AND bp.type = '{type}'
@@ -1016,18 +1019,22 @@ async def get_researcher_metrics(
             params |= term_params
             params['year'] = year
         case 'PATENT':
+            count_among = 'COUNT(p.title) AS among'
             join_filter = 'INNER JOIN patent p ON p.researcher_id = r.id'
             type_filter, term_params = webseatch_filter('p.title', term)
-            year_filter = 'AND p.year::int >= %(year)s'
+            year_filter = 'AND p.development_year::int >= %(year)s'
             params |= term_params
             params['year'] = year
         case 'AREA':
-            join_filter = (
-                'INNER JOIN researcher_production rp ON rp.researcher_id = r.id'
-            )
+            count_among = 'COUNT(rp.researcher_id) AS among'
+            join_filter = """
+                INNER JOIN researcher_production rp
+                    ON rp.researcher_id = r.id
+                """
             type_filter, term_params = webseatch_filter('rp.great_area', term)
             params |= term_params
         case 'EVENT':
+            count_among = 'COUNT(e.title) AS among'
             join_filter = """
                 INNER JOIN event_organization e
                     ON e.researcher_id = r.id
@@ -1037,6 +1044,7 @@ async def get_researcher_metrics(
             params |= term_params
             params['year'] = year
         case 'NAME':
+            count_among = 'COUNT(r.id) AS among'
             filter_name, _ = names_filter('r.name', term)
             params.update(_)
         case _:
@@ -1133,7 +1141,8 @@ async def get_researcher_metrics(
     SCRIPT_SQL = f"""
         SELECT COUNT(DISTINCT r.id) AS researcher_count,
                COUNT(DISTINCT r.orcid) AS orcid_count,
-               COUNT(DISTINCT opr.scopus) AS scopus_count
+               COUNT(DISTINCT opr.scopus) AS scopus_count,
+               {count_among}
         FROM researcher r
         LEFT JOIN openalex_researcher opr
             ON opr.researcher_id = r.id
