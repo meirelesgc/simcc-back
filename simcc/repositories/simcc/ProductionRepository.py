@@ -1,7 +1,5 @@
-from typing import Literal
 from uuid import UUID
 
-from simcc.core.connection import Connection
 from simcc.repositories import conn
 from simcc.repositories.util import names_filter, pagination, webseatch_filter
 from simcc.schemas import ArticleOptions, QualisOptions
@@ -1300,31 +1298,21 @@ def get_book_chapter_metrics(
 
 
 async def get_researcher_metrics(
-    conn: Connection,
-    term: str = None,
-    researcher_id: UUID = None,
-    graduate_program_id: UUID = None,
-    dep_id: str = None,
-    dep: str = None,
-    year: int = 2020,
-    type: Literal[
-        'BOOK',
-        'BOOK_CHAPTER',
-        'ARTICLE',
-        'WORK_IN_EVENT',
-        'TEXT_IN_NEWSPAPER_MAGAZINE',
-        'ABSTRACT',
-        'PATENT',
-        'AREA',
-        'EVENT',
-    ] = None,
-    distinct: int = 1,
-    institution: str = None,
-    graduate_program: str = None,
-    city: str = None,
-    area: str = None,
-    modality: str = None,
-    graduation: str = None,
+    conn,
+    term,
+    researcher_id,
+    graduate_program_id,
+    dep_id,
+    dep,
+    year,
+    type,
+    distinct,
+    institution,
+    graduate_program,
+    city,
+    area,
+    modality,
+    graduation,
 ):
     params = {}
     join_filter = str()
@@ -1335,7 +1323,7 @@ async def get_researcher_metrics(
     join_program = str()
     filter_program = str()
     filter_name = str()
-    count_among = str()
+    count_among = 'COUNT(*) as among'
 
     match type:
         case 'ABSTRACT':

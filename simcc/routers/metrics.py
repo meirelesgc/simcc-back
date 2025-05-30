@@ -235,7 +235,8 @@ async def get_researcher_metrics(
         'AREA',
         'EVENT',
         'NAME',
-    ] = None,
+    ]
+    | str = None,
     distinct: int = 1,
     institution: str = None,
     graduate_program: str = None,
