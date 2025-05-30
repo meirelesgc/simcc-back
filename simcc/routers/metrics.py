@@ -15,6 +15,41 @@ from simcc.services import ProductionService, ResearcherService
 router = APIRouter()
 
 
+@router.get('/brand_metrics', tags=['Metrics'])
+def get_brand_metrics(
+    term: str = None,
+    researcher_id: UUID | str = None,
+    graduate_program_id: UUID | str = None,
+    dep_id: str = None,
+    departament: str = None,
+    nature: str = None,
+    year: int = 2020,
+    distinct: int = 1,
+    institution: str = None,
+    graduate_program: str = None,
+    city: str = None,
+    area: str = None,
+    modality: str = None,
+    graduation: str = None,
+):
+    return ProductionService.get_brand_metrics(
+        term,
+        researcher_id,
+        graduate_program_id,
+        dep_id,
+        departament,
+        year,
+        nature,
+        distinct,
+        institution,
+        graduate_program,
+        city,
+        area,
+        modality,
+        graduation,
+    )
+
+
 @router.get('/speaker_metrics', tags=['Metrics'])
 def get_speaker_metrics(
     term: str = None,
@@ -48,8 +83,8 @@ def get_speaker_metrics(
     )
 
 
-@router.get('/researcher_report_metrics', tags=['Metrics'])
-def get_researcher_report_metrics(
+@router.get('/research_report_metrics', tags=['Metrics'])
+def get_research_report_metrics(
     term: str = None,
     researcher_id: UUID | str = None,
     graduate_program_id: UUID | str = None,
@@ -64,7 +99,7 @@ def get_researcher_report_metrics(
     modality: str = None,
     graduation: str = None,
 ):
-    return ProductionService.get_researcher_report_metrics(
+    return ProductionService.get_research_report_metrics(
         term,
         researcher_id,
         graduate_program_id,

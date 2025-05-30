@@ -15,6 +15,40 @@ from simcc.schemas.Production.Patent import PatentMetric, PatentProduction
 from simcc.schemas.Researcher import AcademicMetric
 
 
+def get_brand_metrics(
+    term,
+    researcher_id,
+    graduate_program_id,
+    dep_id,
+    departament,
+    year,
+    nature,
+    distinct,
+    institution,
+    graduate_program,
+    city,
+    area,
+    modality,
+    graduation,
+):
+    return ProductionRepository.get_brand_metrics(
+        term,
+        researcher_id,
+        graduate_program_id,
+        dep_id,
+        departament,
+        year,
+        nature,
+        distinct,
+        institution,
+        graduate_program,
+        city,
+        area,
+        modality,
+        graduation,
+    )
+
+
 def get_pevent_researcher(
     term,
     researcher_id,
@@ -85,7 +119,7 @@ def get_events_metrics(
     )
 
 
-def get_researcher_report_metrics(
+def get_research_report_metrics(
     term,
     researcher_id,
     graduate_program_id,
@@ -100,7 +134,7 @@ def get_researcher_report_metrics(
     modality,
     graduation,
 ):
-    return ProductionRepository.get_researcher_report_metrics(
+    return ProductionRepository.get_research_report_metrics(
         term,
         researcher_id,
         graduate_program_id,
