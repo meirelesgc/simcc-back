@@ -311,8 +311,7 @@ def get_papers_magazine_metrics(
             """
 
     SCRIPT_SQL = f"""
-        SELECT title, title_en, nature, language, means_divulgation, homepage,
-            relevance, scientific_divulgation, authors, year_
+        SELECT COUNT(*) as among, year_ AS year
         FROM public.bibliographic_production bp
             {join_researcher}
             {join_researcher_production}
@@ -322,6 +321,7 @@ def get_papers_magazine_metrics(
             {join_institution}
         WHERE type = 'TEXT_IN_NEWSPAPER_MAGAZINE'
             {filters}
+        GROUP BY year_
         """
     result = conn.select(SCRIPT_SQL, params)
     return result
