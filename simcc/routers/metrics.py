@@ -15,7 +15,7 @@ from simcc.services import ProductionService, ResearcherService
 router = APIRouter()
 
 
-@router.get('/event_metrics', tags=['Metrics'])
+@router.get('/speaker_metrics', tags=['Metrics'])
 def get_speaker_metrics(
     term: str = None,
     researcher_id: UUID | str = None,
