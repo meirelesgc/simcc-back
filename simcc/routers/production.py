@@ -1,8 +1,12 @@
-from uuid import UUID
+from fastapi import APIRouter, Depends
 
-from fastapi import APIRouter
-
-from simcc.schemas import ArticleOptions, QualisOptions
+from simcc.core.connection import Connection
+from simcc.core.database import get_conn
+from simcc.schemas import (
+    ArticleOptions,
+    DefaultFilters,
+    QualisOptions,
+)
 from simcc.schemas.Production.Article import ArticleProduction
 from simcc.schemas.Production.Book import BookProduction
 from simcc.schemas.Production.BookChapter import BookChapterProduction
@@ -26,37 +30,14 @@ router = APIRouter()
     '/professional_experience',
     response_model=list[ProfessionalExperience],
 )
-def get_professional_experience(
-    researcher_id: UUID | str = None,
-    graduate_program_id: UUID | str = None,
-    dep_id: str = None,
-    departament: str = None,
-    year: int = 2020,
-    distinct: int = 1,
-    institution: str = None,
-    graduate_program: str = None,
-    city: str = None,
-    area: str = None,
-    modality: str = None,
-    graduation: str = None,
-    page: int = None,
-    lenght: int = None,
+async def get_professional_experience(
+    default_filters: DefaultFilters = Depends(),
+    page: int | None = None,
+    lenght: int | None = None,
+    conn: Connection = Depends(get_conn),
 ):
-    return ProductionService.professional_experience(
-        researcher_id,
-        graduate_program_id,
-        dep_id,
-        departament,
-        year,
-        distinct,
-        institution,
-        graduate_program,
-        city,
-        area,
-        modality,
-        graduation,
-        page,
-        lenght,
+    return await ProductionService.professional_experience(
+        conn, default_filters, page, lenght
     )
 
 
@@ -64,80 +45,29 @@ def get_professional_experience(
     '/patent_production_researcher',
     response_model=list[PatentProduction],
 )
-def list_patent_production(
-    term: str = None,
-    researcher_id: UUID | str = None,
-    graduate_program_id: UUID | str = None,
-    dep_id: str = None,
-    departament: str = None,
-    year: int = 2020,
-    distinct: int = 1,
-    institution: str = None,
-    graduate_program: str = None,
-    city: str = None,
-    area: str = None,
-    modality: str = None,
-    graduation: str = None,
-    page: int = None,
-    lenght: int = None,
+async def list_patent_production(
+    default_filters: DefaultFilters = Depends(),
+    page: int | None = None,
+    lenght: int | None = None,
+    conn: Connection = Depends(get_conn),
 ):
-    if distinct:
-        # DEBITO
+    if default_filters.distinct:
         pass
-    return ProductionService.list_patent(
-        term,
-        researcher_id,
-        graduate_program_id,
-        dep_id,
-        departament,
-        year,
-        institution,
-        graduate_program,
-        city,
-        area,
-        modality,
-        graduation,
-        page,
-        lenght,
+    return await ProductionService.list_patent(
+        conn, default_filters, page, lenght
     )
 
 
 @router.get('/pevent_researcher')
-def get_pevent_researcher(
-    term: str = None,
-    researcher_id: UUID | str = None,
-    graduate_program_id: UUID | str = None,
-    dep_id: str = None,
-    departament: str = None,
-    year: int = 2020,
-    nature: str = None,
-    distinct: int = 1,
-    institution: str = None,
-    graduate_program: str = None,
-    city: str = None,
-    area: str = None,
-    modality: str = None,
-    graduation: str = None,
-    page: int = None,
-    lenght: int = None,
+async def get_pevent_researcher(
+    default_filters: DefaultFilters = Depends(),
+    nature: str | None = None,
+    page: int | None = None,
+    lenght: int | None = None,
+    conn: Connection = Depends(get_conn),
 ):
-    return ProductionService.get_pevent_researcher(
-        term,
-        researcher_id,
-        graduate_program_id,
-        dep_id,
-        departament,
-        year,
-        nature,
-        distinct,
-        institution,
-        graduate_program,
-        city,
-        area,
-        modality,
-        graduation,
-        page,
-        lenght,
+    return await ProductionService.get_pevent_researcher(
+        conn, default_filters, nature, page, lenght
     )
 
 
@@ -145,99 +75,31 @@ def get_pevent_researcher(
     '/book_production_researcher',
     response_model=list[BookProduction],
 )
-def list_book_production(
-    term: str = None,
-    researcher_id: UUID | str = None,
-    graduate_program_id: UUID | str = None,
-    dep_id: str = None,
-    departament: str = None,
-    year: int = 2020,
-    distinct: int = 1,
-    institution: str = None,
-    graduate_program: str = None,
-    city: str = None,
-    area: str = None,
-    modality: str = None,
-    graduation: str = None,
-    page: int = None,
-    lenght: int = None,
+async def list_book_production(
+    default_filters: DefaultFilters = Depends(),
+    page: int | None = None,
+    lenght: int | None = None,
+    conn: Connection = Depends(get_conn),
 ):
-    if distinct:
-        return ProductionService.list_book(
-            term,
-            researcher_id,
-            graduate_program_id,
-            dep_id,
-            departament,
-            year,
-            distinct,
-            institution,
-            graduate_program,
-            city,
-            area,
-            modality,
-            graduation,
-            page,
-            lenght,
-        )
-    return ProductionService.list_book(
-        term,
-        researcher_id,
-        graduate_program_id,
-        dep_id,
-        departament,
-        year,
-        distinct,
-        institution,
-        graduate_program,
-        city,
-        area,
-        modality,
-        graduation,
-        page,
-        lenght,
-    )
+    if default_filters.distinct:
+        pass
+    return await ProductionService.list_book(conn, default_filters, page, lenght)
 
 
 @router.get(
     '/brand_production_researcher',
     response_model=list[BrandProduction],
 )
-def list_brand_production(
-    term: str = None,
-    researcher_id: UUID | str = None,
-    graduate_program_id: UUID | str = None,
-    dep_id: str = None,
-    departament: str = None,
-    year: int = 2020,
-    distinct: int = 1,
-    institution: str = None,
-    graduate_program: str = None,
-    city: str = None,
-    area: str = None,
-    modality: str = None,
-    graduation: str = None,
-    page: int = None,
-    lenght: int = None,
+async def list_brand_production(
+    default_filters: DefaultFilters = Depends(),
+    page: int | None = None,
+    lenght: int | None = None,
+    conn: Connection = Depends(get_conn),
 ):
-    if distinct:
-        # DEBITO
+    if default_filters.distinct:
         pass
-    return ProductionService.list_brand(
-        term,
-        researcher_id,
-        graduate_program_id,
-        dep_id,
-        departament,
-        year,
-        institution,
-        graduate_program,
-        city,
-        area,
-        modality,
-        graduation,
-        page,
-        lenght,
+    return await ProductionService.list_brand(
+        conn, default_filters, page, lenght
     )
 
 
@@ -245,42 +107,16 @@ def list_brand_production(
     '/researcher_report',
     response_model=list[ReportProduction],
 )
-def list_researcher_report(
-    term: str = None,
-    researcher_id: UUID | str = None,
-    graduate_program_id: UUID | str = None,
-    dep_id: str = None,
-    departament: str = None,
-    year: int = 2020,
-    distinct: int = 1,
-    institution: str = None,
-    graduate_program: str = None,
-    city: str = None,
-    area: str = None,
-    modality: str = None,
-    graduation: str = None,
-    page: int = None,
-    lenght: int = None,
+async def list_researcher_report(
+    default_filters: DefaultFilters = Depends(),
+    page: int | None = None,
+    lenght: int | None = None,
+    conn: Connection = Depends(get_conn),
 ):
-    if distinct:
-        # DEBITO
+    if default_filters.distinct:
         pass
-    return ProductionService.list_researcher_report(
-        term,
-        researcher_id,
-        graduate_program_id,
-        dep_id,
-        departament,
-        year,
-        distinct,
-        institution,
-        graduate_program,
-        city,
-        area,
-        modality,
-        graduation,
-        page,
-        lenght,
+    return await ProductionService.list_researcher_report(
+        conn, default_filters, page, lenght
     )
 
 
@@ -288,42 +124,17 @@ def list_researcher_report(
     '/book_chapter_production_researcher',
     response_model=list[BookChapterProduction],
 )
-def list_book_chapter_production(
-    term: str = None,
-    researcher_id: UUID | str = None,
-    graduate_program_id: UUID | str = None,
-    dep_id: str = None,
-    departament: str = None,
-    year: int = 2020,
-    distinct: int = 1,
-    institution: str = None,
-    graduate_program: str = None,
-    city: str = None,
-    area: str = None,
-    modality: str = None,
-    graduation: str = None,
-    page: int = None,
-    lenght: int = None,
+async def list_book_chapter_production(
+    default_filters: DefaultFilters = Depends(),
+    page: int | None = None,
+    lenght: int | None = None,
+    conn: Connection = Depends(get_conn),
 ):
-    if distinct:
-        # DEBITO
+    if default_filters.distinct:
         pass
 
-    return ProductionService.list_book_chapter(
-        term,
-        researcher_id,
-        graduate_program_id,
-        dep_id,
-        departament,
-        year,
-        institution,
-        graduate_program,
-        city,
-        area,
-        modality,
-        graduation,
-        page,
-        lenght,
+    return await ProductionService.list_book_chapter(
+        conn, default_filters, page, lenght
     )
 
 
@@ -331,9 +142,15 @@ def list_book_chapter_production(
     '/outstanding_articles',
     response_model=list[ArticleProduction],
 )
-def list_outstanding_articles():
-    articles = ProductionService.list_bibliographic_production(
-        None, None, None, 'ARTICLE', None, None, 1, 20, True
+async def list_outstanding_articles(
+    conn: Connection = Depends(get_conn),
+):
+    articles = await ProductionService.list_bibliographic_production(
+        conn,
+        DefaultFilters(type='ARTICLE', distinct=1, year=20),
+        None,
+        None,
+        None,
     )
     return articles
 
@@ -342,41 +159,18 @@ def list_outstanding_articles():
     '/bibliographic_production_researcher',
     response_model=list[ArticleProduction],
 )
-def list_bibliographic_production(
+async def list_bibliographic_production(
+    default_filters: DefaultFilters = Depends(),
     type: ArticleOptions = 'ARTICLE',
-    qualis: QualisOptions | str = str(),
-    term: str = None,
-    researcher_id: UUID | str = None,
-    graduate_program_id: UUID | str = None,
-    dep_id: str = None,
-    departament: str = None,
-    year: int = 2020,
-    institution: str = None,
-    graduate_program: str = None,
-    city: str = None,
-    area: str = None,
-    modality: str = None,
-    graduation: str = None,
-    page: int = None,
-    lenght: int = None,
+    qualis: QualisOptions | str = None,
+    page: int | None = None,
+    lenght: int | None = None,
+    conn: Connection = Depends(get_conn),
 ):
-    articles = ProductionService.list_bibliographic_production(
-        type,
-        qualis,
-        term,
-        researcher_id,
-        graduate_program_id,
-        dep_id,
-        departament,
-        year,
-        institution,
-        graduate_program,
-        city,
-        area,
-        modality,
-        graduation,
-        page,
-        lenght,
+    default_filters.type = type
+
+    articles = await ProductionService.list_bibliographic_production(
+        conn, default_filters, qualis, page, lenght
     )
     return articles
 
@@ -385,42 +179,16 @@ def list_bibliographic_production(
     '/software_production_researcher',
     response_model=list[SoftwareProduction],
 )
-def list_software_production(
-    term: str = None,
-    researcher_id: UUID | str = None,
-    graduate_program_id: UUID | str = None,
-    dep_id: str = None,
-    departament: str = None,
-    year: int = 2020,
-    institution: str = None,
-    graduate_program: str = None,
-    city: str = None,
-    area: str = None,
-    modality: str = None,
-    graduation: str = None,
-    page: int = None,
-    lenght: int = None,
-    distinct: int = 1,
+async def list_software_production(
+    default_filters: DefaultFilters = Depends(),
+    page: int | None = None,
+    lenght: int | None = None,
+    conn: Connection = Depends(get_conn),
 ):
-    if distinct:
-        # DEBITO
+    if default_filters.distinct:
         pass
-    return ProductionService.list_software(
-        term,
-        researcher_id,
-        graduate_program_id,
-        dep_id,
-        departament,
-        year,
-        institution,
-        graduate_program,
-        city,
-        area,
-        modality,
-        graduation,
-        page,
-        lenght,
-        distinct,
+    return await ProductionService.list_software(
+        conn, default_filters, page, lenght
     )
 
 
@@ -428,45 +196,18 @@ def list_software_production(
     '/bibliographic_production_article',
     response_model=list[ArticleProduction],
 )
-def list_article_production(
-    qualis: str = None,
-    term: str = None,
-    researcher_id: UUID | str = None,
-    graduate_program_id: UUID | str = None,
-    dep_id: str = None,
-    departament: str = None,
-    year: int = 2020,
-    institution: str = None,
-    graduate_program: str = None,
-    city: str = None,
-    area: str = None,
-    modality: str = None,
-    graduation: str = None,
-    page: int = None,
-    lenght: int = None,
-    distinct: int = 1,
+async def list_article_production(
+    default_filters: DefaultFilters = Depends(),
+    qualis: str | None = None,
+    page: int | None = None,
+    lenght: int | None = None,
+    conn: Connection = Depends(get_conn),
 ):
-    if distinct:
-        # DEBITO
+    if default_filters.distinct:
         pass
 
-    return ProductionService.list_article_production(
-        qualis,
-        term,
-        researcher_id,
-        graduate_program_id,
-        dep_id,
-        departament,
-        year,
-        institution,
-        graduate_program,
-        city,
-        area,
-        modality,
-        graduation,
-        page,
-        lenght,
-        distinct,
+    return await ProductionService.list_article_production(
+        conn, default_filters, qualis, page, lenght
     )
 
 
@@ -474,42 +215,16 @@ def list_article_production(
     '/guidance_researcher',
     response_model=list[GuidanceProduction],
 )
-def list_guidance_production(
-    term: str = None,
-    researcher_id: UUID | str = None,
-    graduate_program_id: UUID | str = None,
-    dep_id: str = None,
-    departament: str = None,
-    year: int = 2020,
-    institution: str = None,
-    graduate_program: str = None,
-    city: str = None,
-    area: str = None,
-    modality: str = None,
-    graduation: str = None,
-    page: int = None,
-    lenght: int = None,
-    distinct: int = 1,
+async def list_guidance_production(
+    default_filters: DefaultFilters = Depends(),
+    page: int | None = None,
+    lenght: int | None = None,
+    conn: Connection = Depends(get_conn),
 ):
-    if distinct:
-        # DEBITO
+    if default_filters.distinct:
         pass
-    return ProductionService.list_guidance_production(
-        term,
-        researcher_id,
-        graduate_program_id,
-        dep_id,
-        departament,
-        year,
-        institution,
-        graduate_program,
-        city,
-        area,
-        modality,
-        graduation,
-        page,
-        lenght,
-        distinct,
+    return await ProductionService.list_guidance_production(
+        conn, default_filters, page, lenght
     )
 
 
@@ -517,42 +232,16 @@ def list_guidance_production(
     '/researcher_production/events',
     response_model=list[EventProduction],
 )
-def list_researcher_production_events(
-    term: str = None,
-    researcher_id: UUID | str = None,
-    graduate_program_id: UUID | str = None,
-    dep_id: str = None,
-    departament: str = None,
-    year: int = 2020,
-    institution: str = None,
-    graduate_program: str = None,
-    city: str = None,
-    area: str = None,
-    modality: str = None,
-    graduation: str = None,
-    page: int = None,
-    lenght: int = None,
-    distinct: int = 1,
+async def list_researcher_production_events(
+    default_filters: DefaultFilters = Depends(),
+    page: int | None = None,
+    lenght: int | None = None,
+    conn: Connection = Depends(get_conn),
 ):
-    if distinct:
-        # DEBITO
+    if default_filters.distinct:
         pass
-    return ProductionService.list_researcher_production_events(
-        term,
-        researcher_id,
-        graduate_program_id,
-        dep_id,
-        departament,
-        year,
-        institution,
-        graduate_program,
-        city,
-        area,
-        modality,
-        graduation,
-        page,
-        lenght,
-        distinct,
+    return await ProductionService.list_researcher_production_events(
+        conn, default_filters, page, lenght
     )
 
 
@@ -560,42 +249,19 @@ def list_researcher_production_events(
     '/researcher_research_project',
     response_model=list[ResearchProjectProduction],
 )
-def list_research_project(
-    term: str = None,
-    researcher_id: UUID | str = None,
-    graduate_program_id: UUID | str = None,
-    dep_id: str = None,
-    departament: str = None,
-    year: int = 2020,
-    institution: str = None,
-    graduate_program: str = None,
-    city: str = None,
-    area: str = None,
-    modality: str = None,
-    graduation: str = None,
-    page: int = None,
-    lenght: int = None,
-    distinct: int = 1,
+async def list_research_project(
+    default_filters: DefaultFilters = Depends(),
+    page: int | None = None,
+    lenght: int | None = None,
+    conn: Connection = Depends(get_conn),
 ):
-    if distinct:
-        # DEBITO
+    if default_filters.distinct:
         pass
-    return ProductionService.list_research_projects(
-        term,
-        researcher_id,
-        graduate_program_id,
-        dep_id,
-        departament,
-        year,
-        institution,
-        graduate_program,
-        city,
-        area,
-        modality,
-        graduation,
+    return await ProductionService.list_research_projects(
+        conn,
+        default_filters,
         page,
         lenght,
-        distinct,
     )
 
 
@@ -603,40 +269,14 @@ def list_research_project(
     '/researcher_production/papers_magazine',
     response_model=list[PapersProduction],
 )
-def list_papers_magazine(
-    term: str = None,
-    researcher_id: UUID | str = None,
-    graduate_program_id: UUID | str = None,
-    dep_id: str = None,
-    departament: str = None,
-    year: int = 2020,
-    institution: str = None,
-    graduate_program: str = None,
-    city: str = None,
-    area: str = None,
-    modality: str = None,
-    graduation: str = None,
-    page: int = None,
-    lenght: int = None,
-    distinct: int = 1,
+async def list_papers_magazine(
+    default_filters: DefaultFilters = Depends(),
+    page: int | None = None,
+    lenght: int | None = None,
+    conn: Connection = Depends(get_conn),
 ):
-    if distinct:
-        # DEBITO
+    if default_filters.distinct:
         pass
-    return ProductionService.list_papers_magazine(
-        term,
-        researcher_id,
-        graduate_program_id,
-        dep_id,
-        departament,
-        year,
-        institution,
-        graduate_program,
-        city,
-        area,
-        modality,
-        graduation,
-        page,
-        lenght,
-        distinct,
+    return await ProductionService.list_papers_magazine(
+        conn, default_filters, page, lenght
     )

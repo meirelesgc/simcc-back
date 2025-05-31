@@ -15,7 +15,7 @@ class DefaultFilters(BaseModel):
     )
     dep_id: Optional[str] = None
     departament: Optional[str] = None
-    year: int = 2020  # Este já é opcional porque tem um valor padrão
+    year: int = 2020
     type: Optional[
         Literal[
             'BOOK',

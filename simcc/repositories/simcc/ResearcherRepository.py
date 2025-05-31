@@ -2,8 +2,10 @@ from uuid import UUID
 
 from unidecode import unidecode
 
+from simcc.core.connection import Connection
 from simcc.repositories import conn
 from simcc.repositories.util import names_filter, pagination, webseatch_filter
+from simcc.schemas import DefaultFilters
 from simcc.schemas.Researcher import ResearcherArticleProduction
 
 
@@ -1530,18 +1532,9 @@ def get_researcher(researcher_id: UUID) -> dict:
     return result
 
 
-def academic_degree(
-    researcher_id,
-    graduate_program_id,
-    dep_id,
-    departament,
-    year,
-    institution,
-    graduate_program,
-    city,
-    area,
-    modality,
-    graduation,
+async def academic_degree(
+    conn: Connection,
+    filters: DefaultFilters,  # Recebe a instância DefaultFilters
 ):
     params = {}
     join_researcher_production = str()
@@ -1551,111 +1544,119 @@ def academic_degree(
     join_departament = str()
     join_education = str()
 
-    filters = str()
+    query_filters = str()  # Renomeado para evitar conflito com 'filters'
 
-    if researcher_id:
-        params['researcher_id'] = researcher_id
-        filters += """
+    if filters.researcher_id:  # Acessando via filters.researcher_id
+        params['researcher_id'] = str(
+            filters.researcher_id
+        )  # Convertido para string
+        query_filters += """
             AND r.id = %(researcher_id)s
             """
 
-    if year:
+    if filters.year:  # Acessando via filters.year
         join_education = """
             INNER JOIN public.education edu ON r.id = edu.researcher_id
         """
-        params['year'] = year
-        filters += """
+        params['year'] = filters.year
+        query_filters += """
             AND edu.education_end >= %(year)s
             """
 
-    if dep_id or departament:
+    if filters.dep_id or filters.departament:  # Acessando via filters
         join_departament = """
             INNER JOIN ufmg.departament_researcher dpr
                 ON dpr.researcher_id = r.id
             INNER JOIN ufmg.departament dp
                 ON dp.dep_id = dpr.dep_id
             """
-    if dep_id:
-        params['dep_id'] = dep_id
-        filters += """
+    if filters.dep_id:  # Acessando via filters.dep_id
+        params['dep_id'] = filters.dep_id
+        query_filters += """
             AND dp.dep_id = %(dep_id)s
             """
 
-    if departament:
-        params['departament'] = departament.split(';')
-        filters += """
+    if filters.departament:  # Acessando via filters.departament
+        params['departament'] = filters.departament.split(';')
+        query_filters += """
             AND dp.dep_nom = ANY(%(departament)s)
             """
 
-    if institution:
-        params['institution'] = institution.split(';')
+    if filters.institution:  # Acessando via filters.institution
+        params['institution'] = filters.institution.split(';')
         join_institution = """
             INNER JOIN public.institution i
                 ON r.institution_id = i.id
             """
-        filters += """
+        query_filters += """
             AND i.name = ANY(%(institution)s)
             """
 
-    if graduate_program_id:
-        params['graduate_program_id'] = graduate_program_id
+    if filters.graduate_program_id:  # Acessando via filters.graduate_program_id
+        params['graduate_program_id'] = str(
+            filters.graduate_program_id
+        )  # Convertido para string
         join_program = """
             INNER JOIN public.graduate_program_researcher gpr
                 ON gpr.researcher_id = r.id
             INNER JOIN public.graduate_program gp
                 ON gpr.graduate_program_id = gp.graduate_program_id
             """
-        filters += """
+        query_filters += """
             AND gpr.graduate_program_id = %(graduate_program_id)s
             """
 
-    if graduate_program:
-        params['graduate_program'] = graduate_program.split(';')
-        if not join_program:
+    if filters.graduate_program:  # Acessando via filters.graduate_program
+        params['graduate_program'] = filters.graduate_program.split(';')
+        if (
+            not join_program
+        ):  # Verifica se o join já foi adicionado por graduate_program_id
             join_program = """
                 INNER JOIN public.graduate_program_researcher gpr
                     ON gpr.researcher_id = r.id
                 INNER JOIN public.graduate_program gp
                     ON gpr.graduate_program_id = gp.graduate_program_id
                 """
-        filters += """
+        query_filters += """
             AND gp.name = ANY(%(graduate_program)s)
             """
 
-    if city:
-        params['city'] = city.split(';')
+    if filters.city:  # Acessando via filters.city
+        params['city'] = filters.city.split(';')
         join_researcher_production = """
             LEFT JOIN public.researcher_production rp
                 ON rp.researcher_id = r.id
             """
-        filters += """
+        query_filters += """
             AND rp.city = ANY(%(city)s)
             """
 
-    if area:
-        params['area'] = area.replace(' ', '_').split(';')
-        if not join_researcher_production:
+    if filters.area:  # Acessando via filters.area
+        params['area'] = filters.area.replace(' ', '_').split(';')
+        if (
+            not join_researcher_production
+        ):  # Verifica se o join já foi adicionado por city
             join_researcher_production = """
                 LEFT JOIN public.researcher_production rp
                     ON rp.researcher_id = r.id
                 """
-        filters += """
+        query_filters += """
             AND rp.great_area && %(area)s
             """
 
-    if modality:
-        params['modality'] = modality.split(';')
+    if filters.modality:  # Acessando via filters.modality
+        params['modality'] = filters.modality.split(';')
         join_foment = """
             INNER JOIN public.foment f
                 ON f.researcher_id = r.id
             """
-        filters += """
+        query_filters += """
             AND f.modality_name = ANY(%(modality)s)
             """
 
-    if graduation:
-        params['graduation'] = graduation.split(';')
-        filters += """
+    if filters.graduation:  # Acessando via filters.graduation
+        params['graduation'] = filters.graduation.split(';')
+        query_filters += """
             AND r.graduation = ANY(%(graduation)s)
             """
 
@@ -1669,8 +1670,8 @@ def academic_degree(
             {join_departament}
             {join_institution}
         WHERE r.graduation IS NOT NULL
-            {filters}
+            {query_filters}
         GROUP BY r.graduation;
         """
-    result = conn.select(SCRIPT_SQL, params)
+    result = await conn.select(SCRIPT_SQL, params)  # Adicionado await
     return result

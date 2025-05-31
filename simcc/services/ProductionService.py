@@ -1,292 +1,91 @@
 from collections import Counter
-from uuid import UUID
 
 import pandas as pd
 
+from simcc.core.connection import Connection  # Adicionado
 from simcc.repositories.simcc import ProductionRepository
-from simcc.schemas import ArticleOptions, QualisOptions
+from simcc.schemas import DefaultFilters  # Adicionado
 from simcc.schemas.Production.Article import ArticleMetric, ArticleProduction
-from simcc.schemas.Production.Book import BookProduction
 from simcc.schemas.Production.Brand import BrandProduction
 from simcc.schemas.Production.Guidance import GuidanceMetrics
 from simcc.schemas.Production.Patent import PatentMetric, PatentProduction
 from simcc.schemas.Researcher import AcademicMetric
 
 
-def get_pevent_researcher(
-    term,
-    researcher_id,
-    graduate_program_id,
-    dep_id,
-    departament,
-    year,
-    nature,
-    distinct,
-    institution,
-    graduate_program,
-    city,
-    area,
-    modality,
-    graduation,
-    page,
-    lenght,
+async def get_pevent_researcher(
+    conn: Connection,
+    default_filters: DefaultFilters,
+    nature: str | None,
+    page: int | None,
+    lenght: int | None,
 ):
-    return ProductionRepository.get_pevent_researcher(
-        term,
-        researcher_id,
-        graduate_program_id,
-        dep_id,
-        departament,
-        year,
-        nature,
-        distinct,
-        institution,
-        graduate_program,
-        city,
-        area,
-        modality,
-        graduation,
-        page,
-        lenght,
+    return await ProductionRepository.get_pevent_researcher(
+        conn, default_filters, nature, page, lenght
     )
 
 
-def professional_experience(
-    researcher_id,
-    graduate_program_id,
-    dep_id,
-    departament,
-    year,
-    distinct,
-    institution,
-    graduate_program,
-    city,
-    area,
-    modality,
-    graduation,
-    page,
-    lenght,
+async def professional_experience(
+    conn: Connection,
+    default_filters: DefaultFilters,
+    page: int | None,
+    lenght: int | None,
 ):
-    return ProductionRepository.professional_experience(
-        researcher_id,
-        graduate_program_id,
-        dep_id,
-        departament,
-        year,
-        distinct,
-        institution,
-        graduate_program,
-        city,
-        area,
-        modality,
-        graduation,
-        page,
-        lenght,
+    return await ProductionRepository.professional_experience(
+        conn, default_filters, page, lenght
     )
 
 
-def list_distinct_patent(
-    term,
-    researcher_id,
-    graduate_program_id,
-    dep_id,
-    departament,
-    year,
-    institution,
-    graduate_program,
-    city,
-    area,
-    modality,
-    graduation,
-    page,
-    lenght,
+async def list_patent(
+    conn: Connection,
+    default_filters: DefaultFilters,
+    page: int | None,
+    lenght: int | None,
 ) -> list[PatentProduction]:
-    patents = ProductionRepository.list_distinct_patent(...)
-    if not patents:
-        return []
-    return patents
-
-
-def list_patent(
-    term,
-    researcher_id,
-    graduate_program_id,
-    dep_id,
-    departament,
-    year,
-    institution,
-    graduate_program,
-    city,
-    area,
-    modality,
-    graduation,
-    page,
-    lenght,
-) -> list[PatentProduction]:
-    patents = ProductionRepository.list_patent(
-        term,
-        researcher_id,
-        graduate_program_id,
-        dep_id,
-        departament,
-        year,
-        institution,
-        graduate_program,
-        city,
-        area,
-        modality,
-        graduation,
-        page,
-        lenght,
+    patents = await ProductionRepository.list_patent(
+        conn, default_filters, page, lenght
     )
     if not patents:
         return []
     return patents
 
 
-def list_brand(
-    term,
-    researcher_id,
-    graduate_program_id,
-    dep_id,
-    departament,
-    year,
-    institution,
-    graduate_program,
-    city,
-    area,
-    modality,
-    graduation,
-    page,
-    lenght,
+async def list_brand(
+    conn: Connection,
+    default_filters: DefaultFilters,
+    page: int | None,
+    lenght: int | None,
 ) -> list[BrandProduction]:
-    brands = ProductionRepository.list_brand(
-        term,
-        researcher_id,
-        graduate_program_id,
-        dep_id,
-        departament,
-        year,
-        institution,
-        graduate_program,
-        city,
-        area,
-        modality,
-        graduation,
-        page,
-        lenght,
+    brands = await ProductionRepository.list_brand(
+        conn, default_filters, page, lenght
     )
     if not brands:
         return []
     return brands
 
 
-def list_distinct_brand(
-    term: str,
-    researcher_id: UUID,
-    year: int,
-    institution_id: UUID,
-    page: int,
-    lenght: int,
-) -> list[BrandProduction]:
-    brands = ProductionRepository.list_distinct_brand(
-        term, researcher_id, year, institution_id, page, lenght
-    )
-    if not brands:
-        return []
-    return brands
-
-
-def list_distinct_book(
-    term: str,
-    researcher_id: UUID,
-    year: int,
-    institution_id: UUID,
-    page: int,
-    lenght: int,
-) -> list[BookProduction]:
-    books = ProductionRepository.list_distinct_book(
-        term, researcher_id, year, institution_id, page, lenght
+async def list_book(
+    conn: Connection,
+    default_filters: DefaultFilters,
+    page: int | None,
+    lenght: int | None,
+):
+    books = await ProductionRepository.list_book(
+        conn, default_filters, page, lenght
     )
     if not books:
         return []
     return books
 
 
-def list_book(
-    term,
-    researcher_id,
-    graduate_program_id,
-    dep_id,
-    departament,
-    year,
-    distinct,
-    institution,
-    graduate_program,
-    city,
-    area,
-    modality,
-    graduation,
-    page,
-    lenght,
-):
-    patents = ProductionRepository.list_book(
-        term,
-        researcher_id,
-        graduate_program_id,
-        dep_id,
-        departament,
-        year,
-        distinct,
-        institution,
-        graduate_program,
-        city,
-        area,
-        modality,
-        graduation,
-        page,
-        lenght,
-    )
-    if not patents:
-        return []
-    return patents
-
-
-def list_bibliographic_production(
-    type,
-    qualis,
-    term,
-    researcher_id,
-    graduate_program_id,
-    dep_id,
-    departament,
-    year,
-    institution,
-    graduate_program,
-    city,
-    area,
-    modality,
-    graduation,
-    page,
-    lenght,
+async def list_bibliographic_production(
+    conn: Connection,
+    default_filters: DefaultFilters,
+    qualis: str | None,
+    page: int | None,
+    lenght: int | None,
 ) -> list[ArticleProduction]:
-    production = ProductionRepository.list_bibliographic_production(
-        type,
-        qualis,
-        term,
-        researcher_id,
-        graduate_program_id,
-        dep_id,
-        departament,
-        year,
-        institution,
-        graduate_program,
-        city,
-        area,
-        modality,
-        graduation,
-        page,
-        lenght,
+    production = await ProductionRepository.list_bibliographic_production(
+        conn, default_filters, qualis, page, lenght
     )
 
     if not production:
@@ -298,41 +97,15 @@ def list_bibliographic_production(
     return production.to_dict(orient='records')
 
 
-def list_article_production(
-    qualis,
-    term,
-    researcher_id,
-    graduate_program_id,
-    dep_id,
-    departament,
-    year,
-    institution,
-    graduate_program,
-    city,
-    area,
-    modality,
-    graduation,
-    page,
-    lenght,
-    distinct,
+async def list_article_production(
+    conn: Connection,
+    default_filters: DefaultFilters,
+    qualis: str | None,
+    page: int | None,
+    lenght: int | None,
 ):
-    production = ProductionRepository.list_article_production(
-        qualis,
-        term,
-        researcher_id,
-        graduate_program_id,
-        dep_id,
-        departament,
-        year,
-        institution,
-        graduate_program,
-        city,
-        area,
-        modality,
-        graduation,
-        page,
-        lenght,
-        distinct,
+    production = await ProductionRepository.list_article_production(
+        conn, default_filters, qualis, page, lenght
     )
     if not production:
         return []
@@ -343,354 +116,84 @@ def list_article_production(
     return production.to_dict(orient='records')
 
 
-def list_distinct_article_production(
-    terms: str = None,
-    university: str = None,
-    researcher_id: UUID | str = None,
-    graduate_program_id: UUID | str = None,
-    year: int | str = 2020,
-    type: ArticleOptions = 'ARTICLE',
-    qualis: QualisOptions | str = str(),
-    page: int = None,
-    lenght: int = None,
-    dep_id: str = None,
+async def list_book_chapter(
+    conn: Connection,
+    default_filters: DefaultFilters,
+    page: int | None,
+    lenght: int | None,
 ):
-    production = ProductionRepository.list_distinct_article_production(
-        terms,
-        university,
-        researcher_id,
-        graduate_program_id,
-        year,
-        type,
-        qualis,
-        page,
-        lenght,
-        dep_id,
-    )
-
-    if not production:
-        return []
-
-    production = pd.DataFrame(production)
-    production = production.fillna('')
-
-    return production.to_dict(orient='records')
-
-
-def list_book_chapter(
-    term,
-    researcher_id,
-    graduate_program_id,
-    dep_id,
-    departament,
-    year,
-    institution,
-    graduate_program,
-    city,
-    area,
-    modality,
-    graduation,
-    page,
-    lenght,
-):
-    return ProductionRepository.list_book_chapter(
-        term,
-        researcher_id,
-        graduate_program_id,
-        dep_id,
-        departament,
-        year,
-        institution,
-        graduate_program,
-        city,
-        area,
-        modality,
-        graduation,
-        page,
-        lenght,
+    return await ProductionRepository.list_book_chapter(
+        conn, default_filters, page, lenght
     )
 
 
-def list_distinct_book_chapter(
-    term: str = None,
-    researcher_id: UUID | str = None,
-    year: int | str = 2020,
-    institution_id: UUID = None,
-    page: int = None,
-    lenght: int = None,
+async def list_software(
+    conn: Connection,
+    default_filters: DefaultFilters,
+    page: int | None,
+    lenght: int | None,
 ):
-    return ProductionRepository.list_distinct_book_chapter(
-        term, researcher_id, year, institution_id, page, lenght
+    return await ProductionRepository.list_software(
+        conn, default_filters, page, lenght
     )
 
 
-def list_distinct_software(
-    researcher_id: UUID | str = None, year: int | str = 2020
+async def list_researcher_report(
+    conn: Connection,
+    default_filters: DefaultFilters,
+    page: int | None,
+    lenght: int | None,
 ):
-    return ProductionRepository.list_distinct_software(researcher_id, year)
-
-
-def list_software(
-    term,
-    researcher_id,
-    graduate_program_id,
-    dep_id,
-    departament,
-    year,
-    institution,
-    graduate_program,
-    city,
-    area,
-    modality,
-    graduation,
-    page,
-    lenght,
-    distinct,
-):
-    return ProductionRepository.list_software(
-        term,
-        researcher_id,
-        graduate_program_id,
-        dep_id,
-        departament,
-        year,
-        institution,
-        graduate_program,
-        city,
-        area,
-        modality,
-        graduation,
-        page,
-        lenght,
-        distinct,
+    return await ProductionRepository.list_researcher_report(
+        conn, default_filters, page, lenght
     )
 
 
-def list_distinct_researcher_report(
-    researcher_id: UUID | str = None,
-    year: int | str = 2020,
-    page: int = None,
-    lenght: int = None,
+async def list_guidance_production(
+    conn: Connection,
+    default_filters: DefaultFilters,
+    page: int | None,
+    lenght: int | None,
 ):
-    return ProductionRepository.list_distinct_researcher_report(
-        researcher_id, year, page, lenght
+    return await ProductionRepository.list_guidance_production(
+        conn, default_filters, page, lenght
     )
 
 
-def list_researcher_report(
-    term,
-    researcher_id,
-    graduate_program_id,
-    dep_id,
-    departament,
-    year,
-    distinct,
-    institution,
-    graduate_program,
-    city,
-    area,
-    modality,
-    graduation,
-    page,
-    lenght,
+async def list_researcher_production_events(
+    conn: Connection,
+    default_filters: DefaultFilters,
+    page: int | None,
+    lenght: int | None,
 ):
-    return ProductionRepository.list_researcher_report(
-        term,
-        researcher_id,
-        graduate_program_id,
-        dep_id,
-        departament,
-        year,
-        distinct,
-        institution,
-        graduate_program,
-        city,
-        area,
-        modality,
-        graduation,
-        page,
-        lenght,
+    return await ProductionRepository.list_researcher_production_events(
+        conn, default_filters, page, lenght
     )
 
 
-def list_distinct_guidance_production(
-    researcher_id: UUID | str = None, year: int | str = 2020
+async def list_research_projects(
+    conn: Connection,
+    default_filters: DefaultFilters,
+    page: int | None,
+    lenght: int | None,
 ):
-    return ProductionRepository.list_distinct_guidance_production(
-        researcher_id, year
+    return await ProductionRepository.list_research_projects(
+        conn, default_filters, page, lenght
     )
 
 
-def list_guidance_production(
-    term,
-    researcher_id,
-    graduate_program_id,
-    dep_id,
-    departament,
-    year,
-    institution,
-    graduate_program,
-    city,
-    area,
-    modality,
-    graduation,
-    page,
-    lenght,
-    distinct,
+async def list_papers_magazine(
+    conn: Connection,
+    default_filters: DefaultFilters,
+    page: int | None,
+    lenght: int | None,
 ):
-    return ProductionRepository.list_guidance_production(
-        term,
-        researcher_id,
-        graduate_program_id,
-        dep_id,
-        departament,
-        year,
-        institution,
-        graduate_program,
-        city,
-        area,
-        modality,
-        graduation,
-        page,
-        lenght,
-        distinct,
+    return await ProductionRepository.list_papers_magazine(
+        conn, default_filters, page, lenght
     )
 
 
-def list_researcher_production_events(
-    term,
-    researcher_id,
-    graduate_program_id,
-    dep_id,
-    departament,
-    year,
-    institution,
-    graduate_program,
-    city,
-    area,
-    modality,
-    graduation,
-    page,
-    lenght,
-    distinct,
-):
-    return ProductionRepository.list_researcher_production_events(
-        term,
-        researcher_id,
-        graduate_program_id,
-        dep_id,
-        departament,
-        year,
-        institution,
-        graduate_program,
-        city,
-        area,
-        modality,
-        graduation,
-        page,
-        lenght,
-        distinct,
-    )
-
-
-def list_distinct_researcher_production_events(
-    researcher_id: UUID | str = None, year: int | str = 2020
-):
-    return ProductionRepository.list_distinct_researcher_production_events(
-        researcher_id, year
-    )
-
-
-def list_research_projects(
-    term,
-    researcher_id,
-    graduate_program_id,
-    dep_id,
-    departament,
-    year,
-    institution,
-    graduate_program,
-    city,
-    area,
-    modality,
-    graduation,
-    page,
-    lenght,
-    distinct,
-):
-    return ProductionRepository.list_research_projects(
-        term,
-        researcher_id,
-        graduate_program_id,
-        dep_id,
-        departament,
-        year,
-        institution,
-        graduate_program,
-        city,
-        area,
-        modality,
-        graduation,
-        page,
-        lenght,
-        distinct,
-    )
-
-
-def list_distinct_research_projects(
-    term: str = None,
-    researcher_id: UUID | str = None,
-    year: int | str = 2020,
-    graduate_program_id: UUID | str = None,
-):
-    return ProductionRepository.list_distinct_research_projects(
-        term, researcher_id, year, graduate_program_id
-    )
-
-
-def list_papers_magazine(
-    term,
-    researcher_id,
-    graduate_program_id,
-    dep_id,
-    departament,
-    year,
-    institution,
-    graduate_program,
-    city,
-    area,
-    modality,
-    graduation,
-    page,
-    lenght,
-    distinct,
-):
-    return ProductionRepository.list_papers_magazine(
-        term,
-        researcher_id,
-        graduate_program_id,
-        dep_id,
-        departament,
-        year,
-        institution,
-        graduate_program,
-        city,
-        area,
-        modality,
-        graduation,
-        page,
-        lenght,
-        distinct,
-    )
-
-
-def list_distinct_papers_magazine(
-    researcher_id: UUID | str = None,
-    year: int | str = 2020,
-):
-    return ProductionRepository.list_distinct_papers_magazine(
-        researcher_id, year
-    )
+# ---
 
 
 async def get_article_metrics(conn, default_filters) -> list[ArticleMetric]:
