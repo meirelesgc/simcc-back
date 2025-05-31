@@ -2783,6 +2783,7 @@ async def get_researcher_metrics(
 
 async def list_article_metrics(
     conn: Connection,
+    qualis,
     filters: DefaultFilters,
 ):
     params = {}
@@ -2904,6 +2905,10 @@ async def list_article_metrics(
     if filters.year:
         params['year'] = filters.year
         year_filter = 'AND bp.year::int >= %(year)s'
+
+    if qualis:
+        params['qualis'] = qualis.split(';')
+        year_filter = 'AND bpa.qualis = ANY(%(qualis)s)'
 
     SCRIPT_SQL = f"""
         SELECT bp.year, SUM(opa.citations_count) AS citations,

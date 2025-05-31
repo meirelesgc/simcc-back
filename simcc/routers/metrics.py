@@ -87,10 +87,13 @@ async def get_book_chapter_metrics(
     tags=['Metrics'],
 )
 async def article_metrics(
+    qualis: str = None,
     default_filters: DefaultFilters = Depends(),
     conn: Connection = Depends(get_conn),
 ):
-    metrics = await ProductionService.get_article_metrics(conn, default_filters)
+    metrics = await ProductionService.get_article_metrics(
+        conn, qualis, default_filters
+    )
     return metrics
 
 

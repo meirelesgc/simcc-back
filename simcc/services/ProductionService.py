@@ -196,9 +196,11 @@ async def list_papers_magazine(
 # ---
 
 
-async def get_article_metrics(conn, default_filters) -> list[ArticleMetric]:
+async def get_article_metrics(
+    conn, qualis, default_filters
+) -> list[ArticleMetric]:
     article_metrics = await ProductionRepository.list_article_metrics(
-        conn, default_filters
+        conn, qualis, default_filters
     )
     if not article_metrics:
         return []
