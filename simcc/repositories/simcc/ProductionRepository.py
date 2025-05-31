@@ -2378,13 +2378,13 @@ async def get_book_metrics(
     filter_institution = str()
     join_institution = str()
     if filters.institution:
-        params['institution'] = filters.institution + '%'
+        params['institution'] = filters.institution.split(';')
         join_institution = """
             LEFT JOIN institution i
                 ON r.institution_id = i.id
             """
         filter_institution = """
-            AND i.name ILIKE %(institution)s
+            AND i.name = ANY(%(institution)s)
             """
 
     join_area = str()
@@ -2407,7 +2407,7 @@ async def get_book_metrics(
             INNER JOIN foment f
                 ON f.researcher_id = r.id
         """
-        filter_modality = 'AND modality_name = ANY(%(modality)s)'
+        filter_modality = 'AND f.modality_name = ANY(%(modality)s)'
 
     join_city = str()
     filter_city = str()
@@ -2485,40 +2485,24 @@ async def get_book_chapter_metrics(
     filters: DefaultFilters,
 ):
     params = {}
-
     distinct_filter = str()
+    join_dep = str()
+    filter_dep = str()
+    join_program = str()
+    program_filter = str()
+    filter_institution = str()
+    filter_graduate_program = str()
+    filter_city = str()
+    join_city = str()
+    filter_area = str()
+    join_area = str()
+    filter_modality = str()
+    join_modality = str()
+    filter_graduation = str()
+
     if filters.distinct:
         distinct_filter = 'DISTINCT'
 
-    term_filter = str()
-    if filters.term:
-        term_filter, term_params = webseatch_filter('bp.title', filters.term)
-        params.update(term_params)
-
-    filter_id = str()
-    if filters.researcher_id:
-        params['researcher_id'] = str(filters.researcher_id)
-        filter_id = 'AND bp.researcher_id = %(researcher_id)s'
-
-    program_join = str()
-    program_filter = str()
-    if filters.graduate_program_id:
-        params['program_id'] = str(filters.graduate_program_id)
-        program_join = """
-            LEFT JOIN graduate_program_researcher gpr ON gpr.researcher_id = r.id
-        """
-        program_filter = """
-            AND gpr.graduate_program_id = %(program_id)s
-            AND gpr.type_ = 'PERMANENTE'
-        """
-
-    year_filter = str()
-    if filters.year:
-        params['year'] = filters.year
-        year_filter = 'AND bp.year::int >= %(year)s'
-
-    join_dep = str()
-    filter_dep = str()
     if filters.dep_id:
         distinct_filter = 'DISTINCT'
         params['dep_id'] = filters.dep_id.split(';')
@@ -2537,51 +2521,78 @@ async def get_book_chapter_metrics(
         """
         filter_dep = 'AND dp.dep_nom = ANY(%(dep)s)'
 
-    filter_institution = str()
     if filters.institution:
-        params['institution'] = filters.institution + '%'
+        params['institution'] = filters.institution.split(';')
         filter_institution = """
             AND r.institution_id IN (
-                SELECT id FROM institution WHERE name ILIKE %(institution)s
+                SELECT id FROM institution WHERE name = ANY(%(institution)s)
             )
         """
 
-    filter_graduate_program = str()
     if filters.graduate_program:
-        params['graduate_program'] = filters.graduate_program + '%'
+        params['graduate_program'] = filters.graduate_program.split(';')
         filter_graduate_program = """
-            AND r.graduate_program_id IN (
-                SELECT graduate_program_id FROM graduate_program WHERE name ILIKE %(graduate_program)s
+            AND r.id IN (
+                SELECT gpr.researcher_id FROM graduate_program_researcher gpr
+                JOIN graduate_program gp ON gpr.graduate_program_id = gp.graduate_program_id
+                WHERE gp.name = ANY(%(graduate_program)s) AND gpr.type_ = 'PERMANENTE'
             )
         """
 
-    filter_city = str()
     if filters.city:
-        params['city'] = filters.city + '%'
-        filter_city = 'AND r.city ILIKE %(city)s'
+        params['city'] = filters.city.split(';')
+        join_city = 'LEFT JOIN researcher_production rp_city ON rp_city.researcher_id = r.id'
+        filter_city = 'AND rp_city.city = ANY(%(city)s)'
 
-    filter_area = str()
     if filters.area:
-        params['area'] = filters.area + '%'
-        filter_area = 'AND r.area ILIKE %(area)s'
+        params['area'] = filters.area.replace(' ', '_').split(';')
+        join_area = 'LEFT JOIN researcher_production rp_area ON rp_area.researcher_id = r.id'
+        filter_area = "AND STRING_TO_ARRAY(REPLACE(rp_area.great_area, ' ', '_'), ';') && %(area)s"
 
-    filter_modality = str()
     if filters.modality:
-        params['modality'] = filters.modality + '%'
-        filter_modality = 'AND r.modality ILIKE %(modality)s'
+        params['modality'] = filters.modality.split(';')
+        join_modality = 'INNER JOIN foment f ON f.researcher_id = r.id'
+        filter_modality = 'AND f.modality_name = ANY(%(modality)s)'
 
-    filter_graduation = str()
     if filters.graduation:
-        params['graduation'] = filters.graduation + '%'
-        filter_graduation = 'AND r.graduation ILIKE %(graduation)s'
+        params['graduation'] = filters.graduation.split(';')
+        filter_graduation = 'AND r.graduation = ANY(%(graduation)s)'
+
+    term_filter = str()
+    if filters.term:
+        term_filter, term_params = webseatch_filter('bp.title', filters.term)
+        params.update(term_params)
+
+    filter_id = str()
+    if filters.researcher_id:
+        params['researcher_id'] = str(filters.researcher_id)
+        filter_id = 'AND bp.researcher_id = %(researcher_id)s'
+
+    if filters.graduate_program_id:
+        params['program_id'] = str(filters.graduate_program_id)
+        join_program = """
+            LEFT JOIN graduate_program_researcher gpr ON gpr.researcher_id = r.id
+        """
+        program_filter = """
+            AND gpr.graduate_program_id = %(program_id)s
+            AND gpr.type_ = 'PERMANENTE'
+        """
+
+    year_filter = str()
+    if filters.year:
+        params['year'] = filters.year
+        year_filter = 'AND bp.year::int >= %(year)s'
 
     SCRIPT_SQL = f"""
         SELECT bp.year, COUNT({distinct_filter} bp.title) AS among
         FROM researcher r
             LEFT JOIN bibliographic_production bp ON bp.researcher_id = r.id
             LEFT JOIN openalex_article opa ON opa.article_id = bp.id
-            {program_join}
+            {join_program}
             {join_dep}
+            {join_city}
+            {join_area}
+            {join_modality}
         WHERE 1 = 1
             AND type = 'BOOK_CHAPTER'
             {term_filter}
@@ -2710,10 +2721,10 @@ async def get_researcher_metrics(
 
     filter_institution = ''
     if filters.institution:
-        params['institution'] = filters.institution + '%'
+        params['institution'] = filters.institution.split(';')
         filter_institution = """
             AND r.institution_id IN (
-                SELECT id FROM institution WHERE name ILIKE %(institution)s
+                SELECT id FROM institution WHERE name = ANY(%(institution)s)
             )
         """
 
@@ -2846,12 +2857,12 @@ async def list_article_metrics(
     join_institution = str()
     filter_institution = str()
     if filters.institution:
-        params['institution'] = filters.institution + '%'
+        params['institution'] = filters.institution.split(';')
         join_institution = """
             LEFT JOIN institution i ON r.institution_id = i.id
         """
         filter_institution = """
-            AND i.name ILIKE %(institution)s
+            AND i.name = ANY(%(institution)s)
         """
 
     join_city = str()
@@ -3014,12 +3025,12 @@ async def list_patent_metrics(
     join_institution = str()
     filter_institution = str()
     if filters.institution:
-        params['institution'] = filters.institution + '%'
+        params['institution'] = filters.institution.split(';')
         join_institution = """
             LEFT JOIN researcher r ON r.id = p.researcher_id
             LEFT JOIN institution i ON r.institution_id = i.id
         """
-        filter_institution = 'AND i.name ILIKE %(institution)s'
+        filter_institution = 'AND i.name = ANY(%(institution)s)'
 
     join_city = str()
     filter_city = str()
@@ -3051,7 +3062,7 @@ async def list_patent_metrics(
         filter_modality = 'AND f.modality_name = ANY(%(modality)s)'
 
     filter_graduation = str()
-    join_graduation = str()  # Definir join_graduation
+    join_graduation = str()
     if filters.graduation:
         join_graduation = """
             LEFT JOIN researcher rg ON rg.id = p.researcher_id
@@ -3102,9 +3113,13 @@ async def list_guidance_metrics(
     params = {}
     join_dep = str()
     filter_dep = str()
+    filter_distinct = str()
+
+    if filters.distinct:
+        filter_distinct = 'DISTINCT'
 
     if filters.departament:
-        filters.distinct = 'DISTINCT'  # Use filters.distinct aqui
+        filter_distinct = 'DISTINCT'
         params['dep'] = filters.departament.split(';')
         join_dep = """
             INNER JOIN ufmg.departament_researcher dpr
@@ -3117,7 +3132,7 @@ async def list_guidance_metrics(
             """
 
     if filters.dep_id:
-        filter_distinct = 'DISTINCT'  # Use filters.distinct aqui
+        filter_distinct = 'DISTINCT'
         params['dep_id'] = filters.dep_id.split(';')
         join_dep = """
             INNER JOIN ufmg.departament_researcher dpr
@@ -3128,9 +3143,6 @@ async def list_guidance_metrics(
         filter_dep = """
             AND dp.dep_id = ANY(%(dep_id)s)
             """
-    filter_distinct = str()
-    if filters.distinct:
-        filter_distinct = 'DISTINCT'
 
     term_filter = str()
     if filters.term:
@@ -3172,12 +3184,12 @@ async def list_guidance_metrics(
     join_institution = str()
     filter_institution = str()
     if filters.institution:
-        params['institution'] = filters.institution + '%'
+        params['institution'] = filters.institution.split(';')
         join_institution = """
             LEFT JOIN researcher r ON r.id = g.researcher_id
             LEFT JOIN institution i ON r.institution_id = i.id
         """
-        filter_institution = 'AND i.name ILIKE %(institution)s'
+        filter_institution = 'AND i.name = ANY(%(institution)s)'
 
     join_city = str()
     filter_city = str()
@@ -3320,12 +3332,12 @@ async def list_academic_degree_metrics(
     join_institution = str()
     filter_institution = str()
     if filters.institution:
-        params['institution'] = filters.institution + '%'
+        params['institution'] = filters.institution.split(';')
         join_institution = """
             LEFT JOIN researcher r ON r.id = e.researcher_id
             LEFT JOIN institution i ON r.institution_id = i.id
         """
-        filter_institution = 'AND i.name ILIKE %(institution)s'
+        filter_institution = 'AND i.name = ANY(%(institution)s)'
 
     join_city = str()
     filter_city = str()
@@ -3498,12 +3510,12 @@ async def list_software_metrics(
     join_institution = str()
     filter_institution = str()
     if filters.institution:
-        params['institution'] = filters.institution + '%'
+        params['institution'] = filters.institution.split(';')
         join_institution = """
             LEFT JOIN researcher r ON r.id = s.researcher_id
             LEFT JOIN institution i ON r.institution_id = i.id
         """
-        filter_institution = 'AND i.name ILIKE %(institution)s'
+        filter_institution = 'AND i.name = ANY(%(institution)s)'
 
     join_city = str()
     filter_city = str()
@@ -3607,9 +3619,9 @@ async def get_research_report_metrics(
                 ON dp.dep_id = dpr.dep_id
             """
     if filters.dep_id:
-        params['dep_id'] = filters.dep_id
+        params['dep_id'] = filters.dep_id.split(';')
         filters_sql += """
-            AND dp.dep_id = %(dep_id)s
+            AND dp.dep_id = ANY(%(dep_id)s)
             """
 
     if filters.departament:
@@ -3643,8 +3655,6 @@ async def get_research_report_metrics(
         join_program = """
             INNER JOIN graduate_program_researcher gpr
                 ON gpr.researcher_id = rr.researcher_id
-            INNER JOIN graduate_program gp
-                ON gpr.graduate_program_id = gp.graduate_program_id
             """
         filters_sql += """
             AND gpr.graduate_program_id = %(graduate_program_id)s
@@ -3652,7 +3662,6 @@ async def get_research_report_metrics(
 
     if filters.graduate_program:
         params['graduate_program'] = filters.graduate_program.split(';')
-        # Reutiliza join_program se já foi definido, ou define se não
         if not join_program:
             join_program = """
                 INNER JOIN graduate_program_researcher gpr
@@ -3676,14 +3685,13 @@ async def get_research_report_metrics(
             """
     if filters.area:
         params['area'] = filters.area.replace(' ', '_').split(';')
-        # Reutiliza join_researcher_production se já foi definido, ou define se não
         if not join_researcher_production:
             join_researcher_production = """
                 LEFT JOIN researcher_production rp
                     ON rp.researcher_id = rr.researcher_id
                 """
         filters_sql += """
-            AND rp.great_area_ && %(area)s
+            AND STRING_TO_ARRAY(REPLACE(rp.great_area, ' ', '_'), ';') && %(area)s
             """
 
     if filters.modality:
@@ -3697,7 +3705,6 @@ async def get_research_report_metrics(
             """
 
     if filters.graduation:
-        # Reutiliza join_researcher se já foi definido, ou define se não
         if not join_researcher:
             join_researcher = """
                 INNER JOIN researcher r
@@ -3765,9 +3772,9 @@ async def get_papers_magazine_metrics(
                 ON dp.dep_id = dpr.dep_id
             """
     if filters.dep_id:
-        params['dep_id'] = filters.dep_id
+        params['dep_id'] = filters.dep_id.split(';')
         filters_sql += """
-            AND dp.dep_id = %(dep_id)s
+            AND dp.dep_id = ANY(%(dep_id)s)
             """
 
     if filters.departament:
@@ -3801,8 +3808,6 @@ async def get_papers_magazine_metrics(
         join_program = """
             INNER JOIN graduate_program_researcher gpr
                 ON gpr.researcher_id = bp.researcher_id
-            INNER JOIN graduate_program gp
-                ON gpr.graduate_program_id = gp.graduate_program_id
             """
         filters_sql += """
             AND gpr.graduate_program_id = %(graduate_program_id)s
@@ -3839,7 +3844,7 @@ async def get_papers_magazine_metrics(
                     ON rp.researcher_id = bp.researcher_id
                 """
         filters_sql += """
-            AND rp.great_area_ && %(area)s
+            AND STRING_TO_ARRAY(REPLACE(rp.great_area, ' ', '_'), ';') && %(area)s
             """
 
     if filters.modality:
@@ -3864,7 +3869,7 @@ async def get_papers_magazine_metrics(
             """
 
     SCRIPT_SQL = f"""
-        SELECT COUNT(*) as among, year_ AS year
+        SELECT COUNT(*) as among, year AS year
         FROM public.bibliographic_production bp
             {join_researcher}
             {join_researcher_production}
@@ -3874,9 +3879,9 @@ async def get_papers_magazine_metrics(
             {join_institution}
         WHERE type = 'TEXT_IN_NEWSPAPER_MAGAZINE'
             {filters_sql}
-        GROUP BY year_
+        GROUP BY year
         ORDER BY
-            year_ DESC
+            year DESC
         """
     return await conn.select(SCRIPT_SQL, params)
 
@@ -3917,9 +3922,9 @@ async def get_speaker_metrics(
                 ON dp.dep_id = dpr.dep_id
             """
     if filters.dep_id:
-        params['dep_id'] = filters.dep_id
+        params['dep_id'] = filters.dep_id.split(';')
         filters_sql += """
-            AND dp.dep_id = %(dep_id)s
+            AND dp.dep_id = ANY(%(dep_id)s)
             """
 
     if filters.departament:
@@ -3953,8 +3958,6 @@ async def get_speaker_metrics(
         join_program = """
             INNER JOIN graduate_program_researcher gpr
                 ON gpr.researcher_id = pe.researcher_id
-            INNER JOIN graduate_program gp
-                ON gpr.graduate_program_id = gp.graduate_program_id
             """
         filters_sql += """
             AND gpr.graduate_program_id = %(graduate_program_id)s
@@ -3991,7 +3994,7 @@ async def get_speaker_metrics(
                     ON rp.researcher_id = pe.researcher_id
                 """
         filters_sql += """
-            AND rp.great_area_ && %(area)s
+            AND STRING_TO_ARRAY(REPLACE(rp.great_area, ' ', '_'), ';') && %(area)s
             """
 
     if filters.modality:
@@ -4049,9 +4052,7 @@ async def get_brand_metrics(
     join_program = str()
     join_institution = str()
     join_departament = str()
-    join_researcher = (
-        str()
-    )  # Adicionado para garantir que 'r' é sempre unido se necessário
+    join_researcher = str()
 
     filter_distinct = str()
     if filters.distinct:
@@ -4083,7 +4084,6 @@ async def get_brand_metrics(
             """
 
     if filters.dep_id or filters.departament:
-        # Garante que 'r' é unido antes de 'dpr'
         join_researcher = """
             LEFT JOIN public.researcher r ON r.id = b.researcher_id
             """
@@ -4094,9 +4094,9 @@ async def get_brand_metrics(
                 ON dp.dep_id = dpr.dep_id
             """
     if filters.dep_id:
-        params['dep_id'] = filters.dep_id
+        params['dep_id'] = filters.dep_id.split(';')
         filters_sql += """
-            AND dp.dep_id = %(dep_id)s
+            AND dp.dep_id = ANY(%(dep_id)s)
             """
 
     if filters.departament:
@@ -4106,7 +4106,6 @@ async def get_brand_metrics(
             """
 
     if filters.institution:
-        # Garante que 'r' é unido antes de 'i'
         if not join_researcher:
             join_researcher = """
                 LEFT JOIN public.researcher r ON r.id = b.researcher_id
@@ -4121,7 +4120,6 @@ async def get_brand_metrics(
             """
 
     if filters.graduate_program_id:
-        # Garante que 'r' é unido antes de 'gpr'
         if not join_researcher:
             join_researcher = """
                 LEFT JOIN public.researcher r ON r.id = b.researcher_id
@@ -4130,8 +4128,6 @@ async def get_brand_metrics(
         join_program = """
             INNER JOIN public.graduate_program_researcher gpr
                 ON gpr.researcher_id = r.id
-            INNER JOIN public.graduate_program gp
-                ON gpr.graduate_program_id = gp.graduate_program_id
             """
         filters_sql += """
             AND gpr.graduate_program_id = %(graduate_program_id)s
@@ -4139,10 +4135,7 @@ async def get_brand_metrics(
 
     if filters.graduate_program:
         params['graduate_program'] = filters.graduate_program.split(';')
-        if (
-            not join_program
-        ):  # Só adiciona se não foi adicionado por graduate_program_id
-            # Garante que 'r' é unido antes de 'gpr'
+        if not join_program:
             if not join_researcher:
                 join_researcher = """
                     LEFT JOIN public.researcher r ON r.id = b.researcher_id
@@ -4159,7 +4152,6 @@ async def get_brand_metrics(
             """
 
     if filters.city:
-        # Garante que 'r' é unido antes de 'rp'
         if not join_researcher:
             join_researcher = """
                 LEFT JOIN public.researcher r ON r.id = b.researcher_id
@@ -4174,25 +4166,21 @@ async def get_brand_metrics(
             """
 
     if filters.area:
-        # Garante que 'r' é unido antes de 'rp'
         if not join_researcher:
             join_researcher = """
                 LEFT JOIN public.researcher r ON r.id = b.researcher_id
                 """
         params['area'] = filters.area.replace(' ', '_').split(';')
-        if (
-            not join_researcher_production
-        ):  # Só adiciona se não foi adicionado por city
+        if not join_researcher_production:
             join_researcher_production = """
                 LEFT JOIN public.researcher_production rp
                     ON rp.researcher_id = r.id
                 """
         filters_sql += """
-            AND rp.great_area && %(area)s
+            AND STRING_TO_ARRAY(REPLACE(rp.great_area, ' ', '_'), ';') && %(area)s
             """
 
     if filters.modality:
-        # Garante que 'r' é unido antes de 'f'
         if not join_researcher:
             join_researcher = """
                 LEFT JOIN public.researcher r ON r.id = b.researcher_id
@@ -4207,7 +4195,6 @@ async def get_brand_metrics(
             """
 
     if filters.graduation:
-        # Garante que 'r' é unido
         if not join_researcher:
             join_researcher = """
                 LEFT JOIN public.researcher r ON r.id = b.researcher_id
@@ -4283,9 +4270,9 @@ async def get_research_project_metrics(
                 ON dp.dep_id = dpr.dep_id
             """
     if filters.dep_id:
-        params['dep_id'] = filters.dep_id
+        params['dep_id'] = filters.dep_id.split(';')
         filters_sql += """
-            AND dp.dep_id = %(dep_id)s
+            AND dp.dep_id = ANY(%(dep_id)s)
             """
 
     if filters.departament:
@@ -4317,8 +4304,6 @@ async def get_research_project_metrics(
         join_program = """
             INNER JOIN public.graduate_program_researcher gpr
                 ON gpr.researcher_id = r.id
-            INNER JOIN public.graduate_program gp
-                ON gpr.graduate_program_id = gp.graduate_program_id
             """
         filters_sql += """
             AND gpr.graduate_program_id = %(graduate_program_id)s
@@ -4368,7 +4353,7 @@ async def get_research_project_metrics(
                     ON rp.researcher_id = r.id
                 """
         filters_sql += """
-            AND rp.great_area && %(area)s
+            AND STRING_TO_ARRAY(REPLACE(rp.great_area, ' ', '_'), ';') && %(area)s
             """
 
     if filters.modality:
