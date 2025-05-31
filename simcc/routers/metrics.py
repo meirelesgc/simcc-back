@@ -1,10 +1,10 @@
-from typing import Literal
-from uuid import UUID
-
 from fastapi import APIRouter, Depends
 
 from simcc.core.connection import Connection
 from simcc.core.database import get_conn
+from simcc.schemas import (
+    DefaultFilters,  # Presumindo que DefaultFilters já tem todos os campos opcionais
+)
 from simcc.schemas.Production.Article import ArticleMetric
 from simcc.schemas.Production.Guidance import GuidanceMetrics
 from simcc.schemas.Production.Patent import PatentMetric
@@ -15,288 +15,68 @@ from simcc.services import ProductionService, ResearcherService
 router = APIRouter()
 
 
-@router.get('/brand_metrics', tags=['Metrics'])
-def get_brand_metrics(
-    term: str = None,
-    researcher_id: UUID | str = None,
-    graduate_program_id: UUID | str = None,
-    dep_id: str = None,
-    departament: str = None,
-    nature: str = None,
-    year: int = 2020,
-    distinct: int = 1,
-    institution: str = None,
-    graduate_program: str = None,
-    city: str = None,
-    area: str = None,
-    modality: str = None,
-    graduation: str = None,
-):
-    return ProductionService.get_brand_metrics(
-        term,
-        researcher_id,
-        graduate_program_id,
-        dep_id,
-        departament,
-        year,
-        nature,
-        distinct,
-        institution,
-        graduate_program,
-        city,
-        area,
-        modality,
-        graduation,
-    )
-
-
-@router.get('/speaker_metrics', tags=['Metrics'])
-def get_speaker_metrics(
-    term: str = None,
-    researcher_id: UUID | str = None,
-    graduate_program_id: UUID | str = None,
-    dep_id: str = None,
-    departament: str = None,
-    year: int = 2020,
-    distinct: int = 1,
-    institution: str = None,
-    graduate_program: str = None,
-    city: str = None,
-    area: str = None,
-    modality: str = None,
-    graduation: str = None,
-):
-    return ProductionService.get_speaker_metrics(
-        term,
-        researcher_id,
-        graduate_program_id,
-        dep_id,
-        departament,
-        year,
-        distinct,
-        institution,
-        graduate_program,
-        city,
-        area,
-        modality,
-        graduation,
-    )
-
-
-@router.get('/research_report_metrics', tags=['Metrics'])
-def get_research_report_metrics(
-    term: str = None,
-    researcher_id: UUID | str = None,
-    graduate_program_id: UUID | str = None,
-    dep_id: str = None,
-    departament: str = None,
-    year: int = 2020,
-    distinct: int = 1,
-    institution: str = None,
-    graduate_program: str = None,
-    city: str = None,
-    area: str = None,
-    modality: str = None,
-    graduation: str = None,
-):
-    return ProductionService.get_research_report_metrics(
-        term,
-        researcher_id,
-        graduate_program_id,
-        dep_id,
-        departament,
-        year,
-        distinct,
-        institution,
-        graduate_program,
-        city,
-        area,
-        modality,
-        graduation,
-    )
-
-
-@router.get('/events_metrics', tags=['Metrics'])
-def get_events_metrics(
-    term: str = None,
-    researcher_id: UUID | str = None,
-    graduate_program_id: UUID | str = None,
-    dep_id: str = None,
-    departament: str = None,
-    year: int = 2020,
-    distinct: int = 1,
-    institution: str = None,
-    graduate_program: str = None,
-    city: str = None,
-    area: str = None,
-    modality: str = None,
-    graduation: str = None,
-):
-    return ProductionService.get_events_metrics(
-        term,
-        researcher_id,
-        graduate_program_id,
-        dep_id,
-        departament,
-        year,
-        distinct,
-        institution,
-        graduate_program,
-        city,
-        area,
-        modality,
-        graduation,
-    )
-
-
-@router.get('/papers_magazine_metrics', tags=['Metrics'])
-def get_papers_magazine_metrics(
-    term: str = None,
-    researcher_id: UUID | str = None,
-    graduate_program_id: UUID | str = None,
-    dep_id: str = None,
-    departament: str = None,
-    year: int = 2020,
-    distinct: int = 1,
-    institution: str = None,
-    graduate_program: str = None,
-    city: str = None,
-    area: str = None,
-    modality: str = None,
-    graduation: str = None,
-):
-    return ProductionService.get_papers_magazine_metrics(
-        term,
-        researcher_id,
-        graduate_program_id,
-        dep_id,
-        departament,
-        year,
-        distinct,
-        institution,
-        graduate_program,
-        city,
-        area,
-        modality,
-        graduation,
-    )
-
-
-@router.get('/book_metrics', tags=['Metrics'])
-def get_book_metrics(
-    term: str = None,
-    researcher_id: UUID | str = None,
-    graduate_program_id: UUID | str = None,
-    dep_id: str = None,
-    departament: str = None,
-    year: int = 2020,
-    distinct: int = 1,
-    institution: str = None,
-    graduate_program: str = None,
-    city: str = None,
-    area: str = None,
-    modality: str = None,
-    graduation: str = None,
-):
-    return ProductionService.get_book_metrics(
-        term,
-        researcher_id,
-        graduate_program_id,
-        dep_id,
-        departament,
-        year,
-        distinct,
-        institution,
-        graduate_program,
-        city,
-        area,
-        modality,
-        graduation,
-    )
-
-
-@router.get('/book_chapter_metrics', tags=['Metrics'])
-def get_book_chapter_metrics(
-    term: str = None,
-    researcher_id: UUID | str = None,
-    graduate_program_id: UUID | str = None,
-    dep_id: str = None,
-    departament: str = None,
-    year: int = 2020,
-    distinct: int = 1,
-    institution: str = None,
-    graduate_program: str = None,
-    city: str = None,
-    area: str = None,
-    modality: str = None,
-    graduation: str = None,
-):
-    return ProductionService.get_book_chapter_metrics(
-        term,
-        researcher_id,
-        graduate_program_id,
-        dep_id,
-        departament,
-        year,
-        distinct,
-        institution,
-        graduate_program,
-        city,
-        area,
-        modality,
-        graduation,
-    )
-
-
 @router.get(
     '/researcher_metrics',
     tags=['Metrics'],
 )
 async def get_researcher_metrics(
-    term: str = None,
-    researcher_id: UUID | str = None,
-    graduate_program_id: UUID | str = None,
-    dep_id: str = None,
-    departament: str = None,
-    year: int = 0,
-    type: Literal[
-        'BOOK',
-        'BOOK_CHAPTER',
-        'ARTICLE',
-        'WORK_IN_EVENT',
-        'TEXT_IN_NEWSPAPER_MAGAZINE',
-        'ABSTRACT',
-        'PATENT',
-        'AREA',
-        'EVENT',
-        'NAME',
-    ]
-    | str = None,
-    distinct: int = 1,
-    institution: str = None,
-    graduate_program: str = None,
-    city: str = None,
-    area: str = None,
-    modality: str = None,
-    graduation: str = None,
+    default_filters: DefaultFilters = Depends(),
     conn: Connection = Depends(get_conn),
 ):
-    return await ProductionService.get_researcher_metrics(
-        conn,
-        term,
-        researcher_id,
-        graduate_program_id,
-        dep_id,
-        departament,
-        year,
-        type,
-        distinct,
-        institution,
-        graduate_program,
-        city,
-        area,
-        modality,
-        graduation,
+    return await ProductionService.get_researcher_metrics(conn, default_filters)
+
+
+@router.get('/brand_metrics', tags=['Metrics'])
+async def get_brand_metrics(
+    default_filters: DefaultFilters = Depends(),
+    conn: Connection = Depends(get_conn),
+):
+    return await ProductionService.get_brand_metrics(conn, default_filters)
+
+
+@router.get('/speaker_metrics', tags=['Metrics'])
+async def get_speaker_metrics(
+    default_filters: DefaultFilters = Depends(),
+    conn: Connection = Depends(get_conn),
+):
+    return await ProductionService.get_speaker_metrics(conn, default_filters)
+
+
+@router.get('/research_report_metrics', tags=['Metrics'])
+async def get_research_report_metrics(
+    default_filters: DefaultFilters = Depends(),
+    conn: Connection = Depends(get_conn),
+):
+    return await ProductionService.get_research_report_metrics(
+        conn, default_filters
+    )
+
+
+@router.get('/papers_magazine_metrics', tags=['Metrics'])
+async def get_papers_magazine_metrics(
+    default_filters: DefaultFilters = Depends(),
+    conn: Connection = Depends(get_conn),
+):
+    return await ProductionService.get_papers_magazine_metrics(
+        conn, default_filters
+    )
+
+
+@router.get('/book_metrics', tags=['Metrics'])
+async def get_book_metrics(
+    default_filters: DefaultFilters = Depends(),
+    conn: Connection = Depends(get_conn),
+):
+    return await ProductionService.get_book_metrics(conn, default_filters)
+
+
+@router.get('/book_chapter_metrics', tags=['Metrics'])
+async def get_book_chapter_metrics(
+    default_filters: DefaultFilters = Depends(),
+    conn: Connection = Depends(get_conn),
+):
+    return await ProductionService.get_book_chapter_metrics(
+        conn, default_filters
     )
 
 
@@ -305,36 +85,11 @@ async def get_researcher_metrics(
     response_model=list[ArticleMetric],
     tags=['Metrics'],
 )
-def article_metrics(
-    term: str = None,
-    researcher_id: UUID | str = None,
-    graduate_program_id: UUID | str = None,
-    dep_id: str = None,
-    departament: str = None,
-    year: int = 2020,
-    distinct: int = 1,
-    institution: str = None,
-    graduate_program: str = None,
-    city: str = None,
-    area: str = None,
-    modality: str = None,
-    graduation: str = None,
+async def article_metrics(
+    default_filters: DefaultFilters = Depends(),
+    conn: Connection = Depends(get_conn),
 ):
-    metrics = ProductionService.list_article_metrics(
-        term,
-        researcher_id,
-        graduate_program_id,
-        dep_id,
-        departament,
-        year,
-        distinct,
-        institution,
-        graduate_program,
-        city,
-        area,
-        modality,
-        graduation,
-    )
+    metrics = await ProductionService.get_article_metrics(conn, default_filters)
     return metrics
 
 
@@ -343,36 +98,11 @@ def article_metrics(
     response_model=list[PatentMetric],
     tags=['Metrics'],
 )
-def patent_metrics(
-    term: str = None,
-    researcher_id: UUID | str = None,
-    graduate_program_id: UUID | str = None,
-    dep_id: str = None,
-    departament: str = None,
-    year: int = 2020,
-    distinct: int = 1,
-    institution: str = None,
-    graduate_program: str = None,
-    city: str = None,
-    area: str = None,
-    modality: str = None,
-    graduation: str = None,
+async def patent_metrics(
+    default_filters: DefaultFilters = Depends(),
+    conn: Connection = Depends(get_conn),
 ):
-    metrics = ProductionService.list_patent_metrics(
-        term,
-        researcher_id,
-        graduate_program_id,
-        dep_id,
-        departament,
-        year,
-        distinct,
-        institution,
-        graduate_program,
-        city,
-        area,
-        modality,
-        graduation,
-    )
+    metrics = await ProductionService.get_patent_metrics(conn, default_filters)
     return metrics
 
 
@@ -381,36 +111,11 @@ def patent_metrics(
     response_model=list[GuidanceMetrics],
     tags=['Metrics'],
 )
-def guidance_metrics(
-    term: str = None,
-    researcher_id: UUID | str = None,
-    graduate_program_id: UUID | str = None,
-    dep_id: str = None,
-    departament: str = None,
-    year: int = 2020,
-    distinct: int = 1,
-    institution: str = None,
-    graduate_program: str = None,
-    city: str = None,
-    area: str = None,
-    modality: str = None,
-    graduation: str = None,
+async def guidance_metrics(
+    default_filters: DefaultFilters = Depends(),
+    conn: Connection = Depends(get_conn),
 ):
-    metrics = ProductionService.list_guidance_metrics(
-        term,
-        researcher_id,
-        graduate_program_id,
-        dep_id,
-        departament,
-        year,
-        distinct,
-        institution,
-        graduate_program,
-        city,
-        area,
-        modality,
-        graduation,
-    )
+    metrics = await ProductionService.get_guidance_metrics(conn, default_filters)
     return metrics
 
 
@@ -419,31 +124,12 @@ def guidance_metrics(
     response_model=list[AcademicMetric],
     tags=['Metrics'],
 )
-def academic_degree_metrics(
-    researcher_id: UUID | str = None,
-    graduate_program_id: UUID | str = None,
-    dep_id: str = None,
-    departament: str = None,
-    year: int = 2020,
-    institution: str = None,
-    graduate_program: str = None,
-    city: str = None,
-    area: str = None,
-    modality: str = None,
-    graduation: str = None,
+async def academic_degree_metrics(
+    default_filters: DefaultFilters = Depends(),
+    conn: Connection = Depends(get_conn),
 ):
-    metrics = ProductionService.list_academic_degree_metrics(
-        researcher_id,
-        graduate_program_id,
-        dep_id,
-        departament,
-        year,
-        institution,
-        graduate_program,
-        city,
-        area,
-        modality,
-        graduation,
+    metrics = await ProductionService.get_academic_degree_metrics(
+        conn, default_filters
     )
     return metrics
 
@@ -452,32 +138,11 @@ def academic_degree_metrics(
     '/academic_degree',
     response_model=list[AcademicDegree],
 )
-def academic_degree(
-    researcher_id: UUID | str = None,
-    graduate_program_id: UUID | str = None,
-    dep_id: str = None,
-    departament: str = None,
-    year: int = 2020,
-    institution: str = None,
-    graduate_program: str = None,
-    city: str = None,
-    area: str = None,
-    modality: str = None,
-    graduation: str = None,
+async def academic_degree(
+    default_filters: DefaultFilters = Depends(),
+    conn: Connection = Depends(get_conn),
 ):
-    metrics = ResearcherService.academic_degree(
-        researcher_id,
-        graduate_program_id,
-        dep_id,
-        departament,
-        year,
-        institution,
-        graduate_program,
-        city,
-        area,
-        modality,
-        graduation,
-    )
+    metrics = await ResearcherService.get_academic_degree(conn, default_filters)
     return metrics
 
 
@@ -486,34 +151,9 @@ def academic_degree(
     response_model=list[SoftwareMetric],
     tags=['Metrics'],
 )
-def software_metrics(
-    term: str = None,
-    researcher_id: UUID | str = None,
-    graduate_program_id: UUID | str = None,
-    dep_id: str = None,
-    departament: str = None,
-    year: int = 2020,
-    distinct: int = 1,
-    institution: str = None,
-    graduate_program: str = None,
-    city: str = None,
-    area: str = None,
-    modality: str = None,
-    graduation: str = None,
+async def software_metrics(
+    default_filters: DefaultFilters = Depends(),
+    conn: Connection = Depends(get_conn),
 ):
-    metrics = ProductionService.list_software_metrics(
-        term,
-        researcher_id,
-        graduate_program_id,
-        dep_id,
-        departament,
-        year,
-        distinct,
-        institution,
-        graduate_program,
-        city,
-        area,
-        modality,
-        graduation,
-    )
+    metrics = await ProductionService.get_software_metrics(conn, default_filters)
     return metrics

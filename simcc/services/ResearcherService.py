@@ -376,7 +376,7 @@ def list_foment_researchers():
     return researchers.to_dict(orient='records')
 
 
-def academic_degree(
+def get_academic_degree(
     researcher_id,
     graduate_program_id,
     dep_id,

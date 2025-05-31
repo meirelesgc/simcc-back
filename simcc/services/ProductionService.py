@@ -1,10 +1,8 @@
 from collections import Counter
-from typing import Literal
 from uuid import UUID
 
 import pandas as pd
 
-from simcc.core.connection import Connection
 from simcc.repositories.simcc import ProductionRepository
 from simcc.schemas import ArticleOptions, QualisOptions
 from simcc.schemas.Production.Article import ArticleMetric, ArticleProduction
@@ -13,40 +11,6 @@ from simcc.schemas.Production.Brand import BrandProduction
 from simcc.schemas.Production.Guidance import GuidanceMetrics
 from simcc.schemas.Production.Patent import PatentMetric, PatentProduction
 from simcc.schemas.Researcher import AcademicMetric
-
-
-def get_brand_metrics(
-    term,
-    researcher_id,
-    graduate_program_id,
-    dep_id,
-    departament,
-    year,
-    nature,
-    distinct,
-    institution,
-    graduate_program,
-    city,
-    area,
-    modality,
-    graduation,
-):
-    return ProductionRepository.get_brand_metrics(
-        term,
-        researcher_id,
-        graduate_program_id,
-        dep_id,
-        departament,
-        year,
-        nature,
-        distinct,
-        institution,
-        graduate_program,
-        city,
-        area,
-        modality,
-        graduation,
-    )
 
 
 def get_pevent_researcher(
@@ -87,134 +51,6 @@ def get_pevent_researcher(
     )
 
 
-def get_events_metrics(
-    term,
-    researcher_id,
-    graduate_program_id,
-    dep_id,
-    departament,
-    year,
-    distinct,
-    institution,
-    graduate_program,
-    city,
-    area,
-    modality,
-    graduation,
-):
-    return ProductionRepository.get_events_metrics(
-        term,
-        researcher_id,
-        graduate_program_id,
-        dep_id,
-        departament,
-        year,
-        distinct,
-        institution,
-        graduate_program,
-        city,
-        area,
-        modality,
-        graduation,
-    )
-
-
-def get_research_report_metrics(
-    term,
-    researcher_id,
-    graduate_program_id,
-    dep_id,
-    departament,
-    year,
-    distinct,
-    institution,
-    graduate_program,
-    city,
-    area,
-    modality,
-    graduation,
-):
-    return ProductionRepository.get_research_report_metrics(
-        term,
-        researcher_id,
-        graduate_program_id,
-        dep_id,
-        departament,
-        year,
-        distinct,
-        institution,
-        graduate_program,
-        city,
-        area,
-        modality,
-        graduation,
-    )
-
-
-def get_papers_magazine_metrics(
-    term,
-    researcher_id,
-    graduate_program_id,
-    dep_id,
-    departament,
-    year,
-    distinct,
-    institution,
-    graduate_program,
-    city,
-    area,
-    modality,
-    graduation,
-):
-    return ProductionRepository.get_papers_magazine_metrics(
-        term,
-        researcher_id,
-        graduate_program_id,
-        dep_id,
-        departament,
-        year,
-        distinct,
-        institution,
-        graduate_program,
-        city,
-        area,
-        modality,
-        graduation,
-    )
-
-
-def get_speaker_metrics(
-    term,
-    researcher_id,
-    graduate_program_id,
-    dep_id,
-    departament,
-    year,
-    distinct,
-    institution,
-    graduate_program,
-    city,
-    area,
-    modality,
-    graduation,
-):
-    return ProductionRepository.get_speaker_metrics(
-        term,
-        researcher_id,
-        graduate_program_id,
-        dep_id,
-        departament,
-        year,
-        distinct,
-        institution,
-        graduate_program,
-        city,
-        area,
-        modality,
-        graduation,
-    )
-
-
 def professional_experience(
     researcher_id,
     graduate_program_id,
@@ -247,355 +83,6 @@ def professional_experience(
         page,
         lenght,
     )
-
-
-def get_book_metrics(
-    term: str,
-    researcher_id: UUID,
-    program_id: UUID,
-    dep_id: UUID = None,
-    dep: str = None,
-    year: int = 2020,
-    distinct: int = 1,
-    institution: str = None,
-    graduate_program: str = None,
-    city: str = None,
-    area: str = None,
-    modality: str = None,
-    graduation: str = None,
-):
-    return ProductionRepository.get_book_metrics(
-        term,
-        researcher_id,
-        program_id,
-        dep_id,
-        dep,
-        year,
-        distinct,
-        institution,
-        graduate_program,
-        city,
-        area,
-        modality,
-        graduation,
-    )
-
-
-def get_book_chapter_metrics(
-    term: str,
-    researcher_id: UUID,
-    graduate_program_id: UUID = None,
-    dep_id: str = None,
-    dep: str = None,
-    year: int = 2020,
-    distinct: int = 1,
-    institution: str = None,
-    graduate_program: str = None,
-    city: str = None,
-    area: str = None,
-    modality: str = None,
-    graduation: str = None,
-):
-    return ProductionRepository.get_book_chapter_metrics(
-        term,
-        researcher_id,
-        graduate_program_id,
-        dep_id,
-        dep,
-        year,
-        distinct,
-        institution,
-        graduate_program,
-        city,
-        area,
-        modality,
-        graduation,
-    )
-
-
-async def get_researcher_metrics(
-    conn: Connection,
-    term: str = None,
-    researcher_id: UUID = None,
-    graduate_program_id: UUID = None,
-    dep_id: str = None,
-    dep: str = None,
-    year: int = 2020,
-    type: Literal[
-        'BOOK',
-        'BOOK_CHAPTER',
-        'ARTICLE',
-        'WORK_IN_EVENT',
-        'TEXT_IN_NEWSPAPER_MAGAZINE',
-        'ABSTRACT',
-        'PATENT',
-        'AREA',
-        'EVENT',
-    ] = None,
-    distinct: int = 1,
-    institution: str = None,
-    graduate_program: str = None,
-    city: str = None,
-    area: str = None,
-    modality: str = None,
-    graduation: str = None,
-):
-    return await ProductionRepository.get_researcher_metrics(
-        conn,
-        term,
-        researcher_id,
-        graduate_program_id,
-        dep_id,
-        dep,
-        year,
-        type,
-        distinct,
-        institution,
-        graduate_program,
-        city,
-        area,
-        modality,
-        graduation,
-    )
-
-
-def list_article_metrics(
-    term: str,
-    researcher_id: UUID = None,
-    graduate_program_id: UUID = None,
-    dep_id: str = None,
-    departament: str = None,
-    year: int = None,
-    distinct: int = 1,
-    institution: str = None,
-    graduate_program: str = None,
-    city: str = None,
-    area: str = None,
-    modality: str = None,
-    graduation: str = None,
-) -> list[ArticleMetric]:
-    article_metrics = ProductionRepository.list_article_metrics(
-        term,
-        researcher_id,
-        graduate_program_id,
-        dep_id,
-        departament,
-        year,
-        distinct,
-        institution,
-        graduate_program,
-        city,
-        area,
-        modality,
-        graduation,
-    )
-    if not article_metrics:
-        return []
-
-    def count_qualis(qualis):
-        return dict(Counter(qualis))
-
-    def count_jcr(jcr):
-        bins = [0.0, 0.65, 2.0, 4.0, float('inf')]
-        labels = ['very_low', 'low', 'medium', 'high']
-        jcr_metrics = pd.cut(
-            pd.to_numeric(jcr, errors='coerce'),
-            bins=bins,
-            labels=labels,
-        )
-        jcr_metrics = jcr_metrics.value_counts()
-        jcr_metrics = jcr_metrics.to_dict()
-
-        jcr_metrics['not_applicable'] = jcr.count('N/A')
-        jcr_metrics['without_jcr'] = jcr.count(None)
-        return jcr_metrics
-
-    article_metrics = pd.DataFrame(article_metrics)
-    article_metrics['qualis'] = article_metrics['qualis'].apply(count_qualis)
-    article_metrics['jcr'] = article_metrics['jcr'].apply(count_jcr)
-    article_metrics['citations'] = article_metrics['citations'].fillna(0)
-    return article_metrics.to_dict(orient='records')
-
-
-def list_patent_metrics(
-    term: str,
-    researcher_id: UUID = None,
-    graduate_program_id: UUID = None,
-    dep_id: str = None,
-    departament: str = None,
-    year: int = None,
-    distinct: int = 1,
-    institution: str = None,
-    graduate_program: str = None,
-    city: str = None,
-    area: str = None,
-    modality: str = None,
-    graduation: str = None,
-) -> list[PatentMetric]:
-    patent_metrics = ProductionRepository.list_patent_metrics(
-        term,
-        researcher_id,
-        graduate_program_id,
-        dep_id,
-        departament,
-        year,
-        distinct,
-        institution,
-        graduate_program,
-        city,
-        area,
-        modality,
-        graduation,
-    )
-    if not patent_metrics:
-        return []
-    return patent_metrics
-
-
-def list_guidance_metrics(
-    term: str,
-    researcher_id: UUID = None,
-    graduate_program_id: UUID = None,
-    dep_id: str = None,
-    departament: str = None,
-    year: int = None,
-    distinct: int = 1,
-    institution: str = None,
-    graduate_program: str = None,
-    city: str = None,
-    area: str = None,
-    modality: str = None,
-    graduation: str = None,
-) -> list[GuidanceMetrics]:
-    guidance_metrics = ProductionRepository.list_guidance_metrics(
-        term,
-        researcher_id,
-        graduate_program_id,
-        dep_id,
-        departament,
-        year,
-        distinct,
-        institution,
-        graduate_program,
-        city,
-        area,
-        modality,
-        graduation,
-    )
-    if not guidance_metrics:
-        return []
-    guidance_metrics = pd.DataFrame(guidance_metrics)
-
-    guidance_metrics = guidance_metrics.pivot_table(
-        index='year',
-        columns='nature',
-        values='count_nature',
-        aggfunc='sum',
-        fill_value=0,
-    ).reset_index()
-
-    rename_dict = {
-        'iniciacao cientifica concluida': 'ic_completed',
-        'iniciacao cientifica em andamento': 'ic_in_progress',
-        'dissertacao de mestrado concluida': 'm_completed',
-        'dissertacao de mestrado em andamento': 'm_in_progress',
-        'tese de doutorado concluida': 'd_completed',
-        'tese de doutorado em andamento': 'd_in_progress',
-        'trabalho de conclusao de curso graduacao concluida': 'g_completed',
-        'trabalho de conclusao de curso de graduacao em andamento': 'g_in_progress',
-        'monografia de conclusao de curso aperfeicoamento e especializacao concluida': 'e_completed',
-        'monografia de conclusao de curso aperfeicoamento e especializacao em andamento': 'e_in_progress',
-        'orientacao-de-outra-natureza concluida': 'o_completed',
-        'supervisao de pos-doutorado concluida': 'sd_completed',
-        'supervisao de pos-doutorado em andamento': 'sd_in_progress',
-        'year': 'year',
-    }
-
-    guidance_metrics.rename(columns=rename_dict, inplace=True)
-    columns = [column for column in rename_dict.values()]
-    guidance_metrics = guidance_metrics.reindex(
-        columns, axis='columns', fill_value=0
-    )
-    return guidance_metrics.to_dict(orient='records')
-
-
-def list_academic_degree_metrics(
-    researcher_id: UUID = None,
-    program_id: UUID = None,
-    dep_id: str = None,
-    departament: str = None,
-    year: int = None,
-    institution: str = None,
-    graduate_program: str = None,
-    city: str = None,
-    area: str = None,
-    modality: str = None,
-    graduation: str = None,
-) -> list[AcademicMetric]:
-    degree_metrics = ProductionRepository.list_academic_degree_metrics(
-        researcher_id,
-        program_id,
-        dep_id,
-        departament,
-        year,
-        institution,
-        graduate_program,
-        city,
-        area,
-        modality,
-        graduation,
-    )
-    if not degree_metrics:
-        return []
-    degree_metrics = pd.DataFrame(degree_metrics)
-    degree_metrics['degree'] = degree_metrics['degree'].str.lower()
-    degree_metrics = degree_metrics.pivot_table(
-        index='year',
-        columns='degree',
-        values='among',
-        aggfunc='sum',
-        fill_value=0,
-    ).reset_index()
-
-    columns = AcademicMetric.model_fields.keys()
-    degree_metrics = degree_metrics.reindex(
-        columns, axis='columns', fill_value=0
-    )
-
-    return degree_metrics.to_dict(orient='records')
-
-
-def list_software_metrics(
-    term: str,
-    researcher_id: UUID = None,
-    program_id: UUID = None,
-    dep_id: str = None,
-    departament: str = None,
-    year: int = None,
-    distinct: int = 1,
-    institution: str = None,
-    graduate_program: str = None,
-    city: str = None,
-    area: str = None,
-    modality: str = None,
-    graduation: str = None,
-):
-    metrics = ProductionRepository.list_software_metrics(
-        term,
-        researcher_id,
-        program_id,
-        dep_id,
-        departament,
-        year,
-        distinct,
-        institution,
-        graduate_program,
-        city,
-        area,
-        modality,
-        graduation,
-    )
-    return metrics
 
 
 def list_distinct_patent(
@@ -1204,3 +691,158 @@ def list_distinct_papers_magazine(
     return ProductionRepository.list_distinct_papers_magazine(
         researcher_id, year
     )
+
+
+async def get_article_metrics(conn, default_filters) -> list[ArticleMetric]:
+    article_metrics = await ProductionRepository.list_article_metrics(
+        conn, default_filters
+    )
+    if not article_metrics:
+        return []
+
+    def count_qualis(qualis):
+        return dict(Counter(qualis))
+
+    def count_jcr(jcr):
+        bins = [0.0, 0.65, 2.0, 4.0, float('inf')]
+        labels = ['very_low', 'low', 'medium', 'high']
+        jcr_metrics = pd.cut(
+            pd.to_numeric(jcr, errors='coerce'),
+            bins=bins,
+            labels=labels,
+        )
+        jcr_metrics = jcr_metrics.value_counts()
+        jcr_metrics = jcr_metrics.to_dict()
+
+        jcr_metrics['not_applicable'] = jcr.count('N/A')
+        jcr_metrics['without_jcr'] = jcr.count(None)
+        return jcr_metrics
+
+    article_metrics = pd.DataFrame(article_metrics)
+    article_metrics['qualis'] = article_metrics['qualis'].apply(count_qualis)
+    article_metrics['jcr'] = article_metrics['jcr'].apply(count_jcr)
+    article_metrics['citations'] = article_metrics['citations'].fillna(0)
+    return article_metrics.to_dict(orient='records')
+
+
+async def get_patent_metrics(conn, default_filters) -> list[PatentMetric]:
+    patent_metrics = await ProductionRepository.list_patent_metrics(
+        conn, default_filters
+    )
+    if not patent_metrics:
+        return []
+    return patent_metrics
+
+
+async def get_guidance_metrics(conn, default_filters) -> list[GuidanceMetrics]:
+    guidance_metrics = await ProductionRepository.list_guidance_metrics(
+        conn, default_filters
+    )
+    if not guidance_metrics:
+        return []
+    guidance_metrics = pd.DataFrame(guidance_metrics)
+
+    guidance_metrics = guidance_metrics.pivot_table(
+        index='year',
+        columns='nature',
+        values='count_nature',
+        aggfunc='sum',
+        fill_value=0,
+    ).reset_index()
+
+    rename_dict = {
+        'iniciacao cientifica concluida': 'ic_completed',
+        'iniciacao cientifica em andamento': 'ic_in_progress',
+        'dissertacao de mestrado concluida': 'm_completed',
+        'dissertacao de mestrado em andamento': 'm_in_progress',
+        'tese de doutorado concluida': 'd_completed',
+        'tese de doutorado em andamento': 'd_in_progress',
+        'trabalho de conclusao de curso graduacao concluida': 'g_completed',
+        'trabalho de conclusao de curso de graduacao em andamento': 'g_in_progress',
+        'monografia de conclusao de curso aperfeicoamento e especializacao concluida': 'e_completed',
+        'monografia de conclusao de curso aperfeicoamento e especializacao em andamento': 'e_in_progress',
+        'orientacao-de-outra-natureza concluida': 'o_completed',
+        'supervisao de pos-doutorado concluida': 'sd_completed',
+        'supervisao de pos-doutorado em andamento': 'sd_in_progress',
+        'year': 'year',
+    }
+
+    guidance_metrics.rename(columns=rename_dict, inplace=True)
+    columns = [column for column in rename_dict.values()]
+    guidance_metrics = guidance_metrics.reindex(
+        columns, axis='columns', fill_value=0
+    )
+    return guidance_metrics.to_dict(orient='records')
+
+
+async def get_academic_degree_metrics(
+    conn, default_filters
+) -> list[AcademicMetric]:
+    degree_metrics = await ProductionRepository.list_academic_degree_metrics(
+        conn, default_filters
+    )
+    if not degree_metrics:
+        return []
+    degree_metrics = pd.DataFrame(degree_metrics)
+    degree_metrics['degree'] = degree_metrics['degree'].str.lower()
+    degree_metrics = degree_metrics.pivot_table(
+        index='year',
+        columns='degree',
+        values='among',
+        aggfunc='sum',
+        fill_value=0,
+    ).reset_index()
+
+    columns = AcademicMetric.model_fields.keys()
+    degree_metrics = degree_metrics.reindex(
+        columns, axis='columns', fill_value=0
+    )
+
+    return degree_metrics.to_dict(orient='records')
+
+
+async def get_software_metrics(conn, default_filters):
+    metrics = await ProductionRepository.list_software_metrics(
+        conn, default_filters
+    )
+    return metrics
+
+
+async def get_book_metrics(conn, default_filters):
+    return await ProductionRepository.get_book_metrics(conn, default_filters)
+
+
+async def get_book_chapter_metrics(conn, default_filters):
+    return await ProductionRepository.get_book_chapter_metrics(
+        conn, default_filters
+    )
+
+
+async def get_researcher_metrics(conn, default_filters):
+    return await ProductionRepository.get_researcher_metrics(
+        conn, default_filters
+    )
+
+
+async def get_speaker_metrics(conn, default_filters):
+    return await ProductionRepository.get_speaker_metrics(conn, default_filters)
+
+
+async def get_research_report_metrics(conn, default_filters):
+    return await ProductionRepository.get_research_report_metrics(
+        conn, default_filters
+    )
+
+
+async def get_papers_magazine_metrics(conn, default_filters):
+    return await ProductionRepository.get_papers_magazine_metrics(
+        conn, default_filters
+    )
+
+
+async def get_speaker_metrics(conn, default_filters):
+    return await ProductionRepository.get_speaker_metrics(conn, default_filters)
+
+
+async def get_brand_metrics(conn, default_filters):
+    return await ProductionRepository.get_brand_metrics(conn, default_filters)
