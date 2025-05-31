@@ -2469,7 +2469,7 @@ async def get_book_metrics(
         GROUP BY
             bp.year;
             """
-    print(SCRIPT_SQL, params)
+
     return await conn.select(SCRIPT_SQL, params)
 
 
