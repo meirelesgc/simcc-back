@@ -1007,8 +1007,8 @@ async def list_bibliographic_production(
 
 async def list_article_production(
     conn: Connection,
-    filters: DefaultFilters,  # Recebe a instância DefaultFilters
-    qualis: str | None,  # Parâmetro específico
+    filters: DefaultFilters,
+    qualis: str | None,
     page: int | None,
     lenght: int | None,
 ):
@@ -1026,11 +1026,11 @@ async def list_article_production(
     query_filters = str()
     filter_pagination = str()
 
-    if qualis:  # Parâmetro específico
+    if qualis:
         params['qualis'] = qualis.split(';')
         query_filters += 'AND bpa.qualis = ANY(%(qualis)s)'
 
-    if filters.term:  # Acessando via filters.term
+    if filters.term:
         filter_terms_str, term_params = webseatch_filter('b.title', filters.term)
         query_filters += filter_terms_str
         params.update(term_params)
