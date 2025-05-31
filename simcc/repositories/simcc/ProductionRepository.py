@@ -4646,6 +4646,7 @@ async def get_speaker_metrics(
 
 async def get_brand_metrics(
     conn: Connection,
+    nature,
     filters: DefaultFilters,
 ):
     params = {}
@@ -4663,6 +4664,12 @@ async def get_brand_metrics(
         filter_distinct = 'DISTINCT'
 
     filters_sql = str()
+
+    if nature:
+        params['nature'] = nature.split(';')
+        filters_sql += """
+            AND b.nature = ANY(%(nature)s)
+            """
 
     if filters.term:
         filter_terms_str, term_params = webseatch_filter('b.title', filters.term)

@@ -2,9 +2,7 @@ from fastapi import APIRouter, Depends
 
 from simcc.core.connection import Connection
 from simcc.core.database import get_conn
-from simcc.schemas import (
-    DefaultFilters,  # Presumindo que DefaultFilters já tem todos os campos opcionais
-)
+from simcc.schemas import DefaultFilters
 from simcc.schemas.Production.Article import ArticleMetric
 from simcc.schemas.Production.Guidance import GuidanceMetrics
 from simcc.schemas.Production.Patent import PatentMetric
@@ -13,6 +11,50 @@ from simcc.schemas.Researcher import AcademicDegree, AcademicMetric
 from simcc.services import ProductionService, ResearcherService
 
 router = APIRouter()
+
+from typing import Literal, Optional
+from uuid import UUID
+
+from pydantic import BaseModel, Field
+
+
+class DefaultFilters(BaseModel):
+    term: Optional[str] = None
+    researcher_id: Optional[UUID | str] = Field(
+        default=None, alias='researcher_id'
+    )
+    graduate_program_id: Optional[UUID | str] = Field(
+        default=None, alias='graduate_program_id'
+    )
+    dep_id: Optional[str] = None
+    departament: Optional[str] = None
+    year: int = 2020  # Este já é opcional porque tem um valor padrão
+    type: Optional[
+        Literal[
+            'BOOK',
+            'BOOK_CHAPTER',
+            'ARTICLE',
+            'WORK_IN_EVENT',
+            'TEXT_IN_NEWSPAPER_MAGAZINE',
+            'ABSTRACT',
+            'PATENT',
+            'AREA',
+            'EVENT',
+            'NAME',
+        ]
+        | str
+    ] = None
+    distinct: int = 1
+    institution: Optional[str] = None
+    graduate_program: Optional[str] = None
+    city: Optional[str] = None
+    area: Optional[str] = None
+    modality: Optional[str] = None
+    graduation: Optional[str] = None
+
+    class Config:
+        populate_by_name = True
+        json_encoders = {UUID: str}
 
 
 @router.get(
@@ -28,10 +70,13 @@ async def get_researcher_metrics(
 
 @router.get('/brand_metrics', tags=['Metrics'])
 async def get_brand_metrics(
+    nature: str = None,
     default_filters: DefaultFilters = Depends(),
     conn: Connection = Depends(get_conn),
 ):
-    return await ProductionService.get_brand_metrics(conn, default_filters)
+    return await ProductionService.get_brand_metrics(
+        conn, nature, default_filters
+    )
 
 
 @router.get('/speaker_metrics', tags=['Metrics'])

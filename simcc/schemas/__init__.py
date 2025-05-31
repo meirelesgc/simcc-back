@@ -5,11 +5,11 @@ from uuid import UUID
 from pydantic import BaseModel, Field
 
 
-class DefaultFilters(BaseModel):  # Ou o nome que você deu ao seu modelo
-    term: Optional[str] = None  # Marcado como opcional explicitamente
+class DefaultFilters(BaseModel):
+    term: Optional[str] = None
     researcher_id: Optional[UUID | str] = Field(
         default=None, alias='researcher_id'
-    )  # Usar Optional para campos opcionais
+    )
     graduate_program_id: Optional[UUID | str] = Field(
         default=None, alias='graduate_program_id'
     )
@@ -30,8 +30,8 @@ class DefaultFilters(BaseModel):  # Ou o nome que você deu ao seu modelo
             'NAME',
         ]
         | str
-    ] = None  # Marcado como opcional explicitamente
-    distinct: int = 1  # Este já é opcional porque tem um valor padrão
+    ] = None
+    distinct: int = 1
     institution: Optional[str] = None
     graduate_program: Optional[str] = None
     city: Optional[str] = None

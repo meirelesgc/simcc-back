@@ -844,5 +844,7 @@ async def get_speaker_metrics(conn, default_filters):
     return await ProductionRepository.get_speaker_metrics(conn, default_filters)
 
 
-async def get_brand_metrics(conn, default_filters):
-    return await ProductionRepository.get_brand_metrics(conn, default_filters)
+async def get_brand_metrics(conn, nature, default_filters):
+    return await ProductionRepository.get_brand_metrics(
+        conn, nature, default_filters
+    )
