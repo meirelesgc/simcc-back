@@ -51,8 +51,6 @@ async def list_patent_production(
     lenght: int | None = None,
     conn: Connection = Depends(get_conn),
 ):
-    if default_filters.distinct:
-        pass
     return await ProductionService.list_patent(
         conn, default_filters, page, lenght
     )
@@ -81,8 +79,6 @@ async def list_book_production(
     lenght: int | None = None,
     conn: Connection = Depends(get_conn),
 ):
-    if default_filters.distinct:
-        pass
     return await ProductionService.list_book(conn, default_filters, page, lenght)
 
 
@@ -96,8 +92,6 @@ async def list_brand_production(
     lenght: int | None = None,
     conn: Connection = Depends(get_conn),
 ):
-    if default_filters.distinct:
-        pass
     return await ProductionService.list_brand(
         conn, default_filters, page, lenght
     )
@@ -113,8 +107,6 @@ async def list_researcher_report(
     lenght: int | None = None,
     conn: Connection = Depends(get_conn),
 ):
-    if default_filters.distinct:
-        pass
     return await ProductionService.list_researcher_report(
         conn, default_filters, page, lenght
     )
@@ -130,9 +122,6 @@ async def list_book_chapter_production(
     lenght: int | None = None,
     conn: Connection = Depends(get_conn),
 ):
-    if default_filters.distinct:
-        pass
-
     return await ProductionService.list_book_chapter(
         conn, default_filters, page, lenght
     )
@@ -185,8 +174,6 @@ async def list_software_production(
     lenght: int | None = None,
     conn: Connection = Depends(get_conn),
 ):
-    if default_filters.distinct:
-        pass
     return await ProductionService.list_software(
         conn, default_filters, page, lenght
     )
@@ -203,9 +190,6 @@ async def list_article_production(
     lenght: int | None = None,
     conn: Connection = Depends(get_conn),
 ):
-    if default_filters.distinct:
-        pass
-
     return await ProductionService.list_article_production(
         conn, default_filters, qualis, page, lenght
     )
@@ -221,8 +205,6 @@ async def list_guidance_production(
     lenght: int | None = None,
     conn: Connection = Depends(get_conn),
 ):
-    if default_filters.distinct:
-        pass
     return await ProductionService.list_guidance_production(
         conn, default_filters, page, lenght
     )
@@ -238,8 +220,6 @@ async def list_researcher_production_events(
     lenght: int | None = None,
     conn: Connection = Depends(get_conn),
 ):
-    if default_filters.distinct:
-        pass
     return await ProductionService.list_researcher_production_events(
         conn, default_filters, page, lenght
     )
@@ -255,13 +235,8 @@ async def list_research_project(
     lenght: int | None = None,
     conn: Connection = Depends(get_conn),
 ):
-    if default_filters.distinct:
-        pass
     return await ProductionService.list_research_projects(
-        conn,
-        default_filters,
-        page,
-        lenght,
+        conn, default_filters, page, lenght
     )
 
 
@@ -275,8 +250,6 @@ async def list_papers_magazine(
     lenght: int | None = None,
     conn: Connection = Depends(get_conn),
 ):
-    if default_filters.distinct:
-        pass
     return await ProductionService.list_papers_magazine(
         conn, default_filters, page, lenght
     )

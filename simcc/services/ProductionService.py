@@ -41,12 +41,9 @@ async def list_patent(
     page: int | None,
     lenght: int | None,
 ) -> list[PatentProduction]:
-    patents = await ProductionRepository.list_patent(
+    return await ProductionRepository.list_patent(
         conn, default_filters, page, lenght
     )
-    if not patents:
-        return []
-    return patents
 
 
 async def list_brand(
@@ -55,12 +52,9 @@ async def list_brand(
     page: int | None,
     lenght: int | None,
 ) -> list[BrandProduction]:
-    brands = await ProductionRepository.list_brand(
+    return await ProductionRepository.list_brand(
         conn, default_filters, page, lenght
     )
-    if not brands:
-        return []
-    return brands
 
 
 async def list_book(
