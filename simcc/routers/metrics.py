@@ -12,50 +12,6 @@ from simcc.services import ProductionService, ResearcherService
 
 router = APIRouter()
 
-from typing import Literal, Optional
-from uuid import UUID
-
-from pydantic import BaseModel, Field
-
-
-class DefaultFilters(BaseModel):
-    term: Optional[str] = None
-    researcher_id: Optional[UUID | str] = Field(
-        default=None, alias='researcher_id'
-    )
-    graduate_program_id: Optional[UUID | str] = Field(
-        default=None, alias='graduate_program_id'
-    )
-    dep_id: Optional[str] = None
-    departament: Optional[str] = None
-    year: int = 2020  # Este já é opcional porque tem um valor padrão
-    type: Optional[
-        Literal[
-            'BOOK',
-            'BOOK_CHAPTER',
-            'ARTICLE',
-            'WORK_IN_EVENT',
-            'TEXT_IN_NEWSPAPER_MAGAZINE',
-            'ABSTRACT',
-            'PATENT',
-            'AREA',
-            'EVENT',
-            'NAME',
-        ]
-        | str
-    ] = None
-    distinct: int = 1
-    institution: Optional[str] = None
-    graduate_program: Optional[str] = None
-    city: Optional[str] = None
-    area: Optional[str] = None
-    modality: Optional[str] = None
-    graduation: Optional[str] = None
-
-    class Config:
-        populate_by_name = True
-        json_encoders = {UUID: str}
-
 
 @router.get(
     '/researcher_metrics',
