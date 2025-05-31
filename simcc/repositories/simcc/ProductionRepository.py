@@ -4688,12 +4688,6 @@ async def get_brand_metrics(
             AND b.year >= %(year)s
             """
 
-    if filters.nature:
-        params['nature'] = filters.nature.split(';')
-        filters_sql += """
-            AND b.nature = ANY(%(nature)s)
-            """
-
     if filters.dep_id or filters.departament:
         # Garante que 'r' é unido antes de 'dpr'
         join_researcher = """
