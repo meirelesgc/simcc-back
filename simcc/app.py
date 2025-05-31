@@ -50,7 +50,6 @@ app.add_middleware(
 @app.middleware('http')
 async def reverse_proxy(request: Request, call_next):
     response = await call_next(request)
-
     if response.status_code == HTTPStatus.NOT_FOUND:
         async with httpx.AsyncClient() as client:
             proxy_response = await client.request(

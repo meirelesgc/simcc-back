@@ -2469,6 +2469,7 @@ async def get_book_metrics(
         GROUP BY
             bp.year;
             """
+    print(SCRIPT_SQL, params)
     return await conn.select(SCRIPT_SQL, params)
 
 
@@ -2491,9 +2492,6 @@ async def get_book_chapter_metrics(
     filter_modality = str()
     join_modality = str()
     filter_graduation = str()
-
-    if filters.distinct:
-        distinct_filter = 'DISTINCT'
 
     if filters.dep_id:
         distinct_filter = 'DISTINCT'
@@ -2575,6 +2573,9 @@ async def get_book_chapter_metrics(
         params['year'] = filters.year
         year_filter = 'AND bp.year::int >= %(year)s'
 
+    if filters.distinct:
+        distinct_filter = 'DISTINCT'
+
     SCRIPT_SQL = f"""
         SELECT bp.year, COUNT({distinct_filter} bp.title) AS among
         FROM researcher r
@@ -2600,7 +2601,6 @@ async def get_book_chapter_metrics(
             {filter_graduation}
         GROUP BY bp.year;
     """
-
     return await conn.select(SCRIPT_SQL, params)
 
 
