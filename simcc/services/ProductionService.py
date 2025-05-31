@@ -351,3 +351,9 @@ async def get_brand_metrics(conn, nature, default_filters):
     return await ProductionRepository.get_brand_metrics(
         conn, nature, default_filters
     )
+
+
+async def get_research_project_metrics(conn, default_filters):
+    return await ProductionRepository.get_research_project_metrics(
+        conn, default_filters
+    )

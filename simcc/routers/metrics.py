@@ -158,3 +158,18 @@ async def software_metrics(
 ):
     metrics = await ProductionService.get_software_metrics(conn, default_filters)
     return metrics
+
+
+@router.get(
+    '/research_project_metrics',
+    response_model=list[SoftwareMetric],
+    tags=['Metrics'],
+)
+async def get_research_project_metrics(
+    default_filters: DefaultFilters = Depends(),
+    conn: Connection = Depends(get_conn),
+):
+    metrics = await ProductionService.get_research_project_metrics(
+        conn, default_filters
+    )
+    return metrics
