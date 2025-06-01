@@ -457,3 +457,35 @@ def materialized_vision_csv():
     file_name = 'materialized_vision.csv'
     file_path = os.path.join(STORAGE_PATH, file_name)
     return FileResponse(file_path, filename=file_name)
+
+
+@router.get('/dim_article_keyword.csv')
+def dim_article_keyword_csv():
+    powerBI.fat_article_keyword()
+    file_name = 'dim_article_keyword.csv'
+    file_path = os.path.join(STORAGE_PATH, file_name)
+    return FileResponse(file_path, filename=file_name)
+
+
+@router.get('/fat_article_keyword.csv')
+def fat_article_keyword_csv():
+    powerBI.fat_article_keyword()
+    file_name = 'fat_article_keyword.csv'
+    file_path = os.path.join(STORAGE_PATH, file_name)
+    return FileResponse(file_path, filename=file_name)
+
+
+@router.get('/fat_article_co_authorship.csv')
+def fat_article_co_authorship_csv():
+    powerBI.fat_article_co_authorship()
+    file_name = 'fat_article_co_authorship.csv'
+    file_path = os.path.join(STORAGE_PATH, file_name)
+    return FileResponse(file_path, filename=file_name)
+
+
+@router.get('/fat_keywords_cooccurrences.csv')
+def fat_keywords_cooccurrences():
+    powerBI.fat_keywords_cooccurrences()
+    file_name = 'fat_keywords_cooccurrences.csv'
+    file_path = os.path.join(STORAGE_PATH, file_name)
+    return FileResponse(file_path, filename=file_name)

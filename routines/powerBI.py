@@ -1038,6 +1038,157 @@ def materialized_vision():
     csv.to_csv(csv_path, index=True, quoting=QUOTE_ALL, encoding='utf-8-sig')
 
 
+def fat_article_keyword():
+    stopwords = nltk.corpus.stopwords.words('english')
+    stopwords += nltk.corpus.stopwords.words('portuguese')
+
+    parameters = {}
+    parameters['stopwords'] = stopwords
+
+    SCRIPT_SQL = r"""
+        WITH unified_data AS (
+            SELECT id, REGEXP_REPLACE(TRANSLATE(title, $$-\.":,;'$$, ' '), '<[^>]*>', '', 'g') AS title
+            FROM bibliographic_production
+            WHERE type = 'ARTICLE'
+        ),
+        split_words AS (
+            SELECT id, regexp_split_to_table(title, '\s+') AS word
+            FROM unified_data
+        ),
+        normalized_words AS (
+            SELECT id, lower(trim(word)) AS word
+            FROM split_words
+            WHERE word <> '' AND CHAR_LENGTH(word) > 3 AND lower(trim(word)) <> ALL(%(stopwords)s)
+        ),
+        words AS (
+            SELECT word, array_agg(id) AS ids, count(*) AS frequency
+            FROM normalized_words
+            GROUP BY word
+            ORDER BY frequency DESC
+        )
+        SELECT word, UNNEST(ids) AS bibliographic_production_id
+        FROM words
+        """
+
+    result = conn.select(SCRIPT_SQL, parameters)
+
+    csv = pd.DataFrame(result)
+    csv_path = os.path.join(PATH, 'dim_article_keyword.csv')
+    csv.to_csv(csv_path)
+
+
+def dim_article_keyword():
+    stopwords = nltk.corpus.stopwords.words('english')
+    stopwords += nltk.corpus.stopwords.words('portuguese')
+
+    parameters = {}
+    parameters['stopwords'] = stopwords
+
+    SCRIPT_SQL = r"""
+        WITH unified_data AS (
+            SELECT REGEXP_REPLACE(TRANSLATE(title, $$-\.":,;'$$, ' '), '<[^>]*>', '', 'g') AS title
+            FROM bibliographic_production
+            WHERE type = 'ARTICLE'
+        ),
+        split_words AS (
+            SELECT regexp_split_to_table(title, '\s+') AS word
+            FROM unified_data
+        ),
+        normalized_words AS (
+            SELECT lower(trim(word)) AS word, COUNT(*) AS frequency
+            FROM split_words
+            WHERE word <> '' AND CHAR_LENGTH(word) > 3 AND lower(trim(word)) <> ALL(%(stopwords)s)
+            GROUP BY word
+        )
+        SELECT word, frequency
+        FROM normalized_words
+        ORDER BY frequency DESC;
+        """
+
+    result = conn.select(SCRIPT_SQL, parameters)
+
+    csv = pd.DataFrame(result)
+    csv_path = os.path.join(PATH, 'fat_article_keyword.csv')
+    csv.to_csv(csv_path)
+
+
+def fat_article_co_authorship():
+    stopwords = nltk.corpus.stopwords.words('english')
+    stopwords += nltk.corpus.stopwords.words('portuguese')
+
+    parameters = {}
+    parameters['stopwords'] = stopwords
+
+    SCRIPT_SQL = r"""
+        SELECT title, UNNEST(ARRAY_AGG(researcher_id)) AS researcher_id
+        FROM bibliographic_production
+        WHERE type = 'ARTICLE'
+        GROUP BY title
+        HAVING COUNT(*) > 1
+        ORDER BY title
+        """
+
+    result = conn.select(SCRIPT_SQL, parameters)
+
+    csv = pd.DataFrame(result)
+    csv_path = os.path.join(PATH, 'fat_article_co_authorship.csv')
+    csv.to_csv(csv_path)
+
+
+def fat_keywords_cooccurrences():
+    stopwords = nltk.corpus.stopwords.words('english')
+    stopwords += nltk.corpus.stopwords.words('portuguese')
+
+    parameters = {}
+    parameters['stopwords'] = stopwords
+
+    SCRIPT_SQL = r"""
+        WITH unified_data AS (
+            SELECT REGEXP_REPLACE(TRANSLATE(title, $$-\.":,;'$$, ' '), '<[^>]*>', '', 'g') AS title
+            FROM bibliographic_production
+            WHERE type = 'ARTICLE'
+        ),
+        tokenized_titles AS (
+            SELECT ROW_NUMBER() OVER () AS title_id,
+                regexp_split_to_array(lower(trim(REGEXP_REPLACE(TRANSLATE(title, $$-\.":,;'$$, ' '), '<[^>]*>', '', 'g'))), '\s+') AS words
+            FROM unified_data
+        ),
+        filtered_tokens AS (
+            SELECT title_id,
+                unnest(words) AS word
+            FROM tokenized_titles
+        ),
+        cleaned_tokens AS (
+            SELECT title_id,
+                lower(trim(word)) AS word
+            FROM filtered_tokens
+            WHERE word <> '' AND CHAR_LENGTH(word) > 3 AND lower(trim(word)) <> ALL(%(stopwords)s)
+        ),
+        cooccurrences AS (
+            SELECT LEAST(a.word, b.word) AS word1,
+                GREATEST(a.word, b.word) AS word2
+            FROM cleaned_tokens a
+            JOIN cleaned_tokens b
+                ON a.title_id = b.title_id AND a.word <> b.word
+        ),
+        cooc_count AS (
+            SELECT word1, word2, COUNT(*) AS frequency
+            FROM cooccurrences
+            GROUP BY word1, word2
+        )
+
+        SELECT word1, word2, frequency
+        FROM cooc_count
+        ORDER BY frequency DESC
+        """
+
+    result = conn.select(SCRIPT_SQL, parameters)
+
+    csv = pd.DataFrame(result)
+    csv_path = os.path.join(PATH, 'fat_keywords_cooccurrences.csv')
+    csv.to_csv(csv_path)
+
+
 if __name__ == '__main__':
     for directory in [PATH]:
         if not os.path.exists(directory):
@@ -1100,3 +1251,7 @@ if __name__ == '__main__':
     fat_event_organization()
     fat_participation_events()
     materialized_vision()
+    fat_article_keyword()
+    dim_article_keyword()
+    fat_article_co_authorship()
+    fat_keywords_cooccurrences()
