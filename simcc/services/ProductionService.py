@@ -12,6 +12,10 @@ from simcc.schemas.Production.Patent import PatentMetric, PatentProduction
 from simcc.schemas.Researcher import AcademicMetric
 
 
+async def get_events_metrics(conn, default_filters):
+    return await ProductionRepository.get_events_metrics(conn, default_filters)
+
+
 async def get_pevent_researcher(
     conn: Connection,
     default_filters: DefaultFilters,
@@ -337,10 +341,6 @@ async def get_papers_magazine_metrics(conn, default_filters):
     return await ProductionRepository.get_papers_magazine_metrics(
         conn, default_filters
     )
-
-
-async def get_speaker_metrics(conn, default_filters):
-    return await ProductionRepository.get_speaker_metrics(conn, default_filters)
 
 
 async def get_brand_metrics(conn, nature, default_filters):

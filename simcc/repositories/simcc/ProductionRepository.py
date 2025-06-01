@@ -5,6 +5,150 @@ from simcc.schemas.Production.Article import ArticleProduction
 from simcc.schemas.Production.Patent import PatentProduction
 
 
+async def get_events_metrics(
+    conn: Connection,
+    filters: DefaultFilters,
+):
+    params = {}
+    join_researcher_production = str()
+    join_foment = str()
+    join_program = str()
+    join_institution = str()
+    join_departament = str()
+    join_researcher = """
+            INNER JOIN public.researcher r ON r.id = bp.researcher_id
+            """
+
+    query_filters = str()
+
+    if filters.term:
+        filter_terms_str, term_params = webseatch_filter(
+            'bp.title', filters.term
+        )
+        query_filters += filter_terms_str
+        params.update(term_params)
+
+    if filters.researcher_id:
+        params['researcher_id'] = str(filters.researcher_id)
+        query_filters += """
+            AND bp.researcher_id = %(researcher_id)s
+            """
+
+    if filters.year:
+        params['year'] = filters.year
+        query_filters += """
+            AND bp.year_ >= %(year)s
+            """
+
+    if filters.dep_id or filters.departament:
+        join_departament = """
+            INNER JOIN ufmg.departament_researcher dpr
+                ON dpr.researcher_id = r.id
+            INNER JOIN ufmg.departament dp
+                ON dp.dep_id = dpr.dep_id
+            """
+    if filters.dep_id:
+        params['dep_id'] = filters.dep_id
+        query_filters += """
+            AND dp.dep_id = %(dep_id)s
+            """
+
+    if filters.departament:
+        params['departament'] = filters.departament.split(';')
+        query_filters += """
+            AND dp.dep_nom = ANY(%(departament)s)
+            """
+
+    if filters.institution:
+        params['institution'] = filters.institution.split(';')
+        join_institution = """
+            INNER JOIN public.institution i
+                ON r.institution_id = i.id
+            """
+        query_filters += """
+            AND i.name = ANY(%(institution)s)
+            """
+
+    if filters.graduate_program_id:
+        params['graduate_program_id'] = str(filters.graduate_program_id)
+        join_program = """
+            INNER JOIN public.graduate_program_researcher gpr
+                ON gpr.researcher_id = r.id
+            INNER JOIN public.graduate_program gp
+                ON gpr.graduate_program_id = gp.graduate_program_id
+            """
+        query_filters += """
+            AND gpr.graduate_program_id = %(graduate_program_id)s
+            """
+
+    if filters.graduate_program:
+        params['graduate_program'] = filters.graduate_program.split(';')
+        if not join_program:
+            join_program = """
+                INNER JOIN public.graduate_program_researcher gpr
+                    ON gpr.researcher_id = r.id
+                INNER JOIN public.graduate_program gp
+                    ON gpr.graduate_program_id = gp.graduate_program_id
+                """
+        query_filters += """
+            AND gp.name = ANY(%(graduate_program)s)
+            """
+
+    if filters.city:
+        params['city'] = filters.city.split(';')
+        join_researcher_production = """
+            LEFT JOIN public.researcher_production rp
+                ON rp.researcher_id = r.id
+            """
+        query_filters += """
+            AND rp.city = ANY(%(city)s)
+            """
+
+    if filters.area:
+        params['area'] = filters.area.replace(' ', '_').split(';')
+        if not join_researcher_production:
+            join_researcher_production = """
+                LEFT JOIN public.researcher_production rp
+                    ON rp.researcher_id = r.id
+                """
+        query_filters += """
+            AND rp.great_area_ && %(area)s
+            """
+
+    if filters.modality:
+        params['modality'] = filters.modality.split(';')
+        join_foment = """
+            INNER JOIN public.foment f
+                ON f.researcher_id = r.id
+            """
+        query_filters += """
+            AND f.modality_name = ANY(%(modality)s)
+            """
+
+    if filters.graduation:
+        params['graduation'] = filters.graduation.split(';')
+        query_filters += """
+            AND r.graduation = ANY(%(graduation)s)
+            """
+
+    SCRIPT_SQL = f"""
+        SELECT COUNT(bp.title) AS among, bp.year_
+        FROM
+            public.bibliographic_production bp
+            {join_researcher}
+            {join_researcher_production}
+            {join_foment}
+            {join_program}
+            {join_departament}
+            {join_institution}
+        WHERE bp.type = 'WORK_IN_EVENT'
+        {query_filters}
+        GROUP BY bp.year_;
+        """
+    result = await conn.select(SCRIPT_SQL, params)
+    return result
+
+
 async def get_pevent_researcher(
     conn: Connection,
     filters: DefaultFilters,
@@ -1008,10 +1152,7 @@ async def list_article_production(
     join_foment = str()
     join_program = str()
     join_departament = str()
-    join_institution = """
-        LEFT JOIN institution i
-            ON r.institution_id = i.id
-        """
+    join_institution = str()
 
     filter_distinct = str()
     query_filters = str()
@@ -1051,26 +1192,25 @@ async def list_article_production(
             AND dp.dep_nom = ANY(%(departament)s)
             """
 
-    if filters.researcher_id:  # Acessando via filters.researcher_id
-        params['researcher_id'] = str(
-            filters.researcher_id
-        )  # Convertido para string
+    if filters.researcher_id:
+        params['researcher_id'] = str(filters.researcher_id)
         query_filters += """
             AND b.researcher_id = %(researcher_id)s
             """
 
-    if filters.institution:  # Acessando via filters.institution
+    if filters.institution:
         params['institution'] = filters.institution.split(';')
-        # join_institution já está definido no início da função
+        join_institution = """
+            LEFT JOIN institution i
+                ON r.institution_id = i.id
+            """
         query_filters += """
             AND i.name = ANY(%(institution)s)
             """
 
-    if filters.graduate_program_id:  # Acessando via filters.graduate_program_id
+    if filters.graduate_program_id:
         filter_distinct = 'DISTINCT'
-        params['graduate_program_id'] = str(
-            filters.graduate_program_id
-        )  # Convertido para string
+        params['graduate_program_id'] = str(filters.graduate_program_id)
         join_program = """
             INNER JOIN graduate_program_researcher gpr
                 ON gpr.researcher_id = b.researcher_id
@@ -2300,7 +2440,7 @@ async def list_papers_magazine(
             {join_program}
             {join_departament}
             {join_institution}
-        WHERE type = 'TEXT_IN_NEWSPAPER_MAGAZINE'
+        WHERE bp.type = 'TEXT_IN_NEWSPAPER_MAGAZINE'
             {query_filters}
         ORDER BY bp.title DESC
         {filter_pagination};
@@ -2321,6 +2461,7 @@ async def get_book_metrics(
 
     join_dep = str()
     query_filters = str()
+    term_filter = str()
     filter_distinct = str()
 
     if filters.dep_id:
@@ -2445,6 +2586,7 @@ async def get_book_metrics(
         WHERE 1 = 1
             AND bp.type = 'BOOK'
             {term_filter}
+            {query_filters}
         GROUP BY
             bp.year;
             """
@@ -2805,6 +2947,7 @@ async def list_article_metrics(
     join_institution = str()
     join_area = str()
     join_production = str()
+    term_filter = str()
 
     if filters.distinct:
         filter_distinct = 'DISTINCT'
@@ -3697,7 +3840,7 @@ async def get_research_report_metrics(
     SCRIPT_SQL = f"""
         SELECT
             COUNT(*) as among,
-            year
+            rr.year
         FROM
             public.research_report rr
             {join_researcher}
@@ -3708,7 +3851,7 @@ async def get_research_report_metrics(
             {join_institution}
         WHERE 1=1
             {filters_sql}
-        GROUP BY year
+        GROUP BY rr.year
         ORDER BY
             year DESC
         """
@@ -3848,7 +3991,7 @@ async def get_papers_magazine_metrics(
             """
 
     SCRIPT_SQL = f"""
-        SELECT COUNT(*) as among, year AS year
+        SELECT COUNT(*) as among, bp.year AS year
         FROM public.bibliographic_production bp
             {join_researcher}
             {join_researcher_production}
@@ -3856,11 +3999,11 @@ async def get_papers_magazine_metrics(
             {join_program}
             {join_departament}
             {join_institution}
-        WHERE type = 'TEXT_IN_NEWSPAPER_MAGAZINE'
+        WHERE bp.type = 'TEXT_IN_NEWSPAPER_MAGAZINE'
             {filters_sql}
-        GROUP BY year
+        GROUP BY bp.year
         ORDER BY
-            year DESC
+            bp.year DESC
         """
     return await conn.select(SCRIPT_SQL, params)
 

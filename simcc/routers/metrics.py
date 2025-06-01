@@ -53,6 +53,14 @@ async def get_research_report_metrics(
     )
 
 
+@router.get('/events_metrics', tags=['Metrics'])
+async def get_events_metrics(
+    default_filters: DefaultFilters = Depends(),
+    conn: Connection = Depends(get_conn),
+):
+    return await ProductionService.get_events_metrics(conn, default_filters)
+
+
 @router.get('/papers_magazine_metrics', tags=['Metrics'])
 async def get_papers_magazine_metrics(
     default_filters: DefaultFilters = Depends(),
