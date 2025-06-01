@@ -1641,7 +1641,7 @@ async def academic_degree(
                     ON rp.researcher_id = r.id
                 """
         query_filters += """
-            AND rp.great_area && %(area)s
+            AND rp.great_area_ && %(area)s
             """
 
     if filters.modality:  # Acessando via filters.modality
