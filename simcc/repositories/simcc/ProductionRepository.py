@@ -618,15 +618,20 @@ async def get_researcher_metrics(
     filters: DefaultFilters,
 ):
     params = {}
-    join_filter = str()
-    type_filter = str()
-    year_filter = str()
-    join_extra = str()
-    where_extra = str()
+    join_filter = str()  # Specific join for the 'type' filter (bibliographic production, patent, area, event)
+    type_filter = str()  # Specific where clause for the 'type' filter
+    year_filter = str()  # Specific year filter for certain 'type' cases
+    filter_name = str()  # Specific filter for researcher name
+
+    # Initialize all potential shared joins as empty strings
+    join_departament = str()
     join_program = str()
-    filter_program = str()
-    filter_name = str()
-    count_among = 'COUNT(*) as among'
+    join_institution = str()
+    join_researcher_production = str()  # Used for city and area
+    join_foment = str()
+
+    where_extra = str()  # Accumulates general 'AND' conditions
+    count_among = 'COUNT(*) as among'  # Default count
 
     match filters.type:
         case 'ABSTRACT':
@@ -636,90 +641,121 @@ async def get_researcher_metrics(
             params.update(term_params)
             count_among = 'COUNT(*) AS among'
         case ('BOOK' | 'BOOK_CHAPTER' | 'ARTICLE' | 'WORK_IN_EVENT' | 'TEXT_IN_NEWSPAPER_MAGAZINE'):  # fmt: skip
-            count_among = 'COUNT(bp.title) AS among'
+            count_among = 'COUNT(DISTINCT bp.title) AS among'  # Use DISTINCT here to count unique titles
             join_filter = f"""
                 INNER JOIN bibliographic_production bp
                     ON bp.researcher_id = r.id AND bp.type = '{filters.type}'
             """
-            type_filter, term_params = webseatch_filter('bp.title', filters.term)
-            year_filter = 'AND bp.year::int >= %(year)s'
-            params.update(term_params)
-            params['year'] = filters.year
+            if filters.term:  # Only apply if filters.term exists
+                term_filter_str, term_params_bp = webseatch_filter(
+                    'bp.title', filters.term
+                )
+                type_filter += term_filter_str
+                params.update(term_params_bp)
+            if filters.year:  # Only apply if filters.year exists
+                year_filter = 'AND bp.year::int >= %(year)s'
+                params['year'] = filters.year
         case 'PATENT':
-            count_among = 'COUNT(p.title) AS among'
+            count_among = 'COUNT(DISTINCT p.title) AS among'  # Use DISTINCT here
             join_filter = 'INNER JOIN patent p ON p.researcher_id = r.id'
-            type_filter, term_params = webseatch_filter('p.title', filters.term)
-            year_filter = 'AND p.development_year::int >= %(year)s'
-            params.update(term_params)
-            params['year'] = filters.year
+            if filters.term:  # Only apply if filters.term exists
+                term_filter_str, term_params_p = webseatch_filter(
+                    'p.title', filters.term
+                )
+                type_filter += term_filter_str
+                params.update(term_params_p)
+            if filters.year:  # Only apply if filters.year exists
+                year_filter = 'AND p.development_year::int >= %(year)s'
+                params['year'] = filters.year
         case 'AREA':
-            count_among = 'COUNT(rp.researcher_id) AS among'
+            count_among = (
+                'COUNT(DISTINCT rp.researcher_id) AS among'  # Use DISTINCT here
+            )
             join_filter = """
                 INNER JOIN researcher_production rp
                     ON rp.researcher_id = r.id
                 """
-            type_filter, term_params = webseatch_filter(
-                'rp.great_area', filters.term
-            )
-            params.update(term_params)
+            if filters.term:  # Only apply if filters.term exists
+                term_filter_str, term_params_rp = webseatch_filter(
+                    'rp.great_area', filters.term
+                )
+                type_filter += term_filter_str
+                params.update(term_params_rp)
         case 'EVENT':
-            count_among = 'COUNT(e.title) AS among'
+            count_among = 'COUNT(DISTINCT e.title) AS among'  # Use DISTINCT here
             join_filter = """
                 INNER JOIN event_organization e
                     ON e.researcher_id = r.id
                 """
-            type_filter, term_params = webseatch_filter('e.title', filters.term)
-            year_filter = 'AND e.year::int >= %(year)s'
-            params.update(term_params)
-            params['year'] = filters.year
+            if filters.term:  # Only apply if filters.term exists
+                term_filter_str, term_params_e = webseatch_filter(
+                    'e.title', filters.term
+                )
+                type_filter += term_filter_str
+                params.update(term_params_e)
+            if filters.year:  # Only apply if filters.year exists
+                year_filter = 'AND e.year::int >= %(year)s'
+                params['year'] = filters.year
         case 'NAME':
-            count_among = 'COUNT(r.id) AS among'
-            filter_name, term_params = names_filter('r.name', filters.term)
-            params.update(term_params)
+            count_among = 'COUNT(DISTINCT r.id) AS among'  # Already counting researchers, so use DISTINCT
+            if filters.term:  # Only apply if filters.term exists
+                name_filter_str, term_params_name = names_filter(
+                    'r.name', filters.term
+                )
+                filter_name += name_filter_str
+                params.update(term_params_name)
         case _:
-            ...
+            # Default case for when filters.type is not specified or doesn't match
+            # count_among remains 'COUNT(*) as among' (for total researchers)
+            pass
 
-    join_dep = str()
-    filter_dep = str()
-    if filters.dep_id:
-        params['dep_id'] = filters.dep_id.split(';')
-        join_dep = """
-            INNER JOIN ufmg.departament_researcher dpr
-                ON dpr.researcher_id = r.id
-            INNER JOIN ufmg.departament dp
-                ON dp.dep_id = dpr.dep_id
-            """
-        filter_dep = """
-            AND dp.dep_id = ANY(%(dep_id)s)
-            """
+    # Consolidated logic for departament joins and filters
+    if filters.dep_id or filters.departament:
+        if not join_departament:  # Ensure join is added only once
+            join_departament = """
+                INNER JOIN ufmg.departament_researcher dpr
+                    ON dpr.researcher_id = r.id
+                INNER JOIN ufmg.departament dp
+                    ON dp.dep_id = dpr.dep_id
+                """
+        if filters.dep_id:
+            params['dep_id'] = filters.dep_id.split(';')
+            where_extra += """
+                AND dp.dep_id = ANY(%(dep_id)s)
+                """
+        if filters.departament:
+            params['departament'] = filters.departament.split(';')
+            where_extra += """
+                AND dp.dep_nom = ANY(%(departament)s)
+                """
 
-    if filters.graduate_program_id:
-        params['program_id'] = str(filters.graduate_program_id)
-        join_program = """
-            LEFT JOIN graduate_program_researcher gpr ON gpr.researcher_id = r.id
-            """
-        filter_program = """
-            AND gpr.graduate_program_id = %(program_id)s
-            AND gpr.type_ = 'PERMANENTE'
-            """
+    # Consolidated logic for graduate program joins and filters
+    if filters.graduate_program_id or filters.graduate_program:
+        if not join_program:  # Ensure join is added only once
+            join_program = """
+                INNER JOIN graduate_program_researcher gpr ON gpr.researcher_id = r.id
+                INNER JOIN graduate_program gp ON gpr.graduate_program_id = gp.graduate_program_id
+                """
+        if filters.graduate_program_id:
+            params['program_id'] = str(filters.graduate_program_id)
+            where_extra += """
+                AND gpr.graduate_program_id = %(program_id)s
+                AND gpr.type_ = 'PERMANENTE'
+                """
+        if filters.graduate_program:
+            params['graduate_program'] = filters.graduate_program.split(';')
+            where_extra += """
+                AND gp.name = ANY(%(graduate_program)s)
+                AND gpr.type_ = 'PERMANENTE'
+                """
 
+    # Filter by researcher ID (does not require a new join, `r` is always available)
     filter_id = str()
     if filters.researcher_id:
         params['researcher_id'] = str(filters.researcher_id)
         filter_id = 'AND r.id = %(researcher_id)s'
 
-    if filters.departament:
-        params['dep'] = filters.departament.split(';')
-        join_dep = """
-            INNER JOIN ufmg.departament_researcher dpr
-                ON dpr.researcher_id = r.id
-            INNER JOIN ufmg.departament dp
-                ON dp.dep_id = dpr.dep_id
-            """
-        filter_dep = """
-            AND dp.dep_nom = ANY(%(dep)s)
-            """
-
+    # Filter by institution (uses subquery to avoid adding `join_institution` if not already needed, or if it's already there)
     filter_institution = ''
     if filters.institution:
         params['institution'] = filters.institution.split(';')
@@ -729,41 +765,33 @@ async def get_researcher_metrics(
             )
         """
 
-    if filters.graduate_program:
-        params['graduate_program'] = filters.graduate_program.split(';')
-        join_extra += """
-            INNER JOIN graduate_program_researcher gpr ON gpr.researcher_id = r.id
-            INNER JOIN graduate_program gp ON gpr.graduate_program_id = gp.graduate_program_id
-        """
-        where_extra += """
-            AND gp.name = ANY(%(graduate_program)s)
-            AND gpr.type_ = 'PERMANENTE'
-        """
+    # Consolidated logic for researcher_production joins (city and area)
+    if filters.city or filters.area:
+        if not join_researcher_production:  # Ensure join is added only once
+            join_researcher_production = """
+                LEFT JOIN researcher_production rp_prod ON rp_prod.researcher_id = r.id
+            """
+        if filters.city:
+            params['city'] = filters.city.split(';')
+            where_extra += 'AND rp_prod.city = ANY(%(city)s)'
+        if filters.area:
+            params['area'] = filters.area.replace(' ', '_').split(';')
+            # The original code had `rp_area.great_area` but the join used `rp_city`. Corrected to rp_prod.
+            where_extra += """
+                AND STRING_TO_ARRAY(REPLACE(rp_prod.great_area, ' ', '_'), ';') && %(area)s
+            """
 
-    if filters.city:
-        params['city'] = filters.city.split(';')
-        join_extra += """
-            LEFT JOIN researcher_production rp_city ON rp_city.researcher_id = r.id
-        """
-        where_extra += 'AND rp_city.city = ANY(%(city)s)'
-
-    if filters.area:
-        params['area'] = filters.area.replace(' ', '_').split(';')
-        join_extra += """
-            LEFT JOIN researcher_production rp_area ON rp_area.researcher_id = r.id
-        """
-        where_extra += """
-            AND STRING_TO_ARRAY(REPLACE(rp_area.great_area, ' ', '_'), ';') && %(area)s
-        """
-
+    # Consolidated logic for foment joins
     if filters.modality:
+        if not join_foment:  # Ensure join is added only once
+            join_foment = """
+                INNER JOIN foment f ON f.researcher_id = r.id
+            """
         params['modality'] = filters.modality.split(';')
-        join_extra += """
-            INNER JOIN foment f ON f.researcher_id = r.id
-        """
-        if filters.modality != '*':
+        if filters.modality != '*':  # Only add filter if not wildcard
             where_extra += 'AND f.modality_name = ANY(%(modality)s)'
 
+    # Filter by graduation (does not require a new join, `r` is always available)
     if filters.graduation:
         params['graduation'] = filters.graduation.split(';')
         where_extra += 'AND r.graduation = ANY(%(graduation)s)'
@@ -777,19 +805,18 @@ async def get_researcher_metrics(
         LEFT JOIN openalex_researcher opr
             ON opr.researcher_id = r.id
             {join_filter}
-            {join_dep}
-            {join_extra}
+            {join_departament}
             {join_program}
+            {join_researcher_production}
+            {join_foment}
         WHERE 1 = 1
             {type_filter}
-            {filter_program}
-            {filter_dep}
             {filter_id}
             {filter_name}
             {filter_institution}
             {year_filter}
             {where_extra}
-    """
+        """
     return await conn.select(SCRIPT_SQL, params)
 
 
