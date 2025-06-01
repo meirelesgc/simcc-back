@@ -3044,11 +3044,15 @@ async def list_article_metrics(
 
     if filters.year:
         params['year'] = filters.year
-        query_filters += 'AND bp.year::int >= %(year)s'
+        query_filters += """
+            AND bp.year::int >= %(year)s
+            """
 
     if qualis:
         params['qualis'] = qualis.split(';')
-        query_filters += 'AND bpa.qualis = ANY(%(qualis)s)'
+        query_filters += """
+            AND bpa.qualis = ANY(%(qualis)s)
+            """
 
     SCRIPT_SQL = f"""
         SELECT bp.year, SUM(opa.citations_count) AS citations,
