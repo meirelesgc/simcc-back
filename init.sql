@@ -898,7 +898,7 @@ CREATE TABLE IF NOT EXISTS admin.institution(
 
 -- Tabela Researcher no esquema admin
 CREATE TABLE IF NOT EXISTS admin.researcher(
-    id uuid NOT NULL DEFAULT uuid_generate_v4(),
+    researcher_id uuid NOT NULL DEFAULT uuid_generate_v4(),
     name VARCHAR(150) NOT NULL,
     lattes_id VARCHAR(20),
     extra_field VARCHAR(255),
