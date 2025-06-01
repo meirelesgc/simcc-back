@@ -2588,7 +2588,9 @@ async def get_book_metrics(
             {term_filter}
             {query_filters}
         GROUP BY
-            bp.year;
+            bp.year
+        ORDER BY
+            bp.year ASC;
             """
 
     return await conn.select(SCRIPT_SQL, params)
@@ -2720,7 +2722,8 @@ async def get_book_chapter_metrics(
             {filter_area}
             {filter_modality}
             {filter_graduation}
-        GROUP BY bp.year;
+        GROUP BY bp.year
+        ORDER BY bp.year ASC;
     """
     return await conn.select(SCRIPT_SQL, params)
 
@@ -2738,7 +2741,6 @@ async def get_researcher_metrics(
     # Initialize all potential shared joins as empty strings
     join_departament = str()
     join_program = str()
-    join_institution = str()
     join_researcher_production = str()  # Used for city and area
     join_foment = str()
 
@@ -2821,7 +2823,6 @@ async def get_researcher_metrics(
             # count_among remains 'COUNT(*) as among' (for total researchers)
             pass
 
-    # Consolidated logic for departament joins and filters
     if filters.dep_id or filters.departament:
         if not join_departament:  # Ensure join is added only once
             join_departament = """
@@ -2841,7 +2842,6 @@ async def get_researcher_metrics(
                 AND dp.dep_nom = ANY(%(departament)s)
                 """
 
-    # Consolidated logic for graduate program joins and filters
     if filters.graduate_program_id or filters.graduate_program:
         if not join_program:  # Ensure join is added only once
             join_program = """
@@ -2861,13 +2861,11 @@ async def get_researcher_metrics(
                 AND gpr.type_ = 'PERMANENTE'
                 """
 
-    # Filter by researcher ID (does not require a new join, `r` is always available)
     filter_id = str()
     if filters.researcher_id:
         params['researcher_id'] = str(filters.researcher_id)
         filter_id = 'AND r.id = %(researcher_id)s'
 
-    # Filter by institution (uses subquery to avoid adding `join_institution` if not already needed, or if it's already there)
     filter_institution = ''
     if filters.institution:
         params['institution'] = filters.institution.split(';')
@@ -2877,7 +2875,6 @@ async def get_researcher_metrics(
             )
         """
 
-    # Consolidated logic for researcher_production joins (city and area)
     if filters.city or filters.area:
         if not join_researcher_production:  # Ensure join is added only once
             join_researcher_production = """
@@ -2891,9 +2888,8 @@ async def get_researcher_metrics(
             # The original code had `rp_area.great_area` but the join used `rp_city`. Corrected to rp_prod.
             where_extra += """
                 AND STRING_TO_ARRAY(REPLACE(rp_prod.great_area, ' ', '_'), ';') && %(area)s
-            """
+                """
 
-    # Consolidated logic for foment joins
     if filters.modality:
         if not join_foment:  # Ensure join is added only once
             join_foment = """
@@ -2903,16 +2899,15 @@ async def get_researcher_metrics(
         if filters.modality != '*':  # Only add filter if not wildcard
             where_extra += 'AND f.modality_name = ANY(%(modality)s)'
 
-    # Filter by graduation (does not require a new join, `r` is always available)
     if filters.graduation:
         params['graduation'] = filters.graduation.split(';')
         where_extra += 'AND r.graduation = ANY(%(graduation)s)'
 
     SCRIPT_SQL = f"""
         SELECT COUNT(DISTINCT r.id) AS researcher_count,
-                COUNT(DISTINCT r.orcid) AS orcid_count,
-                COUNT(DISTINCT opr.scopus) AS scopus_count,
-                {count_among}
+               COUNT(DISTINCT r.orcid) AS orcid_count,
+               COUNT(DISTINCT opr.scopus) AS scopus_count,
+               {count_among}
         FROM researcher r
         LEFT JOIN openalex_researcher opr
             ON opr.researcher_id = r.id
@@ -2929,6 +2924,9 @@ async def get_researcher_metrics(
             {year_filter}
             {where_extra}
         """
+    # Ordering by year is not directly applicable here as it's a COUNT query without a GROUP BY year.
+    # If a 'year' column was part of the SELECT and GROUP BY, then ORDER BY year ASC would be added.
+    # For now, no ORDER BY clause is added as it doesn't align with the current query structure.
     return await conn.select(SCRIPT_SQL, params)
 
 
@@ -3071,7 +3069,9 @@ async def list_article_metrics(
             {query_filters}
             {term_filter}
         GROUP BY
-            bp.year;
+            bp.year
+        ORDER BY
+            bp.year ASC;
     """
     return await conn.select(SCRIPT_SQL, params)
 
@@ -3222,7 +3222,8 @@ async def list_patent_metrics(
             {filter_area}
             {filter_modality}
             {filter_graduation}
-        GROUP BY p.development_year;
+        GROUP BY p.development_year
+        ORDER BY p.development_year ASC;
     """
 
     return await conn.select(SCRIPT_SQL, params)
@@ -3376,7 +3377,8 @@ async def list_guidance_metrics(
             {filter_area}
             {filter_modality}
             {filter_graduation}
-        GROUP BY g.year, nature, g.status;
+        GROUP BY g.year, nature, g.status
+        ORDER BY g.year ASC;
     """
 
     return await conn.select(SCRIPT_SQL, params)
@@ -3549,6 +3551,7 @@ async def list_academic_degree_metrics(
             {filter_modality}
             {filter_graduation}
         GROUP BY year, degree
+        ORDER BY year ASC;
     """
     return await conn.select(SCRIPT_SQL, params)
 
@@ -3700,7 +3703,8 @@ async def list_software_metrics(
             {filter_area}
             {filter_modality}
             {filter_graduation}
-        GROUP BY s.year;
+        GROUP BY s.year
+        ORDER BY s.year ASC;
     """
     return await conn.select(SCRIPT_SQL, params)
 
@@ -3853,7 +3857,7 @@ async def get_research_report_metrics(
             {filters_sql}
         GROUP BY rr.year
         ORDER BY
-            year DESC
+            year ASC
         """
     return await conn.select(SCRIPT_SQL, params)
 
@@ -4003,7 +4007,7 @@ async def get_papers_magazine_metrics(
             {filters_sql}
         GROUP BY bp.year
         ORDER BY
-            bp.year DESC
+            bp.year ASC
         """
     return await conn.select(SCRIPT_SQL, params)
 
@@ -4159,6 +4163,8 @@ async def get_speaker_metrics(
             {filters_sql}
         GROUP BY
             pe.year
+        ORDER BY
+            pe.year ASC
         """
     return await conn.select(SCRIPT_SQL, params)
 
@@ -4341,7 +4347,7 @@ async def get_brand_metrics(
         WHERE 1 = 1
             {filters_sql}
         GROUP BY b.year
-        ORDER BY b.year;
+        ORDER BY b.year ASC;
         """
     return await conn.select(SCRIPT_SQL, params)
 
@@ -4517,6 +4523,6 @@ async def get_research_project_metrics(
         WHERE 1 = 1
             {filters_sql}
         GROUP BY b.start_year
-        ORDER BY b.start_year;
+        ORDER BY b.start_year ASC;
         """
     return await conn.select(SCRIPT_SQL, params)
