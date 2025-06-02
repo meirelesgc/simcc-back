@@ -2,11 +2,13 @@ from enum import Enum
 from typing import Literal, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import AliasChoices, BaseModel, Field
 
 
 class DefaultFilters(BaseModel):
-    term: Optional[str] = None
+    term: Optional[str] = Field(
+        default=None, validation_alias=AliasChoices('terms', 'term')
+    )
     researcher_id: Optional[UUID | str] = Field(
         default=None, alias='researcher_id'
     )
@@ -38,13 +40,6 @@ class DefaultFilters(BaseModel):
     area: Optional[str] = None
     modality: Optional[str] = None
     graduation: Optional[str] = None
-
-    @model_validator(mode='before')
-    @classmethod
-    def handle_term_and_terms(cls, data):
-        if 'term' not in data and 'terms' in data:
-            data['term'] = data['terms']
-        return data
 
     model_config = {
         'populate_by_name': True,

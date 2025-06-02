@@ -122,9 +122,11 @@ async def list_book_chapter_production(
     lenght: int | None = None,
     conn: Connection = Depends(get_conn),
 ):
-    return await ProductionService.list_book_chapter(
+    result = await ProductionService.list_book_chapter(
         conn, default_filters, page, lenght
     )
+    print(default_filters)
+    return result
 
 
 @router.get(
