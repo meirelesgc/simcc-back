@@ -16,6 +16,9 @@ class GraduateProgram(BaseModel):
     graduate_program_id: UUID
     code: Optional[str]
     name: str
+    name_en: Optional[str]  # Adicionada
+    basic_area: Optional[str]  # Adicionada
+    cooperation_project: Optional[str]  # Adicionada
     area: str
     modality: str
     type: Optional[str]
@@ -29,9 +32,14 @@ class GraduateProgram(BaseModel):
     acronym: Optional[str]
     description: Optional[str]
     visible: Optional[bool]
-    site: str | None
+    site: Optional[str]
+    coordinator: Optional[str]  # Adicionada
+    email: Optional[str]  # Adicionada
+    start: Optional[str]  # Adicionada (assumindo que será uma string ISO 8601)
+    phone: Optional[str]  # Adicionada
+    periodicity: Optional[str]  # Adicionada
     researchers: list = []
 
-    qtd_permanente: int | None
-    qtd_colaborador: int | None
-    qtd_estudantes: int | None
+    qtd_permanente: Optional[int]
+    qtd_colaborador: Optional[int]
+    qtd_estudantes: Optional[int]
