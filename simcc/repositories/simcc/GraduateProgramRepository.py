@@ -89,11 +89,12 @@ async def list_graduate_programs(
             GROUP BY graduate_program_id
             HAVING COUNT(r.id) >= 1
         )
-        SELECT gp.graduate_program_id, code, gp.name, UPPER(area) AS area,
-            UPPER(modality) AS modality, INITCAP(type) AS type, rating,
-            institution_id, state, UPPER(city) AS city, region, url_image,
-            gp.acronym, gp.description, visible, site, qtd_permanente,
-            qtd_colaborador, qtd_estudantes, i.name AS institution,
+        SELECT gp.graduate_program_id, code, gp.name, gp.name_en, gp.basic_area,
+            gp.cooperation_project, UPPER(area) AS area, UPPER(modality) AS modality,
+            INITCAP(type) AS type, rating, institution_id, state, UPPER(city) AS city,
+            region, url_image, gp.acronym, gp.description, visible, site,
+            gp.coordinator, gp.email, gp.start, gp.phone, gp.periodicity,
+            qtd_permanente, qtd_colaborador, qtd_estudantes, i.name AS institution,
             COALESCE(r.researchers, ARRAY[]::text[]) AS researchers
         FROM public.graduate_program gp
             LEFT JOIN permanent p
