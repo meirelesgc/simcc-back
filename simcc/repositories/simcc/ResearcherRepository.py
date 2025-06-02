@@ -1221,6 +1221,40 @@ def list_departament_data():
     return result
 
 
+def list_user_data():
+    SCRIPT_SQL = """
+        SELECT u.lattes_id,
+            JSONB_BUILD_OBJECT(
+                'lattes_id', u.lattes_id,
+                'uid', u.uid,
+                'email', u.email,
+                'gender', u.gender,
+                'verify', u.verify,
+                'shib_id', u.shib_id,
+                'user_id', u.user_id,
+                'linkedin', u.linkedin,
+                'provider', u.provider,
+                'last_name', u.last_name,
+                'photo_url', u.photo_url,
+                'shib_code', u.shib_code,
+                'birth_date', u.birth_date,
+                'created_at', u.created_at,
+                'first_name', u.first_name,
+                'updated_at', u.updated_at,
+                'course_level', u.course_level,
+                'display_name', u.display_name,
+                'email_status', u.email_status,
+                'registration', u.registration,
+                'institution_id', u.institution_id,
+                'visible_email', u.visible_email
+            ) AS user
+        FROM admin.users u
+        WHERE u.lattes_id IS NOT NULL;
+    """
+    result = conn.select(SCRIPT_SQL)
+    return result
+
+
 def list_ufmg_data():
     SCRIPT_SQL = """
         SELECT researcher_id AS id, full_name, gender, status_code,

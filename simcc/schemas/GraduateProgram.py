@@ -1,5 +1,4 @@
-import datetime
-from typing import List, Optional
+from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -17,17 +16,9 @@ class GraduateProgram(BaseModel):
     graduate_program_id: UUID
     code: Optional[str]
     name: str
-    name_en: Optional[str]
-    basic_area: Optional[str]
-    cooperation_project: Optional[str]
     area: str
     modality: str
     type: Optional[str]
-    coordinator: Optional[str]
-    email: Optional[str]
-    start: Optional[datetime.date]
-    phone: Optional[str]
-    periodicity: Optional[str]
     rating: Optional[str]
     institution_id: UUID
     state: Optional[str]
@@ -38,10 +29,9 @@ class GraduateProgram(BaseModel):
     acronym: Optional[str]
     description: Optional[str]
     visible: Optional[bool]
-    site: Optional[str]
-    researchers: List[str] = []
-    qtd_permanente: Optional[int]
-    qtd_colaborador: Optional[int]
-    qtd_estudantes: Optional[int]
-    created_at: Optional[datetime.datetime]
-    updated_at: Optional[datetime.datetime]
+    site: str | None
+    researchers: list = []
+
+    qtd_permanente: int | None
+    qtd_colaborador: int | None
+    qtd_estudantes: int | None

@@ -151,6 +151,12 @@ def merge_researcher_data(researchers: pd.DataFrame) -> pd.DataFrame:
         researchers = researchers.merge(ufmg_df, on='id', how='left')
     else:
         researchers['ufmg'] = None
+    user_data = ResearcherRepository.list_user_data()
+    if user_data:
+        user_df = pd.DataFrame(user_data)[['lattes_id', 'user']]
+        researchers = researchers.merge(user_df, on='lattes_id', how='left')
+    else:
+        researchers['user'] = None
 
     return researchers
 

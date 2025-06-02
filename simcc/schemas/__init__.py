@@ -2,7 +2,7 @@ from enum import Enum
 from typing import Literal, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class DefaultFilters(BaseModel):
@@ -39,9 +39,17 @@ class DefaultFilters(BaseModel):
     modality: Optional[str] = None
     graduation: Optional[str] = None
 
-    class Config:
-        populate_by_name = True
-        json_encoders = {UUID: str}
+    @model_validator(mode='before')
+    @classmethod
+    def handle_term_and_terms(cls, data):
+        if 'term' not in data and 'terms' in data:
+            data['term'] = data['terms']
+        return data
+
+    model_config = {
+        'populate_by_name': True,
+        'json_encoders': {UUID: str},
+    }
 
 
 class ResearcherOptions(str, Enum):

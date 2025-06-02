@@ -157,7 +157,6 @@ async def list_bibliographic_production(
     conn: Connection = Depends(get_conn),
 ):
     default_filters.type = type
-
     articles = await ProductionService.list_bibliographic_production(
         conn, default_filters, qualis, page, lenght
     )

@@ -1044,6 +1044,7 @@ CREATE TABLE IF NOT EXISTS admin.users (
     gender VARCHAR(50),
     last_name VARCHAR(255),
     email_status VARCHAR(50),
+    visible_email BOOLEAN,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (user_id),

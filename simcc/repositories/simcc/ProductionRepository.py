@@ -1324,7 +1324,6 @@ async def list_book_chapter(
     filter_distinct = str()
     query_filters = str()
     filter_pagination = str()
-
     if filters.term:  # Acessando via filters.term
         filter_terms_str, term_params = webseatch_filter(
             'bp.title', filters.term
