@@ -33,11 +33,11 @@ class GraduateProgram(BaseModel):
     description: Optional[str]
     visible: Optional[bool]
     site: Optional[str]
-    coordinator: Optional[str]  # Adicionada
-    email: Optional[str]  # Adicionada
-    start: Optional[str]  # Adicionada (assumindo que será uma string ISO 8601)
-    phone: Optional[str]  # Adicionada
-    periodicity: Optional[str]  # Adicionada
+    coordinator: Optional[str]
+    email: Optional[str]
+    start: Optional[str]
+    phone: Optional[str]
+    periodicity: Optional[str]
     researchers: list = []
 
     qtd_permanente: Optional[int]
