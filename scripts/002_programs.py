@@ -1,10 +1,21 @@
 import ast
 import json
 import unicodedata
+from datetime import datetime
 
 import pandas as pd
 
 from simcc.repositories import conn_admin
+
+
+def extract_data(text):
+    if isinstance(text, list):
+        text = text[0]
+    parts = text.split('|')
+    key_values = [p.strip() for p in parts if p.strip()]
+    return {
+        key_values[i]: key_values[i + 1] for i in range(0, len(key_values), 2)
+    }
 
 
 def normalize_string(s):
@@ -14,90 +25,135 @@ def normalize_string(s):
 
 
 def normalize_keys(d):
-    def normalize(s):
-        s = unicodedata.normalize('NFD', s)
-        s = ''.join(c for c in s if unicodedata.category(c) != 'Mn')
-        return s.lower()
-
-    return {normalize(k): v for k, v in d.items()}
+    return {normalize_string(k): v for k, v in d.items()}
 
 
-def get_institution_id(institution):
-    SCRIPT_SQL = """
-        SELECT institution_id FROM institution WHERE name ILIKE %(institution)s
-        """
-    institution_id = conn_admin.select(SCRIPT_SQL, {'institution': institution})
-    if institution_id:
-        return institution_id[0]['institution_id']
-    return None
+def get_institution_id(name):
+    sql = (
+        'SELECT institution_id FROM institution WHERE name ILIKE %(institution)s'
+    )
+    result = conn_admin.select(sql, {'institution': name})
+    return result[0]['institution_id'] if result else None
 
 
-with open('storage/city.json', 'r', encoding='utf-8') as buffer:
-    citys = json.load(buffer)
-
-programs = pd.read_csv('storage/csv/002_programs.csv')
-programs.columns = [normalize_string(col) for col in programs.columns]
+def load_city_data(path='storage/city.json'):
+    with open(path, 'r', encoding='utf-8') as f:
+        return json.load(f)
 
 
-programs['ies_nome'] = programs['ies_nome'].where(
-    programs['ies_nome'].notnull(), None
-)
+def load_programs_csv(path='storage/csv/002_programs.csv'):
+    df = pd.read_csv(path)
+    df.columns = [normalize_string(col) for col in df.columns]
+    df['ies_nome'] = df['ies_nome'].where(df['ies_nome'].notnull(), None)
+    return df
 
-SCRIPT_SQL = """
-    INSERT INTO public.graduate_program (code, name, area, modality, type,
-        institution_id, state, city, visible, site)
-    VALUES (
-        %(codigo)s, %(nome)s, %(area de avaliacao)s, %(modality)s, %(type)s,
-        %(institution_id)s, %(state)s, %(city)s, %(visible)s, %(ies_url)s)
-    ON CONFLICT (code) DO UPDATE SET
-        name = EXCLUDED.name, area = EXCLUDED.area, modality = EXCLUDED.modality,
-        type = EXCLUDED.type, institution_id = EXCLUDED.institution_id,
-        state = EXCLUDED.state, city = EXCLUDED.city, site = EXCLUDED.site,
-        visible = EXCLUDED.visible;
+
+def process_program_row(pg):
+    if pg['situacao'] != 'EM FUNCIONAMENTO':
+        return None
+
+    cs = str(pg['ies_municipio']).split(' - ')
+    pg['city'], pg['state'] = cs if len(cs) == 2 else ('', '')
+
+    institution_id = get_institution_id(pg['ies_nome'])
+    if not institution_id:
+        return None
+
+    pg['institution_id'] = institution_id
+    pg['visible'] = False
+    types = []
+
+    for course in ast.literal_eval(pg['cursos']):
+        course_data = normalize_keys(course)
+        if course_data.get('situacao') == 'em funcionamento':
+            pg['visible'] = True
+
+        modality = f'{normalize_string(course_data.get("nota", ""))}|{normalize_string(course_data.get("nivel", ""))}'
+        pg['modality'] = (
+            'PROFISSIONAL' if 'profissional' in modality else 'ACADÊMICO'
+        )
+        types.append(course_data.get('nivel', ''))
+
+    pg['type'] = '/'.join(types)
+    pg['name_en'] = pg.get('nome ingles')
+    pg['basic_area'] = pg.get('area basica')
+    pg['cooperation_project'] = pg.get('projetos_coop')
+    pg['coordinator'] = pg.get('coordenador')
+    pg['email'] = pg.get('ies_email')
+
+    try:
+        pg['start'] = datetime.strptime(
+            pg.get('ies_inicio', ''), '%d/%m/%Y'
+        ).date()
+    except Exception:
+        pg['start'] = None
+
+    try:
+        pg['phone'] = ''.join(
+            c for c in pg.get('ies_telefones', '') if c.isdigit()
+        )
+    except Exception:
+        pg['phone'] = None
+
+    try:
+        regimes = ast.literal_eval(pg.get('regime_letivo', '[]'))
+        pg['periodicity'] = '/'.join(
+            set(item.get('Nome', '') for item in regimes)
+        )
+    except Exception:
+        pg['periodicity'] = ''
+
+    return pg
+
+
+def insert_or_update_program(pg):
+    sql = """
+        INSERT INTO public.graduate_program (
+            code, name, name_en, basic_area, cooperation_project, area, modality, type,
+            institution_id, state, city, visible, site, coordinator, email, start, phone, periodicity
+        )
+        VALUES (
+            %(codigo)s, %(nome)s, %(name_en)s, %(basic_area)s, %(cooperation_project)s, %(area de avaliacao)s,
+            %(modality)s, %(type)s, %(institution_id)s, %(state)s, %(city)s, %(visible)s, %(ies_url)s,
+            %(coordinator)s, %(email)s, %(start)s, %(phone)s, %(periodicity)s
+        )
+        ON CONFLICT (code) DO UPDATE SET
+            name = EXCLUDED.name,
+            area = EXCLUDED.area,
+            modality = EXCLUDED.modality,
+            type = EXCLUDED.type,
+            institution_id = EXCLUDED.institution_id,
+            state = EXCLUDED.state,
+            city = EXCLUDED.city,
+            site = EXCLUDED.site,
+            visible = EXCLUDED.visible
     """
-erro = 0
-for _, program in programs.iterrows():
-    pg = program.to_dict()
+    conn_admin.exec(sql, pg)
 
-    if pg['situacao'] == 'EM FUNCIONAMENTO':
-        cs = str(pg['ies_municipio']).split(' - ')
-        pg['city'], pg['state'] = cs if len(cs) == 2 else ('', '')
-        if institution_id := get_institution_id(pg['ies_nome']):
-            pg['institution_id'] = institution_id
+
+def format_program_names():
+    sql = """
+        UPDATE graduate_program SET
+            name = INITCAP(name),
+            area = UPPER(area)
+    """
+    conn_admin.exec(sql)
+
+
+def main():
+    erro = 0
+    programs = load_programs_csv()
+
+    for _, row in programs.iterrows():
+        program = process_program_row(row.to_dict())
+        if program:
+            insert_or_update_program(program)
         else:
             erro += 1
-            continue
 
-        _type = list()
+    print(f'Erros: {erro}')
+    format_program_names()
 
-        pg['visible'] = False
-        for course in ast.literal_eval(pg['cursos']):
-            _co = normalize_keys(course)
 
-            if _co['situacao'] == 'EM FUNCIONAMENTO':
-                pg['visible'] = True
-
-            nota = normalize_string(_co['nota'])
-            nivel = normalize_string(_co['nivel'])
-            modality = f'{nota}|{nivel}'
-
-            if 'profissional' in modality:
-                pg['modality'] = 'PROFISSIONAL'
-            else:
-                pg['modality'] = 'ACADÊMICO'
-
-            _type.append(_co['nivel'])
-
-        pg['type'] = '/'.join(_type)
-        conn_admin.exec(SCRIPT_SQL, pg)
-    else:
-        erro += 1
-
-print(erro)
-SCRIPT_SQL = """
-    UPDATE graduate_program SET
-        name = INITCAP(name),
-        area = UPPER(area)
-    """
-
-conn_admin.exec(SCRIPT_SQL)
+if __name__ == '__main__':
+    main()

@@ -394,6 +394,9 @@ CREATE TABLE IF NOT EXISTS public.graduate_program(
     graduate_program_id uuid NOT NULL DEFAULT uuid_generate_v4(),
     code VARCHAR(100),
     name VARCHAR(100) NOT NULL,
+    name_en VARCHAR(100),
+    basic_area VARCHAR(100), 
+    cooperation_project VARCHAR(100),
     area VARCHAR(100) NOT NULL,
     modality VARCHAR(100) NOT NULL,
     TYPE VARCHAR(100) NULL,
@@ -407,10 +410,15 @@ CREATE TABLE IF NOT EXISTS public.graduate_program(
     description TEXT,
     visible bool DEFAULT FALSE,
     site TEXT,
+    coordinator VARCHAR(100), 
+    email VARCHAR(100),
+    start DATE, 
+    phone VARCHAR(20), 
+    periodicity VARCHAR(50), 
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (graduate_program_id),
-    FOREIGN KEY (institution_id) REFERENCES institution (id) ON UPDATE  CASCADE ON DELETE CASCADE
+    FOREIGN KEY (institution_id) REFERENCES institution (id) ON UPDATE CASCADE ON DELETE CASCADE
 );
 CREATE TABLE IF NOT EXISTS public.graduate_program_researcher(
     graduate_program_id uuid NOT NULL,
