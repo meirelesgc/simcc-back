@@ -7,7 +7,7 @@ from pydantic import AliasChoices, BaseModel, Field
 
 class DefaultFilters(BaseModel):
     term: Optional[str] = Field(
-        default=None, validation_alias=AliasChoices('terms', 'term')
+        default=None, validation_alias=AliasChoices('term', 'terms')
     )
     researcher_id: Optional[UUID | str] = Field(
         default=None, alias='researcher_id'

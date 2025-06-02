@@ -152,6 +152,7 @@ async def list_outstanding_articles(
 )
 async def list_bibliographic_production(
     default_filters: DefaultFilters = Depends(),
+    terms: str | None = None,
     type: ArticleOptions = 'ARTICLE',
     qualis: QualisOptions | str = None,
     page: int | None = None,
@@ -159,6 +160,8 @@ async def list_bibliographic_production(
     conn: Connection = Depends(get_conn),
 ):
     default_filters.type = type
+    if terms:
+        default_filters.term = terms
     articles = await ProductionService.list_bibliographic_production(
         conn, default_filters, qualis, page, lenght
     )
