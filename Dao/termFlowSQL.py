@@ -687,7 +687,7 @@ def lists_word_researcher_db(researcher_id=None, graduate_program=None, dep_id=N
         filter_clauses = """
             b.researcher_id IN (
                 SELECT researcher_id 
-                FROM public.departament_researcher 
+                FROM ufmg.departament_researcher 
                 WHERE dep_id = %(dep_id)s
             )
         """
