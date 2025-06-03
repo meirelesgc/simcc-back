@@ -2,6 +2,25 @@ from simcc.repositories import conn
 from simcc.schemas.Conectee import ResearcherData
 
 
+def get_departament():
+    SCRIPT_SQL = """
+        WITH researchers AS (
+            SELECT dep_id, ARRAY_AGG(r.name) AS researchers
+            FROM ufmg.departament_researcher dp
+                LEFT JOIN researcher r ON dp.researcher_id = r.id
+            GROUP BY dep_id
+            HAVING COUNT(r.id) >= 1
+        )
+        SELECT d.dep_id, d.org_cod, d.dep_nom, d.dep_des, d.dep_email, d.dep_site,
+            d.dep_sigla, d.dep_tel, COALESCE(r.researchers, ARRAY[]::text[]) AS researchers
+        FROM ufmg.departament d
+            LEFT JOIN researchers r
+                ON r.dep_id = d.dep_id
+        WHERE 1 = 1
+        """
+    return conn.select(SCRIPT_SQL)
+
+
 def get_work_regime():
     SCRIPT_SQL = """
         SELECT work_regime AS rt, COUNT(*)
