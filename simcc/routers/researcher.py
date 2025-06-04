@@ -4,8 +4,9 @@ from fastapi import APIRouter, Depends
 
 from simcc.core.connection import Connection
 from simcc.core.database import get_conn
-from simcc.schemas import ResearcherOptions
+from simcc.schemas import DefaultFilters, ResearcherOptions
 from simcc.schemas.Researcher import (
+    AcademicDegree,
     CoAuthorship,
     Researcher,
 )
@@ -274,3 +275,15 @@ def list_researchers_by_patent(
 )
 def co_authorship(researcher_id: UUID):
     return ResearcherService.list_co_authorship(researcher_id)
+
+
+@router.get(
+    '/academic_degree',
+    response_model=list[AcademicDegree],
+)
+async def academic_degree(
+    default_filters: DefaultFilters = Depends(),
+    conn: Connection = Depends(get_conn),
+):
+    metrics = await ResearcherService.get_academic_degree(conn, default_filters)
+    return metrics

@@ -26,6 +26,7 @@ selenium = "^4.28.0"
 firebase-admin = "^6.6.0"
 psycopg-pool = "^3.2.4"
 xlrd = "^2.0.1"
+pytest-asyncio = "^1.0.0"
 
 
 [tool.poetry.group.dev.dependencies]

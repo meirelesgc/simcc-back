@@ -2464,6 +2464,7 @@ async def get_book_metrics(
     query_filters = str()
     term_filter = str()
     filter_distinct = str()
+    join_program = str()
 
     if filters.dep_id:
         filter_distinct = 'DISTINCT'
@@ -2491,7 +2492,6 @@ async def get_book_metrics(
             AND dp.dep_nom = ANY(%(dep)s)
             """
 
-    join_program = str()
     if filters.graduate_program:
         filter_distinct = 'DISTINCT'
         params['graduate_program'] = filters.graduate_program.split(';')
@@ -2564,7 +2564,10 @@ async def get_book_metrics(
     if filters.graduate_program_id:
         params['program_id'] = str(filters.graduate_program_id)
         join_program = """
-            LEFT JOIN graduate_program_researcher gpr ON gpr.researcher_id = r.id
+            INNER JOIN graduate_program_researcher gpr
+                ON gpr.researcher_id = r.id
+            INNER JOIN graduate_program gp
+                ON gpr.graduate_program_id = gp.graduate_program_id
             """
         query_filters += """
             AND gpr.graduate_program_id = %(program_id)s
@@ -2987,8 +2990,9 @@ async def list_article_metrics(
     if filters.graduate_program_id:
         params['program_id'] = str(filters.graduate_program_id)
         join_program = """
-            LEFT JOIN graduate_program_researcher gpr ON gpr.researcher_id = r.id
-            """
+            INNER JOIN graduate_program_researcher gpr ON gpr.researcher_id = r.id
+            INNER JOIN graduate_program gp ON gpr.graduate_program_id = gp.graduate_program_id
+        """
         query_filters += """
             AND gpr.graduate_program_id = %(program_id)s
             AND gpr.type_ = 'PERMANENTE'
@@ -3030,10 +3034,9 @@ async def list_article_metrics(
         params['graduation'] = filters.graduation.split(';')
         query_filters += 'AND r.graduation = ANY(%(graduation)s)'
 
-    join_graduate_program = str()
     if filters.graduate_program:
         params['graduate_program'] = filters.graduate_program.split(';')
-        join_graduate_program = """
+        join_program = """
             INNER JOIN graduate_program_researcher gpr ON gpr.researcher_id = r.id
             INNER JOIN graduate_program gp ON gpr.graduate_program_id = gp.graduate_program_id
         """
@@ -3063,7 +3066,6 @@ async def list_article_metrics(
             INNER JOIN bibliographic_production_article bpa ON bpa.bibliographic_production_id = bp.id
             LEFT JOIN openalex_article opa ON opa.article_id = bp.id
             {join_program}
-            {join_graduate_program}
             {join_modality}
             {join_institution}
             {join_production}
@@ -3528,7 +3530,7 @@ async def list_academic_degree_metrics(
             {filter_area}
             {filter_modality}
             {filter_graduation}
-        GROUP BY year, degree
+        GROUP BY e.education_start, degree
 
         UNION
 
@@ -3554,8 +3556,7 @@ async def list_academic_degree_metrics(
             {filter_area}
             {filter_modality}
             {filter_graduation}
-        GROUP BY year, degree
-        ORDER BY year ASC;
+        GROUP BY e.education_end, degree
     """
     return await conn.select(SCRIPT_SQL, params)
 
@@ -3785,6 +3786,8 @@ async def get_research_report_metrics(
         join_program = """
             INNER JOIN graduate_program_researcher gpr
                 ON gpr.researcher_id = rr.researcher_id
+            INNER JOIN graduate_program gp
+                ON gpr.graduate_program_id = gp.graduate_program_id
             """
         filters_sql += """
             AND gpr.graduate_program_id = %(graduate_program_id)s
@@ -3792,13 +3795,12 @@ async def get_research_report_metrics(
 
     if filters.graduate_program:
         params['graduate_program'] = filters.graduate_program.split(';')
-        if not join_program:
-            join_program = """
-                INNER JOIN graduate_program_researcher gpr
-                    ON gpr.researcher_id = rr.researcher_id
-                INNER JOIN graduate_program gp
-                    ON gpr.graduate_program_id = gp.graduate_program_id
-                """
+        join_program = """
+            INNER JOIN graduate_program_researcher gpr
+                ON gpr.researcher_id = rr.researcher_id
+            INNER JOIN graduate_program gp
+                ON gpr.graduate_program_id = gp.graduate_program_id
+            """
         filters_sql += """
             AND gp.name = ANY(%(graduate_program)s)
             AND gpr.type_ = 'PERMANENTE'
@@ -3938,6 +3940,8 @@ async def get_papers_magazine_metrics(
         join_program = """
             INNER JOIN graduate_program_researcher gpr
                 ON gpr.researcher_id = bp.researcher_id
+            INNER JOIN graduate_program gp
+                ON gpr.graduate_program_id = gp.graduate_program_id
             """
         filters_sql += """
             AND gpr.graduate_program_id = %(graduate_program_id)s
@@ -3945,13 +3949,12 @@ async def get_papers_magazine_metrics(
 
     if filters.graduate_program:
         params['graduate_program'] = filters.graduate_program.split(';')
-        if not join_program:
-            join_program = """
-                INNER JOIN graduate_program_researcher gpr
-                    ON gpr.researcher_id = bp.researcher_id
-                INNER JOIN graduate_program gp
-                    ON gpr.graduate_program_id = gp.graduate_program_id
-                """
+        join_program = """
+            INNER JOIN graduate_program_researcher gpr
+                ON gpr.researcher_id = bp.researcher_id
+            INNER JOIN graduate_program gp
+                ON gpr.graduate_program_id = gp.graduate_program_id
+            """
         filters_sql += """
             AND gp.name = ANY(%(graduate_program)s)
             AND gpr.type_ = 'PERMANENTE'
@@ -4088,6 +4091,8 @@ async def get_speaker_metrics(
         join_program = """
             INNER JOIN graduate_program_researcher gpr
                 ON gpr.researcher_id = pe.researcher_id
+            INNER JOIN graduate_program gp
+                ON gpr.graduate_program_id = gp.graduate_program_id
             """
         filters_sql += """
             AND gpr.graduate_program_id = %(graduate_program_id)s
@@ -4095,13 +4100,12 @@ async def get_speaker_metrics(
 
     if filters.graduate_program:
         params['graduate_program'] = filters.graduate_program.split(';')
-        if not join_program:
-            join_program = """
-                INNER JOIN graduate_program_researcher gpr
-                    ON gpr.researcher_id = pe.researcher_id
-                INNER JOIN graduate_program gp
-                    ON gpr.graduate_program_id = gp.graduate_program_id
-                """
+        join_program = """
+            INNER JOIN graduate_program_researcher gpr
+                ON gpr.researcher_id = pe.researcher_id
+            INNER JOIN graduate_program gp
+                ON gpr.graduate_program_id = gp.graduate_program_id
+            """
         filters_sql += """
             AND gp.name = ANY(%(graduate_program)s)
             AND gpr.type_ = 'PERMANENTE'
@@ -4238,10 +4242,9 @@ async def get_brand_metrics(
             """
 
     if filters.institution:
-        if not join_researcher:
-            join_researcher = """
-                LEFT JOIN public.researcher r ON r.id = b.researcher_id
-                """
+        join_researcher = """
+            LEFT JOIN public.researcher r ON r.id = b.researcher_id
+            """
         params['institution'] = filters.institution.split(';')
         join_institution = """
             INNER JOIN public.institution i
@@ -4252,14 +4255,15 @@ async def get_brand_metrics(
             """
 
     if filters.graduate_program_id:
-        if not join_researcher:
-            join_researcher = """
-                LEFT JOIN public.researcher r ON r.id = b.researcher_id
-                """
+        join_researcher = """
+            LEFT JOIN public.researcher r ON r.id = b.researcher_id
+            """
         params['graduate_program_id'] = str(filters.graduate_program_id)
         join_program = """
             INNER JOIN public.graduate_program_researcher gpr
                 ON gpr.researcher_id = r.id
+            INNER JOIN public.graduate_program gp
+                ON gpr.graduate_program_id = gp.graduate_program_id
             """
         filters_sql += """
             AND gpr.graduate_program_id = %(graduate_program_id)s
@@ -4267,17 +4271,15 @@ async def get_brand_metrics(
 
     if filters.graduate_program:
         params['graduate_program'] = filters.graduate_program.split(';')
-        if not join_program:
-            if not join_researcher:
-                join_researcher = """
-                    LEFT JOIN public.researcher r ON r.id = b.researcher_id
-                    """
-            join_program = """
-                INNER JOIN public.graduate_program_researcher gpr
-                    ON gpr.researcher_id = r.id
-                INNER JOIN public.graduate_program gp
-                    ON gpr.graduate_program_id = gp.graduate_program_id
-                """
+        join_researcher = """
+            LEFT JOIN public.researcher r ON r.id = b.researcher_id
+            """
+        join_program = """
+            INNER JOIN public.graduate_program_researcher gpr
+                ON gpr.researcher_id = r.id
+            INNER JOIN public.graduate_program gp
+                ON gpr.graduate_program_id = gp.graduate_program_id
+            """
         filters_sql += """
             AND gp.name = ANY(%(graduate_program)s)
             AND gpr.type_ = 'PERMANENTE'
@@ -4375,7 +4377,9 @@ async def get_research_project_metrics(
     filters_sql = str()
 
     if filters.term:
-        filter_terms_str, term_params = webseatch_filter('b.title', filters.term)
+        filter_terms_str, term_params = webseatch_filter(
+            'b.project_name', filters.term
+        )
         filters_sql += filter_terms_str
         params.update(term_params)
 
@@ -4433,9 +4437,14 @@ async def get_research_project_metrics(
                 LEFT JOIN public.researcher r ON r.id = b.researcher_id
                 """
         params['graduate_program_id'] = str(filters.graduate_program_id)
+        join_researcher = """
+            LEFT JOIN public.researcher r ON r.id = b.researcher_id
+            """
         join_program = """
             INNER JOIN public.graduate_program_researcher gpr
                 ON gpr.researcher_id = r.id
+            INNER JOIN public.graduate_program gp
+                ON gpr.graduate_program_id = gp.graduate_program_id
             """
         filters_sql += """
             AND gpr.graduate_program_id = %(graduate_program_id)s
@@ -4443,27 +4452,24 @@ async def get_research_project_metrics(
 
     if filters.graduate_program:
         params['graduate_program'] = filters.graduate_program.split(';')
-        if not join_program:
-            if not join_researcher:
-                join_researcher = """
-                    LEFT JOIN public.researcher r ON r.id = b.researcher_id
-                    """
-            join_program = """
-                INNER JOIN public.graduate_program_researcher gpr
-                    ON gpr.researcher_id = r.id
-                INNER JOIN public.graduate_program gp
-                    ON gpr.graduate_program_id = gp.graduate_program_id
-                """
+        join_researcher = """
+            LEFT JOIN public.researcher r ON r.id = b.researcher_id
+            """
+        join_program = """
+            INNER JOIN public.graduate_program_researcher gpr
+                ON gpr.researcher_id = r.id
+            INNER JOIN public.graduate_program gp
+                ON gpr.graduate_program_id = gp.graduate_program_id
+            """
         filters_sql += """
             AND gp.name = ANY(%(graduate_program)s)
             AND gpr.type_ = 'PERMANENTE'
             """
 
     if filters.city:
-        if not join_researcher:
-            join_researcher = """
-                LEFT JOIN public.researcher r ON r.id = b.researcher_id
-                """
+        join_researcher = """
+            LEFT JOIN public.researcher r ON r.id = b.researcher_id
+            """
         params['city'] = filters.city.split(';')
         join_researcher_production = """
             LEFT JOIN public.researcher_production rp

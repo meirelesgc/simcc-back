@@ -476,6 +476,7 @@ CREATE TABLE IF NOT EXISTS public.researcher_production (
     software integer,
     brand integer,
     great_area text,
+    great_area_ text[],
     area_specialty text,
     city character varying(100),
     organ character varying(100),

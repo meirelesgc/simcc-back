@@ -7,8 +7,8 @@ from simcc.schemas.Production.Article import ArticleMetric
 from simcc.schemas.Production.Guidance import GuidanceMetrics
 from simcc.schemas.Production.Patent import PatentMetric
 from simcc.schemas.Production.Software import SoftwareMetric
-from simcc.schemas.Researcher import AcademicDegree, AcademicMetric
-from simcc.services import ProductionService, ResearcherService
+from simcc.schemas.Researcher import AcademicMetric
+from simcc.services import ProductionService
 
 router = APIRouter()
 
@@ -143,18 +143,6 @@ async def academic_degree_metrics(
     metrics = await ProductionService.get_academic_degree_metrics(
         conn, default_filters
     )
-    return metrics
-
-
-@router.get(
-    '/academic_degree',
-    response_model=list[AcademicDegree],
-)
-async def academic_degree(
-    default_filters: DefaultFilters = Depends(),
-    conn: Connection = Depends(get_conn),
-):
-    metrics = await ResearcherService.get_academic_degree(conn, default_filters)
     return metrics
 
 
