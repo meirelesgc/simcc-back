@@ -18,6 +18,11 @@ def departament():
     return researcher
 
 
+@router.get('/docentes')
+def get_docentes():
+    return ConecteeService.get_docentes()
+
+
 @router.get(
     '/researcher',
     response_model=list[ResearcherData],

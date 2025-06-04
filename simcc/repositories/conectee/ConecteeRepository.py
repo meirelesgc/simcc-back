@@ -2,6 +2,21 @@ from simcc.repositories import conn
 from simcc.schemas.Conectee import ResearcherData
 
 
+def get_docentes():
+    SCRIPT_SQL = """
+        SELECT researcher_id, full_name, gender, status_code, work_regime,
+            job_class, job_title, job_rank, job_reference_code, academic_degree,
+            organization_entry_date, last_promotion_date,
+            employment_status_description, department_name, career_category,
+            academic_unit, unit_code, function_code, position_code,
+            leadership_start_date, leadership_end_date, current_function_name,
+            function_location, registration_number, ufmg_registration_number,
+            semester_reference
+        FROM ufmg.researcher;
+        """
+    return conn.select(SCRIPT_SQL)
+
+
 def get_departament():
     SCRIPT_SQL = """
         WITH researchers AS (
