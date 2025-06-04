@@ -1841,7 +1841,7 @@ async def get_great_area(
             ):
                 join_type_specific = 'INNER JOIN public.bibliographic_production bp ON bp.researcher_id = r.id'
                 params['type'] = filters.type
-                type_specific_filters += ' AND bp.type = %(type)s'
+                type_specific_filters += ' AND bp.type = %(type)s '
                 if filters.term:
                     term_filter_str, term_params = websearch_filter(
                         'bp.title', filters.term

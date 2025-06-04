@@ -20,6 +20,7 @@ class Settings(BaseSettings):
     ALTERNATIVE_CNPQ_SERVICE: bool = False
     FIREBASE_COLLECTION: str = 'termos_busca'
 
+    OPENAI_API_KEY: str = None
     JADE_EXTRATOR_FOLTER: DirectoryPath
 
     class Config:
