@@ -3245,10 +3245,10 @@ async def list_guidance_metrics(
     filter_distinct = str()
 
     if filters.distinct:
-        filter_distinct = 'DISTINCT'
+        filter_distinct = 'DISTINCT ON (oriented, nature, year)'
 
     if filters.departament:
-        filter_distinct = 'DISTINCT'
+        filter_distinct = 'DISTINCT ON (oriented, nature, year)'
         params['dep'] = filters.departament.split(';')
         join_dep = """
             INNER JOIN ufmg.departament_researcher dpr
@@ -3261,7 +3261,7 @@ async def list_guidance_metrics(
             """
 
     if filters.dep_id:
-        filter_distinct = 'DISTINCT'
+        filter_distinct = 'DISTINCT ON (oriented, nature, year)'
         params['dep_id'] = filters.dep_id.split(';')
         join_dep = """
             INNER JOIN ufmg.departament_researcher dpr
@@ -3359,32 +3359,46 @@ async def list_guidance_metrics(
         filter_graduation = 'AND rg.graduation = ANY(%(graduation)s)'
 
     SCRIPT_SQL = f"""
-        SELECT g.year AS year,
-            unaccent(lower((g.nature || ' ' || g.status))) AS nature,
-            COUNT({filter_distinct} g.oriented) AS count_nature
-        FROM guidance g
-            {join_program}
-            {join_graduate_program}
-            {join_institution}
-            {join_dep}
-            {join_city}
-            {join_area}
-            {join_modality}
-            {join_graduation}
-        WHERE 1 = 1
-            {filter_id}
-            {filter_year}
-            {term_filter}
-            {filter_dep}
-            {filter_program}
-            {filter_graduate_program}
-            {filter_institution}
-            {filter_city}
-            {filter_area}
-            {filter_modality}
-            {filter_graduation}
-        GROUP BY g.year, nature, g.status
-        ORDER BY g.year ASC;
+        WITH Orientacoes AS (
+            SELECT {filter_distinct}
+                g.year AS year,
+                unaccent(lower((g.nature || ' ' || g.status))) AS nature,
+                g.oriented AS oriented
+            FROM
+                guidance g
+                {join_program}
+                {join_graduate_program}
+                {join_institution}
+                {join_dep}
+                {join_city}
+                {join_area}
+                {join_modality}
+                {join_graduation}
+            WHERE 1 = 1
+                {filter_id}
+                {filter_year}
+                {term_filter}
+                {filter_dep}
+                {filter_program}
+                {filter_graduate_program}
+                {filter_institution}
+                {filter_city}
+                {filter_area}
+                {filter_modality}
+                {filter_graduation}
+            ORDER BY oriented, nature, year
+        )
+        SELECT
+            year,
+            nature,
+            COUNT(oriented) AS count_nature
+        FROM
+            Orientacoes
+        GROUP BY
+            year,
+            nature
+        ORDER BY
+            year ASC;
     """
 
     return await conn.select(SCRIPT_SQL, params)
@@ -3506,57 +3520,67 @@ async def list_academic_degree_metrics(
         """
         params['graduation'] = filters.graduation.split(';')
         filter_graduation = 'AND rg.graduation = ANY(%(graduation)s)'
-
     SCRIPT_SQL = f"""
-        SELECT e.education_start AS year,
-            COUNT(e.degree) AS among,
-            REPLACE(degree || '-START', '-', '_') AS degree
-        FROM education e
-            {join_graduate_program}
-            {join_institution}
-            {join_city}
-            {join_area}
-            {join_dep}
-            {join_modality}
-            {join_graduation}
-        WHERE 1 = 1
-            {filter_year}
-            {filter_dep}
-            {filter_id}
-            {filter_program}
-            {filter_graduate_program}
-            {filter_institution}
-            {filter_city}
-            {filter_area}
-            {filter_modality}
-            {filter_graduation}
-        GROUP BY e.education_start, degree
+        WITH EducacaoFiltrada AS (
+            -- 1. CTE Base: Seleciona e filtra os dados brutos apenas uma vez.
+            SELECT
+                e.education_start,
+                e.education_end,
+                e.degree
+            FROM
+                education e
+                {join_graduate_program}
+                {join_institution}
+                {join_city}
+                {join_area}
+                {join_dep}
+                {join_modality}
+                {join_graduation}
+            WHERE 1 = 1
+                {filter_year}
+                {filter_dep}
+                {filter_id}
+                {filter_program}
+                {filter_graduate_program}
+                {filter_institution}
+                {filter_city}
+                {filter_area}
+                {filter_modality}
+                {filter_graduation}
+            -- ORDER BY em uma CTE só tem efeito se usado com cláusulas como LIMIT/FETCH.
+            -- A ordenação final é aplicada no último SELECT.
+        ),
+        EducacaoUnificada AS (
+            -- 2. CTE Unificada: Transforma os dados, tratando anos de início e fim como eventos separados.
+            SELECT
+                education_start AS year,
+                degree,
+                'START' AS event_type
+            FROM EducacaoFiltrada
+            WHERE education_start IS NOT NULL
 
-        UNION
+            UNION ALL
 
-        SELECT e.education_end AS year,
-            COUNT(e.degree) AS among,
-            REPLACE(degree || '-END', '-', '_') AS degree
-        FROM education e
-            {join_graduate_program}
-            {join_institution}
-            {join_city}
-            {join_dep}
-            {join_area}
-            {join_modality}
-            {join_graduation}
-        WHERE 1 = 1
-            {filter_year}
-            {filter_id}
-            {filter_program}
-            {filter_graduate_program}
-            {filter_institution}
-            {filter_dep}
-            {filter_city}
-            {filter_area}
-            {filter_modality}
-            {filter_graduation}
-        GROUP BY e.education_end, degree
+            SELECT
+                education_end AS year,
+                degree,
+                'END' AS event_type
+            FROM EducacaoFiltrada
+            WHERE education_end IS NOT NULL
+        )
+        -- 3. SELECT Final: Agrega os dados unificados e formata a saída.
+        SELECT
+            year,
+            COUNT(degree) AS among,
+            REPLACE(degree || '-' || event_type, '-', '_') AS degree
+        FROM EducacaoUnificada
+        GROUP BY
+            year,
+            degree,
+            event_type
+        ORDER BY
+            year,
+            degree;
     """
     return await conn.select(SCRIPT_SQL, params)
 
