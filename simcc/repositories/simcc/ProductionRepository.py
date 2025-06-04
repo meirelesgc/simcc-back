@@ -3756,6 +3756,7 @@ async def get_research_report_metrics(
     filters: DefaultFilters,
 ):
     params = {}
+    filter_distinct = str()
 
     join_researcher = str()
     join_researcher_production = str()
@@ -3779,7 +3780,9 @@ async def get_research_report_metrics(
             AND rr.year >= %(year)s
             """
 
+    # Aplica DISTINCT ao filtrar por departamento
     if filters.dep_id or filters.departament:
+        filter_distinct = 'DISTINCT ON (rr.title)'
         join_departament = """
             INNER JOIN ufmg.departament_researcher dpr
                 ON dpr.researcher_id = rr.researcher_id
@@ -3818,26 +3821,21 @@ async def get_research_report_metrics(
             AND i.name = ANY(%(institution)s)
             """
 
-    if filters.graduate_program_id:
-        params['graduate_program_id'] = str(filters.graduate_program_id)
+    if filters.graduate_program_id or filters.graduate_program:
         join_program = """
             INNER JOIN graduate_program_researcher gpr
                 ON gpr.researcher_id = rr.researcher_id
             INNER JOIN graduate_program gp
                 ON gpr.graduate_program_id = gp.graduate_program_id
             """
+    if filters.graduate_program_id:
+        params['graduate_program_id'] = str(filters.graduate_program_id)
         filters_sql += """
             AND gpr.graduate_program_id = %(graduate_program_id)s
             """
 
     if filters.graduate_program:
         params['graduate_program'] = filters.graduate_program.split(';')
-        join_program = """
-            INNER JOIN graduate_program_researcher gpr
-                ON gpr.researcher_id = rr.researcher_id
-            INNER JOIN graduate_program gp
-                ON gpr.graduate_program_id = gp.graduate_program_id
-            """
         filters_sql += """
             AND gp.name = ANY(%(graduate_program)s)
             AND gpr.type_ = 'PERMANENTE'
@@ -3852,6 +3850,7 @@ async def get_research_report_metrics(
         filters_sql += """
             AND rp.city = ANY(%(city)s)
             """
+
     if filters.area:
         params['area'] = filters.area.replace(' ', '_').split(';')
         if not join_researcher_production:
@@ -3873,7 +3872,9 @@ async def get_research_report_metrics(
             AND f.modality_name = ANY(%(modality)s)
             """
 
+    # Aplica DISTINCT ao filtrar por graduação
     if filters.graduation:
+        filter_distinct = 'DISTINCT ON (rr.title)'
         if not join_researcher:
             join_researcher = """
                 INNER JOIN researcher r
@@ -3884,23 +3885,35 @@ async def get_research_report_metrics(
             AND r.graduation = ANY(%(graduation)s)
             """
 
+    if filters.distinct:
+        filter_distinct = 'DISTINCT ON (rr.title)'
+
     SCRIPT_SQL = f"""
+        WITH FilteredResearchReport AS (
+            SELECT {filter_distinct}
+                rr.year,
+                rr.title
+            FROM
+                public.research_report rr
+                {join_researcher}
+                {join_researcher_production}
+                {join_foment}
+                {join_program}
+                {join_departament}
+                {join_institution}
+            WHERE 1=1
+                {filters_sql}
+            ORDER BY rr.title, rr.year
+        )
         SELECT
-            COUNT(*) as among,
-            rr.year
+            frr.year,
+            COUNT(frr.title) AS among
         FROM
-            public.research_report rr
-            {join_researcher}
-            {join_researcher_production}
-            {join_foment}
-            {join_program}
-            {join_departament}
-            {join_institution}
-        WHERE 1=1
-            {filters_sql}
-        GROUP BY rr.year
+            FilteredResearchReport frr
+        GROUP BY
+            frr.year
         ORDER BY
-            year ASC
+            frr.year ASC;
         """
     return await conn.select(SCRIPT_SQL, params)
 
