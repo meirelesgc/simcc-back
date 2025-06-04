@@ -3923,6 +3923,7 @@ async def get_papers_magazine_metrics(
     filters: DefaultFilters,
 ):
     params = {}
+    filter_distinct = str()
 
     join_researcher = str()
     join_researcher_production = str()
@@ -3947,6 +3948,7 @@ async def get_papers_magazine_metrics(
             """
 
     if filters.dep_id or filters.departament:
+        filter_distinct = 'DISTINCT ON (bp.title)'
         join_departament = """
             INNER JOIN ufmg.departament_researcher dpr
                 ON dpr.researcher_id = bp.researcher_id
@@ -3985,26 +3987,21 @@ async def get_papers_magazine_metrics(
             AND i.name = ANY(%(institution)s)
             """
 
-    if filters.graduate_program_id:
-        params['graduate_program_id'] = str(filters.graduate_program_id)
+    if filters.graduate_program_id or filters.graduate_program:
         join_program = """
             INNER JOIN graduate_program_researcher gpr
                 ON gpr.researcher_id = bp.researcher_id
             INNER JOIN graduate_program gp
                 ON gpr.graduate_program_id = gp.graduate_program_id
             """
+    if filters.graduate_program_id:
+        params['graduate_program_id'] = str(filters.graduate_program_id)
         filters_sql += """
             AND gpr.graduate_program_id = %(graduate_program_id)s
             """
 
     if filters.graduate_program:
         params['graduate_program'] = filters.graduate_program.split(';')
-        join_program = """
-            INNER JOIN graduate_program_researcher gpr
-                ON gpr.researcher_id = bp.researcher_id
-            INNER JOIN graduate_program gp
-                ON gpr.graduate_program_id = gp.graduate_program_id
-            """
         filters_sql += """
             AND gp.name = ANY(%(graduate_program)s)
             AND gpr.type_ = 'PERMANENTE'
@@ -4019,6 +4016,7 @@ async def get_papers_magazine_metrics(
         filters_sql += """
             AND rp.city = ANY(%(city)s)
             """
+
     if filters.area:
         params['area'] = filters.area.replace(' ', '_').split(';')
         if not join_researcher_production:
@@ -4041,6 +4039,7 @@ async def get_papers_magazine_metrics(
             """
 
     if filters.graduation:
+        filter_distinct = 'DISTINCT ON (bp.title)'
         if not join_researcher:
             join_researcher = """
                 INNER JOIN researcher r
@@ -4051,20 +4050,36 @@ async def get_papers_magazine_metrics(
             AND r.graduation = ANY(%(graduation)s)
             """
 
+    if filters.distinct:
+        filter_distinct = 'DISTINCT ON (bp.title)'
+
     SCRIPT_SQL = f"""
-        SELECT COUNT(*) as among, bp.year AS year
-        FROM public.bibliographic_production bp
-            {join_researcher}
-            {join_researcher_production}
-            {join_foment}
-            {join_program}
-            {join_departament}
-            {join_institution}
-        WHERE bp.type = 'TEXT_IN_NEWSPAPER_MAGAZINE'
-            {filters_sql}
-        GROUP BY bp.year
+        WITH FilteredPapers AS (
+            SELECT {filter_distinct}
+                bp.title,
+                bp.year_ AS year
+            FROM
+                public.bibliographic_production bp
+                {join_researcher}
+                {join_researcher_production}
+                {join_foment}
+                {join_program}
+                {join_departament}
+                {join_institution}
+            WHERE
+                bp.type = 'TEXT_IN_NEWSPAPER_MAGAZINE'
+                {filters_sql}
+            ORDER BY bp.title, bp.year_
+        )
+        SELECT
+            fp.year,
+            COUNT(fp.title) as among
+        FROM
+            FilteredPapers fp
+        GROUP BY
+            fp.year
         ORDER BY
-            bp.year ASC
+            fp.year ASC;
         """
     return await conn.select(SCRIPT_SQL, params)
 
