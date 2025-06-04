@@ -140,3 +140,8 @@ def resarcher_barema(
 @router.get('/secondWord')
 def list_words(term: str):
     return GenericService.list_words(term)
+
+
+@router.get('/lattes_update')
+def lattes_update():
+    return GenericService.lattes_update()

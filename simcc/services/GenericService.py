@@ -19,6 +19,10 @@ from simcc.repositories.simcc import GenericRepository
 from simcc.schemas import ResearcherBarema, YearBarema
 
 
+def lattes_update():
+    return GenericRepository.lattes_update()
+
+
 def barema_production(
     name: str, lattes_id: str, year: YearBarema
 ) -> list[ResearcherBarema]:

@@ -6,6 +6,17 @@ from simcc.repositories import conn
 from simcc.schemas import YearBarema
 
 
+def lattes_update():
+    SCRIPT_SQL = """
+        SELECT
+        COUNT(*) AS total,
+        COUNT(*) FILTER (WHERE last_update < CURRENT_DATE - INTERVAL '3 months') AS over_3_months,
+        COUNT(*) FILTER (WHERE last_update < CURRENT_DATE - INTERVAL '6 months') AS over_6_months
+        FROM researcher;
+        """
+    return conn.select(SCRIPT_SQL, {}, True)
+
+
 def lattes_list(names: list = None, lattes: list = None) -> dict:
     one = False
     params = {}
