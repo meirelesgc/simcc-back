@@ -384,3 +384,7 @@ def list_foment_researchers():
 
 async def get_academic_degree(conn, default_filters):
     return await ResearcherRepository.academic_degree(conn, default_filters)
+
+
+async def get_great_area(conn, default_filters):
+    return await ResearcherRepository.get_great_area(conn, default_filters)

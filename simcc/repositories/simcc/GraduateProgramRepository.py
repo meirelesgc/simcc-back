@@ -1,7 +1,7 @@
 from uuid import UUID
 
 from simcc.core.connection import Connection
-from simcc.repositories.util import webseatch_filter
+from simcc.repositories.util import websearch_filter
 
 
 async def get_research_lines(
@@ -16,7 +16,7 @@ async def get_research_lines(
 
     filter_terms = str()
     if term:
-        filter_terms, term = webseatch_filter('lgp.name', term)
+        filter_terms, term = websearch_filter('lgp.name', term)
         params |= term
 
     filter_university = str()

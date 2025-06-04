@@ -58,7 +58,7 @@ def build_query_terms(sanitized_terms, column):
     return ' '.join(query_parts), terms_dict
 
 
-def webseatch_filter(column, string_of_terms):
+def websearch_filter(column, string_of_terms):
     terms = parse_terms(string_of_terms)
     sanitized_terms = sanitize_terms(terms)
     query_terms, terms_dict = build_query_terms(sanitized_terms, column)

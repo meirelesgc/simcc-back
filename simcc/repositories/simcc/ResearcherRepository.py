@@ -4,7 +4,7 @@ from unidecode import unidecode
 
 from simcc.core.connection import Connection
 from simcc.repositories import conn
-from simcc.repositories.util import names_filter, pagination, webseatch_filter
+from simcc.repositories.util import names_filter, pagination, websearch_filter
 from simcc.schemas import DefaultFilters
 from simcc.schemas.Researcher import ResearcherArticleProduction
 
@@ -85,7 +85,7 @@ def search_in_area_specialty(
         filter_graduation = 'AND r.graduation = ANY(%(graduation)s)'
 
     if term:
-        filter_terms, term = webseatch_filter('rp.area_specialty', term)
+        filter_terms, term = websearch_filter('rp.area_specialty', term)
         params |= term
 
     if page and lenght:
@@ -232,7 +232,7 @@ def search_in_participation_event(
         filter_graduation = 'AND r.graduation = ANY(%(graduation)s)'
 
     if term:
-        filter_terms, term = webseatch_filter('pe.event_name', term)
+        filter_terms, term = websearch_filter('pe.event_name', term)
         params |= term
 
     if page and lenght:
@@ -375,7 +375,7 @@ def search_in_book(
         filter_graduation = 'AND r.graduation = ANY(%(graduation)s)'
 
     if term:
-        filter_terms, term = webseatch_filter('bp.title', term)
+        filter_terms, term = websearch_filter('bp.title', term)
         params |= term
 
     if page and lenght:
@@ -672,7 +672,7 @@ def search_in_articles(
 
     filter_terms = str()
     if terms:
-        filter_terms, terms = webseatch_filter('bp.title', terms)
+        filter_terms, terms = websearch_filter('bp.title', terms)
         params |= terms
 
     if graduate_program_id and graduate_program_id != '0':
@@ -822,7 +822,7 @@ def search_in_abstracts(
 
     filter_terms = str()
     if terms:
-        filter_terms, terms = webseatch_filter('r.abstract', terms)
+        filter_terms, terms = websearch_filter('r.abstract', terms)
         params |= terms
 
     join_program = str()
@@ -1467,7 +1467,7 @@ def search_in_patents(
     filter_terms = str()
 
     if term:
-        filter_terms, terms = webseatch_filter('p.title', term)
+        filter_terms, terms = websearch_filter('p.title', term)
         params |= terms
 
     join_program = str()
@@ -1660,7 +1660,7 @@ async def academic_degree(
             case 'ABSTRACT':
                 count_among = 'COUNT(DISTINCT r.id) AS among'
                 if filters.term:
-                    term_filter_str, term_params = webseatch_filter(
+                    term_filter_str, term_params = websearch_filter(
                         'r.abstract', filters.term
                     )
                     type_specific_filters += term_filter_str
@@ -1676,7 +1676,7 @@ async def academic_degree(
                 count_among = 'COUNT(DISTINCT bp.title) AS among'
                 join_type_specific = f"INNER JOIN bibliographic_production bp ON bp.researcher_id = r.id AND bp.type = '{filters.type}'"
                 if filters.term:
-                    term_filter_str, term_params_bp = webseatch_filter(
+                    term_filter_str, term_params_bp = websearch_filter(
                         'bp.title', filters.term
                     )
                     type_specific_filters += term_filter_str
@@ -1691,7 +1691,7 @@ async def academic_degree(
                     'INNER JOIN patent p ON p.researcher_id = r.id'
                 )
                 if filters.term:
-                    term_filter_str, term_params_p = webseatch_filter(
+                    term_filter_str, term_params_p = websearch_filter(
                         'p.title', filters.term
                     )
                     type_specific_filters += term_filter_str
@@ -1709,7 +1709,7 @@ async def academic_degree(
                 ):  # Reutiliza o JOIN se já existir
                     join_researcher_production = 'INNER JOIN researcher_production rp ON rp.researcher_id = r.id'
                 if filters.term:
-                    term_filter_str, term_params_rp = webseatch_filter(
+                    term_filter_str, term_params_rp = websearch_filter(
                         'rp.great_area', filters.term
                     )
                     type_specific_filters += term_filter_str
@@ -1721,7 +1721,7 @@ async def academic_degree(
                     'INNER JOIN event_organization e ON e.researcher_id = r.id'
                 )
                 if filters.term:
-                    term_filter_str, term_params_e = webseatch_filter(
+                    term_filter_str, term_params_e = websearch_filter(
                         'e.title', filters.term
                     )
                     type_specific_filters += term_filter_str
@@ -1755,6 +1755,157 @@ async def academic_degree(
             {general_filters}
             {type_specific_filters}
         GROUP BY r.graduation;
+        """
+
+    result = await conn.select(SCRIPT_SQL, params)
+    return result
+
+
+async def get_great_area(
+    conn: Connection,
+    filters: DefaultFilters,
+):
+    # --- Bloco de Inicialização (sem alterações) ---
+    params = {}
+    join_departament = str()
+    join_institution = str()
+    join_program = str()
+    join_foment = str()
+    general_filters = str()
+    join_type_specific = str()
+    type_specific_filters = str()
+
+    # --- Bloco de Construção dos Filtros (sem alterações na lógica Python) ---
+    if filters.researcher_id:
+        params['researcher_id'] = str(filters.researcher_id)
+        general_filters += ' AND r.id = %(researcher_id)s'
+
+    if filters.dep_id or filters.departament:
+        join_departament = """
+            INNER JOIN public.departament_researcher dpr ON dpr.researcher_id = r.id
+            INNER JOIN public.departament dp ON dp.dep_id = dpr.dep_id
+            """
+        if filters.dep_id:
+            params['dep_id'] = filters.dep_id.split(';')
+            general_filters += ' AND dp.dep_id = ANY(%(dep_id)s)'
+        if filters.departament:
+            params['departament'] = filters.departament.split(';')
+            general_filters += ' AND dp.dep_nom = ANY(%(departament)s)'
+
+    if filters.institution:
+        join_institution = (
+            ' INNER JOIN public.institution i ON r.institution_id = i.id'
+        )
+        params['institution'] = filters.institution.split(';')
+        general_filters += ' AND i.name = ANY(%(institution)s)'
+
+    if filters.graduate_program_id or filters.graduate_program:
+        join_program = """
+            INNER JOIN public.graduate_program_researcher gpr ON gpr.researcher_id = r.id
+            INNER JOIN public.graduate_program gp ON gpr.graduate_program_id = gp.graduate_program_id
+            """
+        if filters.graduate_program_id:
+            params['graduate_program_id'] = str(filters.graduate_program_id)
+            general_filters += (
+                ' AND gpr.graduate_program_id = %(graduate_program_id)s'
+            )
+        if filters.graduate_program:
+            params['graduate_program'] = filters.graduate_program.split(';')
+            general_filters += ' AND gp.name = ANY(%(graduate_program)s)'
+
+    if filters.city:
+        params['city'] = filters.city.split(';')
+        general_filters += ' AND rp.city = ANY(%(city)s)'
+
+    if filters.area:
+        params['area'] = filters.area.replace(' ', '_').split(';')
+        general_filters += " AND STRING_TO_ARRAY(REPLACE(rp.great_area, ' ', '_'), ';') && %(area)s"
+
+    if filters.modality:
+        join_foment = ' INNER JOIN public.foment f ON f.researcher_id = r.id'
+        params['modality'] = filters.modality.split(';')
+        general_filters += ' AND f.modality_name = ANY(%(modality)s)'
+
+    if filters.graduation:
+        params['graduation'] = filters.graduation.split(';')
+        general_filters += ' AND r.graduation = ANY(%(graduation)s)'
+
+    if filters.type:
+        match filters.type:
+            case (
+                'BOOK'
+                | 'BOOK_CHAPTER'
+                | 'ARTICLE'
+                | 'WORK_IN_EVENT'
+                | 'TEXT_IN_NEWSPAPER_MAGAZINE'
+            ):
+                join_type_specific = 'INNER JOIN public.bibliographic_production bp ON bp.researcher_id = r.id'
+                params['type'] = filters.type
+                type_specific_filters += ' AND bp.type = %(type)s'
+                if filters.term:
+                    term_filter_str, term_params = websearch_filter(
+                        'bp.title', filters.term
+                    )
+                    type_specific_filters += term_filter_str
+                    params.update(term_params)
+                if filters.year:
+                    params['year'] = filters.year
+                    type_specific_filters += ' AND bp.year_ >= %(year)s'
+            case 'PATENT':
+                join_type_specific = (
+                    'INNER JOIN public.patent p ON p.researcher_id = r.id'
+                )
+                if filters.term:
+                    term_filter_str, term_params = websearch_filter(
+                        'p.title', filters.term
+                    )
+                    type_specific_filters += term_filter_str
+                    params.update(term_params)
+                if filters.year:
+                    params['year'] = filters.year
+                    type_specific_filters += (
+                        ' AND p.development_year >= %(year)s'
+                    )
+            case 'EVENT':
+                join_type_specific = 'INNER JOIN public.event_organization e ON e.researcher_id = r.id'
+                if filters.term:
+                    term_filter_str, term_params = websearch_filter(
+                        'e.title', filters.term
+                    )
+                    type_specific_filters += term_filter_str
+                    params.update(term_params)
+                if filters.year:
+                    params['year'] = filters.year
+                    type_specific_filters += ' AND e.year >= %(year)s'
+
+    SCRIPT_SQL = f"""
+        WITH areas AS (
+            SELECT DISTINCT ON (r.id, ga)
+                r.id AS researcher_id,
+                UNNEST(rp.great_area_) AS ga
+            FROM
+                public.researcher_production rp
+            INNER JOIN public.researcher r ON r.id = rp.researcher_id
+            {join_departament}
+            {join_institution}
+            {join_program}
+            {join_foment}
+            {join_type_specific}
+            WHERE 1 = 1
+                {general_filters}
+                {type_specific_filters}
+        )
+        SELECT
+            REPLACE(areas.ga, '_', ' ') AS great_area,
+            COUNT(areas.researcher_id) AS count
+        FROM
+            areas
+        WHERE
+            areas.ga IS NOT NULL AND areas.ga <> ''
+        GROUP BY
+            great_area
+        ORDER BY
+            count DESC;
         """
 
     result = await conn.select(SCRIPT_SQL, params)

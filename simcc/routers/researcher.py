@@ -281,9 +281,20 @@ def co_authorship(researcher_id: UUID):
     '/academic_degree',
     response_model=list[AcademicDegree],
 )
-async def academic_degree(
+async def get_academic_degree(
     default_filters: DefaultFilters = Depends(),
     conn: Connection = Depends(get_conn),
 ):
     metrics = await ResearcherService.get_academic_degree(conn, default_filters)
+    return metrics
+
+
+@router.get(
+    '/great_area',
+)
+async def get_great_area(
+    default_filters: DefaultFilters = Depends(),
+    conn: Connection = Depends(get_conn),
+):
+    metrics = await ResearcherService.get_great_area(conn, default_filters)
     return metrics

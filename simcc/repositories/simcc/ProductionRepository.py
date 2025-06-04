@@ -1,5 +1,5 @@
 from simcc.core.connection import Connection
-from simcc.repositories.util import names_filter, pagination, webseatch_filter
+from simcc.repositories.util import names_filter, pagination, websearch_filter
 from simcc.schemas import DefaultFilters
 from simcc.schemas.Production.Article import ArticleProduction
 from simcc.schemas.Production.Patent import PatentProduction
@@ -22,7 +22,7 @@ async def get_events_metrics(
     query_filters = str()
 
     if filters.term:
-        filter_terms_str, term_params = webseatch_filter(
+        filter_terms_str, term_params = websearch_filter(
             'bp.title', filters.term
         )
         query_filters += filter_terms_str
@@ -166,7 +166,7 @@ async def get_pevent_researcher(
     query_filters = str()
 
     if filters.term:
-        filter_terms_str, term_params = webseatch_filter('p.title', filters.term)
+        filter_terms_str, term_params = websearch_filter('p.title', filters.term)
         query_filters += filter_terms_str
         params.update(term_params)
 
@@ -494,7 +494,7 @@ async def list_patent(
     filter_pagination = str()
 
     if filters.term:  # Acessando via filters.term
-        filter_terms_str, term_params = webseatch_filter('p.title', filters.term)
+        filter_terms_str, term_params = websearch_filter('p.title', filters.term)
         query_filters += filter_terms_str
         params.update(term_params)
 
@@ -654,7 +654,7 @@ async def list_brand(
     filter_pagination = str()
 
     if filters.term:  # Acessando via filters.term
-        filter_terms_str, term_params = webseatch_filter('b.title', filters.term)
+        filter_terms_str, term_params = websearch_filter('b.title', filters.term)
         query_filters += filter_terms_str
         params.update(term_params)
 
@@ -813,7 +813,7 @@ async def list_book(
     filter_pagination = str()
 
     if filters.term:
-        filter_terms_str, term_params = webseatch_filter(
+        filter_terms_str, term_params = websearch_filter(
             'bp.title', filters.term
         )
         query_filters += filter_terms_str
@@ -980,7 +980,7 @@ async def list_bibliographic_production(
     filter_pagination = str()
 
     if filters.term:  # Acessando via filters.term
-        filter_terms_str, term_params = webseatch_filter('b.title', filters.term)
+        filter_terms_str, term_params = websearch_filter('b.title', filters.term)
         query_filters += filter_terms_str
         params.update(term_params)
 
@@ -1165,7 +1165,7 @@ async def list_article_production(
         query_filters += 'AND bpa.qualis = ANY(%(qualis)s)'
 
     if filters.term:
-        filter_terms_str, term_params = webseatch_filter('b.title', filters.term)
+        filter_terms_str, term_params = websearch_filter('b.title', filters.term)
         query_filters += filter_terms_str
         params.update(term_params)
 
@@ -1327,7 +1327,7 @@ async def list_book_chapter(
     query_filters = str()
     filter_pagination = str()
     if filters.term:  # Acessando via filters.term
-        filter_terms_str, term_params = webseatch_filter(
+        filter_terms_str, term_params = websearch_filter(
             'bp.title', filters.term
         )
         query_filters += filter_terms_str
@@ -1492,7 +1492,7 @@ async def list_software(
     filter_pagination = str()
 
     if filters.term:  # Acessando via filters.term
-        filter_terms_str, term_params = webseatch_filter('s.title', filters.term)
+        filter_terms_str, term_params = websearch_filter('s.title', filters.term)
         query_filters += filter_terms_str
         params.update(term_params)
 
@@ -1651,7 +1651,7 @@ async def list_researcher_report(
     filter_pagination = str()
 
     if filters.term:  # Acessando via filters.term
-        filter_terms_str, term_params = webseatch_filter(
+        filter_terms_str, term_params = websearch_filter(
             'rr.title', filters.term
         )
         query_filters += filter_terms_str
@@ -1812,7 +1812,7 @@ async def list_guidance_production(
     filter_pagination = str()
 
     if filters.term:  # Acessando via filters.term
-        filter_terms_str, term_params = webseatch_filter('g.title', filters.term)
+        filter_terms_str, term_params = websearch_filter('g.title', filters.term)
         query_filters += filter_terms_str
         params.update(term_params)
 
@@ -1970,7 +1970,7 @@ async def list_researcher_production_events(
     filter_pagination = str()
 
     if filters.term:  # Acessando via filters.term
-        filter_terms_str, term_params = webseatch_filter(
+        filter_terms_str, term_params = websearch_filter(
             'bp.title', filters.term
         )
         query_filters += filter_terms_str
@@ -2132,7 +2132,7 @@ async def list_research_projects(
     filter_pagination = str()
 
     if filters.term:  # Acessando via filters.term
-        filter_terms_str, term_params = webseatch_filter(
+        filter_terms_str, term_params = websearch_filter(
             'rp.project_name', filters.term
         )
         query_filters += filter_terms_str
@@ -2307,7 +2307,7 @@ async def list_papers_magazine(
     filter_pagination = str()
 
     if filters.term:  # Acessando via filters.term
-        filter_terms_str, term_params = webseatch_filter(
+        filter_terms_str, term_params = websearch_filter(
             'bp.title', filters.term
         )
         query_filters += filter_terms_str
@@ -2554,7 +2554,7 @@ async def get_book_metrics(
         filter_distinct = 'DISTINCT'
 
     if filters.term:
-        term_filter, term_params = webseatch_filter('bp.title', filters.term)
+        term_filter, term_params = websearch_filter('bp.title', filters.term)
         params.update(term_params)
 
     if filters.researcher_id:
@@ -2676,7 +2676,7 @@ async def get_book_chapter_metrics(
 
     term_filter = str()
     if filters.term:
-        term_filter, term_params = webseatch_filter('bp.title', filters.term)
+        term_filter, term_params = websearch_filter('bp.title', filters.term)
         params.update(term_params)
 
     filter_id = str()
@@ -2752,7 +2752,7 @@ async def get_researcher_metrics(
 
     match filters.type:
         case 'ABSTRACT':
-            type_filter, term_params = webseatch_filter(
+            type_filter, term_params = websearch_filter(
                 'r.abstract', filters.term
             )
             params.update(term_params)
@@ -2764,7 +2764,7 @@ async def get_researcher_metrics(
                     ON bp.researcher_id = r.id AND bp.type = '{filters.type}'
             """
             if filters.term:  # Only apply if filters.term exists
-                term_filter_str, term_params_bp = webseatch_filter(
+                term_filter_str, term_params_bp = websearch_filter(
                     'bp.title', filters.term
                 )
                 type_filter += term_filter_str
@@ -2776,7 +2776,7 @@ async def get_researcher_metrics(
             count_among = 'COUNT(DISTINCT p.title) AS among'  # Use DISTINCT here
             join_filter = 'INNER JOIN patent p ON p.researcher_id = r.id'
             if filters.term:  # Only apply if filters.term exists
-                term_filter_str, term_params_p = webseatch_filter(
+                term_filter_str, term_params_p = websearch_filter(
                     'p.title', filters.term
                 )
                 type_filter += term_filter_str
@@ -2793,7 +2793,7 @@ async def get_researcher_metrics(
                     ON rp.researcher_id = r.id
                 """
             if filters.term:  # Only apply if filters.term exists
-                term_filter_str, term_params_rp = webseatch_filter(
+                term_filter_str, term_params_rp = websearch_filter(
                     'rp.great_area', filters.term
                 )
                 type_filter += term_filter_str
@@ -2805,7 +2805,7 @@ async def get_researcher_metrics(
                     ON e.researcher_id = r.id
                 """
             if filters.term:  # Only apply if filters.term exists
-                term_filter_str, term_params_e = webseatch_filter(
+                term_filter_str, term_params_e = websearch_filter(
                     'e.title', filters.term
                 )
                 type_filter += term_filter_str
@@ -2980,7 +2980,7 @@ async def list_article_metrics(
             """
 
     if filters.term:
-        term_filter, term_params = webseatch_filter('bp.title', filters.term)
+        term_filter, term_params = websearch_filter('bp.title', filters.term)
         params.update(term_params)
 
     if filters.researcher_id:
@@ -3120,7 +3120,7 @@ async def list_patent_metrics(
 
     term_filter = str()
     if filters.term:
-        term_filter, term_params = webseatch_filter('p.title', filters.term)
+        term_filter, term_params = websearch_filter('p.title', filters.term)
         params.update(term_params)
 
     filter_id = str()
@@ -3275,7 +3275,7 @@ async def list_guidance_metrics(
 
     term_filter = str()
     if filters.term:
-        term_filter, term_params = webseatch_filter('g.title', filters.term)
+        term_filter, term_params = websearch_filter('g.title', filters.term)
         params.update(term_params)
 
     filter_id = str()
@@ -3625,7 +3625,7 @@ async def list_software_metrics(
 
     term_filter = str()
     if filters.term:
-        term_filter, term_params = webseatch_filter('s.title', filters.term)
+        term_filter, term_params = websearch_filter('s.title', filters.term)
         params.update(term_params)
 
     filter_id = str()
@@ -3768,7 +3768,7 @@ async def get_research_report_metrics(
     filters_sql = str()
 
     if filters.term:
-        filter_terms_str, term_params = webseatch_filter(
+        filter_terms_str, term_params = websearch_filter(
             'rr.title', filters.term
         )
         filters_sql += filter_terms_str
@@ -3935,7 +3935,7 @@ async def get_papers_magazine_metrics(
     filters_sql = str()
 
     if filters.term:
-        filter_terms_str, term_params = webseatch_filter(
+        filter_terms_str, term_params = websearch_filter(
             'bp.title', filters.term
         )
         filters_sql += filter_terms_str
@@ -4101,7 +4101,7 @@ async def get_speaker_metrics(
     filters_sql = str()
 
     if filters.term:
-        filter_terms_str, term_params = webseatch_filter(
+        filter_terms_str, term_params = websearch_filter(
             'pe.title', filters.term
         )
         filters_sql += filter_terms_str
@@ -4278,7 +4278,7 @@ async def get_brand_metrics(
             """
 
     if filters.term:
-        filter_terms_str, term_params = webseatch_filter('b.title', filters.term)
+        filter_terms_str, term_params = websearch_filter('b.title', filters.term)
         filters_sql += filter_terms_str
         params.update(term_params)
 
@@ -4460,7 +4460,7 @@ async def get_research_project_metrics(
     filters_sql = str()
 
     if filters.term:
-        filter_terms_str, term_params = webseatch_filter(
+        filter_terms_str, term_params = websearch_filter(
             'b.project_name', filters.term
         )
         filters_sql += filter_terms_str
