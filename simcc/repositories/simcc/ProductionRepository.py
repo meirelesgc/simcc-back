@@ -4448,16 +4448,14 @@ async def get_research_project_metrics(
     filters: DefaultFilters,
 ):
     params = {}
+    filter_distinct = str()
+
     join_researcher_production = str()
     join_foment = str()
     join_program = str()
     join_institution = str()
     join_departament = str()
     join_researcher = str()
-
-    filter_distinct = str()
-    if filters.distinct:
-        filter_distinct = 'DISTINCT'
 
     filters_sql = str()
 
@@ -4481,6 +4479,7 @@ async def get_research_project_metrics(
             """
 
     if filters.dep_id or filters.departament:
+        filter_distinct = 'DISTINCT ON (b.project_name)'
         join_researcher = """
             LEFT JOIN public.researcher r ON r.id = b.researcher_id
             """
@@ -4503,6 +4502,7 @@ async def get_research_project_metrics(
             """
 
     if filters.institution:
+        filter_distinct = 'DISTINCT ON (b.project_name)'
         if not join_researcher:
             join_researcher = """
                 LEFT JOIN public.researcher r ON r.id = b.researcher_id
@@ -4516,45 +4516,36 @@ async def get_research_project_metrics(
             AND i.name = ANY(%(institution)s)
             """
 
-    if filters.graduate_program_id:
+    if filters.graduate_program_id or filters.graduate_program:
+        filter_distinct = 'DISTINCT ON (b.project_name)'
         if not join_researcher:
             join_researcher = """
                 LEFT JOIN public.researcher r ON r.id = b.researcher_id
                 """
-        params['graduate_program_id'] = str(filters.graduate_program_id)
-        join_researcher = """
-            LEFT JOIN public.researcher r ON r.id = b.researcher_id
-            """
         join_program = """
             INNER JOIN public.graduate_program_researcher gpr
                 ON gpr.researcher_id = r.id
             INNER JOIN public.graduate_program gp
                 ON gpr.graduate_program_id = gp.graduate_program_id
             """
+    if filters.graduate_program_id:
+        params['graduate_program_id'] = str(filters.graduate_program_id)
         filters_sql += """
             AND gpr.graduate_program_id = %(graduate_program_id)s
             """
 
     if filters.graduate_program:
         params['graduate_program'] = filters.graduate_program.split(';')
-        join_researcher = """
-            LEFT JOIN public.researcher r ON r.id = b.researcher_id
-            """
-        join_program = """
-            INNER JOIN public.graduate_program_researcher gpr
-                ON gpr.researcher_id = r.id
-            INNER JOIN public.graduate_program gp
-                ON gpr.graduate_program_id = gp.graduate_program_id
-            """
         filters_sql += """
             AND gp.name = ANY(%(graduate_program)s)
             AND gpr.type_ = 'PERMANENTE'
             """
 
     if filters.city:
-        join_researcher = """
-            LEFT JOIN public.researcher r ON r.id = b.researcher_id
-            """
+        if not join_researcher:
+            join_researcher = """
+                LEFT JOIN public.researcher r ON r.id = b.researcher_id
+                """
         params['city'] = filters.city.split(';')
         join_researcher_production = """
             LEFT JOIN public.researcher_production rp
@@ -4580,6 +4571,7 @@ async def get_research_project_metrics(
             """
 
     if filters.modality:
+        filter_distinct = 'DISTINCT ON (b.project_name)'
         if not join_researcher:
             join_researcher = """
                 LEFT JOIN public.researcher r ON r.id = b.researcher_id
@@ -4594,6 +4586,7 @@ async def get_research_project_metrics(
             """
 
     if filters.graduation:
+        filter_distinct = 'DISTINCT ON (b.project_name)'
         if not join_researcher:
             join_researcher = """
                 LEFT JOIN public.researcher r ON r.id = b.researcher_id
@@ -4603,21 +4596,34 @@ async def get_research_project_metrics(
             AND r.graduation = ANY(%(graduation)s)
             """
 
+    if filters.distinct:
+        filter_distinct = 'DISTINCT ON (b.project_name)'
+
     SCRIPT_SQL = f"""
-        SELECT {filter_distinct}
-            COUNT(*) AS among,
-            b.start_year AS year
+        WITH FilteredProjects AS (
+            SELECT {filter_distinct}
+                b.project_name,
+                b.start_year
+            FROM
+                public.research_project b
+                {join_researcher}
+                {join_researcher_production}
+                {join_foment}
+                {join_program}
+                {join_departament}
+                {join_institution}
+            WHERE 1 = 1
+                {filters_sql}
+            ORDER BY b.project_name, b.start_year
+        )
+        SELECT
+            fp.start_year AS year,
+            COUNT(fp.project_name) AS among
         FROM
-            public.research_project b
-            {join_researcher}
-            {join_researcher_production}
-            {join_foment}
-            {join_program}
-            {join_departament}
-            {join_institution}
-        WHERE 1 = 1
-            {filters_sql}
-        GROUP BY b.start_year
-        ORDER BY b.start_year ASC;
+            FilteredProjects fp
+        GROUP BY
+            fp.start_year
+        ORDER BY
+            fp.start_year ASC;
         """
     return await conn.select(SCRIPT_SQL, params)
