@@ -1,74 +1,75 @@
 import sys
-import nltk
-import unidecode
-from flask import Flask, jsonify, request, send_file
-from flask_cors import CORS
-from nltk.tokenize import RegexpTokenizer
 from http import HTTPStatus
+
 import Dao.areaFlowSQL
 import Dao.generalSQL
 import Dao.researcherSQL
 import Dao.termFlowSQL
+import nltk
 import SimccBD as SimccBD
-from Model.Magazine import Magazine
-from Rest.book_events_area_patentRest import areaRest
-from Rest.graduateProgramRest import graduateProgramRest
-from Rest.researcherDataRest import researcherDataRest
-from Rest.researcherTermRest import researcherTermRest
-from Rest.relevantRest import management
-from Rest.mariaRest import mariaRest
-from Rest.ufmgRest import ufmgRest
-from Rest.research_productionRest import productionRest
-from zeep import Client
+import unidecode
 from csv_powerBI import (
-    graduate_program_csv_db,
-    ufmg_teacher,
-    dim_great_area,
-    fat_great_area,
-    dim_area_specialty,
-    fat_area_specialty,
-    researcher_city,
-    researcher_area_leader,
-    fat_openalex_researcher,
-    graduate_program_researcher_csv_db,
-    production_distinct_novo_csv_db,
-    fat_openalex_article,
-    article_distinct_novo_csv_db,
-    researcher_production_novo_csv_db,
-    graduate_program_ind_prod_csv_db,
-    ind_prod_researcher_csv_db,
-    production_coauthors_csv_db,
-    researcher_production_year_csv_db,
-    researcher_production_year_distinct_csv_db,
-    researcher_article_qualis_csv_db,
-    researcher_production_csv_db,
     area_leader_dim,
+    article_distinct_novo_csv_db,
     article_qualis_csv_distinct_db,
-    researcher_csv_db,
-    researcher_production_tecnical_year_csv_db,
-    institution_csv_db,
-    fat_simcc_bibliographic_production,
-    dim_researcher_csv_db,
-    dim_institution_csv_db,
-    fat_production_tecnical_year_novo_csv_db,
-    fat_foment,
+    dim_area_specialty,
     dim_category_level_code,
-    dim_research_group,
-    fat_group_leaders,
+    dim_city_csv_db,
     dim_departament_researcher,
     dim_departament_technician,
-    graduate_program_researcher_year_unnest,
     dim_graduate_program_acronym,
     dim_graduate_program_student_year_unnest,
-    graduate_program_student_researcher_csv_db,
-    save_data_to_csv,
+    dim_great_area,
+    dim_institution_csv_db,
+    dim_research_group,
+    dim_researcher_csv_db,
+    fat_area_specialty,
     fat_departament_csv_bd,
-    dim_city_csv_db,
+    fat_foment,
+    fat_great_area,
+    fat_group_leaders,
+    fat_openalex_article,
+    fat_openalex_researcher,
+    fat_production_tecnical_year_novo_csv_db,
+    fat_simcc_bibliographic_production,
+    graduate_program_csv_db,
+    graduate_program_ind_prod_csv_db,
+    graduate_program_researcher_csv_db,
+    graduate_program_researcher_year_unnest,
+    graduate_program_student_researcher_csv_db,
+    ind_prod_researcher_csv_db,
+    institution_csv_db,
+    production_coauthors_csv_db,
+    production_distinct_novo_csv_db,
+    researcher_area_leader,
+    researcher_article_qualis_csv_db,
+    researcher_city,
+    researcher_csv_db,
+    researcher_production_csv_db,
+    researcher_production_novo_csv_db,
+    researcher_production_tecnical_year_csv_db,
+    researcher_production_year_csv_db,
+    researcher_production_year_distinct_csv_db,
+    save_data_to_csv,
+    ufmg_teacher,
 )
+from flask import Flask, jsonify, request, send_file
+from flask_cors import CORS
+from Model.Magazine import Magazine
+from nltk.tokenize import RegexpTokenizer
+from Rest.book_events_area_patentRest import areaRest
+from Rest.graduateProgramRest import graduateProgramRest
+from Rest.mariaRest import mariaRest
+from Rest.relevantRest import management
+from Rest.research_productionRest import productionRest
+from Rest.researcherDataRest import researcherDataRest
+from Rest.researcherTermRest import researcherTermRest
+from Rest.ufmgRest import ufmgRest
+from zeep import Client
 
 YEAR = 1990
 try:
-    port = sys.argv[2]
+    port = sys.argv[1]
 except Exception:
     port = 8080
 
