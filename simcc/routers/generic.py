@@ -4,14 +4,16 @@ from pathlib import Path
 from typing import Optional
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import (
     FileResponse,
     PlainTextResponse,
 )
 from zeep import Client
 
-from simcc.schemas import ResearcherBarema, YearBarema
+from simcc.core.connection import Connection
+from simcc.core.database import get_conn
+from simcc.schemas import DefaultFilters, ResearcherBarema, YearBarema
 from simcc.services import ConecteeService, GenericService
 
 STORAGE_PATH = Path('storage/dictionary')
@@ -143,5 +145,8 @@ def list_words(term: str):
 
 
 @router.get('/lattes_update')
-def lattes_update():
-    return GenericService.lattes_update()
+async def lattes_update(
+    default_filters: DefaultFilters = Depends(),
+    conn: Connection = Depends(get_conn),
+):
+    return await GenericService.lattes_update(conn, default_filters)

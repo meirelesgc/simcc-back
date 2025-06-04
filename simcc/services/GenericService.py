@@ -19,8 +19,8 @@ from simcc.repositories.simcc import GenericRepository
 from simcc.schemas import ResearcherBarema, YearBarema
 
 
-def lattes_update():
-    return GenericRepository.lattes_update()
+async def lattes_update(conn, default_filters):
+    return await GenericRepository.lattes_update(conn, default_filters)
 
 
 def barema_production(

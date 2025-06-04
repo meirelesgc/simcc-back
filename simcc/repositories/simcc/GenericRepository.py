@@ -2,19 +2,181 @@ from uuid import UUID
 
 import nltk
 
+from simcc.core.connection import Connection
 from simcc.repositories import conn
-from simcc.schemas import YearBarema
+from simcc.repositories.util import names_filter, websearch_filter
+from simcc.schemas import DefaultFilters, YearBarema
 
 
-def lattes_update():
-    SCRIPT_SQL = """
-        SELECT
-        COUNT(*) AS total,
-        COUNT(*) FILTER (WHERE last_update < CURRENT_DATE - INTERVAL '3 months') AS over_3_months,
-        COUNT(*) FILTER (WHERE last_update < CURRENT_DATE - INTERVAL '6 months') AS over_6_months
-        FROM researcher;
+async def lattes_update(
+    conn: Connection,
+    filters: DefaultFilters,
+):
+    # --- Bloco de Inicialização ---
+    params = {}
+    join_departament = str()
+    join_institution = str()
+    join_program = str()
+    join_researcher_production = str()
+    join_foment = str()
+    join_type_specific = str()
+    general_filters = str()
+    type_specific_filters = str()
+
+    # --- Bloco de Construção dos Filtros Gerais ---
+    if filters.researcher_id:
+        params['researcher_id'] = str(filters.researcher_id)
+        general_filters += ' AND r.id = %(researcher_id)s'
+
+    if filters.dep_id or filters.departament:
+        join_departament = """
+            INNER JOIN public.departament_researcher dpr ON dpr.researcher_id = r.id
+            INNER JOIN public.departament dp ON dp.dep_id = dpr.dep_id
         """
-    return conn.select(SCRIPT_SQL, {}, True)
+        if filters.dep_id:
+            params['dep_id'] = filters.dep_id.split(';')
+            general_filters += ' AND dp.dep_id = ANY(%(dep_id)s)'
+        if filters.departament:
+            params['departament'] = filters.departament.split(';')
+            general_filters += ' AND dp.dep_nom = ANY(%(departament)s)'
+
+    if filters.institution:
+        join_institution = (
+            ' INNER JOIN public.institution i ON r.institution_id = i.id'
+        )
+        params['institution'] = filters.institution.split(';')
+        general_filters += ' AND i.name = ANY(%(institution)s)'
+
+    if filters.graduate_program_id or filters.graduate_program:
+        join_program = """
+            INNER JOIN public.graduate_program_researcher gpr ON gpr.researcher_id = r.id
+            INNER JOIN public.graduate_program gp ON gpr.graduate_program_id = gp.graduate_program_id
+        """
+        if filters.graduate_program_id:
+            params['graduate_program_id'] = str(filters.graduate_program_id)
+            general_filters += (
+                ' AND gpr.graduate_program_id = %(graduate_program_id)s'
+            )
+        if filters.graduate_program:
+            params['graduate_program'] = filters.graduate_program.split(';')
+            general_filters += ' AND gp.name = ANY(%(graduate_program)s)'
+
+    if filters.city:
+        join_researcher_production = ' LEFT JOIN public.researcher_production rp ON rp.researcher_id = r.id'
+        params['city'] = filters.city.split(';')
+        general_filters += ' AND rp.city = ANY(%(city)s)'
+
+    if filters.area:
+        if not join_researcher_production:
+            join_researcher_production = ' LEFT JOIN public.researcher_production rp ON rp.researcher_id = r.id'
+        params['area'] = filters.area.replace(' ', '_').split(';')
+        general_filters += " AND STRING_TO_ARRAY(REPLACE(rp.great_area, ' ', '_'), ';') && %(area)s"
+
+    if filters.modality:
+        join_foment = ' INNER JOIN public.foment f ON f.researcher_id = r.id'
+        params['modality'] = filters.modality.split(';')
+        general_filters += ' AND f.modality_name = ANY(%(modality)s)'
+
+    if filters.graduation:
+        params['graduation'] = filters.graduation.split(';')
+        general_filters += ' AND r.graduation = ANY(%(graduation)s)'
+
+    # --- Bloco de Filtro por Tipo (Lógica Principal COMPLETA) ---
+    if filters.type:
+        match filters.type:
+            case 'ABSTRACT':
+                if filters.term:
+                    term_filter_str, term_params = websearch_filter(
+                        'r.abstract', filters.term
+                    )
+                    type_specific_filters += term_filter_str
+                    params.update(term_params)
+
+            case (
+                'BOOK'
+                | 'BOOK_CHAPTER'
+                | 'ARTICLE'
+                | 'WORK_IN_EVENT'
+                | 'TEXT_IN_NEWSPAPER_MAGAZINE'
+            ):
+                join_type_specific = f"INNER JOIN public.bibliographic_production bp ON bp.researcher_id = r.id AND bp.type = '{filters.type}'"
+                if filters.term:
+                    term_filter_str, term_params = websearch_filter(
+                        'bp.title', filters.term
+                    )
+                    type_specific_filters += term_filter_str
+                    params.update(term_params)
+                if filters.year:
+                    type_specific_filters += ' AND bp.year >= %(year)s'
+                    params['year'] = filters.year
+
+            case 'PATENT':
+                join_type_specific = (
+                    'INNER JOIN public.patent p ON p.researcher_id = r.id'
+                )
+                if filters.term:
+                    term_filter_str, term_params = websearch_filter(
+                        'p.title', filters.term
+                    )
+                    type_specific_filters += term_filter_str
+                    params.update(term_params)
+                if filters.year:
+                    type_specific_filters += (
+                        ' AND p.development_year >= %(year)s'
+                    )
+                    params['year'] = filters.year
+
+            case 'AREA':
+                if not join_researcher_production:
+                    join_researcher_production = 'LEFT JOIN public.researcher_production rp ON rp.researcher_id = r.id'
+                if filters.term:
+                    term_filter_str, term_params = websearch_filter(
+                        'rp.great_area', filters.term
+                    )
+                    type_specific_filters += term_filter_str
+                    params.update(term_params)
+
+            case 'EVENT':
+                join_type_specific = 'INNER JOIN public.event_organization e ON e.researcher_id = r.id'
+                if filters.term:
+                    term_filter_str, term_params = websearch_filter(
+                        'e.title', filters.term
+                    )
+                    type_specific_filters += term_filter_str
+                    params.update(term_params)
+                if filters.year:
+                    type_specific_filters += ' AND e.year >= %(year)s'
+                    params['year'] = filters.year
+
+            case 'NAME':
+                if filters.term:
+                    # Supondo a existência da função names_filter
+                    name_filter_str, term_params = names_filter(
+                        'r.name', filters.term
+                    )
+                    type_specific_filters += name_filter_str
+                    params.update(term_params)
+
+    # --- Bloco de Montagem e Execução da Query ---
+    SCRIPT_SQL = f"""
+        SELECT
+            COUNT(DISTINCT r.id) AS total,
+            COUNT(DISTINCT r.id) FILTER (WHERE r.last_update < CURRENT_DATE - INTERVAL '3 months') AS over_3_months,
+            COUNT(DISTINCT r.id) FILTER (WHERE r.last_update < CURRENT_DATE - INTERVAL '6 months') AS over_6_months
+        FROM
+            researcher r
+        {join_departament}
+        {join_institution}
+        {join_program}
+        {join_researcher_production}
+        {join_foment}
+        {join_type_specific}
+        WHERE 1=1
+            {general_filters}
+            {type_specific_filters}
+    """
+
+    return await conn.select(SCRIPT_SQL, params)
 
 
 def lattes_list(names: list = None, lattes: list = None) -> dict:
