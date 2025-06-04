@@ -4089,6 +4089,7 @@ async def get_speaker_metrics(
     filters: DefaultFilters,
 ):
     params = {}
+    filter_distinct = str()
 
     join_researcher = str()
     join_researcher_production = str()
@@ -4113,6 +4114,7 @@ async def get_speaker_metrics(
             """
 
     if filters.dep_id or filters.departament:
+        filter_distinct = 'DISTINCT ON (pe.title)'
         join_departament = """
             INNER JOIN ufmg.departament_researcher dpr
                 ON dpr.researcher_id = pe.researcher_id
@@ -4151,26 +4153,21 @@ async def get_speaker_metrics(
             AND i.name = ANY(%(institution)s)
             """
 
-    if filters.graduate_program_id:
-        params['graduate_program_id'] = str(filters.graduate_program_id)
+    if filters.graduate_program_id or filters.graduate_program:
         join_program = """
             INNER JOIN graduate_program_researcher gpr
                 ON gpr.researcher_id = pe.researcher_id
             INNER JOIN graduate_program gp
                 ON gpr.graduate_program_id = gp.graduate_program_id
             """
+    if filters.graduate_program_id:
+        params['graduate_program_id'] = str(filters.graduate_program_id)
         filters_sql += """
             AND gpr.graduate_program_id = %(graduate_program_id)s
             """
 
     if filters.graduate_program:
         params['graduate_program'] = filters.graduate_program.split(';')
-        join_program = """
-            INNER JOIN graduate_program_researcher gpr
-                ON gpr.researcher_id = pe.researcher_id
-            INNER JOIN graduate_program gp
-                ON gpr.graduate_program_id = gp.graduate_program_id
-            """
         filters_sql += """
             AND gp.name = ANY(%(graduate_program)s)
             AND gpr.type_ = 'PERMANENTE'
@@ -4185,6 +4182,7 @@ async def get_speaker_metrics(
         filters_sql += """
             AND rp.city = ANY(%(city)s)
             """
+
     if filters.area:
         params['area'] = filters.area.replace(' ', '_').split(';')
         if not join_researcher_production:
@@ -4207,6 +4205,7 @@ async def get_speaker_metrics(
             """
 
     if filters.graduation:
+        filter_distinct = 'DISTINCT ON (pe.title)'
         if not join_researcher:
             join_researcher = """
                 INNER JOIN researcher r
@@ -4217,27 +4216,40 @@ async def get_speaker_metrics(
             AND r.graduation = ANY(%(graduation)s)
             """
 
+    if filters.distinct:
+        filter_distinct = 'DISTINCT ON (pe.title)'
+
     SCRIPT_SQL = f"""
-        SELECT pe.year,
-            SUM(CASE WHEN nature = 'Congresso' THEN 1 ELSE 0 END) AS congress,
-            SUM(CASE WHEN nature = 'Encontro' THEN 1 ELSE 0 END) AS meeting,
-            SUM(CASE WHEN nature = 'Oficina' THEN 1 ELSE 0 END) AS workshop,
-            SUM(CASE WHEN nature = 'Outra' THEN 1 ELSE 0 END) AS other,
-            SUM(CASE WHEN nature = 'Seminário' THEN 1 ELSE 0 END) AS seminar,
-            SUM(CASE WHEN nature = 'Simpósio' THEN 1 ELSE 0 END) AS symposium
-        FROM public.participation_events pe
-            {join_researcher}
-            {join_researcher_production}
-            {join_foment}
-            {join_program}
-            {join_departament}
-            {join_institution}
-        WHERE 1=1
-            {filters_sql}
+        WITH FilteredEvents AS (
+            SELECT {filter_distinct}
+                pe.title,
+                pe.year,
+                pe.nature
+            FROM
+                public.participation_events pe
+                {join_researcher}
+                {join_researcher_production}
+                {join_foment}
+                {join_program}
+                {join_departament}
+                {join_institution}
+            WHERE 1=1
+                {filters_sql}
+            ORDER BY pe.title, pe.year
+        )
+        SELECT fe.year,
+            SUM(CASE WHEN fe.nature = 'Congresso' THEN 1 ELSE 0 END) AS congress,
+            SUM(CASE WHEN fe.nature = 'Encontro' THEN 1 ELSE 0 END) AS meeting,
+            SUM(CASE WHEN fe.nature = 'Oficina' THEN 1 ELSE 0 END) AS workshop,
+            SUM(CASE WHEN fe.nature = 'Outra' THEN 1 ELSE 0 END) AS other,
+            SUM(CASE WHEN fe.nature = 'Seminário' THEN 1 ELSE 0 END) AS seminar,
+            SUM(CASE WHEN fe.nature = 'Simpósio' THEN 1 ELSE 0 END) AS symposium
+        FROM
+            FilteredEvents fe
         GROUP BY
-            pe.year
+            fe.year
         ORDER BY
-            pe.year ASC
+            fe.year ASC;
         """
     return await conn.select(SCRIPT_SQL, params)
 
@@ -4248,16 +4260,14 @@ async def get_brand_metrics(
     filters: DefaultFilters,
 ):
     params = {}
+    filter_distinct = str()
+
     join_researcher_production = str()
     join_foment = str()
     join_program = str()
     join_institution = str()
     join_departament = str()
     join_researcher = str()
-
-    filter_distinct = str()
-    if filters.distinct:
-        filter_distinct = 'DISTINCT'
 
     filters_sql = str()
 
@@ -4285,6 +4295,7 @@ async def get_brand_metrics(
             """
 
     if filters.dep_id or filters.departament:
+        filter_distinct = 'DISTINCT ON (b.title)'
         join_researcher = """
             LEFT JOIN public.researcher r ON r.id = b.researcher_id
             """
@@ -4307,6 +4318,7 @@ async def get_brand_metrics(
             """
 
     if filters.institution:
+        filter_distinct = 'DISTINCT ON (b.title)'  # Adicionado para consistência
         join_researcher = """
             LEFT JOIN public.researcher r ON r.id = b.researcher_id
             """
@@ -4319,32 +4331,25 @@ async def get_brand_metrics(
             AND i.name = ANY(%(institution)s)
             """
 
-    if filters.graduate_program_id:
+    if filters.graduate_program_id or filters.graduate_program:
+        filter_distinct = 'DISTINCT ON (b.title)'  # Adicionado para consistência
         join_researcher = """
             LEFT JOIN public.researcher r ON r.id = b.researcher_id
             """
-        params['graduate_program_id'] = str(filters.graduate_program_id)
         join_program = """
             INNER JOIN public.graduate_program_researcher gpr
                 ON gpr.researcher_id = r.id
             INNER JOIN public.graduate_program gp
                 ON gpr.graduate_program_id = gp.graduate_program_id
             """
+    if filters.graduate_program_id:
+        params['graduate_program_id'] = str(filters.graduate_program_id)
         filters_sql += """
             AND gpr.graduate_program_id = %(graduate_program_id)s
             """
 
     if filters.graduate_program:
         params['graduate_program'] = filters.graduate_program.split(';')
-        join_researcher = """
-            LEFT JOIN public.researcher r ON r.id = b.researcher_id
-            """
-        join_program = """
-            INNER JOIN public.graduate_program_researcher gpr
-                ON gpr.researcher_id = r.id
-            INNER JOIN public.graduate_program gp
-                ON gpr.graduate_program_id = gp.graduate_program_id
-            """
         filters_sql += """
             AND gp.name = ANY(%(graduate_program)s)
             AND gpr.type_ = 'PERMANENTE'
@@ -4380,6 +4385,7 @@ async def get_brand_metrics(
             """
 
     if filters.modality:
+        filter_distinct = 'DISTINCT ON (b.title)'  # Adicionado para consistência
         if not join_researcher:
             join_researcher = """
                 LEFT JOIN public.researcher r ON r.id = b.researcher_id
@@ -4394,6 +4400,7 @@ async def get_brand_metrics(
             """
 
     if filters.graduation:
+        filter_distinct = 'DISTINCT ON (b.title)'
         if not join_researcher:
             join_researcher = """
                 LEFT JOIN public.researcher r ON r.id = b.researcher_id
@@ -4403,22 +4410,35 @@ async def get_brand_metrics(
             AND r.graduation = ANY(%(graduation)s)
             """
 
+    if filters.distinct:
+        filter_distinct = 'DISTINCT ON (b.title)'
+
     SCRIPT_SQL = f"""
-        SELECT {filter_distinct}
-            COUNT(*) AS among,
-            b.year
+        WITH FilteredBrands AS (
+            SELECT {filter_distinct}
+                b.title,
+                b.year
+            FROM
+                public.brand b
+                {join_researcher}
+                {join_researcher_production}
+                {join_foment}
+                {join_program}
+                {join_departament}
+                {join_institution}
+            WHERE 1 = 1
+                {filters_sql}
+            ORDER BY b.title, b.year
+        )
+        SELECT
+            fb.year,
+            COUNT(fb.title) AS among
         FROM
-            public.brand b
-            {join_researcher}
-            {join_researcher_production}
-            {join_foment}
-            {join_program}
-            {join_departament}
-            {join_institution}
-        WHERE 1 = 1
-            {filters_sql}
-        GROUP BY b.year
-        ORDER BY b.year ASC;
+            FilteredBrands fb
+        GROUP BY
+            fb.year
+        ORDER BY
+            fb.year ASC;
         """
     return await conn.select(SCRIPT_SQL, params)
 
