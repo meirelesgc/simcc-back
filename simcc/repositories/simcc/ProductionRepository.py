@@ -3595,7 +3595,7 @@ async def list_software_metrics(
     filter_dep = str()
 
     if filters.departament:
-        filter_distinct = 'DISTINCT'
+        filter_distinct = 'DISTINCT ON (s.title)'
         params['dep'] = filters.departament.split(';')
         join_dep = """
             INNER JOIN ufmg.departament_researcher dpr
@@ -3608,7 +3608,7 @@ async def list_software_metrics(
             """
 
     if filters.dep_id:
-        filter_distinct = 'DISTINCT'
+        filter_distinct = 'DISTINCT ON (s.title)'
         params['dep_id'] = filters.dep_id.split(';')
         join_dep = """
             INNER JOIN ufmg.departament_researcher dpr
@@ -3621,7 +3621,7 @@ async def list_software_metrics(
             """
 
     if filters.distinct:
-        filter_distinct = 'DISTINCT'
+        filter_distinct = 'DISTINCT ON (s.title)'
 
     term_filter = str()
     if filters.term:
@@ -3710,30 +3710,43 @@ async def list_software_metrics(
         filter_graduation = 'AND rg.graduation = ANY(%(graduation)s)'
 
     SCRIPT_SQL = f"""
-        SELECT s.year, COUNT({filter_distinct} s.title) among
-        FROM public.software s
-            {join_program}
-            {join_graduate_program}
-            {join_institution}
-            {join_dep}
-            {join_city}
-            {join_area}
-            {join_modality}
-            {join_graduation}
-        WHERE 1 = 1
-            {filter_id}
-            {term_filter}
-            {filter_year}
-            {filter_program}
-            {filter_dep}
-            {filter_graduate_program}
-            {filter_institution}
-            {filter_city}
-            {filter_area}
-            {filter_modality}
-            {filter_graduation}
-        GROUP BY s.year
-        ORDER BY s.year ASC;
+        WITH FilteredSoftware AS (
+            SELECT {filter_distinct}
+                s.year,
+                s.title
+            FROM
+                public.software s
+                {join_program}
+                {join_graduate_program}
+                {join_institution}
+                {join_dep}
+                {join_city}
+                {join_area}
+                {join_modality}
+                {join_graduation}
+            WHERE 1 = 1
+                {filter_id}
+                {term_filter}
+                {filter_year}
+                {filter_program}
+                {filter_dep}
+                {filter_graduate_program}
+                {filter_institution}
+                {filter_city}
+                {filter_area}
+                {filter_modality}
+                {filter_graduation}
+                ORDER BY s.title, s.year
+        )
+        SELECT
+            fs.year,
+            COUNT(fs.title) AS among
+        FROM
+            FilteredSoftware fs
+        GROUP BY
+            fs.year
+        ORDER BY
+            fs.year ASC;
     """
     return await conn.select(SCRIPT_SQL, params)
 
