@@ -41,11 +41,11 @@ def bibliographic_production_count():
 
     columns = [
         'researcher_id',
-        'book',
-        'book_chapter',
-        'article',
-        'work_in_event',
-        'text_in_newspaper_magazine',
+        'BOOK',
+        'BOOK_CHAPTER',
+        'ARTICLE',
+        'WORK_IN_EVENT',
+        'TEXT_IN_NEWSPAPER_MAGAZINE',
     ]
 
     bibliographic_production = bibliographic_production.reindex(
@@ -129,6 +129,7 @@ if __name__ == '__main__':
 
     researchers = list_researchers()
     researchers = pd.DataFrame(researchers)
+
     b_production = bibliographic_production_count()
     columns = ['researcher_id', 'book', 'book_chapter', 'article', 'work_in_event', 'text_in_newspaper_magazine']  # fmt: skip
     b_production = pd.DataFrame(b_production, columns=columns)
@@ -140,15 +141,19 @@ if __name__ == '__main__':
     great_area = list_great_area()
     columns = ['researcher_id', 'area']
     great_area = pd.DataFrame(great_area, columns=columns)
+
     software = list_software()
     columns = ['researcher_id', 'software']
     software = pd.DataFrame(software, columns=columns)
+
     brand = list_brand()
     columns = ['researcher_id', 'brand']
     brand = pd.DataFrame(brand, columns=columns)
+
     patent = list_patent()
     columns = ['researcher_id', 'patent']
     patent = pd.DataFrame(patent, columns=columns)
+
     address = list_address()
     columns = ['researcher_id', 'city', 'organ']
     address = pd.DataFrame(address, columns=columns)
@@ -166,7 +171,6 @@ if __name__ == '__main__':
 
     researchers = researchers.replace(np.nan, None)
     researchers = researchers.rename(columns=str.lower)
-
     for _, researcher in researchers.iterrows():
         SCRIPT_SQL = """
             INSERT INTO researcher_production
@@ -179,6 +183,7 @@ if __name__ == '__main__':
                 %(area)s, %(area_specialty)s, %(city)s, %(organ)s);
             """
         print(f'Inserting row for researcher: {_}')
+        print(researcher.to_dict())
         conn.exec(SCRIPT_SQL, researcher.to_dict())
         logger_researcher_routine(researcher.researcher_id, 'PRODUCTION', False)
     logger_routine('PRODUCTION', False)
