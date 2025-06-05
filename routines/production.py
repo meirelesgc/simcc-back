@@ -41,15 +41,21 @@ def bibliographic_production_count():
 
     columns = [
         'researcher_id',
-        'BOOK',
-        'WORK_IN_EVENT',
-        'ARTICLE',
-        'BOOK_CHAPTER',
+        'book',
+        'book_chapter',
+        'article',
+        'work_in_event',
+        'text_in_newspaper_magazine',
     ]
 
     bibliographic_production = bibliographic_production.reindex(
         columns, axis='columns', fill_value=0
     )
+
+    bibliographic_production.columns = (
+        bibliographic_production.columns.str.lower()
+    )
+
     return bibliographic_production.to_dict(orient='records')
 
 
@@ -123,12 +129,9 @@ if __name__ == '__main__':
 
     researchers = list_researchers()
     researchers = pd.DataFrame(researchers)
-
-    bibliographic_production = bibliographic_production_count()
-    columns = ['researcher_id', 'book', 'work_in_event', 'article', 'book_chapter']  # fmt: skip  # noqa: E501
-    bibliographic_production = pd.DataFrame(
-        bibliographic_production, columns=columns
-    )
+    b_production = bibliographic_production_count()
+    columns = ['researcher_id', 'book', 'book_chapter', 'article', 'work_in_event', 'text_in_newspaper_magazine']  # fmt: skip
+    b_production = pd.DataFrame(b_production, columns=columns)
 
     area_speciality = list_speciality()
     columns = ['researcher_id', 'area_specialty']
@@ -137,28 +140,21 @@ if __name__ == '__main__':
     great_area = list_great_area()
     columns = ['researcher_id', 'area']
     great_area = pd.DataFrame(great_area, columns=columns)
-
     software = list_software()
     columns = ['researcher_id', 'software']
     software = pd.DataFrame(software, columns=columns)
-
     brand = list_brand()
     columns = ['researcher_id', 'brand']
     brand = pd.DataFrame(brand, columns=columns)
-
     patent = list_patent()
     columns = ['researcher_id', 'patent']
     patent = pd.DataFrame(patent, columns=columns)
-
     address = list_address()
     columns = ['researcher_id', 'city', 'organ']
     address = pd.DataFrame(address, columns=columns)
-
     # Merge the dataframes
+    researchers = researchers.merge(b_production, how='left', on='researcher_id')
 
-    researchers = researchers.merge(
-        bibliographic_production, how='left', on='researcher_id'
-    )
     researchers = researchers.merge(
         area_speciality, how='left', on='researcher_id'
     )
