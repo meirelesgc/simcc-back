@@ -125,7 +125,6 @@ async def list_book_chapter_production(
     result = await ProductionService.list_book_chapter(
         conn, default_filters, page, lenght
     )
-    print(default_filters)
     return result
 
 

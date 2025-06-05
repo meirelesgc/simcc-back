@@ -70,6 +70,7 @@ class Researcher(BaseModel):
     classification: str
     status: bool
     institution_id: UUID
+    abstract_ai: str = None
 
     # Metrics
     among: int | str

@@ -130,7 +130,8 @@ def search_in_area_specialty(
             1 AS among, rp.articles, rp.book_chapters, rp.book, rp.patent,
             rp.software, rp.brand, opr.h_index, opr.relevance_score,
             opr.works_count, opr.cited_by_count, opr.i10_index, opr.scopus,
-            opr.openalex, r.classification, r.status, r.institution_id
+            opr.openalex, r.classification, r.status, r.institution_id,
+            r.abstract_ai
         FROM researcher r
             LEFT JOIN institution i ON i.id = r.institution_id
             LEFT JOIN researcher_production rp ON rp.researcher_id = r.id
@@ -282,7 +283,8 @@ def search_in_participation_event(
             pe.among AS among, rp.articles, rp.book_chapters, rp.book, rp.patent,
             rp.software, rp.brand, opr.h_index, opr.relevance_score,
             opr.works_count, opr.cited_by_count, opr.i10_index, opr.scopus,
-            opr.openalex, r.classification, r.status, r.institution_id
+            opr.openalex, r.classification, r.status, r.institution_id,
+            r.abstract_ai
         FROM researcher r
             LEFT JOIN institution i ON i.id = r.institution_id
             LEFT JOIN researcher_production rp ON rp.researcher_id = r.id
@@ -441,7 +443,8 @@ def search_in_book(
             1 AS among, rp.articles, rp.book_chapters, rp.book, rp.patent,
             rp.software, rp.brand, opr.h_index, opr.relevance_score,
             opr.works_count, opr.cited_by_count, opr.i10_index, opr.scopus,
-            opr.openalex, r.classification, r.status, r.institution_id
+            opr.openalex, r.classification, r.status, r.institution_id,
+            r.abstract_ai
         FROM researcher r
             LEFT JOIN institution i ON i.id = r.institution_id
             LEFT JOIN researcher_production rp ON rp.researcher_id = r.id
@@ -719,7 +722,8 @@ def search_in_articles(
             bp.among AS among, rp.articles, rp.book_chapters, rp.book, rp.patent,
             rp.software, rp.brand, opr.h_index, opr.relevance_score,
             opr.works_count, opr.cited_by_count, opr.i10_index, opr.scopus,
-            opr.openalex, r.classification, r.status, r.institution_id
+            opr.openalex, r.classification, r.status, r.institution_id,
+            r.abstract_ai
         FROM researcher r
             LEFT JOIN institution i ON i.id = r.institution_id
             LEFT JOIN researcher_production rp ON rp.researcher_id = r.id
@@ -871,7 +875,8 @@ def search_in_abstracts(
             1 AS among, rp.articles, rp.book_chapters, rp.book, rp.patent,
             rp.software, rp.brand, opr.h_index, opr.relevance_score,
             opr.works_count, opr.cited_by_count, opr.i10_index, opr.scopus,
-            opr.openalex, r.classification, r.status, r.institution_id
+            opr.openalex, r.classification, r.status, r.institution_id,
+            r.abstract_ai
         FROM researcher r
             LEFT JOIN institution i ON i.id = r.institution_id
             LEFT JOIN researcher_production rp ON rp.researcher_id = r.id
@@ -1015,7 +1020,8 @@ def search_in_name(
             1 AS among, rp.articles, rp.book_chapters, rp.book, rp.patent,
             rp.software, rp.brand, opr.h_index, opr.relevance_score,
             opr.works_count, opr.cited_by_count, opr.i10_index, opr.scopus,
-            opr.openalex, r.classification, r.status, r.institution_id
+            opr.openalex, r.classification, r.status, r.institution_id,
+            r.abstract_ai
         FROM researcher r
             LEFT JOIN institution i ON i.id = r.institution_id
             LEFT JOIN researcher_production rp ON rp.researcher_id = r.id
@@ -1119,7 +1125,8 @@ def list_outstanding_researchers(
             ors.among, rp.articles, rp.book_chapters, rp.book, rp.patent,
             rp.software, rp.brand, opr.h_index, opr.relevance_score,
             opr.works_count, opr.cited_by_count, opr.i10_index, opr.scopus,
-            opr.openalex, r.classification, r.status, r.institution_id
+            opr.openalex, r.classification, r.status, r.institution_id,
+            r.abstract_ai
         FROM researcher r
             LEFT JOIN institution i ON i.id = r.institution_id
             LEFT JOIN researcher_production rp ON rp.researcher_id = r.id
@@ -1489,7 +1496,8 @@ def search_in_patents(
             p.among, rp.articles, rp.book_chapters, rp.book, rp.patent,
             rp.software, rp.brand, opr.h_index, opr.relevance_score,
             opr.works_count, opr.cited_by_count, opr.i10_index, opr.scopus,
-            opr.openalex, r.classification, r.status, r.institution_id
+            opr.openalex, r.classification, r.status, r.institution_id,
+            r.abstract_ai
         FROM researcher r
             LEFT JOIN institution i ON i.id = r.institution_id
             LEFT JOIN researcher_production rp ON rp.researcher_id = r.id
@@ -1540,7 +1548,8 @@ def list_foment_researchers(
             1 AS among, rp.articles, rp.book_chapters, rp.book, rp.patent,
             rp.software, rp.brand, opr.h_index, opr.relevance_score,
             opr.works_count, opr.cited_by_count, opr.i10_index, opr.scopus,
-            opr.openalex, r.classification, r.status, r.institution_id
+            opr.openalex, r.classification, r.status, r.institution_id,
+            r.abstract_ai
         FROM researcher r
             LEFT JOIN institution i ON i.id = r.institution_id
             LEFT JOIN researcher_production rp ON rp.researcher_id = r.id

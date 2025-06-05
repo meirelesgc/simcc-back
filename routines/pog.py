@@ -98,7 +98,7 @@ if __name__ == '__main__':
 
     SCRIPT_SQL = """
         UPDATE researcher_production
-            SET great_area_ = STRING_TO_ARRAY(great_area, ';')
+            SET great_area_ = STRING_TO_ARRAY(great_area, ';');
         """
 
     logger_routine('POG', False)

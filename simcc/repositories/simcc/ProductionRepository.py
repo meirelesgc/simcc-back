@@ -953,7 +953,6 @@ async def list_book(
         ORDER BY bp.title desc
         {filter_pagination};
         """
-    print(SCRIPT_SQL, params)
     result = await conn.select(SCRIPT_SQL, params)
     return result
 
@@ -1137,7 +1136,6 @@ async def list_bibliographic_production(
             b.title DESC
         {filter_pagination};
         """
-    print(SCRIPT_SQL, params)
     result = await conn.select(SCRIPT_SQL, params)
     return result
 
@@ -2927,7 +2925,6 @@ async def get_researcher_metrics(
             {year_filter}
             {where_extra}
         """
-    print(SCRIPT_SQL, params)
     return await conn.select(SCRIPT_SQL, params)
 
 
