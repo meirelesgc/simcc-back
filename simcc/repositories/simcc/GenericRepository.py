@@ -107,7 +107,7 @@ async def lattes_update(
                     type_specific_filters += term_filter_str
                     params.update(term_params)
                 if filters.year:
-                    type_specific_filters += ' AND bp.year >= %(year)s'
+                    type_specific_filters += ' AND bp.year_ >= %(year)s'
                     params['year'] = filters.year
 
             case 'PATENT':
@@ -122,7 +122,7 @@ async def lattes_update(
                     params.update(term_params)
                 if filters.year:
                     type_specific_filters += (
-                        ' AND p.development_year >= %(year)s'
+                        ' AND p.development_year::INT >= %(year)s'
                     )
                     params['year'] = filters.year
 

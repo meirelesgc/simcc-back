@@ -2927,9 +2927,7 @@ async def get_researcher_metrics(
             {year_filter}
             {where_extra}
         """
-    # Ordering by year is not directly applicable here as it's a COUNT query without a GROUP BY year.
-    # If a 'year' column was part of the SELECT and GROUP BY, then ORDER BY year ASC would be added.
-    # For now, no ORDER BY clause is added as it doesn't align with the current query structure.
+    print(SCRIPT_SQL, params)
     return await conn.select(SCRIPT_SQL, params)
 
 
