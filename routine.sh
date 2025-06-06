@@ -29,6 +29,9 @@ check_error "pog"
 "${SIMCC_HOME}/.venv/bin/python" routines/production.py
 check_error "production"
 
+"${SIMCC_HOME}/.venv/bin/python" routines/researcher_class.py
+check_error "class"
+
 "${SIMCC_HOME}/.venv/bin/python" routines/researcher_image.py
 check_error "researcher_image"
 

@@ -1894,6 +1894,7 @@ async def list_guidance_production(
         query_filters += """
             AND rp.city = ANY(%(city)s)
             """
+
     if filters.area:  # Acessando via filters.area
         params['area'] = filters.area.replace(' ', '_').split(';')
         if (
@@ -1945,8 +1946,8 @@ async def list_guidance_production(
         ORDER BY g.title ASC
         {filter_pagination};
         """
-    result = await conn.select(SCRIPT_SQL, params)  # Adicionado await
-    return result
+    result = await conn.select(SCRIPT_SQL, params)
+    return sorted(result, key=lambda x: x['year'], reverse=True)
 
 
 async def list_researcher_production_events(

@@ -641,7 +641,7 @@ def production_year():
 
 def production_coauthors_csv_db():
     SCRIPT_SQL = """
-        SELECT COUNT(*) AS qtd, a.doi, a.title, ba.qualis, a.year,
+        SELECT COUNT(*) + 1 AS qtd, a.doi, a.title, ba.qualis, a.year,
             gp.graduate_program_id, gp.year AS year_pos, a.type
         FROM bibliographic_production a
             LEFT JOIN bibliographic_production_article ba
@@ -1094,6 +1094,7 @@ def dim_article_keyword():
             FROM split_words
             WHERE word <> '' AND CHAR_LENGTH(word) > 3 AND lower(trim(word)) <> ALL(%(stopwords)s)
             GROUP BY word
+            HAVING COUNT(*) > 5
         )
         SELECT word, frequency
         FROM normalized_words
@@ -1246,7 +1247,7 @@ if __name__ == '__main__':
     fat_event_organization()
     fat_participation_events()
     materialized_vision()
-    fat_article_keyword()
+    fat_article_keyword_()
     dim_article_keyword()
     fat_article_co_authorship()
     fat_keywords_cooccurrences()
