@@ -467,10 +467,10 @@ def dim_article_keyword_csv():
     return FileResponse(file_path, filename=file_name)
 
 
-@router.get('/fat_article_keyword.csv')
+@router.get('/fat_article_keyword_.csv')
 def fat_article_keyword_csv():
-    powerBI.fat_article_keyword()
-    file_name = 'fat_article_keyword.csv'
+    powerBI.fat_article_keyword_()
+    file_name = 'fat_article_keyword_.csv'
     file_path = os.path.join(STORAGE_PATH, file_name)
     return FileResponse(file_path, filename=file_name)
 

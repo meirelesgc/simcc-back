@@ -1038,7 +1038,7 @@ def materialized_vision():
     csv.to_csv(csv_path, index=True, quoting=QUOTE_ALL, encoding='utf-8-sig')
 
 
-def fat_article_keyword():
+def fat_article_keyword_():
     stopwords = nltk.corpus.stopwords.words('english')
     stopwords += nltk.corpus.stopwords.words('portuguese')
 
@@ -1068,7 +1068,7 @@ def fat_article_keyword():
     result = conn.select(SCRIPT_SQL, parameters)
 
     csv = pd.DataFrame(result)
-    csv_path = os.path.join(PATH, 'fat_article_keyword.csv')
+    csv_path = os.path.join(PATH, 'fat_article_keyword_.csv')
     csv.to_csv(csv_path)
 
 
