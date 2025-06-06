@@ -188,11 +188,14 @@ async def list_software_production(
 )
 async def list_article_production(
     default_filters: DefaultFilters = Depends(),
+    terms: str | None = None,
     qualis: str | None = None,
     page: int | None = None,
     lenght: int | None = None,
     conn: Connection = Depends(get_conn),
 ):
+    if terms:
+        default_filters.term = terms
     return await ProductionService.list_article_production(
         conn, default_filters, qualis, page, lenght
     )
