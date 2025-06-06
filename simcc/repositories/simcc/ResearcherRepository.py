@@ -1593,7 +1593,6 @@ async def academic_degree(
     join_type_specific = str()
     type_specific_filters = str()
     # Define um COUNT padrão seguro, que será sobrescrito pela lógica de tipo
-    count_among = 'COUNT(DISTINCT r.id) as among'
 
     # String para filtros gerais (que não dependem do tipo)
     general_filters = str()
@@ -1667,7 +1666,6 @@ async def academic_degree(
     if filters.type:
         match filters.type:
             case 'ABSTRACT':
-                count_among = 'COUNT(DISTINCT r.id) AS among'
                 if filters.term:
                     term_filter_str, term_params = websearch_filter(
                         'r.abstract', filters.term
@@ -1682,7 +1680,6 @@ async def academic_degree(
                 | 'WORK_IN_EVENT'
                 | 'TEXT_IN_NEWSPAPER_MAGAZINE'
             ):
-                count_among = 'COUNT(DISTINCT bp.title) AS among'
                 join_type_specific = f"INNER JOIN bibliographic_production bp ON bp.researcher_id = r.id AND bp.type = '{filters.type}'"
                 if filters.term:
                     term_filter_str, term_params_bp = websearch_filter(
@@ -1695,7 +1692,6 @@ async def academic_degree(
                     params['year'] = filters.year
 
             case 'PATENT':
-                count_among = 'COUNT(DISTINCT p.title) AS among'
                 join_type_specific = (
                     'INNER JOIN patent p ON p.researcher_id = r.id'
                 )
@@ -1712,7 +1708,6 @@ async def academic_degree(
                     params['year'] = filters.year
 
             case 'AREA':
-                count_among = 'COUNT(DISTINCT rp.researcher_id) AS among'
                 if (
                     not join_researcher_production
                 ):  # Reutiliza o JOIN se já existir
@@ -1725,7 +1720,6 @@ async def academic_degree(
                     params.update(term_params_rp)
 
             case 'EVENT':
-                count_among = 'COUNT(DISTINCT e.title) AS among'
                 join_type_specific = (
                     'INNER JOIN event_organization e ON e.researcher_id = r.id'
                 )
@@ -1740,7 +1734,6 @@ async def academic_degree(
                     params['year'] = filters.year
 
             case 'NAME':
-                count_among = 'COUNT(DISTINCT r.id) AS among'
                 if filters.term:
                     # Assumindo que a função `names_filter` existe e retorna a string do filtro
                     name_filter_str, term_params_name = names_filter(
@@ -1750,9 +1743,8 @@ async def academic_degree(
                     params.update(term_params_name)
 
     # --- Montagem e Execução da Query SQL ---
-
     SCRIPT_SQL = f"""
-        SELECT r.graduation, {count_among}
+        SELECT r.graduation, COUNT(DISTINCT r.id) AS among
         FROM public.researcher r
             {join_departament}
             {join_institution}

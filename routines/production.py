@@ -134,9 +134,9 @@ if __name__ == '__main__':
     columns = ['researcher_id', 'book', 'book_chapter', 'article', 'work_in_event', 'text_in_newspaper_magazine']  # fmt: skip
     b_production = pd.DataFrame(b_production, columns=columns)
 
-    area_speciality = list_speciality()
+    a_speciality = list_speciality()
     columns = ['researcher_id', 'area_specialty']
-    area_speciality = pd.DataFrame(area_speciality, columns=columns)
+    a_speciality = pd.DataFrame(a_speciality, columns=columns)
 
     great_area = list_great_area()
     columns = ['researcher_id', 'area']
@@ -158,11 +158,9 @@ if __name__ == '__main__':
     columns = ['researcher_id', 'city', 'organ']
     address = pd.DataFrame(address, columns=columns)
     # Merge the dataframes
-    researchers = researchers.merge(b_production, how='left', on='researcher_id')
 
-    researchers = researchers.merge(
-        area_speciality, how='left', on='researcher_id'
-    )
+    researchers = researchers.merge(b_production, how='left', on='researcher_id')
+    researchers = researchers.merge(a_speciality, how='left', on='researcher_id')
     researchers = researchers.merge(great_area, how='left', on='researcher_id')
     researchers = researchers.merge(software, how='left', on='researcher_id')
     researchers = researchers.merge(brand, how='left', on='researcher_id')
@@ -183,7 +181,6 @@ if __name__ == '__main__':
                 %(area)s, %(area_specialty)s, %(city)s, %(organ)s);
             """
         print(f'Inserting row for researcher: {_}')
-        print(researcher.to_dict())
         conn.exec(SCRIPT_SQL, researcher.to_dict())
         logger_researcher_routine(researcher.researcher_id, 'PRODUCTION', False)
     logger_routine('PRODUCTION', False)
