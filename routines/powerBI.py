@@ -1047,27 +1047,22 @@ def fat_article_keyword():
 
     SCRIPT_SQL = r"""
         WITH unified_data AS (
-            SELECT id, REGEXP_REPLACE(TRANSLATE(title, $$-\.":,;'$$, ' '), '<[^>]*>', '', 'g') AS title
-            FROM bibliographic_production
+            SELECT bp.title AS title_, REGEXP_REPLACE(TRANSLATE(bp.title, $$-\.":,;'$$, ' '), '<[^>]*>', '', 'g') AS title, bp.researcher_id
+            FROM bibliographic_production bp
             WHERE type = 'ARTICLE'
         ),
         split_words AS (
-            SELECT id, regexp_split_to_table(title, '\s+') AS word
+            SELECT title_ AS title, regexp_split_to_table(title, '\s+') AS word, researcher_id
             FROM unified_data
         ),
         normalized_words AS (
-            SELECT id, lower(trim(word)) AS word
+            SELECT title, lower(trim(word)) AS word, researcher_id
             FROM split_words
             WHERE word <> '' AND CHAR_LENGTH(word) > 3 AND lower(trim(word)) <> ALL(%(stopwords)s)
-        ),
-        words AS (
-            SELECT word, array_agg(id) AS ids, count(*) AS frequency
-            FROM normalized_words
-            GROUP BY word
-            ORDER BY frequency DESC
         )
-        SELECT word, UNNEST(ids) AS bibliographic_production_id
-        FROM words
+        SELECT title, word, researcher_id AS researcher_id 
+        FROM normalized_words 
+        ORDER BY title
         """
 
     result = conn.select(SCRIPT_SQL, parameters)

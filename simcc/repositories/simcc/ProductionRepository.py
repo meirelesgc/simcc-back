@@ -1793,7 +1793,7 @@ async def list_researcher_report(
 
 async def list_guidance_production(
     conn: Connection,
-    filters: DefaultFilters,  # Recebe a instância DefaultFilters
+    filters: DefaultFilters,
     page: int | None,
     lenght: int | None,
 ):
@@ -1942,7 +1942,7 @@ async def list_guidance_production(
             {join_institution}
         WHERE 1 = 1
             {query_filters}
-        ORDER BY g.title DESC
+        ORDER BY g.title ASC
         {filter_pagination};
         """
     result = await conn.select(SCRIPT_SQL, params)  # Adicionado await

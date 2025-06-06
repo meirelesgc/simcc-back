@@ -99,7 +99,7 @@ for _, researcher_data in enumerate(result):
         for edu in education_history:
             prompt += f'- Grau: {edu.get("degree", "N/A")} em {edu.get("education_name", "N/A")} pela {edu.get("institution", "N/A")} ({edu.get("education_start", "N/A")} - {edu.get("education_end", "Atual")})\n'
 
-    prompt += '\nO resumo deve ser detalhado, fornecendo uma visão holística da carreira e das contribuições do(a) pesquisador(a), com foco em sua área de atuação, principais conquistas e envolvimento atual. O texto deve ter aproximadamente de 5 a 8 frases.'
+    prompt += '\nO resumo deve ser detalhado, fornecendo uma visão holística da carreira e das contribuições do(a) pesquisador(a), com foco em sua área de atuação, principais conquistas e envolvimento atual. O texto deve ter aproximadamente de 700 palavras..'
 
     response = model.invoke(prompt)
     if response.content:
