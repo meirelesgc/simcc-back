@@ -1060,15 +1060,15 @@ def fat_article_keyword():
             FROM split_words
             WHERE word <> '' AND CHAR_LENGTH(word) > 3 AND lower(trim(word)) <> ALL(%(stopwords)s)
         )
-        SELECT title, word, researcher_id AS researcher_id 
-        FROM normalized_words 
+        SELECT title, word, researcher_id AS researcher_id
+        FROM normalized_words
         ORDER BY title
         """
 
     result = conn.select(SCRIPT_SQL, parameters)
 
     csv = pd.DataFrame(result)
-    csv_path = os.path.join(PATH, 'dim_article_keyword.csv')
+    csv_path = os.path.join(PATH, 'fat_article_keyword.csv')
     csv.to_csv(csv_path)
 
 

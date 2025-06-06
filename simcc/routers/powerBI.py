@@ -461,7 +461,7 @@ def materialized_vision_csv():
 
 @router.get('/dim_article_keyword.csv')
 def dim_article_keyword_csv():
-    powerBI.fat_article_keyword()
+    powerBI.dim_article_keyword()
     file_name = 'dim_article_keyword.csv'
     file_path = os.path.join(STORAGE_PATH, file_name)
     return FileResponse(file_path, filename=file_name)
