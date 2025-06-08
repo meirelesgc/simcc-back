@@ -222,15 +222,15 @@ for i, researcher_data in enumerate(researchers_to_process):
 
     prompt += """
     \n**Instrução para Geração do Resumo:**
-    Com base em TODOS os dados acima, construa um texto dissertativo e bem estruturado de aproximadamente 700 palavras. O resumo deve:
-    1. Apresentar o(a) pesquisador(a), sua afiliação principal e sua área de especialização.
-    2. Apresentar sua trajetória acadêmica e profissional, conectando suas experiências com suas linhas de pesquisa.
-    3. Destacar suas contribuições científicas, mencionando os tipos de produção mais recentes.
-    4. Incluir seu papel em programas de pós-graduação e a liderança de grupos de pesquisa, se houver.
-    5. Mencionar o envolvimento em projetos financiados e bolsas, se aplicável, como um indicador de reconhecimento e impacto.
-    6. Manter um tom formal e acadêmico, fornecendo uma visão que seja útil para a comunidade científica, potenciais colaboradores e o público em geral.
-    7. Escreva de forma o mais objetiva possivel, evite juizo de valor ou elogios ao pesquisador, você deve ser estritamente descritivo.
-    8. Não deve existir nenhum elogio direto ao pesquisador, é apenas a descrição do mesmo
+    Com base em TODOS os dados acima, elabore um texto dissertativo e estruturado com aproximadamente 700 palavras. O resumo deve:
+    1. Apresentar o(a) pesquisador(a), incluindo sua afiliação institucional principal e área de especialização.
+    2. Descrever sua trajetória acadêmica e profissional, estabelecendo conexões entre sua formação, experiências e linhas de pesquisa.
+    3. Indicar suas contribuições científicas recentes, detalhando os tipos de produção realizados.
+    4. Relatar a participação em programas de pós-graduação e eventuais funções de liderança em grupos de pesquisa.
+    5. Informar sobre projetos financiados, bolsas de pesquisa ou outras formas de apoio institucional, quando houver, como indicativos de inserção e atividade na área.
+    6. Adotar um tom formal, informativo e voltado ao público acadêmico-científico, a fim de oferecer uma visão clara e útil para a comunidade científica e possíveis colaboradores.
+    7. Utilizar linguagem objetiva e descritiva, evitando qualquer tipo de juízo de valor, adjetivações ou elogios direcionados ao pesquisador(a).
+    8. É proibido incluir qualquer forma de apreciação subjetiva, qualificações positivas ou formulações laudatórias; o texto deve ser estritamente factual e impessoal.
     """
 
     try:
