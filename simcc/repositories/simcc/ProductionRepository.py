@@ -2095,9 +2095,25 @@ async def list_researcher_production_events(
             bp.id, bp.title, bp.title_en, bp.nature, bp.language,
             bp.means_divulgation, bp.homepage, bp.relevance,
             bp.scientific_divulgation, bp.authors, bp.year_,
-            r.name, r.id AS researcher_id, r.lattes_id, r.lattes_10_id
+            r.name, r.id AS researcher_id, r.lattes_id, r.lattes_10_id,
+            bpew.event_classification,
+            bpew.event_name,
+            bpew.event_city,
+            bpew.event_year,
+            bpew.proceedings_title,
+            bpew.volume,
+            bpew.issue,
+            bpew.series,
+            bpew.start_page,
+            bpew.end_page,
+            bpew.publisher_name,
+            bpew.publisher_city,
+            bpew.event_name_english,
+            bpew.identifier_number,
+            bpew.isbn
         FROM public.bibliographic_production bp
             LEFT JOIN public.researcher r ON r.id = bp.researcher_id
+            INNER JOIN public.bibliographic_production_work_in_event bpew ON bpew.bibliographic_production_id = bp.id
             {join_researcher_production}
             {join_foment}
             {join_program}

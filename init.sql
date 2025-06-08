@@ -347,6 +347,30 @@ CREATE TABLE IF NOT EXISTS public.bibliographic_production_article (
     CONSTRAINT "FKPeriodicalMagazineArticle" FOREIGN KEY (periodical_magazine_id) REFERENCES public.periodical_magazine (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE,
     CONSTRAINT "FKPublicationArticle" FOREIGN KEY (bibliographic_production_id) REFERENCES public.bibliographic_production (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE
 );
+CREATE TABLE IF NOT EXISTS public.bibliographic_production_work_in_event(
+    bibliographic_production_id uuid NOT NULL UNIQUE,
+    event_classification character varying(100),
+    event_name character varying(600),
+    event_city character varying(255),
+    event_year integer,
+    proceedings_title character varying(600),
+    volume character varying(30),
+    issue character varying(30),
+    series character varying(100),
+    start_page character varying(30),
+    end_page character varying(30),
+    publisher_name character varying(255),
+    publisher_city character varying(255),
+    event_name_english character varying(600),
+    identifier_number character varying(100),
+    isbn character varying(20),
+    created_at timestamp without time zone NOT NULL DEFAULT now(),
+    updated_at timestamp without time zone,
+    deleted_at timestamp without time zone,
+    CONSTRAINT pk_bibliographic_production_event_work PRIMARY KEY (id),
+    CONSTRAINT fk_bibliographic_production_event_work_production FOREIGN KEY (bibliographic_production_id) 
+        REFERENCES public.bibliographic_production (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE
+);
 CREATE TABLE IF NOT EXISTS public.bibliographic_production_book (
     id uuid NOT NULL DEFAULT uuid_generate_v4(),
     bibliographic_production_id uuid NOT NULL,

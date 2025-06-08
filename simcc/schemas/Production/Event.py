@@ -1,3 +1,4 @@
+from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -16,3 +17,19 @@ class EventProduction(BaseModel):
     year_: int
     name: str | list[str]
     id: UUID | list[UUID]
+
+    event_classification: Optional[str]
+    event_name: Optional[str]
+    event_city: Optional[str]
+    event_year: Optional[int]
+    proceedings_title: Optional[str]
+    volume: Optional[str]
+    issue: Optional[str]
+    series: Optional[str]
+    start_page: Optional[str]
+    end_page: Optional[str]
+    publisher_name: Optional[str]
+    publisher_city: Optional[str]
+    event_name_english: Optional[str]
+    identifier_number: Optional[str]
+    isbn: Optional[str]
