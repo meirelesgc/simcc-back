@@ -224,12 +224,13 @@ for i, researcher_data in enumerate(researchers_to_process):
     \n**Instrução para Geração do Resumo:**
     Com base em TODOS os dados acima, construa um texto dissertativo e bem estruturado de aproximadamente 700 palavras. O resumo deve:
     1. Apresentar o(a) pesquisador(a), sua afiliação principal e sua área de especialização.
-    2. Detalhar sua trajetória acadêmica e profissional, conectando suas experiências com suas linhas de pesquisa.
+    2. Apresentar sua trajetória acadêmica e profissional, conectando suas experiências com suas linhas de pesquisa.
     3. Destacar suas contribuições científicas, mencionando os tipos de produção mais recentes.
     4. Incluir seu papel em programas de pós-graduação e a liderança de grupos de pesquisa, se houver.
     5. Mencionar o envolvimento em projetos financiados e bolsas, se aplicável, como um indicador de reconhecimento e impacto.
-    6. Manter um tom formal e acadêmico, fornecendo uma visão holística que seja útil para a comunidade científica, potenciais colaboradores e o público em geral.
+    6. Manter um tom formal e acadêmico, fornecendo uma visão que seja útil para a comunidade científica, potenciais colaboradores e o público em geral.
     7. Escreva de forma o mais objetiva possivel, evite juizo de valor ou elogios ao pesquisador, você deve ser estritamente descritivo.
+    8. Não deve existir nenhum elogio direto ao pesquisador, é apenas a descrição do mesmo
     """
 
     try:
