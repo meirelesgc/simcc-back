@@ -229,6 +229,7 @@ for i, researcher_data in enumerate(researchers_to_process):
     4. Incluir seu papel em programas de pós-graduação e a liderança de grupos de pesquisa, se houver.
     5. Mencionar o envolvimento em projetos financiados e bolsas, se aplicável, como um indicador de reconhecimento e impacto.
     6. Manter um tom formal e acadêmico, fornecendo uma visão holística que seja útil para a comunidade científica, potenciais colaboradores e o público em geral.
+    7. Escreva de forma o mais objetiva possivel, evite juizo de valor ou elogios ao pesquisador, você deve ser estritamente descritivo.
     """
 
     try:
