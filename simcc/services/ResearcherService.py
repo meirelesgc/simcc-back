@@ -7,6 +7,38 @@ from simcc.repositories.simcc import InstitutionRepository, ResearcherRepository
 from simcc.schemas.Researcher import CoAuthorship, Researcher
 
 
+def merge_researcher_data(researchers: pd.DataFrame) -> pd.DataFrame:
+    sources = {
+        'graduate_programs': ResearcherRepository.list_graduate_programs(),
+        'research_groups': ResearcherRepository.list_research_groups(),
+        'subsidy': ResearcherRepository.list_foment_data(),
+        'departments': ResearcherRepository.list_departament_data(),
+    }
+
+    for column, source in sources.items():
+        if source:
+            dataframe = pd.DataFrame(source)
+            researchers = researchers.merge(dataframe, on='id', how='left')
+        else:
+            researchers[column] = None
+
+    ufmg_data = ResearcherRepository.list_ufmg_data()
+    if ufmg_data:
+        ufmg_df = pd.DataFrame(ufmg_data)[['id']]
+        ufmg_df['ufmg'] = ufmg_data
+        researchers = researchers.merge(ufmg_df, on='id', how='left')
+    else:
+        researchers['ufmg'] = None
+    user_data = ResearcherRepository.list_user_data()
+    if user_data:
+        user_df = pd.DataFrame(user_data)[['lattes_id', 'user']]
+        researchers = researchers.merge(user_df, on='lattes_id', how='left')
+    else:
+        researchers['user'] = None
+
+    return researchers
+
+
 async def get_researcher_filter(conn):
     return await ResearcherRepository.get_researcher_filter(conn)
 
@@ -127,38 +159,6 @@ def search_in_book(
 
     researchers = researchers.replace(nan, '')
     return researchers.to_dict(orient='records')
-
-
-def merge_researcher_data(researchers: pd.DataFrame) -> pd.DataFrame:
-    sources = {
-        'graduate_programs': ResearcherRepository.list_graduate_programs(),
-        'research_groups': ResearcherRepository.list_research_groups(),
-        'subsidy': ResearcherRepository.list_foment_data(),
-        'departments': ResearcherRepository.list_departament_data(),
-    }
-
-    for column, source in sources.items():
-        if source:
-            dataframe = pd.DataFrame(source)
-            researchers = researchers.merge(dataframe, on='id', how='left')
-        else:
-            researchers[column] = None
-
-    ufmg_data = ResearcherRepository.list_ufmg_data()
-    if ufmg_data:
-        ufmg_df = pd.DataFrame(ufmg_data)[['id']]
-        ufmg_df['ufmg'] = ufmg_data
-        researchers = researchers.merge(ufmg_df, on='id', how='left')
-    else:
-        researchers['ufmg'] = None
-    user_data = ResearcherRepository.list_user_data()
-    if user_data:
-        user_df = pd.DataFrame(user_data)[['lattes_id', 'user']]
-        researchers = researchers.merge(user_df, on='lattes_id', how='left')
-    else:
-        researchers['user'] = None
-
-    return researchers
 
 
 def search_in_articles(
