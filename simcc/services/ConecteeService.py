@@ -12,8 +12,8 @@ from simcc.repositories.conectee import ConecteeRepository
 from simcc.schemas.Conectee import ResearcherData
 
 
-def get_docentes():
-    return ConecteeRepository.get_docentes()
+def get_docentes(conn, default_filters):
+    return ConecteeRepository.get_docentes(conn, default_filters)
 
 
 def get_departament():

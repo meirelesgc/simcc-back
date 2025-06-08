@@ -1,8 +1,11 @@
 from http import HTTPStatus
 from pathlib import Path
 
-from fastapi import APIRouter, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, HTTPException, UploadFile
 
+from simcc.core.connection import Connection
+from simcc.core.database import get_conn
+from simcc.schemas import DefaultFilters
 from simcc.schemas.Conectee import ResearcherData, RtMetrics, Technician
 from simcc.services import ConecteeService
 
@@ -19,8 +22,11 @@ def departament():
 
 
 @router.get('/docentes')
-def get_docentes():
-    return ConecteeService.get_docentes()
+async def get_docentes(
+    default_filters: DefaultFilters = Depends(),
+    conn: Connection = Depends(get_conn),
+):
+    return await ConecteeService.get_docentes(conn, default_filters)
 
 
 @router.get(
