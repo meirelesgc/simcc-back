@@ -37,7 +37,7 @@ class GraduateProgram(BaseModel):
     coordinator: Optional[str]
     email: Optional[str]
     start: Optional[datetime]
-    phone: Optional[datetime]
+    phone: Optional[str]
     periodicity: Optional[str]
     researchers: list = []
 
