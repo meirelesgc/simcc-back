@@ -187,8 +187,8 @@ def Qualis():
 def dim_departament():
     SCRIPT_SQL = """
         SELECT dep_id, dep_nom, 'Escola de Engenharia' AS institution,
-            '083a16f0-cccf-47d2-a676-d10b8931f66b' AS institution_id
-        FROM ufmg.departament
+            'b24e043a-c6ff-446a-a85a-14d9f944a729' AS institution_id
+        FROM ufmg.departament;
         """
     result = conn.select(SCRIPT_SQL)
     csv = pd.DataFrame(result)

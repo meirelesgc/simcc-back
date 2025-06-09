@@ -59,3 +59,13 @@ async def list_programs(
     return await GraduateProgramService.list_graduate_programs(
         conn, id, university
     )
+
+
+@router.get('/graduate_program_researcher')
+async def list_graduate_program_researcher(
+    graduate_program_id: UUID | str = None,
+    conn: Connection = Depends(get_conn),
+):
+    return await GraduateProgramService.list_graduate_program_researcher(
+        conn, graduate_program_id
+    )
