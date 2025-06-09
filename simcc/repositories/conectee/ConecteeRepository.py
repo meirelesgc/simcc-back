@@ -180,7 +180,7 @@ def get_departament(dep_id):
         WHERE 1 = 1
             {filters}
         """
-    return conn.select(SCRIPT_SQL)
+    return conn.select(SCRIPT_SQL, params)
 
 
 def get_work_regime():
