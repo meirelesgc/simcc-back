@@ -16,8 +16,8 @@ STORAGE_PATH.mkdir(parents=True, exist_ok=True)
 
 
 @router.get('/departamentos')
-def departament():
-    researcher = ConecteeService.get_departament()
+def departament(dep_id):
+    researcher = ConecteeService.get_departament(dep_id)
     return researcher
 
 
