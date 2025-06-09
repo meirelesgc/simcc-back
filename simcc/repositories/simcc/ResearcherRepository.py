@@ -1175,12 +1175,13 @@ def list_graduate_programs():
                         'phone', gp.phone,
                         'periodicity', gp.periodicity,
                         'created_at', gp.created_at,
-                        'updated_at', gp.updated_at
+                        'updated_at', gp.updated_at,
+                        'researcher_type', gpr.type_
                     )) AS graduate_programs
         FROM graduate_program_researcher gpr
         LEFT JOIN graduate_program gp
         ON gpr.graduate_program_id = gp.graduate_program_id
-        GROUP BY gpr.researcher_id;
+        GROUP BY gpr.researcher_id, gpr.type_;
         """
     result = conn.select(SCRIPT_SQL)
     return result
