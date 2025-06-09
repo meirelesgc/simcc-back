@@ -788,6 +788,7 @@ def cimatec_graduate_program():
         FROM graduate_program gp
             LEFT JOIN institution i
                 ON i.id = gp.institution_id
+        WHERE visible IS True
         """
     result = conn.select(SCRIPT_SQL)
     csv = pd.DataFrame(result)
