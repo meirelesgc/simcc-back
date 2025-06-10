@@ -489,3 +489,11 @@ def fat_keywords_cooccurrences():
     file_name = 'fat_keywords_cooccurrences.csv'
     file_path = os.path.join(STORAGE_PATH, file_name)
     return FileResponse(file_path, filename=file_name)
+
+
+@router.get('/fat_co_authorship.csv')
+def fat_co_authorship_csv():
+    powerBI.fat_co_authorship()
+    file_name = 'fat_co_authorship.csv'
+    file_path = os.path.join(STORAGE_PATH, file_name)
+    return FileResponse(file_path, filename=file_name)
