@@ -230,7 +230,6 @@ def get_researcher_foment(institution_id: UUID):
         WHERE 1 = 1
             AND s.researcher_id IS NOT NULL
             AND researcher_id NOT IN
-                (SELECT id FROM researcher WHERE docente = false)
             {filter_institution}
         """
     result = conn.select(SCRIPT_SQL, params)
