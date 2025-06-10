@@ -1186,6 +1186,31 @@ def fat_keywords_cooccurrences():
     csv.to_csv(csv_path)
 
 
+def fat_co_authorship():
+    SCRIPT_SQL = r"""
+        WITH co_articles AS (
+            SELECT title, ARRAY_AGG(researcher_id) AS co_authors
+            FROM bibliographic_production 
+            WHERE type = 'ARTICLE'
+            GROUP BY title
+        ),
+        co_authors AS (
+            SELECT bp.researcher_id, UNNEST(co_authors) AS co_author
+            FROM bibliographic_production bp 
+            INNER JOIN co_articles ON co_articles.title = bp.title
+        )
+        SELECT co_authors.researcher_id, co_authors.co_author
+        FROM co_authors
+        WHERE co_authors.researcher_id != co_authors.co_author
+        """
+
+    result = conn.select(SCRIPT_SQL)
+
+    csv = pd.DataFrame(result)
+    csv_path = os.path.join(PATH, 'fat_co_authorship.csv')
+    csv.to_csv(csv_path)
+
+
 if __name__ == '__main__':
     for directory in [PATH]:
         if not os.path.exists(directory):
