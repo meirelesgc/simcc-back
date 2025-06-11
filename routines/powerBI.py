@@ -1195,11 +1195,11 @@ def fat_co_authorship():
             GROUP BY title
         ),
         co_authors AS (
-            SELECT bp.researcher_id, UNNEST(co_authors) AS co_author
+            SELECT co_articles.title, bp.researcher_id, UNNEST(co_authors) AS co_author
             FROM bibliographic_production bp 
             INNER JOIN co_articles ON co_articles.title = bp.title
         )
-        SELECT co_authors.researcher_id, co_authors.co_author
+        SELECT co_authors.title, co_authors.researcher_id, co_authors.co_author
         FROM co_authors
         WHERE co_authors.researcher_id != co_authors.co_author
         """
