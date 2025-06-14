@@ -367,7 +367,7 @@ CREATE TABLE IF NOT EXISTS public.bibliographic_production_work_in_event(
     created_at timestamp without time zone NOT NULL DEFAULT now(),
     updated_at timestamp without time zone,
     deleted_at timestamp without time zone,
-    CONSTRAINT pk_bibliographic_production_event_work PRIMARY KEY (id),
+    CONSTRAINT pk_bibliographic_production_event_work PRIMARY KEY (bibliographic_production_id),
     CONSTRAINT fk_bibliographic_production_event_work_production FOREIGN KEY (bibliographic_production_id) 
         REFERENCES public.bibliographic_production (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE
 );

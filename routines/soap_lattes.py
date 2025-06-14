@@ -1,30 +1,47 @@
 import os
+import time
 import zipfile
 from datetime import datetime
 
 import httpx
+from requests.exceptions import RequestException
 from zeep import Client
+from zeep.exceptions import XMLSyntaxError
 
 from routines.logger import logger_researcher_routine, logger_routine
 from simcc.config import settings
 from simcc.repositories import conn, conn_admin
 
-client = Client('http://servicosweb.cnpq.br/srvcurriculo/WSCurriculo?wsdl')
-
 LOG_PATH = 'logs'
 CURRENT_XML_PATH = 'current'
 ZIP_XML_PATH = 'zip'
-
 PROXY = settings.ALTERNATIVE_CNPQ_SERVICE
+
+
+def create_zeep_client_with_retries(wsdl_url: str, max_retries=3, delay=3):
+    attempt = 0
+    while attempt < max_retries:
+        try:
+            return Client(wsdl_url)
+        except (RequestException, XMLSyntaxError, ConnectionResetError) as e:
+            attempt += 1
+            print(f'Tentativa {attempt} falhou ao conectar ao WSDL: {e}')
+            if attempt >= max_retries:
+                raise
+            time.sleep(delay)
+
+
+client = create_zeep_client_with_retries(
+    'http://servicosweb.cnpq.br/srvcurriculo/WSCurriculo?wsdl'
+)
 
 
 def list_admin_researchers():
     SCRIPT_SQL = """
         SELECT researcher_id, name, lattes_id
         FROM public.researcher;
-        """
-    result = conn_admin.select(SCRIPT_SQL)
-    return result
+    """
+    return conn_admin.select(SCRIPT_SQL)
 
 
 def cnpq_att(lattes_id) -> datetime:
@@ -48,7 +65,7 @@ def database_att(lattes_id) -> datetime:
         SELECT last_update
         FROM researcher
         WHERE lattes_id = %(lattes_id)s;
-        """
+    """
     result = conn.select(SCRIPT_SQL, params)
     if result:
         return result[0].get('last_update')
@@ -71,6 +88,7 @@ def download_xml(lattes_id, researcher_id):
     except httpx.Timeout as E:
         logger_researcher_routine(researcher_id, 'SOAP_LATTES', True, str(E))
         return
+
     try:
         zip_path = os.path.join(ZIP_XML_PATH, lattes_id + '.zip')
         with open(zip_path, 'wb') as XML:
@@ -107,9 +125,9 @@ if __name__ == '__main__':
         print(f'Pesquisador: [{researcher.get("name")}]')
         print(f'Lattes: [{researcher.get("lattes_id")}]')
 
-        lattes_id = researcher.get('lattes_id')
-        lattes_id = lattes_id.zfill(16)
+        lattes_id = researcher.get('lattes_id').zfill(16)
         researcher_id = researcher['researcher_id']
         download_xml(lattes_id, researcher_id)
+
     logger_routine('SOAP_LATTES', False)
     print('FIM!')
