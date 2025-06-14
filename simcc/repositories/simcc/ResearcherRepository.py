@@ -1180,7 +1180,7 @@ def list_graduate_programs():
         FROM graduate_program_researcher gpr
         LEFT JOIN graduate_program gp
         ON gpr.graduate_program_id = gp.graduate_program_id
-        GROUP BY gpr.researcher_id;
+        GROUP BY gpr.researcher_id
         """
     result = conn.select(SCRIPT_SQL)
     return result
@@ -1580,7 +1580,6 @@ def list_foment_researchers(
             LEFT JOIN openalex_researcher opr ON opr.researcher_id = r.id
             INNER JOIN foment f ON f.researcher_id = r.id
         WHERE 1 = 1
-            AND i.acronym != 'UICL'
         ORDER BY
             among DESC
             {filter_pagination};

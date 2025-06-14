@@ -4,6 +4,29 @@ from simcc.core.connection import Connection
 from simcc.repositories.util import websearch_filter
 
 
+async def list_graduate_program_researcher(conn, graduate_program_id):
+    params = {}
+    filters = str()
+
+    if graduate_program_id:
+        params['graduate_program_id'] = graduate_program_id
+        filters += 'AND gpr.graduate_program_id = %(graduate_program_id)s'
+    SCRIPT_SQL = f"""
+        SELECT
+            r.id AS researcher_id,
+            r.name,
+            graduate_program_id,
+            gpr.type_,
+            gpr.year
+        FROM
+            graduate_program_researcher gpr
+            LEFT JOIN researcher r ON gpr.researcher_id = r.id
+        WHERE 1 = 1
+            {filters}
+        """
+    return await conn.select(SCRIPT_SQL, params)
+
+
 async def get_research_lines(
     conn: Connection, program_id: UUID, university: str = None, term: str = None
 ):

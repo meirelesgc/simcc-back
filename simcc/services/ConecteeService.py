@@ -16,8 +16,8 @@ def get_docentes(conn, default_filters):
     return ConecteeRepository.get_docentes(conn, default_filters)
 
 
-def get_departament():
-    return ConecteeRepository.get_departament()
+def get_departament(dep_id):
+    return ConecteeRepository.get_departament(dep_id)
 
 
 def get_work_regime():

@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
@@ -35,7 +36,7 @@ class GraduateProgram(BaseModel):
     site: Optional[str]
     coordinator: Optional[str]
     email: Optional[str]
-    start: Optional[str]
+    start: Optional[datetime]
     phone: Optional[str]
     periodicity: Optional[str]
     researchers: list = []

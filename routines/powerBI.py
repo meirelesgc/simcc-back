@@ -187,8 +187,8 @@ def Qualis():
 def dim_departament():
     SCRIPT_SQL = """
         SELECT dep_id, dep_nom, 'Escola de Engenharia' AS institution,
-            '083a16f0-cccf-47d2-a676-d10b8931f66b' AS institution_id
-        FROM ufmg.departament
+            'b24e043a-c6ff-446a-a85a-14d9f944a729' AS institution_id
+        FROM ufmg.departament;
         """
     result = conn.select(SCRIPT_SQL)
     csv = pd.DataFrame(result)
@@ -788,6 +788,7 @@ def cimatec_graduate_program():
         FROM graduate_program gp
             LEFT JOIN institution i
                 ON i.id = gp.institution_id
+        WHERE visible IS True
         """
     result = conn.select(SCRIPT_SQL)
     csv = pd.DataFrame(result)
@@ -1182,6 +1183,31 @@ def fat_keywords_cooccurrences():
 
     csv = pd.DataFrame(result)
     csv_path = os.path.join(PATH, 'fat_keywords_cooccurrences.csv')
+    csv.to_csv(csv_path)
+
+
+def fat_co_authorship():
+    SCRIPT_SQL = r"""
+        WITH co_articles AS (
+            SELECT title, ARRAY_AGG(researcher_id) AS co_authors
+            FROM bibliographic_production 
+            WHERE type = 'ARTICLE'
+            GROUP BY title
+        ),
+        co_authors AS (
+            SELECT co_articles.title, bp.researcher_id, UNNEST(co_authors) AS co_author
+            FROM bibliographic_production bp 
+            INNER JOIN co_articles ON co_articles.title = bp.title
+        )
+        SELECT co_authors.title, co_authors.researcher_id, co_authors.co_author
+        FROM co_authors
+        WHERE co_authors.researcher_id != co_authors.co_author
+        """
+
+    result = conn.select(SCRIPT_SQL)
+
+    csv = pd.DataFrame(result)
+    csv_path = os.path.join(PATH, 'fat_co_authorship.csv')
     csv.to_csv(csv_path)
 
 

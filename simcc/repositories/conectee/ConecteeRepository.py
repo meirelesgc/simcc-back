@@ -156,8 +156,15 @@ async def get_docentes(conn, filters):
     return await conn.select(SCRIPT_SQL, params)
 
 
-def get_departament():
-    SCRIPT_SQL = """
+def get_departament(dep_id):
+    params = {}
+
+    filters = str()
+    if dep_id:
+        params['dep_id'] = dep_id
+        filters += 'AND d.dep_id = %(dep_id)s'
+
+    SCRIPT_SQL = f"""
         WITH researchers AS (
             SELECT dep_id, ARRAY_AGG(r.name) AS researchers
             FROM ufmg.departament_researcher dp
@@ -171,8 +178,9 @@ def get_departament():
             LEFT JOIN researchers r
                 ON r.dep_id = d.dep_id
         WHERE 1 = 1
+            {filters}
         """
-    return conn.select(SCRIPT_SQL)
+    return conn.select(SCRIPT_SQL, params)
 
 
 def get_work_regime():
