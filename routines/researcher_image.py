@@ -23,7 +23,7 @@ def get_lattes_id_10(lattes_id: str) -> str:
 
     url = f'http://lattes.cnpq.br/{lattes_id}'
     with httpx.Client(follow_redirects=True) as client:
-        response = client.get(url, headers=headers)
+        response = client.get(url, headers=headers, timeout=30.0)
         response.raise_for_status()
 
         soup = BeautifulSoup(response.content, 'html.parser')
@@ -47,7 +47,6 @@ def update_lattes_id_10(researcher):
         'id': researcher['researcher_id'],
         'lattes_10_id': lattes_10_id,
     }
-
     conn.exec(SCRIPT_SQL, params)
 
 
