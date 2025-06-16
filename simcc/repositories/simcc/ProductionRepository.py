@@ -336,7 +336,7 @@ async def professional_experience(
     if filters.year:
         params['year'] = filters.year
         query_filters += """
-            AND rpe.start_year >= %(year)s OR rpe.end_year >= %(year)s
+            AND (rpe.start_year >= %(year)s OR rpe.end_year >= %(year)s)
             """
 
     if filters.dep_id or filters.departament:
