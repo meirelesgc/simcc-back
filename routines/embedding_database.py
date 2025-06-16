@@ -86,9 +86,9 @@ def process_openalex_abstracts():
     """Fetches, embeds, and stores abstracts from OpenAlex articles."""
     print('\n--- Stage 3: Processing OpenAlex Article Abstracts ---')
     select_query = """
-        SELECT id, abstract AS text
-        FROM openalex_article 
-        WHERE abstract IS NOT NULL AND article_id NOT IN 
+        SELECT article_id AS id, abstract AS text
+        FROM openalex_article
+        WHERE abstract IS NOT NULL AND article_id NOT IN
         (SELECT reference_id FROM embeddings.article_abstract);
     """
     records = conn.select(select_query)
@@ -117,7 +117,6 @@ def process_openalex_abstracts():
 
 
 def process_book_titles():
-    """Fetches, embeds, and stores titles for books."""
     print('\n--- Stage 4: Processing Book Titles ---')
     select_query = """
         SELECT id, title AS text
