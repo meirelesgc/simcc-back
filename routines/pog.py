@@ -103,4 +103,25 @@ if __name__ == '__main__':
         """
     conn.exec(SCRIPT_SQL)
 
+    SCRIPT_SQL = """
+        WITH ranked AS (
+        SELECT id,
+                ROW_NUMBER() OVER (
+                PARTITION BY researcher_id, enterprise, start_year, end_year,
+                                employment_type, other_employment_type,
+                                functional_classification, other_functional_classification,
+                                workload_hours_weekly, exclusive_dedication, additional_info
+                ORDER BY id
+                ) AS rn
+        FROM public.researcher_professional_experience
+        )
+        DELETE FROM public.researcher_professional_experience
+        WHERE id IN (
+        SELECT id
+        FROM ranked
+        WHERE rn > 1
+        );
+        """
+    conn.exec(SCRIPT_SQL)
+
     logger_routine('POG', False)
