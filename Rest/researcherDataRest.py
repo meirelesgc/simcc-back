@@ -1,4 +1,5 @@
 from http import HTTPStatus
+
 import pandas as pd
 from flask import Blueprint, jsonify, request, send_file
 
@@ -7,7 +8,6 @@ import Dao.researcherSQL as researcherSQL
 from Dao import sgbdSQL
 from Model.City import City
 from rest_imageResearcher import download_image
-from unidecode import unidecode
 
 researcherDataRest = Blueprint("researcherDataRest", __name__)
 
@@ -30,7 +30,7 @@ def image():
             FROM
                 researcher
             WHERE
-                unaccent(LOWER(name)) ILIKE '{unidecode(name.lower())}%'
+                name = '{name}'
             LIMIT 1;"""
         researcher_id = sgbdSQL.consultar_db(script_sql)
         if researcher_id:
