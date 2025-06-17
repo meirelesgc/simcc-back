@@ -3072,7 +3072,8 @@ async def list_article_metrics(
     SCRIPT_SQL = f"""
         SELECT bp.year, SUM(opa.citations_count) AS citations,
             ARRAY_AGG(bpa.qualis) AS qualis, ARRAY_AGG(bpa.jcr) AS jcr,
-            COUNT({filter_distinct} bp.title) AS among
+            COUNT({filter_distinct} bp.title) AS among, COUNT(DISTINCT bp.doi) 
+            AS count_doi
         FROM researcher r
             LEFT JOIN bibliographic_production bp ON bp.researcher_id = r.id
             INNER JOIN bibliographic_production_article bpa ON bpa.bibliographic_production_id = bp.id

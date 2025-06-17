@@ -124,4 +124,10 @@ if __name__ == '__main__':
         """
     conn.exec(SCRIPT_SQL)
 
+    SCRIPT_SQL = """
+        UPDATE guidance
+        SET title = regexp_replace(title, '<a[^>]*>|</a>', '', 'gi');
+        """
+    conn.exec(SCRIPT_SQL)
+
     logger_routine('POG', False)

@@ -32,6 +32,7 @@ class ArticleMetric(BaseModel):
     qualis: Qualis
     jcr: Jcr
     citations: int | None
+    count_doi: int
 
 
 class Article(BaseModel):
