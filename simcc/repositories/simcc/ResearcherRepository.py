@@ -1688,25 +1688,18 @@ async def academic_degree(
     conn: Connection,
     filters: DefaultFilters,
 ):
-    # --- Bloco de Inicialização ---
     params = {}
 
-    # Variáveis para JOINs gerais
     join_researcher_production = str()
     join_foment = str()
     join_program = str()
     join_institution = str()
     join_departament = str()
 
-    # Variáveis para a lógica do filtro de tipo
     join_type_specific = str()
     type_specific_filters = str()
-    # Define um COUNT padrão seguro, que será sobrescrito pela lógica de tipo
 
-    # String para filtros gerais (que não dependem do tipo)
     general_filters = str()
-
-    # --- Bloco de Filtros Gerais ---
 
     if filters.researcher_id:
         params['researcher_id'] = str(filters.researcher_id)
@@ -1718,7 +1711,6 @@ async def academic_degree(
             INNER JOIN ufmg.departament dp ON dp.dep_id = dpr.dep_id
             """
     if filters.dep_id:
-        # CORREÇÃO: Trata múltiplos IDs e usa ANY
         params['dep_id'] = filters.dep_id.split(';')
         general_filters += ' AND dp.dep_id = ANY(%(dep_id)s)'
 
@@ -1728,9 +1720,9 @@ async def academic_degree(
 
     if filters.institution:
         params['institution'] = filters.institution.split(';')
-        join_institution = (
-            ' INNER JOIN public.institution i ON r.institution_id = i.id'
-        )
+        join_institution = """
+            INNER JOIN public.institution i ON r.institution_id = i.id
+            """
         general_filters += ' AND i.name = ANY(%(institution)s)'
 
     if filters.graduate_program_id or filters.graduate_program:
@@ -1758,19 +1750,17 @@ async def academic_degree(
         params['area'] = filters.area.replace(' ', '_').split(';')
         if not join_researcher_production:
             join_researcher_production = ' LEFT JOIN public.researcher_production rp ON rp.researcher_id = r.id'
-        # CORREÇÃO: Usa STRING_TO_ARRAY e verifica o nome da coluna (assumindo 'great_area')
         general_filters += " AND STRING_TO_ARRAY(REPLACE(rp.great_area, ' ', '_'), ';') && %(area)s"
 
     if filters.modality:
         params['modality'] = filters.modality.split(';')
         join_foment = ' INNER JOIN public.foment f ON f.researcher_id = r.id'
-        general_filters += ' AND f.modality_name = ANY(%(modality)s)'
+        if filters.modality != '*':
+            general_filters += ' AND f.modality_name = ANY(%(modality)s)'
 
     if filters.graduation:
         params['graduation'] = filters.graduation.split(';')
         general_filters += ' AND r.graduation = ANY(%(graduation)s)'
-
-    # --- Bloco de Filtro por Tipo (Lógica Principal) ---
 
     if filters.type:
         match filters.type:
@@ -1875,7 +1865,6 @@ async def get_great_area(
     conn: Connection,
     filters: DefaultFilters,
 ):
-    # --- Bloco de Inicialização (sem alterações) ---
     params = {}
     join_departament = str()
     join_institution = str()
@@ -1885,7 +1874,6 @@ async def get_great_area(
     join_type_specific = str()
     type_specific_filters = str()
 
-    # --- Bloco de Construção dos Filtros (sem alterações na lógica Python) ---
     if filters.researcher_id:
         params['researcher_id'] = str(filters.researcher_id)
         general_filters += ' AND r.id = %(researcher_id)s'
@@ -1916,9 +1904,9 @@ async def get_great_area(
             """
         if filters.graduate_program_id:
             params['graduate_program_id'] = str(filters.graduate_program_id)
-            general_filters += (
-                ' AND gpr.graduate_program_id = %(graduate_program_id)s'
-            )
+            general_filters += """
+                AND gpr.graduate_program_id = %(graduate_program_id)s
+                """
         if filters.graduate_program:
             params['graduate_program'] = filters.graduate_program.split(';')
             general_filters += ' AND gp.name = ANY(%(graduate_program)s)'
@@ -1934,7 +1922,10 @@ async def get_great_area(
     if filters.modality:
         join_foment = ' INNER JOIN public.foment f ON f.researcher_id = r.id'
         params['modality'] = filters.modality.split(';')
-        general_filters += ' AND f.modality_name = ANY(%(modality)s)'
+        if filters.modality != '*':
+            general_filters += """
+            AND f.modality_name = ANY(%(modality)s)
+            """
 
     if filters.graduation:
         params['graduation'] = filters.graduation.split(';')
