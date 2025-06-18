@@ -560,22 +560,38 @@ async def get_researcher_filter(conn):
 
 
 def list_article_production(
-    program_id: UUID, year: int
+    program_id: UUID, dep_id: str, year: int
 ) -> list[ResearcherArticleProduction]:
     params = {}
+    filters = str()
 
-    program_filter = str()
+    join_program = str()
+    join_departament = str()
+
+    if dep_id:
+        params['dep_id'] = dep_id
+        filters += """
+            AND dpr.dep_id = %(dep_id)s
+            """
+        join_departament = """
+            INNER JOIN ufmg.departament_researcher dpr
+            ON dpr.researcher_id = r.id
+            """
+
     if program_id:
         params['program_id'] = program_id
-        program_filter = """
+        filters += """
             AND gpr.graduate_program_id = %(program_id)s
             AND gpr.type_ = 'PERMANENTE'
             """
+        join_program = """
+            INNER JOIN graduate_program_researcher gpr
+            ON gpr.researcher_id = r.id
+            """
 
-    year_filter = str()
     if year:
         params['year'] = year
-        year_filter = 'AND bp.year::int >= %(year)s'
+        filters += 'AND bp.year::int >= %(year)s'
 
     SCRIPT_SQL = f"""
         SELECT r.name, bpa.qualis, COUNT(*) AS among, bp.year,
@@ -585,12 +601,11 @@ def list_article_production(
             RIGHT JOIN bibliographic_production_article bpa
                 ON bpa.bibliographic_production_id = bp.id
             LEFT JOIN openalex_article opa ON opa.article_id = bp.id
-            LEFT JOIN graduate_program_researcher gpr ON gpr.researcher_id = r.id
+            {join_program}
+            {join_departament}
         WHERE 1 = 1
-            {program_filter}
-            {year_filter}
-        GROUP BY r.id, bpa.qualis, bp.year
-        HAVING 1 = 1;
+            {filters}
+        GROUP BY r.id, bpa.qualis, bp.year;
         """
 
     result = conn.select(SCRIPT_SQL, params)

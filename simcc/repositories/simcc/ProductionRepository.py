@@ -2751,19 +2751,18 @@ async def get_researcher_metrics(
     filters: DefaultFilters,
 ):
     params = {}
-    join_filter = str()  # Specific join for the 'type' filter (bibliographic production, patent, area, event)
-    type_filter = str()  # Specific where clause for the 'type' filter
-    year_filter = str()  # Specific year filter for certain 'type' cases
-    filter_name = str()  # Specific filter for researcher name
+    join_filter = str()
+    type_filter = str()
+    year_filter = str()
+    filter_name = str()
 
-    # Initialize all potential shared joins as empty strings
     join_departament = str()
     join_program = str()
-    join_researcher_production = str()  # Used for city and area
+    join_researcher_production = str()
     join_foment = str()
 
-    where_extra = str()  # Accumulates general 'AND' conditions
-    count_among = 'COUNT(*) as among'  # Default count
+    where_extra = str()
+    count_among = 'COUNT(*) as among'
 
     match filters.type:
         case 'ABSTRACT':
@@ -2909,12 +2908,11 @@ async def get_researcher_metrics(
                 """
 
     if filters.modality:
-        if not join_foment:  # Ensure join is added only once
-            join_foment = """
-                INNER JOIN foment f ON f.researcher_id = r.id
+        join_foment = """
+            INNER JOIN foment f ON f.researcher_id = r.id
             """
         params['modality'] = filters.modality.split(';')
-        if filters.modality != '*':  # Only add filter if not wildcard
+        if filters.modality != '*':
             where_extra += 'AND f.modality_name = ANY(%(modality)s)'
 
     if filters.graduation:

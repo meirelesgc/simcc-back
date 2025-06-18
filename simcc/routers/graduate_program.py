@@ -44,7 +44,7 @@ async def get_research_lines(
     response_model=list[Researcher.ResearcherArticleProduction],
 )
 def article_production(program_id: UUID, year: int = 2020):
-    return GraduateProgramService.list_article_production(program_id, year)
+    return GraduateProgramService.list_article_production(program_id, None, year)
 
 
 @router.get(

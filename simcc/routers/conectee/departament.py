@@ -5,14 +5,23 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile
 
 from simcc.core.connection import Connection
 from simcc.core.database import get_conn
-from simcc.schemas import DefaultFilters
+from simcc.schemas import DefaultFilters, Researcher
 from simcc.schemas.Conectee import ResearcherData, RtMetrics, Technician
-from simcc.services import ConecteeService
+from simcc.services import ConecteeService, GraduateProgramService
 
 router = APIRouter()
 
+
 STORAGE_PATH = Path('storage/conectee')
 STORAGE_PATH.mkdir(parents=True, exist_ok=True)
+
+
+@router.get(
+    '/departament/{dep_id}/article_production',
+    response_model=list[Researcher.ResearcherArticleProduction],
+)
+def article_production(dep_id: str, year: int = 2020):
+    return GraduateProgramService.list_article_production(None, dep_id, year)
 
 
 @router.get('/departamentos')

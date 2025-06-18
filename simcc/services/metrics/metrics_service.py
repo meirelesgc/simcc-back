@@ -2,44 +2,15 @@ from uuid import UUID
 
 import pandas as pd
 
-from simcc.core.connection import Connection
-from simcc.repositories.simcc import (
-    GraduateProgramRepository,
-    ResearcherRepository,
-)
+from simcc.repositories.simcc import ResearcherRepository
 from simcc.schemas.Researcher import ResearcherArticleProduction
 
 
-async def list_graduate_program_researcher(conn, graduate_program_id):
-    return await GraduateProgramRepository.list_graduate_program_researcher(  # fmt:skip
-        conn, graduate_program_id
-    )
-
-
-async def get_research_lines(
-    conn: Connection,
-    program_id: UUID = None,
-    university: str = None,
-    term: str = None,
-):
-    return await GraduateProgramRepository.get_research_lines(
-        conn, program_id, university, term
-    )
-
-
-async def list_graduate_programs(
-    conn: Connection, program_id: UUID = None, university: str = None
-):
-    return await GraduateProgramRepository.list_graduate_programs(
-        conn, program_id, university
-    )
-
-
 def list_article_production(
-    program_id: UUID, dep_id: str, year: int
+    program_id: UUID, year: int
 ) -> ResearcherArticleProduction:
     article_production = ResearcherRepository.list_article_production(
-        program_id, dep_id, year
+        program_id, year
     )
     if not article_production:
         return []
