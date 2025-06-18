@@ -1568,7 +1568,7 @@ def search_in_patents(
     return result
 
 
-def list_foment_researchers(default_filters, conn):
+async def list_foment_researchers(default_filters, conn):
     params = {}
 
     query_filters = str()
@@ -1670,7 +1670,7 @@ def list_foment_researchers(default_filters, conn):
             among DESC;
         """
 
-    result = conn.select(SCRIPT_SQL, params)
+    result = await conn.select(SCRIPT_SQL, params)
     return result
 
 
