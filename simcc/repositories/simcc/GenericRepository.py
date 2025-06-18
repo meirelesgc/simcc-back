@@ -12,7 +12,6 @@ async def lattes_update(
     conn: Connection,
     filters: DefaultFilters,
 ):
-    # --- Bloco de Inicialização ---
     params = {}
     join_departament = str()
     join_institution = str()
@@ -23,7 +22,6 @@ async def lattes_update(
     general_filters = str()
     type_specific_filters = str()
 
-    # --- Bloco de Construção dos Filtros Gerais ---
     if filters.researcher_id:
         params['researcher_id'] = str(filters.researcher_id)
         general_filters += ' AND r.id = %(researcher_id)s'
@@ -81,7 +79,6 @@ async def lattes_update(
         params['graduation'] = filters.graduation.split(';')
         general_filters += ' AND r.graduation = ANY(%(graduation)s)'
 
-    # --- Bloco de Filtro por Tipo (Lógica Principal COMPLETA) ---
     if filters.type:
         match filters.type:
             case 'ABSTRACT':

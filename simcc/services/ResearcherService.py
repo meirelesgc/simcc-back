@@ -370,8 +370,10 @@ def search_in_patents(
     return researchers.to_dict(orient='records')
 
 
-def list_foment_researchers():
-    researchers = ResearcherRepository.list_foment_researchers()
+def list_foment_researchers(default_filters, conn):
+    researchers = ResearcherRepository.list_foment_researchers(
+        default_filters, conn
+    )
     if not researchers:
         return []
 

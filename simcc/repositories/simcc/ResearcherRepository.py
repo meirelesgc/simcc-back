@@ -1568,15 +1568,83 @@ def search_in_patents(
     return result
 
 
-def list_foment_researchers(
-    page: int = None,
-    lenght: int = None,
-):
+def list_foment_researchers(default_filters, conn):
     params = {}
 
-    filter_pagination = str()
-    if page and lenght:
-        filter_pagination = pagination(page, lenght)
+    query_filters = str()
+    join_departament = str()
+    join_program = str()
+
+    if default_filters.term:
+        filter_terms, term = websearch_filter('r.name', default_filters.term)
+        query_filters += filter_terms
+        params.update(term)
+
+    if default_filters.researcher_id:
+        params['researcher_id'] = str(default_filters.researcher_id)
+        query_filters += """
+            AND r.id = %(researcher_id)s
+            """
+
+    if default_filters.dep_id or default_filters.departament:
+        join_departament = """
+            INNER JOIN ufmg.departament_researcher dpr
+                ON dpr.researcher_id = r.id
+            INNER JOIN ufmg.departament dp
+                ON dp.dep_id = dpr.dep_id
+            """
+    if default_filters.dep_id:
+        params['dep_id'] = default_filters.dep_id
+        query_filters += """
+            AND dp.dep_id = %(dep_id)s
+            """
+
+    if default_filters.departament:
+        params['departament'] = default_filters.departament.split(';')
+        query_filters += """
+            AND dp.dep_nom = ANY(%(departament)s)
+            """
+
+    if default_filters.institution:
+        params['institution'] = default_filters.institution.split(';')
+        query_filters += """
+            AND i.name = ANY(%(institution)s)
+            """
+
+    if default_filters.graduate_program_id or default_filters.graduate_program:
+        join_program = """
+            INNER JOIN public.graduate_program_researcher gpr
+                ON gpr.researcher_id = r.id
+            INNER JOIN public.graduate_program gp
+                ON gpr.graduate_program_id = gp.graduate_program_id
+            """
+    if default_filters.graduate_program_id:
+        params['graduate_program_id'] = str(default_filters.graduate_program_id)
+        query_filters += """
+            AND gpr.graduate_program_id = %(graduate_program_id)s
+            """
+
+    if default_filters.graduate_program:
+        params['graduate_program'] = default_filters.graduate_program.split(';')
+        query_filters += """
+            AND gp.name = ANY(%(graduate_program)s)
+            """
+
+    if default_filters.city:
+        params['city'] = default_filters.city.split(';')
+        query_filters += ' AND rp.city = ANY(%(city)s)'
+
+    if default_filters.area:
+        params['area'] = default_filters.area.replace(' ', '_').split(';')
+        query_filters += ' AND rp.great_area && %(area)s'
+
+    if default_filters.modality:
+        params['modality'] = default_filters.modality.split(';')
+        query_filters += ' AND f.modality_name = ANY(%(modality)s)'
+
+    if default_filters.graduation:
+        params['graduation'] = default_filters.graduation.split(';')
+        query_filters += ' AND r.graduation = ANY(%(graduation)s)'
 
     SCRIPT_SQL = f"""
         SELECT
@@ -1594,11 +1662,14 @@ def list_foment_researchers(
             LEFT JOIN researcher_production rp ON rp.researcher_id = r.id
             LEFT JOIN openalex_researcher opr ON opr.researcher_id = r.id
             INNER JOIN foment f ON f.researcher_id = r.id
+            {join_departament}
+            {join_program}
         WHERE 1 = 1
+            {query_filters}
         ORDER BY
-            among DESC
-            {filter_pagination};
+            among DESC;
         """
+
     result = conn.select(SCRIPT_SQL, params)
     return result
 

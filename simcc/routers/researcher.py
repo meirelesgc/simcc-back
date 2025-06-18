@@ -180,12 +180,12 @@ def search_in_abstract_or_article(
     return researchers
 
 
-@router.get(
-    '/researcher/foment',
-    response_model=list[Researcher],
-)
-def list_foment_researchers():
-    return ResearcherService.list_foment_researchers()
+@router.get('/researcher/foment', response_model=list[Researcher])
+async def list_foment_researchers(
+    default_filters: DefaultFilters = Depends(),
+    conn: Connection = Depends(get_conn),
+):
+    return await ResearcherService.list_foment_researchers(default_filters, conn)
 
 
 @router.get(
