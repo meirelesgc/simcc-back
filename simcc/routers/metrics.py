@@ -161,7 +161,6 @@ async def software_metrics(
 
 @router.get(
     '/research_project_metrics',
-    response_model=list[SoftwareMetric],
     tags=['Metrics'],
 )
 async def get_research_project_metrics(

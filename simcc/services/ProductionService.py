@@ -350,6 +350,12 @@ async def get_brand_metrics(conn, nature, default_filters):
 
 
 async def get_research_project_metrics(conn, default_filters):
-    return await ProductionRepository.get_research_project_metrics(
+    rp_metrics = await ProductionRepository.get_research_project_metrics(
         conn, default_filters
     )
+    if not rp_metrics:
+        return []
+    rp_metrics = pd.DataFrame(rp_metrics)
+    rp_metrics['nature'] = rp_metrics['nature'].apply(Counter)
+
+    return rp_metrics.to_dict(orient='records')

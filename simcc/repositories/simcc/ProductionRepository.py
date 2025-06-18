@@ -4611,30 +4611,34 @@ async def get_research_project_metrics(
         filter_distinct = 'DISTINCT ON (b.project_name)'
 
     SCRIPT_SQL = f"""
-        WITH FilteredProjects AS (
+        WITH rp_ AS (
             SELECT {filter_distinct}
-                b.project_name,
-                b.start_year
-            FROM
-                public.research_project b
+                nature AS nature, start_year AS year, project_name
+            FROM research_project b
                 {join_researcher}
                 {join_researcher_production}
                 {join_foment}
                 {join_program}
                 {join_departament}
                 {join_institution}
-            WHERE 1 = 1
+            WHERE start_year IS NOT NULL
                 {filters_sql}
-            ORDER BY b.project_name, b.start_year
+            ORDER BY project_name
         )
-        SELECT
-            fp.start_year AS year,
-            COUNT(fp.project_name) AS among
-        FROM
-            FilteredProjects fp
-        GROUP BY
-            fp.start_year
-        ORDER BY
-            fp.start_year ASC;
+        SELECT rp.year, ARRAY_AGG(rp.nature) AS nature, COUNT(rp.project_name) AS among
+        FROM rp_ rp
+        GROUP BY year
+        ORDER BY rp.year ASC;
         """
+    return await conn.select(SCRIPT_SQL, params)
+
+
+async def get_researcher_research_project(
+    conn: Connection,
+    filters: DefaultFilters,
+):
+    params = {}
+    SCRIPT_SQL = """
+
+    """
     return await conn.select(SCRIPT_SQL, params)
