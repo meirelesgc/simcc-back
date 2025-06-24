@@ -1,3 +1,5 @@
+from typing import Optional
+
 from fastapi import APIRouter, Depends
 
 from simcc.core.connection import Connection
@@ -11,6 +13,15 @@ from simcc.schemas.Researcher import AcademicMetric
 from simcc.services import ProductionService
 
 router = APIRouter()
+
+
+@router.get('/magazine_metrics')
+async def get_magazine_metrics(
+    issn: Optional[str] = None,
+    initials: Optional[str] = None,
+    conn: Connection = Depends(get_conn),
+):
+    return await ProductionService.get_magazine_metrics(conn, issn, initials)
 
 
 @router.get(

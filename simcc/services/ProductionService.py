@@ -12,6 +12,10 @@ from simcc.schemas.Production.Patent import PatentMetric, PatentProduction
 from simcc.schemas.Researcher import AcademicMetric
 
 
+async def get_magazine_metrics(conn, issn, initials):
+    return await ProductionRepository.get_magazine_metrics(conn, issn, initials)
+
+
 async def get_events_metrics(conn, default_filters):
     return await ProductionRepository.get_events_metrics(conn, default_filters)
 

@@ -5,6 +5,25 @@ from simcc.schemas.Production.Article import ArticleProduction
 from simcc.schemas.Production.Patent import PatentProduction
 
 
+async def get_magazine_metrics(conn, issn, initials):
+    params = {}
+    filters = str()
+    if initials:
+        params['initials'] = initials.lower() + '%'
+        filters += 'AND LOWER(name) like %(initials)s'
+    if issn:
+        params['issn'] = issn
+        filters += "AND translate(issn, '-', '')= %(issn)s"
+
+    SCRIPT_SQL = f"""
+        SELECT COUNT(*) AS among
+        FROM periodical_magazine m
+        WHERE 1 = 1
+            {filters}
+        """
+    return await conn.select(SCRIPT_SQL, params, True)
+
+
 async def get_events_metrics(
     conn: Connection,
     filters: DefaultFilters,
