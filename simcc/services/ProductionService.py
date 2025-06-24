@@ -56,9 +56,10 @@ async def list_brand(
     page: int | None,
     lenght: int | None,
 ) -> list[BrandProduction]:
-    return await ProductionRepository.list_brand(
+    brands = await ProductionRepository.list_brand(
         conn, default_filters, page, lenght
     )
+    return sorted(brands, key=lambda x: x['year'], reverse=True)
 
 
 async def list_book(
