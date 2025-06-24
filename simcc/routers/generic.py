@@ -150,3 +150,14 @@ async def lattes_update(
     conn: Connection = Depends(get_conn),
 ):
     return await GenericService.lattes_update(conn, default_filters)
+
+
+@router.get('/magazine')
+async def get_magazine(
+    issn: str | None = None,
+    initials: str | None = None,
+    page: int | None = None,
+    lenght: int | None = None,
+    conn: Connection = Depends(get_conn),
+):
+    return await GenericService.get_magazine(conn, issn, initials, page, lenght)

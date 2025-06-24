@@ -19,6 +19,12 @@ from simcc.repositories.simcc import GenericRepository
 from simcc.schemas import ResearcherBarema, YearBarema
 
 
+async def get_magazine(conn, issn, initials, page, lenght):
+    return await GenericRepository.get_magazine(
+        conn, issn, initials, page, lenght
+    )
+
+
 async def lattes_update(conn, default_filters):
     return await GenericRepository.lattes_update(conn, default_filters)
 

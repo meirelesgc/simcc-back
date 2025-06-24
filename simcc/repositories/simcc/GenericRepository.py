@@ -4,8 +4,32 @@ import nltk
 
 from simcc.core.connection import Connection
 from simcc.repositories import conn
-from simcc.repositories.util import names_filter, websearch_filter
+from simcc.repositories.util import names_filter, pagination, websearch_filter
 from simcc.schemas import DefaultFilters, YearBarema
+
+
+async def get_magazine(conn, issn, initials, page, lenght):
+    params = {}
+    filters = str()
+    if initials:
+        params['initials'] = initials.lower() + '%'
+        filters += 'AND LOWER(name) like %(initials)s'
+    if issn:
+        params['issn'] = issn
+        filters += "AND translate(issn, '-', '')= %(issn)s"
+    filter_pagination = str()
+    if page and lenght:
+        filter_pagination = pagination(page, lenght)
+
+    SCRIPT_SQL = f"""
+        SELECT m.id as id, m.name as magazine, issn,jcr,jcr_link,qualis
+        FROM periodical_magazine m
+        WHERE 1 = 1
+            {filters}
+        ORDER BY name asc
+        {filter_pagination}
+        """
+    return await conn.select(SCRIPT_SQL, params)
 
 
 async def lattes_update(
