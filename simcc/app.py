@@ -2,12 +2,12 @@ from contextlib import asynccontextmanager
 from http import HTTPStatus
 
 import httpx
-from fastapi import FastAPI, Request, Response
+from fastapi import Depends, FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
 from simcc.config import Settings
-from simcc.core.database import conn
+from simcc.core.database import admin_conn, conn
 from simcc.routers import (
     generic,
     graduate_program,
@@ -17,18 +17,26 @@ from simcc.routers import (
     researcher,
 )
 from simcc.routers.conectee import departament
+from simcc.security import get_current_key
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    await admin_conn.connect()
     await conn.connect()
     yield
+    await admin_conn.disconnect()
     await conn.disconnect()
 
 
 app = FastAPI(
-    root_path=Settings().ROOT_PATH, lifespan=lifespan, docs_url='/swagger'
+    root_path=Settings().ROOT_PATH,
+    lifespan=lifespan,
+    docs_url='/swagger',
+    openapi_url='/openapi.json',
+    dependencies=[Depends(get_current_key)],
 )
+
 
 app.include_router(production.router, tags=['Production'])
 app.include_router(researcher.router, tags=['Researcher'])
@@ -37,6 +45,7 @@ app.include_router(metrics.router, tags=['Metrics'])
 app.include_router(departament.router, prefix='/ufmg', tags=['Conectee'])
 app.include_router(graduate_program.router, tags=['Graduate Program'])
 app.include_router(generic.router, tags=['Generic'])
+
 
 app.add_middleware(
     CORSMiddleware,

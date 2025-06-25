@@ -3,7 +3,7 @@ from langchain_postgres import PGVector
 
 from simcc.config import Settings
 
-connection_url = Settings()._get_connection_string()
+connection_url = Settings()._get_conn_str()
 
 vectorstore = PGVector(
     embeddings=OpenAIEmbeddings(

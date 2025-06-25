@@ -10,10 +10,6 @@ class Settings(BaseSettings):
     PORT: int = 5432
 
     ADMIN_DATABASE: str = 'simcc_admin'
-    ADMIN_PG_USER: str = 'postgres'
-    ADMIN_PASSWORD: str = 'postgres'
-    ADMIN_HOST: str = 'localhost'
-    ADMIN_PORT: int = 5432
 
     ROOT_PATH: str = ''
     PROXY_URL: str = 'http://localhost:8080'
@@ -27,14 +23,14 @@ class Settings(BaseSettings):
         env_file = '.env'
         env_file_encoding = 'utf-8'
 
-    def get_connection_string(self) -> str:
+    def get_conn_str(self) -> str:
         return f'postgresql://{self.PG_USER}:{self.PASSWORD}@{self.HOST}:{self.PORT}/{self.DATABASE}'
 
-    def _get_connection_string(self) -> str:
+    def _get_conn_str(self) -> str:
         return f'postgresql+psycopg://{self.PG_USER}:{self.PASSWORD}@{self.HOST}:{self.PORT}/{self.DATABASE}'
 
-    def get_simcc_admin_connection_string(self) -> str:
-        return f'postgresql://{self.ADMIN_PG_USER}:{self.ADMIN_PASSWORD}@{self.ADMIN_HOST}:{self.ADMIN_PORT}/{self.ADMIN_DATABASE}'
+    def get_admin_conn_str(self) -> str:
+        return f'postgresql://{self.PG_USER}:{self.PASSWORD}@{self.HOST}:{self.PORT}/{self.ADMIN_DATABASE}'
 
 
 settings = Settings()
