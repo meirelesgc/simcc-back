@@ -34,11 +34,11 @@ barema = {
 
 def article_indprod():
     SCRIPT_SQL = """
-        SELECT year, qualis, COUNT(*) AS count_article, researcher_id
+        SELECT year_ AS year, qualis, COUNT(*) AS count_article, researcher_id
         FROM bibliographic_production bp
         RIGHT JOIN bibliographic_production_article bpa
             ON bp.id = bpa.bibliographic_production_id
-        GROUP BY year, qualis, researcher_id;
+        GROUP BY year_, qualis, researcher_id;
         """
     result = conn.select(SCRIPT_SQL)
     articles = pd.DataFrame(result)
