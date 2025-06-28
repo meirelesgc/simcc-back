@@ -1,35 +1,22 @@
+from http import HTTPStatus
+
 import httpx
-from bs4 import BeautifulSoup
 
 from routines.logger import logger_researcher_routine, logger_routine
 from simcc.repositories import conn
 
 
 def get_lattes_id_10(lattes_id: str) -> str:
+    URL = f'https://buscatextual.cnpq.br/buscatextual/cv?id={lattes_id}'
     headers = {
-        'Connection': 'keep-alive',
-        'Cache-Control': 'max-age=0',
-        'Origin': 'http://buscatextual.cnpq.br',
-        'Upgrade-Insecure-Requests': '1',
-        'DNT': '1',
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
-        'Chrome/93.0.4577.63 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,'
-        '*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
-        'Referer': 'http://buscatextual.cnpq.br/buscatextual/busca.do?metodo=apresentar',
-        'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36'
     }
+    with httpx.Client(follow_redirects=False, headers=headers) as client:
+        response = client.get(URL, timeout=30.0)
 
-    url = f'http://lattes.cnpq.br/{lattes_id}'
-    with httpx.Client(follow_redirects=True) as client:
-        response = client.get(url, headers=headers, timeout=30.0)
-        response.raise_for_status()
-
-        soup = BeautifulSoup(response.content, 'html.parser')
-        input_element = soup.find('input', {'type': 'hidden', 'name': 'id'})
-        if input_element is not None:
-            code = input_element.get('value', '')[:10]
+        if response.status_code == HTTPStatus.FOUND:
+            code = response.headers.get('Location')[-10:]
+            print(f'FOUND: {code}')
             return code
     return None
 
