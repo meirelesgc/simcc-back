@@ -22,6 +22,15 @@ if __name__ == '__main__':
         if not os.path.exists(directory):
             os.makedirs(directory)
 
+    SCRIPT_SQL = r"""
+        UPDATE bibliographic_production
+        SET year = NULL
+        WHERE YEAR !~ '^\d+$';
+        """
+
+    conn.exec(SCRIPT_SQL)
+    logger.info('Qualis updated for ISSN 17412242')
+
     SCRIPT_SQL = """
         UPDATE bibliographic_production_article ba
         SET qualis = 'A4'

@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 from http import HTTPStatus
 
 import httpx
-from fastapi import Depends, FastAPI, Request, Response
+from fastapi import FastAPI, Request, Response  # , Depends,
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
@@ -17,7 +17,8 @@ from simcc.routers import (
     researcher,
 )
 from simcc.routers.conectee import departament
-from simcc.security import get_current_key
+
+# from simcc.security import get_current_key
 
 
 @asynccontextmanager
@@ -34,7 +35,7 @@ app = FastAPI(
     lifespan=lifespan,
     docs_url='/swagger',
     openapi_url='/openapi.json',
-    dependencies=[Depends(get_current_key)],
+    # dependencies=[Depends(get_current_key)],
 )
 
 
