@@ -16,7 +16,14 @@ from simcc.routers import (
     ResearcherRouter,
 )
 
+
 app = FastAPI(root_path=settings.ROOT_PATH)
+
+from fastapi.middleware.gzip import GZipMiddleware
+
+app.add_middleware(GZipMiddleware, minimum_size=1000)
+
+
 
 app.include_router(
     GraduateProgramRouter.router,
