@@ -54,10 +54,11 @@ def get_researcher_foment(institution_id: UUID):
         FROM foment s
             LEFT JOIN researcher r
                 ON s.researcher_id = r.id
+            LEFT JOIN institution i
+                ON i.id = r.institution_id
         WHERE 1 = 1
             AND s.researcher_id IS NOT NULL
-            AND researcher_id NOT IN
-                (SELECT id FROM researcher WHERE docente = false)
+            AND i.acronym != 'UICL'
             {filter_institution}
         """
     result = conn.select(SCRIPT_SQL, params)
