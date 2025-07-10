@@ -5,7 +5,7 @@ from datetime import datetime
 import nltk
 import pandas as pd
 
-from simcc.repositories import conn
+from simcc.repositories import conn, conn_admin
 
 PATH = 'storage/powerBI'
 
@@ -130,28 +130,44 @@ def dim_city():
 
 def ufmg_researcher():
     SCRIPT_SQL = """
-        SELECT researcher_id, matric, inscufmg, nome, genero, situacao, rt, clas,
-            cargo, classe, ref, titulacao, entradanaufmg, progressao, semester
+        SELECT researcher_id, full_name, gender, status_code, work_regime, 
+            job_class, job_title, job_rank, job_reference_code, academic_degree, 
+            organization_entry_date, last_promotion_date, 
+            employment_status_description, department_name, career_category,
+            academic_unit, unit_code, function_code, position_code, leadership_start_date,
+            leadership_end_date, current_function_name, function_location, registration_number,
+            ufmg_registration_number, semester_reference
         FROM ufmg.researcher;
-        """
+    """
     result = conn.select(SCRIPT_SQL)
     csv = pd.DataFrame(result)
     columns = [
         'researcher_id',
-        'matric',
-        'inscufmg',
-        'nome',
-        'genero',
-        'situacao',
-        'rt',
-        'clas',
-        'cargo',
-        'classe',
-        'ref',
-        'titulacao',
-        'entradanaufmg',
-        'progressao',
-        'semester',
+        'full_name',
+        'gender',
+        'status_code',
+        'work_regime',
+        'job_class',
+        'job_title',
+        'job_rank',
+        'job_reference_code',
+        'academic_degree',
+        'organization_entry_date',
+        'last_promotion_date',
+        'employment_status_description',
+        'department_name',
+        'career_category',
+        'academic_unit',
+        'unit_code',
+        'function_code',
+        'position_code',
+        'leadership_start_date',
+        'leadership_end_date',
+        'current_function_name',
+        'function_location',
+        'registration_number',
+        'ufmg_registration_number',
+        'semester_reference',
     ]
     csv = csv.reindex(columns, axis='columns', fill_value=0)
     csv_path = os.path.join(PATH, 'ufmg_researcher.csv')
@@ -1022,6 +1038,101 @@ def materialized_vision():
     csv.to_csv(csv_path, index=True, quoting=QUOTE_ALL, encoding='utf-8-sig')
 
 
+def guidance():
+    SCRIPT_SQL = """
+        SELECT id, r.lattes_id AS student_researcher_id, r.lattes_id
+            AS supervisor_researcher_id, r.lattes_id
+            AS co_supervisor_researcher_id, graduate_program_id, start_date,
+               planned_date_project, done_date_project,
+               planned_date_qualification, done_date_qualification,
+               planned_date_conclusion, done_date_conclusion
+        FROM public.guidance_tracking gt
+        LEFT JOIN researcher r
+            ON r.researcher_id = gt.co_supervisor_researcher_id
+            OR r.researcher_id = gt.student_researcher_id
+            OR r.researcher_id = gt.supervisor_researcher_id
+    """
+    guidance = conn_admin.select(SCRIPT_SQL)
+    guidance = pd.DataFrame(
+        guidance,
+        columns=[
+            'id',
+            'student_researcher_id',
+            'supervisor_researcher_id',
+            'co_supervisor_researcher_id',
+            'graduate_program_id',
+            'start_date',
+            'planned_date_project',
+            'done_date_project',
+            'planned_date_qualification',
+            'done_date_qualification',
+            'planned_date_conclusion',
+            'done_date_conclusion',
+        ],
+    )
+
+    SCRIPT_SQL = """
+        SELECT id AS researcher_id, lattes_id
+        FROM researcher
+    """
+    researchers = conn.select(SCRIPT_SQL)
+    researchers = pd.DataFrame(
+        researchers, columns=['researcher_id', 'lattes_id']
+    )
+
+    guidance = guidance.rename(
+        columns={
+            'student_researcher_id': 'student_lattes_id',
+            'supervisor_researcher_id': 'supervisor_lattes_id',
+            'co_supervisor_researcher_id': 'co_supervisor_lattes_id',
+        }
+    )
+
+    guidance = guidance.merge(
+        researchers,
+        left_on='student_lattes_id',
+        right_on='lattes_id',
+        how='left',
+    )
+    guidance = guidance.rename(
+        columns={'researcher_id': 'student_researcher_id'}
+    )
+    guidance = guidance.drop(columns=['lattes_id'])
+
+    guidance = guidance.merge(
+        researchers,
+        left_on='supervisor_lattes_id',
+        right_on='lattes_id',
+        how='left',
+    )
+    guidance = guidance.rename(
+        columns={'researcher_id': 'supervisor_researcher_id'}
+    )
+    guidance = guidance.drop(columns=['lattes_id'])
+
+    guidance = guidance.merge(
+        researchers,
+        left_on='co_supervisor_lattes_id',
+        right_on='lattes_id',
+        how='left',
+    )
+    guidance = guidance.rename(
+        columns={'researcher_id': 'co_supervisor_researcher_id'}
+    )
+
+    csv = guidance.drop(
+        columns=[
+            'lattes_id',
+            'student_lattes_id',
+            'supervisor_lattes_id',
+            'co_supervisor_lattes_id',
+        ]
+    )
+
+    csv_path = os.path.join(PATH, 'guidance.csv')
+    csv.to_csv(csv_path, index=True, quoting=QUOTE_ALL, encoding='utf-8-sig')
+
+
 if __name__ == '__main__':
     for directory in [PATH]:
         if not os.path.exists(directory):
@@ -1084,3 +1195,4 @@ if __name__ == '__main__':
     fat_event_organization()
     fat_participation_events()
     materialized_vision()
+    guidance()
