@@ -161,33 +161,9 @@ def search_in_book(
     return researchers.to_dict(orient='records')
 
 
-def search_in_articles(
-    terms,
-    graduate_program_id,
-    dep_id,
-    departament,
-    institution,
-    graduate_program,
-    city,
-    area,
-    modality,
-    graduation,
-    page,
-    lenght,
-) -> list[Researcher]:
-    researchers = ResearcherRepository.search_in_articles(
-        terms,
-        graduate_program_id,
-        dep_id,
-        departament,
-        institution,
-        graduate_program,
-        city,
-        area,
-        modality,
-        graduation,
-        page,
-        lenght,
+async def search_in_articles(conn, default_filters):
+    researchers = await ResearcherRepository.search_in_articles(
+        conn, default_filters
     )
     if not researchers:
         return []
@@ -199,33 +175,9 @@ def search_in_articles(
     return researchers.to_dict(orient='records')
 
 
-def search_in_abstracts(
-    terms,
-    graduate_program_id,
-    dep_id,
-    departament,
-    institution,
-    graduate_program,
-    city,
-    area,
-    modality,
-    graduation,
-    page,
-    lenght,
-) -> list[Researcher]:
-    researchers = ResearcherRepository.search_in_abstracts(
-        terms,
-        graduate_program_id,
-        dep_id,
-        departament,
-        institution,
-        graduate_program,
-        city,
-        area,
-        modality,
-        graduation,
-        page,
-        lenght,
+async def search_in_abstracts(conn, default_filters):
+    researchers = await ResearcherRepository.search_in_abstracts(
+        conn, default_filters
     )
     if not researchers:
         return []
@@ -257,33 +209,9 @@ def list_outstanding_researchers(
     return researchers.to_dict(orient='records')
 
 
-def serch_in_name(
-    name,
-    graduate_program_id,
-    dep_id,
-    departament,
-    institution,
-    graduate_program,
-    city,
-    area,
-    modality,
-    graduation,
-    page,
-    lenght,
-) -> list[Researcher]:
-    researchers = ResearcherRepository.search_in_name(
-        name,
-        graduate_program_id,
-        dep_id,
-        departament,
-        institution,
-        graduate_program,
-        city,
-        area,
-        modality,
-        graduation,
-        page,
-        lenght,
+async def serch_in_name(conn, default_filters, name):
+    researchers = await ResearcherRepository.search_in_name(
+        conn, default_filters, name
     )
     if not researchers:
         return []

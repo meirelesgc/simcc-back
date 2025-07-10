@@ -1,5 +1,5 @@
 from simcc.repositories import conn
-from simcc.repositories.util import names_filter, websearch_filter
+from simcc.repositories.tools import names_filter, websearch_filter
 from simcc.schemas.Conectee import ResearcherData
 
 
@@ -11,7 +11,6 @@ async def get_docentes(conn, filters):
     filter_name = str()
     join_departament = str()
     join_program = str()
-    join_institution = str()
     join_researcher_production = str()
     join_foment = str()
     where_extra = str()

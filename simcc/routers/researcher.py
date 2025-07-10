@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends
 
 from simcc.core.connection import Connection
 from simcc.core.database import get_conn
-from simcc.schemas import DefaultFilters, ResearcherOptions
+from simcc.schemas import DefaultFilters
 from simcc.schemas.Researcher import (
     AcademicDegree,
     CoAuthorship,
@@ -132,52 +132,14 @@ def search_in_book(
     '/researcher',
     response_model=list[Researcher],
 )
-def search_in_abstract_or_article(
-    type: ResearcherOptions = 'ABSTRACT',
-    terms: str = None,
-    graduate_program_id: UUID | str = None,
-    dep_id: str = None,
-    departament: str = None,
-    institution: str = None,
-    graduate_program: str = None,
-    city: str = None,
-    area: str = None,
-    modality: str = None,
-    graduation: str = None,
-    page: int = None,
-    lenght: int = None,
+async def search_in_abstract_or_article(
+    default_filters: DefaultFilters = Depends(),
+    conn: Connection = Depends(get_conn),
 ):
-    if type == 'ARTICLE':
-        researchers = ResearcherService.search_in_articles(
-            terms,
-            graduate_program_id,
-            dep_id,
-            departament,
-            institution,
-            graduate_program,
-            city,
-            area,
-            modality,
-            graduation,
-            page,
-            lenght,
-        )
-    elif type == 'ABSTRACT':
-        researchers = ResearcherService.search_in_abstracts(
-            terms,
-            graduate_program_id,
-            dep_id,
-            departament,
-            institution,
-            graduate_program,
-            city,
-            area,
-            modality,
-            graduation,
-            page,
-            lenght,
-        )
-    return researchers
+    if default_filters.type == 'ARTICLE':
+        return await ResearcherService.search_in_articles(conn, default_filters)
+    elif default_filters.type == 'ABSTRACT':
+        return await ResearcherService.search_in_abstracts(conn, default_filters)
 
 
 @router.get('/researcher/foment', response_model=list[Researcher])
@@ -192,34 +154,12 @@ async def list_foment_researchers(
     '/researcherName',
     response_model=list[Researcher],
 )
-def list_researchers(
+async def list_researchers(
+    default_filters: DefaultFilters = Depends(),
+    conn: Connection = Depends(get_conn),
     name: str = None,
-    graduate_program_id: UUID | str = None,
-    dep_id: str = None,
-    departament: str = None,
-    institution: str = None,
-    graduate_program: str = None,
-    city: str = None,
-    area: str = None,
-    modality: str = None,
-    graduation: str = None,
-    page: int = None,
-    lenght: int = None,
 ):
-    return ResearcherService.serch_in_name(
-        name,
-        graduate_program_id,
-        dep_id,
-        departament,
-        institution,
-        graduate_program,
-        city,
-        area,
-        modality,
-        graduation,
-        page,
-        lenght,
-    )
+    return await ResearcherService.serch_in_name(conn, default_filters, name)
 
 
 @router.get(

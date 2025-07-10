@@ -41,6 +41,9 @@ class DefaultFilters(BaseModel):
     modality: Optional[str] = None
     graduation: Optional[str] = None
 
+    page: Optional[int] = 1
+    lenght: Optional[int] = 10
+
     model_config = {
         'populate_by_name': True,
         'json_encoders': {UUID: str},

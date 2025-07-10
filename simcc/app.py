@@ -9,6 +9,7 @@ from fastapi.responses import FileResponse
 from simcc.config import Settings
 from simcc.core.database import admin_conn, conn
 from simcc.routers import (
+    ai,
     generic,
     graduate_program,
     metrics,
@@ -46,6 +47,7 @@ app.include_router(metrics.router, tags=['Metrics'])
 app.include_router(departament.router, prefix='/ufmg', tags=['Conectee'])
 app.include_router(graduate_program.router, tags=['Graduate Program'])
 app.include_router(generic.router, tags=['Generic'])
+app.include_router(ai.router, tags=['AI'])
 
 
 app.add_middleware(

@@ -1,7 +1,7 @@
 from uuid import UUID
 
 from simcc.core.connection import Connection
-from simcc.repositories.util import websearch_filter
+from simcc.repositories.tools import websearch_filter
 
 
 async def list_graduate_program_researcher(conn, graduate_program_id):

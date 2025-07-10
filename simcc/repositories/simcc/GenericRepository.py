@@ -4,7 +4,7 @@ import nltk
 
 from simcc.core.connection import Connection
 from simcc.repositories import conn
-from simcc.repositories.util import names_filter, pagination, websearch_filter
+from simcc.repositories.tools import names_filter, pagination, websearch_filter
 from simcc.schemas import DefaultFilters, YearBarema
 
 

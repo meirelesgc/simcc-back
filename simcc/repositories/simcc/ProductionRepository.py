@@ -1,5 +1,5 @@
 from simcc.core.connection import Connection
-from simcc.repositories.util import names_filter, pagination, websearch_filter
+from simcc.repositories import tools
 from simcc.schemas import DefaultFilters
 from simcc.schemas.Production.Article import ArticleProduction
 from simcc.schemas.Production.Patent import PatentProduction
@@ -41,7 +41,7 @@ async def get_events_metrics(
     query_filters = str()
 
     if filters.term:
-        filter_terms_str, term_params = websearch_filter(
+        filter_terms_str, term_params = tools.websearch_filter(
             'bp.title', filters.term
         )
         query_filters += filter_terms_str
@@ -185,7 +185,9 @@ async def get_pevent_researcher(
     query_filters = str()
 
     if filters.term:
-        filter_terms_str, term_params = websearch_filter('p.title', filters.term)
+        filter_terms_str, term_params = tools.websearch_filter(
+            'p.title', filters.term
+        )
         query_filters += filter_terms_str
         params.update(term_params)
 
@@ -300,7 +302,7 @@ async def get_pevent_researcher(
 
     filter_pagination = str()
     if page and lenght:
-        filter_pagination = pagination(page, lenght)
+        filter_pagination = tools.pagination(page, lenght)
 
     filter_distinct = str()
     if filters.distinct:
@@ -468,7 +470,7 @@ async def professional_experience(
             """
 
     if page and lenght:
-        filter_pagination = pagination(page, lenght)
+        filter_pagination = tools.pagination(page, lenght)
 
     if filters.distinct:
         filter_distinct = 'DISTINCT ON (rpe.researcher_id, rpe.enterprise)'
@@ -513,7 +515,9 @@ async def list_patent(
     filter_pagination = str()
 
     if filters.term:  # Acessando via filters.term
-        filter_terms_str, term_params = websearch_filter('p.title', filters.term)
+        filter_terms_str, term_params = tools.websearch_filter(
+            'p.title', filters.term
+        )
         query_filters += filter_terms_str
         params.update(term_params)
 
@@ -628,7 +632,7 @@ async def list_patent(
             """
 
     if page and lenght:
-        filter_pagination = pagination(page, lenght)
+        filter_pagination = tools.pagination(page, lenght)
 
     if filters.distinct:
         filter_distinct = 'DISTINCT ON (p.title)'
@@ -673,7 +677,9 @@ async def list_brand(
     filter_pagination = str()
 
     if filters.term:
-        filter_terms_str, term_params = websearch_filter('b.title', filters.term)
+        filter_terms_str, term_params = tools.websearch_filter(
+            'b.title', filters.term
+        )
         query_filters += filter_terms_str
         params.update(term_params)
 
@@ -782,7 +788,7 @@ async def list_brand(
             """
 
     if page and lenght:
-        filter_pagination = pagination(page, lenght)
+        filter_pagination = tools.pagination(page, lenght)
 
     if filters.distinct:
         filter_distinct = 'DISTINCT ON (b.title)'
@@ -808,12 +814,7 @@ async def list_brand(
     return result
 
 
-async def list_book(
-    conn: Connection,
-    filters: DefaultFilters,
-    page: int | None,
-    lenght: int | None,
-):
+async def list_book(conn: Connection, default_filters: DefaultFilters):
     params = {}
     join_researcher_production = str()
     join_foment = str()
@@ -825,46 +826,46 @@ async def list_book(
     query_filters = str()
     filter_pagination = str()
 
-    if filters.term:
-        filter_terms_str, term_params = websearch_filter(
-            'bp.title', filters.term
+    if default_filters.term:
+        filter_terms_str, term_params = tools.websearch_filter(
+            'bp.title', default_filters.term
         )
         query_filters += filter_terms_str
         params.update(term_params)
 
-    if filters.year:
-        params['year'] = filters.year
+    if default_filters.year:
+        params['year'] = default_filters.year
         query_filters += """
             AND bp.year::INT >= %(year)s
             """
 
-    if filters.dep_id or filters.departament:
+    if default_filters.dep_id or default_filters.departament:
         join_departament = """
             INNER JOIN ufmg.departament_researcher dpr
                 ON dpr.researcher_id = bp.researcher_id
             INNER JOIN ufmg.departament dp
                 ON dp.dep_id = dpr.dep_id
             """
-    if filters.dep_id:
-        params['dep_id'] = filters.dep_id
+    if default_filters.dep_id:
+        params['dep_id'] = default_filters.dep_id
         query_filters += """
             AND dp.dep_id = %(dep_id)s
             """
 
-    if filters.departament:
-        params['departament'] = filters.departament.split(';')
+    if default_filters.departament:
+        params['departament'] = default_filters.departament.split(';')
         query_filters += """
             AND dp.dep_nom = ANY(%(departament)s)
             """
 
-    if filters.researcher_id:
-        params['researcher_id'] = str(filters.researcher_id)
+    if default_filters.researcher_id:
+        params['researcher_id'] = str(default_filters.researcher_id)
         query_filters += """
             AND bp.researcher_id = %(researcher_id)s
             """
 
-    if filters.institution:
-        params['institution'] = filters.institution.split(';')
+    if default_filters.institution:
+        params['institution'] = default_filters.institution.split(';')
         join_institution = """
             INNER JOIN institution i
                 ON r.institution_id = i.id
@@ -873,10 +874,10 @@ async def list_book(
             AND i.name = ANY(%(institution)s)
             """
 
-    if filters.graduate_program_id:
+    if default_filters.graduate_program_id:
         filter_distinct = 'DISTINCT'
         params['graduate_program_id'] = str(
-            filters.graduate_program_id
+            default_filters.graduate_program_id
         )  # Convertido para string
         join_program = """
             INNER JOIN graduate_program_researcher gpr
@@ -888,9 +889,9 @@ async def list_book(
             AND gpr.graduate_program_id = %(graduate_program_id)s
             """
 
-    if filters.graduate_program:
+    if default_filters.graduate_program:
         filter_distinct = 'DISTINCT'
-        params['graduate_program'] = filters.graduate_program.split(';')
+        params['graduate_program'] = default_filters.graduate_program.split(';')
         join_program = """
             INNER JOIN graduate_program_researcher gpr
                 ON gpr.researcher_id = bp.researcher_id
@@ -901,8 +902,8 @@ async def list_book(
             AND gp.name = ANY(%(graduate_program)s)
             """
 
-    if filters.city:
-        params['city'] = filters.city.split(';')
+    if default_filters.city:
+        params['city'] = default_filters.city.split(';')
         join_researcher_production = """
             LEFT JOIN researcher_production rp
                 ON rp.researcher_id = bp.researcher_id
@@ -910,8 +911,8 @@ async def list_book(
         query_filters += """
             AND rp.city = ANY(%(city)s)
             """
-    if filters.area:
-        params['area'] = filters.area.replace(' ', '_').split(';')
+    if default_filters.area:
+        params['area'] = default_filters.area.replace(' ', '_').split(';')
         if not join_researcher_production:
             join_researcher_production = """
                 LEFT JOIN researcher_production rp
@@ -921,9 +922,9 @@ async def list_book(
             AND rp.great_area_ && %(area)s
             """
 
-    if filters.modality:
+    if default_filters.modality:
         filter_distinct = 'DISTINCT'
-        params['modality'] = filters.modality.split(';')
+        params['modality'] = default_filters.modality.split(';')
         join_foment = """
             INNER JOIN foment f
                 ON f.researcher_id = bp.researcher_id
@@ -932,16 +933,18 @@ async def list_book(
             AND f.modality_name = ANY(%(modality)s)
             """
 
-    if filters.graduation:
-        params['graduation'] = filters.graduation.split(';')
+    if default_filters.graduation:
+        params['graduation'] = default_filters.graduation.split(';')
         query_filters += """
             AND r.graduation = ANY(%(graduation)s)
             """
 
-    if page and lenght:
-        filter_pagination = pagination(page, lenght)
+    if default_filters.page and default_filters.lenght:
+        filter_pagination = tools.pagination(
+            default_filters.page, default_filters.lenght
+        )
 
-    if filters.distinct:
+    if default_filters.distinct:
         filter_distinct = 'DISTINCT ON (bp.title)'
 
     SCRIPT_SQL = f"""
@@ -972,10 +975,8 @@ async def list_book(
 
 async def list_bibliographic_production(
     conn: Connection,
-    filters: DefaultFilters,
+    default_filters: DefaultFilters,
     qualis: str | None,
-    page: int | None,
-    lenght: int | None,
 ) -> list[ArticleProduction]:
     params = {}
     join_researcher_production = str()
@@ -991,13 +992,15 @@ async def list_bibliographic_production(
     query_filters = str()
     filter_pagination = str()
 
-    if filters.term:  # Acessando via filters.term
-        filter_terms_str, term_params = websearch_filter('b.title', filters.term)
+    if default_filters.term:  # Acessando via filters.term
+        filter_terms_str, term_params = tools.websearch_filter(
+            'b.title', default_filters.term
+        )
         query_filters += filter_terms_str
         params.update(term_params)
 
-    if filters.type:
-        params['type'] = filters.type.split(';')
+    if default_filters.type:
+        params['type'] = default_filters.type.split(';')
         query_filters += """
             AND b.type = ANY(%(type)s)
             """
@@ -1008,50 +1011,54 @@ async def list_bibliographic_production(
             AND bpa.qualis = ANY(%(qualis)s)
             """
 
-    if filters.year:  # Acessando via filters.year
-        params['year'] = filters.year
+    if default_filters.year:  # Acessando via filters.year
+        params['year'] = default_filters.year
         query_filters += """
             AND b.year::INT >= %(year)s
             """
 
-    if filters.dep_id or filters.departament:  # Acessando via filters
+    if (
+        default_filters.dep_id or default_filters.departament
+    ):  # Acessando via filters
         join_departament = """
             INNER JOIN ufmg.departament_researcher dpr
                 ON dpr.researcher_id = b.researcher_id
             INNER JOIN ufmg.departament dp
                 ON dp.dep_id = dpr.dep_id
             """
-    if filters.dep_id:  # Acessando via filters.dep_id
-        params['dep_id'] = filters.dep_id
+    if default_filters.dep_id:  # Acessando via filters.dep_id
+        params['dep_id'] = default_filters.dep_id
         query_filters += """
             AND dp.dep_id = %(dep_id)s
             """
 
-    if filters.departament:  # Acessando via filters.departament
-        params['departament'] = filters.departament.split(';')
+    if default_filters.departament:  # Acessando via filters.departament
+        params['departament'] = default_filters.departament.split(';')
         query_filters += """
             AND dp.dep_nom = ANY(%(departament)s)
             """
 
-    if filters.researcher_id:  # Acessando via filters.researcher_id
+    if default_filters.researcher_id:  # Acessando via filters.researcher_id
         params['researcher_id'] = str(
-            filters.researcher_id
+            default_filters.researcher_id
         )  # Convertido para string
         query_filters += """
             AND b.researcher_id = %(researcher_id)s
             """
 
-    if filters.institution:  # Acessando via filters.institution
-        params['institution'] = filters.institution.split(';')
+    if default_filters.institution:  # Acessando via filters.institution
+        params['institution'] = default_filters.institution.split(';')
         # join_institution já está definido no início da função
         query_filters += """
             AND i.name = ANY(%(institution)s)
             """
 
-    if filters.graduate_program_id:  # Acessando via filters.graduate_program_id
+    if (
+        default_filters.graduate_program_id
+    ):  # Acessando via filters.graduate_program_id
         filter_distinct = 'DISTINCT'
         params['graduate_program_id'] = str(
-            filters.graduate_program_id
+            default_filters.graduate_program_id
         )  # Convertido para string
         join_program = """
             INNER JOIN graduate_program_researcher gpr
@@ -1063,9 +1070,11 @@ async def list_bibliographic_production(
             AND gpr.graduate_program_id = %(graduate_program_id)s
             """
 
-    if filters.graduate_program:  # Acessando via filters.graduate_program
+    if (
+        default_filters.graduate_program
+    ):  # Acessando via filters.graduate_program
         filter_distinct = 'DISTINCT'
-        params['graduate_program'] = filters.graduate_program.split(';')
+        params['graduate_program'] = default_filters.graduate_program.split(';')
         join_program = """
             INNER JOIN graduate_program_researcher gpr
                 ON gpr.researcher_id = b.researcher_id
@@ -1076,8 +1085,8 @@ async def list_bibliographic_production(
             AND gp.name = ANY(%(graduate_program)s)
             """
 
-    if filters.city:  # Acessando via filters.city
-        params['city'] = filters.city.split(';')
+    if default_filters.city:  # Acessando via filters.city
+        params['city'] = default_filters.city.split(';')
         join_researcher_production = """
             LEFT JOIN researcher_production rp
                 ON rp.researcher_id = b.researcher_id
@@ -1085,8 +1094,8 @@ async def list_bibliographic_production(
         query_filters += """
             AND rp.city = ANY(%(city)s)
             """
-    if filters.area:  # Acessando via filters.area
-        params['area'] = filters.area.replace(' ', '_').split(';')
+    if default_filters.area:  # Acessando via filters.area
+        params['area'] = default_filters.area.replace(' ', '_').split(';')
         if (
             not join_researcher_production
         ):  # Adicionado para evitar duplicidade do join
@@ -1098,9 +1107,9 @@ async def list_bibliographic_production(
             AND rp.great_area_ && %(area)s
             """
 
-    if filters.modality:  # Acessando via filters.modality
+    if default_filters.modality:  # Acessando via filters.modality
         filter_distinct = 'DISTINCT'
-        params['modality'] = filters.modality.split(';')
+        params['modality'] = default_filters.modality.split(';')
         join_foment = """
             INNER JOIN foment f
                 ON f.researcher_id = b.researcher_id
@@ -1109,16 +1118,18 @@ async def list_bibliographic_production(
             AND f.modality_name = ANY(%(modality)s)
             """
 
-    if filters.graduation:  # Acessando via filters.graduation
-        params['graduation'] = filters.graduation.split(';')
+    if default_filters.graduation:  # Acessando via filters.graduation
+        params['graduation'] = default_filters.graduation.split(';')
         query_filters += """
             AND r.graduation = ANY(%(graduation)s)
             """
 
-    if page and lenght:
-        filter_pagination = pagination(page, lenght)
+    if default_filters.page and default_filters.lenght:
+        filter_pagination = tools.pagination(
+            default_filters.page, default_filters.lenght
+        )
 
-    if filters.distinct:
+    if default_filters.distinct:
         filter_distinct = 'DISTINCT ON (b.title)'
 
     SCRIPT_SQL = f"""
@@ -1176,7 +1187,9 @@ async def list_article_production(
         query_filters += 'AND bpa.qualis = ANY(%(qualis)s)'
 
     if filters.term:
-        filter_terms_str, term_params = websearch_filter('b.title', filters.term)
+        filter_terms_str, term_params = tools.websearch_filter(
+            'b.title', filters.term
+        )
         query_filters += filter_terms_str
         params.update(term_params)
 
@@ -1285,7 +1298,7 @@ async def list_article_production(
             """
 
     if page and lenght:
-        filter_pagination = pagination(page, lenght)
+        filter_pagination = tools.pagination(page, lenght)
 
     if filters.distinct:  # Acessando via filters.distinct
         filter_distinct = 'DISTINCT ON (b.title)'
@@ -1323,9 +1336,7 @@ async def list_article_production(
 
 async def list_book_chapter(
     conn: Connection,
-    filters: DefaultFilters,
-    page: int | None,
-    lenght: int | None,
+    default_filters: DefaultFilters,
 ):
     params = {}
     join_researcher_production = str()
@@ -1337,48 +1348,50 @@ async def list_book_chapter(
     filter_distinct = str()
     query_filters = str()
     filter_pagination = str()
-    if filters.term:  # Acessando via filters.term
-        filter_terms_str, term_params = websearch_filter(
-            'bp.title', filters.term
+    if default_filters.term:  # Acessando via filters.term
+        filter_terms_str, term_params = tools.websearch_filter(
+            'bp.title', default_filters.term
         )
         query_filters += filter_terms_str
         params.update(term_params)
 
-    if filters.year:  # Acessando via filters.year
-        params['year'] = filters.year
+    if default_filters.year:  # Acessando via filters.year
+        params['year'] = default_filters.year
         query_filters += """
             AND bp.year::INT >= %(year)s
             """
 
-    if filters.dep_id or filters.departament:  # Acessando via filters
+    if (
+        default_filters.dep_id or default_filters.departament
+    ):  # Acessando via filters
         join_departament = """
             INNER JOIN ufmg.departament_researcher dpr
                 ON dpr.researcher_id = bp.researcher_id
             INNER JOIN ufmg.departament dp
                 ON dp.dep_id = dpr.dep_id
             """
-    if filters.dep_id:  # Acessando via filters.dep_id
-        params['dep_id'] = filters.dep_id
+    if default_filters.dep_id:  # Acessando via filters.dep_id
+        params['dep_id'] = default_filters.dep_id
         query_filters += """
             AND dp.dep_id = %(dep_id)s
             """
 
-    if filters.departament:  # Acessando via filters.departament
-        params['departament'] = filters.departament.split(';')
+    if default_filters.departament:  # Acessando via filters.departament
+        params['departament'] = default_filters.departament.split(';')
         query_filters += """
             AND dp.dep_nom = ANY(%(departament)s)
             """
 
-    if filters.researcher_id:  # Acessando via filters.researcher_id
+    if default_filters.researcher_id:  # Acessando via filters.researcher_id
         params['researcher_id'] = str(
-            filters.researcher_id
+            default_filters.researcher_id
         )  # Convertido para string
         query_filters += """
             AND bp.researcher_id = %(researcher_id)s
             """
 
-    if filters.institution:  # Acessando via filters.institution
-        params['institution'] = filters.institution.split(';')
+    if default_filters.institution:  # Acessando via filters.institution
+        params['institution'] = default_filters.institution.split(';')
         join_institution = """
             INNER JOIN institution i
                 ON r.institution_id = i.id
@@ -1387,10 +1400,12 @@ async def list_book_chapter(
             AND i.name = ANY(%(institution)s)
             """
 
-    if filters.graduate_program_id:  # Acessando via filters.graduate_program_id
+    if (
+        default_filters.graduate_program_id
+    ):  # Acessando via filters.graduate_program_id
         filter_distinct = 'DISTINCT'
         params['graduate_program_id'] = str(
-            filters.graduate_program_id
+            default_filters.graduate_program_id
         )  # Convertido para string
         join_program = """
             INNER JOIN graduate_program_researcher gpr
@@ -1402,9 +1417,11 @@ async def list_book_chapter(
             AND gpr.graduate_program_id = %(graduate_program_id)s
             """
 
-    if filters.graduate_program:  # Acessando via filters.graduate_program
+    if (
+        default_filters.graduate_program
+    ):  # Acessando via filters.graduate_program
         filter_distinct = 'DISTINCT'
-        params['graduate_program'] = filters.graduate_program.split(';')
+        params['graduate_program'] = default_filters.graduate_program.split(';')
         join_program = """
             INNER JOIN graduate_program_researcher gpr
                 ON gpr.researcher_id = bp.researcher_id
@@ -1415,8 +1432,8 @@ async def list_book_chapter(
             AND gp.name = ANY(%(graduate_program)s)
             """
 
-    if filters.city:  # Acessando via filters.city
-        params['city'] = filters.city.split(';')
+    if default_filters.city:  # Acessando via filters.city
+        params['city'] = default_filters.city.split(';')
         join_researcher_production = """
             LEFT JOIN researcher_production rp
                 ON rp.researcher_id = bp.researcher_id
@@ -1424,8 +1441,8 @@ async def list_book_chapter(
         query_filters += """
             AND rp.city = ANY(%(city)s)
             """
-    if filters.area:  # Acessando via filters.area
-        params['area'] = filters.area.replace(' ', '_').split(';')
+    if default_filters.area:  # Acessando via filters.area
+        params['area'] = default_filters.area.replace(' ', '_').split(';')
         if (
             not join_researcher_production
         ):  # Adicionado para evitar duplicidade do join
@@ -1437,9 +1454,9 @@ async def list_book_chapter(
             AND rp.great_area_ && %(area)s
             """
 
-    if filters.modality:  # Acessando via filters.modality
+    if default_filters.modality:  # Acessando via filters.modality
         filter_distinct = 'DISTINCT'
-        params['modality'] = filters.modality.split(';')
+        params['modality'] = default_filters.modality.split(';')
         join_foment = """
             INNER JOIN foment f
                 ON f.researcher_id = bp.researcher_id
@@ -1448,16 +1465,18 @@ async def list_book_chapter(
             AND f.modality_name = ANY(%(modality)s)
             """
 
-    if filters.graduation:  # Acessando via filters.graduation
-        params['graduation'] = filters.graduation.split(';')
+    if default_filters.graduation:  # Acessando via filters.graduation
+        params['graduation'] = default_filters.graduation.split(';')
         query_filters += """
             AND r.graduation = ANY(%(graduation)s)
             """
 
-    if page and lenght:
-        filter_pagination = pagination(page, lenght)
+    if default_filters.page and default_filters.lenght:
+        filter_pagination = tools.pagination(
+            default_filters.page, default_filters.lenght
+        )
 
-    if filters.distinct:
+    if default_filters.distinct:
         filter_distinct = 'DISTINCT ON (bp.title)'
 
     SCRIPT_SQL = f"""
@@ -1503,7 +1522,9 @@ async def list_software(
     filter_pagination = str()
 
     if filters.term:  # Acessando via filters.term
-        filter_terms_str, term_params = websearch_filter('s.title', filters.term)
+        filter_terms_str, term_params = tools.websearch_filter(
+            's.title', filters.term
+        )
         query_filters += filter_terms_str
         params.update(term_params)
 
@@ -1618,7 +1639,7 @@ async def list_software(
             """
 
     if page and lenght:
-        filter_pagination = pagination(page, lenght)
+        filter_pagination = tools.pagination(page, lenght)
 
     if filters.distinct:  # Acessando via filters.distinct
         filter_distinct = 'DISTINCT ON (s.title)'
@@ -1662,7 +1683,7 @@ async def list_researcher_report(
     filter_pagination = str()
 
     if filters.term:  # Acessando via filters.term
-        filter_terms_str, term_params = websearch_filter(
+        filter_terms_str, term_params = tools.websearch_filter(
             'rr.title', filters.term
         )
         query_filters += filter_terms_str
@@ -1779,7 +1800,7 @@ async def list_researcher_report(
             """
 
     if page and lenght:
-        filter_pagination = pagination(page, lenght)
+        filter_pagination = tools.pagination(page, lenght)
 
     if filters.distinct:
         filter_distinct = 'DISTINCT ON (rr.title)'
@@ -1823,7 +1844,9 @@ async def list_guidance_production(
     filter_pagination = str()
 
     if filters.term:  # Acessando via filters.term
-        filter_terms_str, term_params = websearch_filter('g.title', filters.term)
+        filter_terms_str, term_params = tools.websearch_filter(
+            'g.title', filters.term
+        )
         query_filters += filter_terms_str
         params.update(term_params)
 
@@ -1939,7 +1962,7 @@ async def list_guidance_production(
             """
 
     if page and lenght:
-        filter_pagination = pagination(page, lenght)
+        filter_pagination = tools.pagination(page, lenght)
     if filters.distinct:  # Acessando via filters.distinct
         filter_distinct = 'DISTINCT ON (g.title)'
 
@@ -1982,7 +2005,7 @@ async def list_researcher_production_events(
     filter_pagination = str()
 
     if filters.term:  # Acessando via filters.term
-        filter_terms_str, term_params = websearch_filter(
+        filter_terms_str, term_params = tools.websearch_filter(
             'bp.title', filters.term
         )
         query_filters += filter_terms_str
@@ -2099,7 +2122,7 @@ async def list_researcher_production_events(
             """
 
     if page and lenght:
-        filter_pagination = pagination(page, lenght)
+        filter_pagination = tools.pagination(page, lenght)
     if filters.distinct:  # Acessando via filters.distinct
         filter_distinct = 'DISTINCT ON (bp.title)'
 
@@ -2160,7 +2183,7 @@ async def list_research_projects(
     filter_pagination = str()
 
     if filters.term:  # Acessando via filters.term
-        filter_terms_str, term_params = websearch_filter(
+        filter_terms_str, term_params = tools.websearch_filter(
             'rp.project_name', filters.term
         )
         query_filters += filter_terms_str
@@ -2278,7 +2301,7 @@ async def list_research_projects(
             """
 
     if page and lenght:
-        filter_pagination = pagination(page, lenght)
+        filter_pagination = tools.pagination(page, lenght)
 
     if filters.distinct:  # Acessando via filters.distinct
         filter_distinct = 'DISTINCT ON (rp.project_name)'
@@ -2335,7 +2358,7 @@ async def list_papers_magazine(
     filter_pagination = str()
 
     if filters.term:  # Acessando via filters.term
-        filter_terms_str, term_params = websearch_filter(
+        filter_terms_str, term_params = tools.websearch_filter(
             'bp.title', filters.term
         )
         query_filters += filter_terms_str
@@ -2452,7 +2475,7 @@ async def list_papers_magazine(
             """
 
     if page and lenght:
-        filter_pagination = pagination(page, lenght)
+        filter_pagination = tools.pagination(page, lenght)
 
     if filters.distinct:  # Acessando via filters.distinct
         filter_distinct = 'DISTINCT ON (bp.title)'
@@ -2582,7 +2605,9 @@ async def get_book_metrics(
         filter_distinct = 'DISTINCT'
 
     if filters.term:
-        term_filter, term_params = websearch_filter('bp.title', filters.term)
+        term_filter, term_params = tools.websearch_filter(
+            'bp.title', filters.term
+        )
         params.update(term_params)
 
     if filters.researcher_id:
@@ -2704,7 +2729,9 @@ async def get_book_chapter_metrics(
 
     term_filter = str()
     if filters.term:
-        term_filter, term_params = websearch_filter('bp.title', filters.term)
+        term_filter, term_params = tools.websearch_filter(
+            'bp.title', filters.term
+        )
         params.update(term_params)
 
     filter_id = str()
@@ -2764,173 +2791,158 @@ async def get_researcher_metrics(
     filters: DefaultFilters,
 ):
     params = {}
-    join_filter = str()
-    type_filter = str()
-    year_filter = str()
-    filter_name = str()
 
+    join_type = str()
     join_departament = str()
     join_program = str()
     join_researcher_production = str()
     join_foment = str()
 
-    where_extra = str()
+    WHERE_SQL = str()
     count_among = 'COUNT(*) as among'
 
     match filters.type:
         case 'ABSTRACT':
-            type_filter, term_params = websearch_filter(
+            type_filter, term_params = tools.websearch_filter(
                 'r.abstract', filters.term
             )
+            WHERE_SQL += type_filter
             params.update(term_params)
             count_among = 'COUNT(*) AS among'
-        case ('BOOK' | 'BOOK_CHAPTER' | 'ARTICLE' | 'WORK_IN_EVENT' | 'TEXT_IN_NEWSPAPER_MAGAZINE'):  # fmt: skip
-            count_among = 'COUNT(DISTINCT bp.title) AS among'  # Use DISTINCT here to count unique titles
-            join_filter = f"""
+        case (
+            'BOOK'
+            | 'BOOK_CHAPTER'
+            | 'ARTICLE'
+            | 'WORK_IN_EVENT'
+            | 'TEXT_IN_NEWSPAPER_MAGAZINE'
+        ):
+            count_among = 'COUNT(DISTINCT bp.title) AS among'
+            join_type = f"""
                 INNER JOIN bibliographic_production bp
                     ON bp.researcher_id = r.id AND bp.type = '{filters.type}'
             """
-            if filters.term:  # Only apply if filters.term exists
-                term_filter_str, term_params_bp = websearch_filter(
+            if filters.term:
+                term_filter_str, term_params_bp = tools.websearch_filter(
                     'bp.title', filters.term
                 )
                 type_filter += term_filter_str
                 params.update(term_params_bp)
-            if filters.year:  # Only apply if filters.year exists
-                year_filter = 'AND bp.year::int >= %(year)s'
+            if filters.year:
+                WHERE_SQL += 'AND bp.year::int >= %(year)s'
                 params['year'] = filters.year
         case 'PATENT':
-            count_among = 'COUNT(DISTINCT p.title) AS among'  # Use DISTINCT here
-            join_filter = 'INNER JOIN patent p ON p.researcher_id = r.id'
-            if filters.term:  # Only apply if filters.term exists
-                term_filter_str, term_params_p = websearch_filter(
+            count_among = 'COUNT(DISTINCT p.title) AS among'
+            join_type = 'INNER JOIN patent p ON p.researcher_id = r.id'
+            if filters.term:
+                term_filter_str, term_params_p = tools.websearch_filter(
                     'p.title', filters.term
                 )
                 type_filter += term_filter_str
                 params.update(term_params_p)
-            if filters.year:  # Only apply if filters.year exists
-                year_filter = 'AND p.development_year::int >= %(year)s'
+            if filters.year:
+                WHERE_SQL += 'AND p.development_year::int >= %(year)s'
                 params['year'] = filters.year
         case 'AREA':
-            count_among = (
-                'COUNT(DISTINCT rp.researcher_id) AS among'  # Use DISTINCT here
-            )
-            join_filter = """
+            count_among = 'COUNT(DISTINCT rp.researcher_id) AS among'
+            join_type = """
                 INNER JOIN researcher_production rp
                     ON rp.researcher_id = r.id
                 """
-            if filters.term:  # Only apply if filters.term exists
-                term_filter_str, term_params_rp = websearch_filter(
+            if filters.term:
+                term_filter_str, term_params_rp = tools.websearch_filter(
                     'rp.great_area', filters.term
                 )
                 type_filter += term_filter_str
                 params.update(term_params_rp)
         case 'EVENT':
-            count_among = 'COUNT(DISTINCT e.title) AS among'  # Use DISTINCT here
-            join_filter = """
+            count_among = 'COUNT(DISTINCT e.title) AS among'
+            join_type = """
                 INNER JOIN event_organization e
                     ON e.researcher_id = r.id
                 """
-            if filters.term:  # Only apply if filters.term exists
-                term_filter_str, term_params_e = websearch_filter(
+            if filters.term:
+                term_filter_str, term_params_e = tools.websearch_filter(
                     'e.title', filters.term
                 )
                 type_filter += term_filter_str
                 params.update(term_params_e)
-            if filters.year:  # Only apply if filters.year exists
-                year_filter = 'AND e.year::int >= %(year)s'
+            if filters.year:
+                WHERE_SQL += 'AND e.year::int >= %(year)s'
                 params['year'] = filters.year
         case 'NAME':
-            count_among = 'COUNT(DISTINCT r.id) AS among'  # Already counting researchers, so use DISTINCT
-            if filters.term:  # Only apply if filters.term exists
-                name_filter_str, term_params_name = names_filter(
+            count_among = 'COUNT(DISTINCT r.id) AS among'
+            if filters.term:
+                name_filter_str, term_params_name = tools.names_filter(
                     'r.name', filters.term
                 )
-                filter_name += name_filter_str
+                WHERE_SQL += name_filter_str
                 params.update(term_params_name)
         case _:
-            # Default case for when filters.type is not specified or doesn't match
-            # count_among remains 'COUNT(*) as among' (for total researchers)
             pass
 
     if filters.dep_id or filters.departament:
-        if not join_departament:  # Ensure join is added only once
-            join_departament = """
-                INNER JOIN ufmg.departament_researcher dpr
-                    ON dpr.researcher_id = r.id
-                INNER JOIN ufmg.departament dp
-                    ON dp.dep_id = dpr.dep_id
-                """
+        if not join_departament:
+            join_departament = tools.JOIN_DEPARTAMENT
+
         if filters.dep_id:
             params['dep_id'] = filters.dep_id.split(';')
-            where_extra += """
-                AND dp.dep_id = ANY(%(dep_id)s)
-                """
+            WHERE_SQL += 'AND dp.dep_id = ANY(%(dep_id)s) '
         if filters.departament:
             params['departament'] = filters.departament.split(';')
-            where_extra += """
+            WHERE_SQL += """
                 AND dp.dep_nom = ANY(%(departament)s)
                 """
 
     if filters.graduate_program_id or filters.graduate_program:
-        if not join_program:  # Ensure join is added only once
-            join_program = """
-                INNER JOIN graduate_program_researcher gpr ON gpr.researcher_id = r.id
-                INNER JOIN graduate_program gp ON gpr.graduate_program_id = gp.graduate_program_id
-                """
+        if not join_program:
+            join_program = tools.JOIN_PROGRAM
         if filters.graduate_program_id:
             params['program_id'] = str(filters.graduate_program_id)
-            where_extra += """
+            WHERE_SQL += """
                 AND gpr.graduate_program_id = %(program_id)s
                 AND gpr.type_ = 'PERMANENTE'
                 """
         if filters.graduate_program:
             params['graduate_program'] = filters.graduate_program.split(';')
-            where_extra += """
+            WHERE_SQL += """
                 AND gp.name = ANY(%(graduate_program)s)
                 AND gpr.type_ = 'PERMANENTE'
                 """
 
-    filter_id = str()
     if filters.researcher_id:
         params['researcher_id'] = str(filters.researcher_id)
-        filter_id = 'AND r.id = %(researcher_id)s'
+        WHERE_SQL += 'AND r.id = %(researcher_id)s'
 
-    filter_institution = ''
     if filters.institution:
         params['institution'] = filters.institution.split(';')
-        filter_institution = """
+        WHERE_SQL += """
             AND r.institution_id IN (
                 SELECT id FROM institution WHERE name = ANY(%(institution)s)
             )
         """
 
     if filters.city or filters.area:
-        if not join_researcher_production:  # Ensure join is added only once
-            join_researcher_production = """
-                LEFT JOIN researcher_production rp_prod ON rp_prod.researcher_id = r.id
-            """
+        if not join_researcher_production:
+            join_researcher_production = tools.JOIN_RESEARCH_PRODUCTION
+
         if filters.city:
             params['city'] = filters.city.split(';')
-            where_extra += 'AND rp_prod.city = ANY(%(city)s)'
+            WHERE_SQL += 'AND rp_prod.city = ANY(%(city)s)'
         if filters.area:
             params['area'] = filters.area.replace(' ', '_').split(';')
-            # The original code had `rp_area.great_area` but the join used `rp_city`. Corrected to rp_prod.
-            where_extra += """
+            WHERE_SQL += """
                 AND STRING_TO_ARRAY(REPLACE(rp_prod.great_area, ' ', '_'), ';') && %(area)s
                 """
 
     if filters.modality:
-        join_foment = """
-            INNER JOIN foment f ON f.researcher_id = r.id
-            """
+        join_foment = tools.JOIN_FOMENT
         params['modality'] = filters.modality.split(';')
         if filters.modality != '*':
-            where_extra += 'AND f.modality_name = ANY(%(modality)s)'
+            WHERE_SQL += 'AND f.modality_name = ANY(%(modality)s)'
 
     if filters.graduation:
         params['graduation'] = filters.graduation.split(';')
-        where_extra += 'AND r.graduation = ANY(%(graduation)s)'
+        WHERE_SQL += 'AND r.graduation = ANY(%(graduation)s)'
 
     SCRIPT_SQL = f"""
         SELECT COUNT(DISTINCT r.id) AS researcher_count,
@@ -2940,18 +2952,13 @@ async def get_researcher_metrics(
         FROM researcher r
         LEFT JOIN openalex_researcher opr
             ON opr.researcher_id = r.id
-            {join_filter}
+            {join_type}
             {join_departament}
             {join_program}
             {join_researcher_production}
             {join_foment}
         WHERE 1 = 1
-            {type_filter}
-            {filter_id}
-            {filter_name}
-            {filter_institution}
-            {year_filter}
-            {where_extra}
+            {WHERE_SQL}
         """
     return await conn.select(SCRIPT_SQL, params)
 
@@ -3003,7 +3010,9 @@ async def list_article_metrics(
             """
 
     if filters.term:
-        term_filter, term_params = websearch_filter('bp.title', filters.term)
+        term_filter, term_params = tools.websearch_filter(
+            'bp.title', filters.term
+        )
         params.update(term_params)
 
     if filters.researcher_id:
@@ -3144,7 +3153,9 @@ async def list_patent_metrics(
 
     term_filter = str()
     if filters.term:
-        term_filter, term_params = websearch_filter('p.title', filters.term)
+        term_filter, term_params = tools.websearch_filter(
+            'p.title', filters.term
+        )
         params.update(term_params)
 
     filter_id = str()
@@ -3299,7 +3310,9 @@ async def list_guidance_metrics(
 
     term_filter = str()
     if filters.term:
-        term_filter, term_params = websearch_filter('g.title', filters.term)
+        term_filter, term_params = tools.websearch_filter(
+            'g.title', filters.term
+        )
         params.update(term_params)
 
     filter_id = str()
@@ -3649,7 +3662,9 @@ async def list_software_metrics(
 
     term_filter = str()
     if filters.term:
-        term_filter, term_params = websearch_filter('s.title', filters.term)
+        term_filter, term_params = tools.websearch_filter(
+            's.title', filters.term
+        )
         params.update(term_params)
 
     filter_id = str()
@@ -3792,7 +3807,7 @@ async def get_research_report_metrics(
     filters_sql = str()
 
     if filters.term:
-        filter_terms_str, term_params = websearch_filter(
+        filter_terms_str, term_params = tools.websearch_filter(
             'rr.title', filters.term
         )
         filters_sql += filter_terms_str
@@ -3959,7 +3974,7 @@ async def get_papers_magazine_metrics(
     filters_sql = str()
 
     if filters.term:
-        filter_terms_str, term_params = websearch_filter(
+        filter_terms_str, term_params = tools.websearch_filter(
             'bp.title', filters.term
         )
         filters_sql += filter_terms_str
@@ -4125,7 +4140,7 @@ async def get_speaker_metrics(
     filters_sql = str()
 
     if filters.term:
-        filter_terms_str, term_params = websearch_filter(
+        filter_terms_str, term_params = tools.websearch_filter(
             'pe.title', filters.term
         )
         filters_sql += filter_terms_str
@@ -4302,7 +4317,9 @@ async def get_brand_metrics(
             """
 
     if filters.term:
-        filter_terms_str, term_params = websearch_filter('b.title', filters.term)
+        filter_terms_str, term_params = tools.websearch_filter(
+            'b.title', filters.term
+        )
         filters_sql += filter_terms_str
         params.update(term_params)
 
@@ -4484,7 +4501,7 @@ async def get_research_project_metrics(
     filters_sql = str()
 
     if filters.term:
-        filter_terms_str, term_params = websearch_filter(
+        filter_terms_str, term_params = tools.websearch_filter(
             'b.project_name', filters.term
         )
         filters_sql += filter_terms_str

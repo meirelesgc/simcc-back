@@ -95,3 +95,22 @@ def names_filter(column, names: str):
 
     filter_sql = f'AND ({query_names})'
     return filter_sql, names_dict
+
+
+JOIN_DEPARTAMENT = """
+    INNER JOIN ufmg.departament_researcher dpr ON dpr.researcher_id = r.id
+    INNER JOIN ufmg.departament dp ON dp.dep_id = dpr.dep_id
+    """
+
+JOIN_PROGRAM = """
+    INNER JOIN graduate_program_researcher gpr ON gpr.researcher_id = r.id
+    INNER JOIN graduate_program gp ON gpr.graduate_program_id = gp.graduate_program_id
+    """
+
+JOIN_RESEARCH_PRODUCTION = """
+    LEFT JOIN researcher_production rp_prod ON rp_prod.researcher_id = r.id
+    """
+
+JOIN_FOMENT = """
+    INNER JOIN foment f ON f.researcher_id = r.id
+    """
