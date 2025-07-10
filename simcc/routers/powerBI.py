@@ -497,3 +497,11 @@ def fat_co_authorship_csv():
     file_name = 'fat_co_authorship.csv'
     file_path = os.path.join(STORAGE_PATH, file_name)
     return FileResponse(file_path, filename=file_name)
+
+
+@router.get('/guidance.csv')
+def guidance_csv():
+    powerBI.guidance()
+    file_name = 'guidance.csv'
+    file_path = os.path.join(STORAGE_PATH, file_name)
+    return FileResponse(file_path, filename=file_name)

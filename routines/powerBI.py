@@ -5,7 +5,7 @@ from datetime import datetime
 import nltk
 import pandas as pd
 
-from simcc.repositories import conn
+from simcc.repositories import conn, conn_admin
 
 PATH = 'storage/powerBI'
 
@@ -1209,6 +1209,101 @@ def fat_co_authorship():
     csv = pd.DataFrame(result)
     csv_path = os.path.join(PATH, 'fat_co_authorship.csv')
     csv.to_csv(csv_path)
+
+
+def guidance():
+    SCRIPT_SQL = """
+        SELECT id, r.lattes_id AS student_researcher_id, r.lattes_id
+            AS supervisor_researcher_id, r.lattes_id
+            AS co_supervisor_researcher_id, graduate_program_id, start_date,
+               planned_date_project, done_date_project,
+               planned_date_qualification, done_date_qualification,
+               planned_date_conclusion, done_date_conclusion
+        FROM public.guidance_tracking gt
+        LEFT JOIN researcher r
+            ON r.researcher_id = gt.co_supervisor_researcher_id
+            OR r.researcher_id = gt.student_researcher_id
+            OR r.researcher_id = gt.supervisor_researcher_id
+    """
+    guidance = conn_admin.select(SCRIPT_SQL)
+    guidance = pd.DataFrame(
+        guidance,
+        columns=[
+            'id',
+            'student_researcher_id',
+            'supervisor_researcher_id',
+            'co_supervisor_researcher_id',
+            'graduate_program_id',
+            'start_date',
+            'planned_date_project',
+            'done_date_project',
+            'planned_date_qualification',
+            'done_date_qualification',
+            'planned_date_conclusion',
+            'done_date_conclusion',
+        ],
+    )
+
+    SCRIPT_SQL = """
+        SELECT id AS researcher_id, lattes_id
+        FROM researcher
+    """
+    researchers = conn.select(SCRIPT_SQL)
+    researchers = pd.DataFrame(
+        researchers, columns=['researcher_id', 'lattes_id']
+    )
+
+    guidance = guidance.rename(
+        columns={
+            'student_researcher_id': 'student_lattes_id',
+            'supervisor_researcher_id': 'supervisor_lattes_id',
+            'co_supervisor_researcher_id': 'co_supervisor_lattes_id',
+        }
+    )
+
+    guidance = guidance.merge(
+        researchers,
+        left_on='student_lattes_id',
+        right_on='lattes_id',
+        how='left',
+    )
+    guidance = guidance.rename(
+        columns={'researcher_id': 'student_researcher_id'}
+    )
+    guidance = guidance.drop(columns=['lattes_id'])
+
+    guidance = guidance.merge(
+        researchers,
+        left_on='supervisor_lattes_id',
+        right_on='lattes_id',
+        how='left',
+    )
+    guidance = guidance.rename(
+        columns={'researcher_id': 'supervisor_researcher_id'}
+    )
+    guidance = guidance.drop(columns=['lattes_id'])
+
+    guidance = guidance.merge(
+        researchers,
+        left_on='co_supervisor_lattes_id',
+        right_on='lattes_id',
+        how='left',
+    )
+    guidance = guidance.rename(
+        columns={'researcher_id': 'co_supervisor_researcher_id'}
+    )
+
+    csv = guidance.drop(
+        columns=[
+            'lattes_id',
+            'student_lattes_id',
+            'supervisor_lattes_id',
+            'co_supervisor_lattes_id',
+        ]
+    )
+
+    csv_path = os.path.join(PATH, 'guidance.csv')
+    csv.to_csv(csv_path, index=True, quoting=QUOTE_ALL, encoding='utf-8-sig')
 
 
 if __name__ == '__main__':
