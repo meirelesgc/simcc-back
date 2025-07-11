@@ -146,11 +146,9 @@ async def list_guidance_production(
 async def list_researcher_production_events(
     conn: Connection,
     default_filters: DefaultFilters,
-    page: int | None,
-    lenght: int | None,
 ):
     return await ProductionRepository.list_researcher_production_events(
-        conn, default_filters, page, lenght
+        conn, default_filters
     )
 
 

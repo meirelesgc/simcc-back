@@ -210,12 +210,10 @@ async def list_guidance_production(
 )
 async def list_researcher_production_events(
     default_filters: DefaultFilters = Depends(),
-    page: int | None = None,
-    lenght: int | None = None,
     conn: Connection = Depends(get_conn),
 ):
     return await ProductionService.list_researcher_production_events(
-        conn, default_filters, page, lenght
+        conn, default_filters
     )
 
 

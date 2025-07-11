@@ -62,33 +62,15 @@ def search_in_participation_event(
     '/researcherArea_specialty',
     response_model=list[Researcher],
 )
-def search_in_area_specialty(
+async def search_in_area_specialty(
     area_specialty: str = None,
-    graduate_program_id: UUID | str = None,
-    dep_id: str = None,
-    departament: str = None,
-    institution: str = None,
-    graduate_program: str = None,
-    city: str = None,
-    area: str = None,
-    modality: str = None,
-    graduation: str = None,
-    page: int = None,
-    lenght: int = None,
+    default_filters: DefaultFilters = Depends(),
+    conn: Connection = Depends(get_conn),
 ):
-    return ResearcherService.search_in_area_specialty(
-        area_specialty,
-        graduate_program_id,
-        dep_id,
-        departament,
-        institution,
-        graduate_program,
-        city,
-        area,
-        modality,
-        graduation,
-        page,
-        lenght,
+    if area_specialty:
+        default_filters.term = area_specialty
+    return await ResearcherService.search_in_area_specialty(
+        conn, default_filters
     )
 
 

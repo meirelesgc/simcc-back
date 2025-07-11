@@ -21,7 +21,6 @@ async def ai_summary_search(conn, model, default_filters):
             )
             fields = ['title', 'year', 'qualis', 'magazine', 'abstract', 'jif']
             search = extract_fields(result, fields)
-            print(search)
         case 'BOOK':
             result = await ProductionRepository.list_book(conn, default_filters)
             fields = ['year', 'title', 'publishing_company']
@@ -71,6 +70,57 @@ async def ai_summary_search(conn, model, default_filters):
                 'subsidy',
                 'graduate_programs',
                 'ufmg',
+            ]
+            search = extract_fields(result, fields)
+        case 'WORK_IN_EVENT':
+            result = await ProductionRepository.list_researcher_production_events(  # fmt: skip
+                conn, default_filters
+            )
+            fields = [
+                'title',
+                'event_classification',
+                'event_name',
+                'event_city',
+                'publisher_name',
+            ]
+            search = extract_fields(result, fields)
+        case 'PATENT':
+            result = await ProductionRepository.list_patent(
+                conn, default_filters
+            )
+            fields = ['title', 'category', 'grant_date', 'details']
+            search = extract_fields(result, fields)
+        case 'AREA':
+            result = await ResearcherRepository.search_in_area_specialty(
+                conn, default_filters
+            )
+            fields = [
+                'name',
+                'university',
+                'area',
+                'abstract',
+                'graduation',
+                'h_index',
+                'relevance_score',
+                'works_count',
+                'cited_by_count',
+                'i10_index',
+                'research_groups',
+                'subsidy',
+                'graduate_programs',
+                'ufmg',
+            ]
+            search = extract_fields(result, fields)
+        case 'EVENT':
+            result = await ProductionRepository.get_pevent_researcher(
+                conn, default_filters, None
+            )
+            fields = [
+                'title',
+                'event_name',
+                'nature',
+                'form_participation',
+                'year',
             ]
             search = extract_fields(result, fields)
         case _:

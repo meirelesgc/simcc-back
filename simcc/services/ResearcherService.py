@@ -43,33 +43,9 @@ async def get_researcher_filter(conn):
     return await ResearcherRepository.get_researcher_filter(conn)
 
 
-def search_in_area_specialty(
-    area_specialty,
-    graduate_program_id,
-    dep_id,
-    departament,
-    institution,
-    graduate_program,
-    city,
-    area,
-    modality,
-    graduation,
-    page,
-    lenght,
-):
-    researchers = ResearcherRepository.search_in_area_specialty(
-        area_specialty,
-        graduate_program_id,
-        dep_id,
-        departament,
-        institution,
-        graduate_program,
-        city,
-        area,
-        modality,
-        graduation,
-        page,
-        lenght,
+async def search_in_area_specialty(conn, default_filters):
+    researchers = await ResearcherRepository.search_in_area_specialty(
+        conn, default_filters
     )
     if not researchers:
         return []
