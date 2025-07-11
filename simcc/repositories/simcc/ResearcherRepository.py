@@ -428,11 +428,6 @@ def search_in_book(
             AND STRING_TO_ARRAY(REPLACE(rp.great_area, ' ', '_'), ';') && %(area)s
         """
 
-    filter_type = str()
-    if type:
-        params['type'] = type.split(';')
-        filter_type = 'AND bp.type = ANY(%(type)s)'
-
     SCRIPT_SQL = f"""
         SELECT {filter_distinct}
             r.id, r.name, r.lattes_id, r.lattes_10_id, r.abstract, r.orcid,
@@ -457,7 +452,6 @@ def search_in_book(
                 WHERE 1 = 1
                     AND TYPE = 'BOOK'
                     {filter_terms}
-                    {filter_type}
                     {filter_institution}
                 GROUP BY researcher_id
             ) bp ON bp.researcher_id = r.id
