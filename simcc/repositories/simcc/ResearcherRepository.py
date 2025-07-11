@@ -1736,14 +1736,12 @@ async def academic_degree(
                     params.update(term_params_p)
                 if filters.year:
                     type_specific_filters += (
-                        ' AND p.development_year >= %(year)s'
+                        ' AND p.development_year::INT >= %(year)s'
                     )
                     params['year'] = filters.year
 
             case 'AREA':
-                if (
-                    not join_researcher_production
-                ):  # Reutiliza o JOIN se já existir
+                if not join_researcher_production:
                     join_researcher_production = 'INNER JOIN researcher_production rp ON rp.researcher_id = r.id'
                 if filters.term:
                     term_filter_str, term_params_rp = tools.websearch_filter(
@@ -1768,14 +1766,12 @@ async def academic_degree(
 
             case 'NAME':
                 if filters.term:
-                    # Assumindo que a função `tools.names_filter` existe e retorna a string do filtro
                     name_filter_str, term_params_name = tools.names_filter(
                         'r.name', filters.term
                     )
                     type_specific_filters += name_filter_str
                     params.update(term_params_name)
 
-    # --- Montagem e Execução da Query SQL ---
     SCRIPT_SQL = f"""
         SELECT r.graduation, COUNT(DISTINCT r.id) AS among
         FROM public.researcher r
@@ -1899,7 +1895,7 @@ async def get_great_area(
                 if filters.year:
                     params['year'] = filters.year
                     type_specific_filters += (
-                        ' AND p.development_year >= %(year)s'
+                        ' AND p.development_year::INT >= %(year)s'
                     )
             case 'EVENT':
                 join_type_specific = 'INNER JOIN public.event_organization e ON e.researcher_id = r.id'
