@@ -2825,7 +2825,7 @@ async def get_researcher_metrics(
                 term_filter_str, term_params_bp = tools.websearch_filter(
                     'bp.title', filters.term
                 )
-                type_filter += term_filter_str
+                WHERE_SQL += term_filter_str
                 params.update(term_params_bp)
             if filters.year:
                 WHERE_SQL += 'AND bp.year::int >= %(year)s'
@@ -2837,7 +2837,7 @@ async def get_researcher_metrics(
                 term_filter_str, term_params_p = tools.websearch_filter(
                     'p.title', filters.term
                 )
-                type_filter += term_filter_str
+                WHERE_SQL += term_filter_str
                 params.update(term_params_p)
             if filters.year:
                 WHERE_SQL += 'AND p.development_year::int >= %(year)s'
@@ -2852,7 +2852,7 @@ async def get_researcher_metrics(
                 term_filter_str, term_params_rp = tools.websearch_filter(
                     'rp.great_area', filters.term
                 )
-                type_filter += term_filter_str
+                WHERE_SQL += term_filter_str
                 params.update(term_params_rp)
         case 'EVENT':
             count_among = 'COUNT(DISTINCT e.title) AS among'
@@ -2864,7 +2864,7 @@ async def get_researcher_metrics(
                 term_filter_str, term_params_e = tools.websearch_filter(
                     'e.title', filters.term
                 )
-                type_filter += term_filter_str
+                WHERE_SQL += term_filter_str
                 params.update(term_params_e)
             if filters.year:
                 WHERE_SQL += 'AND e.year::int >= %(year)s'
