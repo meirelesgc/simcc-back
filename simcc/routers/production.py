@@ -154,15 +154,13 @@ async def list_bibliographic_production(
     terms: str | None = None,
     type: ArticleOptions = 'ARTICLE',
     qualis: QualisOptions | str = None,
-    page: int | None = None,
-    lenght: int | None = None,
     conn: Connection = Depends(get_conn),
 ):
     default_filters.type = type
     if terms:
         default_filters.term = terms
     articles = await ProductionService.list_bibliographic_production(
-        conn, default_filters, qualis, page, lenght
+        conn, default_filters, qualis
     )
     return articles
 

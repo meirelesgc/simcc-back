@@ -84,11 +84,9 @@ async def list_bibliographic_production(
     conn: Connection,
     default_filters: DefaultFilters,
     qualis: str | None,
-    page: int | None,
-    lenght: int | None,
 ) -> list[ArticleProduction]:
     production = await ProductionRepository.list_bibliographic_production(
-        conn, default_filters, qualis, page, lenght
+        conn, default_filters, qualis
     )
 
     if not production:
