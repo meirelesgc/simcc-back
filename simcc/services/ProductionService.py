@@ -72,9 +72,7 @@ async def list_book(
     page: int | None,
     lenght: int | None,
 ):
-    books = await ProductionRepository.list_book(
-        conn, default_filters, page, lenght
-    )
+    books = await ProductionRepository.list_book(conn, default_filters)
     if not books:
         return []
     return books
