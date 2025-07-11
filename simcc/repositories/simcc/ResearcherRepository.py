@@ -1735,9 +1735,9 @@ async def academic_degree(
                     type_specific_filters += term_filter_str
                     params.update(term_params_p)
                 if filters.year:
-                    type_specific_filters += (
-                        ' AND p.development_year::INT >= %(year)s'
-                    )
+                    type_specific_filters += """
+                        AND p.development_year::INT >= %(year)s
+                        """
                     params['year'] = filters.year
 
             case 'AREA':
