@@ -75,11 +75,9 @@ async def get_pevent_researcher(
 )
 async def list_book_production(
     default_filters: DefaultFilters = Depends(),
-    page: int | None = None,
-    lenght: int | None = None,
     conn: Connection = Depends(get_conn),
 ):
-    return await ProductionService.list_book(conn, default_filters, page, lenght)
+    return await ProductionService.list_book(conn, default_filters)
 
 
 @router.get(
@@ -118,13 +116,9 @@ async def list_researcher_report(
 )
 async def list_book_chapter_production(
     default_filters: DefaultFilters = Depends(),
-    page: int | None = None,
-    lenght: int | None = None,
     conn: Connection = Depends(get_conn),
 ):
-    result = await ProductionService.list_book_chapter(
-        conn, default_filters, page, lenght
-    )
+    result = await ProductionService.list_book_chapter(conn, default_filters)
     return result
 
 

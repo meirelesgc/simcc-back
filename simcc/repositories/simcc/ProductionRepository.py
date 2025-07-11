@@ -1335,41 +1335,39 @@ async def list_book_chapter(
     filter_distinct = str()
     query_filters = str()
     filter_pagination = str()
-    if default_filters.term:  # Acessando via filters.term
+    if default_filters.term:
         filter_terms_str, term_params = tools.websearch_filter(
             'bp.title', default_filters.term
         )
         query_filters += filter_terms_str
         params.update(term_params)
 
-    if default_filters.year:  # Acessando via filters.year
+    if default_filters.year:
         params['year'] = default_filters.year
         query_filters += """
             AND bp.year::INT >= %(year)s
             """
 
-    if (
-        default_filters.dep_id or default_filters.departament
-    ):  # Acessando via filters
+    if default_filters.dep_id or default_filters.departament:
         join_departament = """
             INNER JOIN ufmg.departament_researcher dpr
                 ON dpr.researcher_id = bp.researcher_id
             INNER JOIN ufmg.departament dp
                 ON dp.dep_id = dpr.dep_id
             """
-    if default_filters.dep_id:  # Acessando via filters.dep_id
+    if default_filters.dep_id:
         params['dep_id'] = default_filters.dep_id
         query_filters += """
             AND dp.dep_id = %(dep_id)s
             """
 
-    if default_filters.departament:  # Acessando via filters.departament
+    if default_filters.departament:
         params['departament'] = default_filters.departament.split(';')
         query_filters += """
             AND dp.dep_nom = ANY(%(departament)s)
             """
 
-    if default_filters.researcher_id:  # Acessando via filters.researcher_id
+    if default_filters.researcher_id:
         params['researcher_id'] = str(
             default_filters.researcher_id
         )  # Convertido para string
@@ -1377,7 +1375,7 @@ async def list_book_chapter(
             AND bp.researcher_id = %(researcher_id)s
             """
 
-    if default_filters.institution:  # Acessando via filters.institution
+    if default_filters.institution:
         params['institution'] = default_filters.institution.split(';')
         join_institution = """
             INNER JOIN institution i
@@ -1387,13 +1385,9 @@ async def list_book_chapter(
             AND i.name = ANY(%(institution)s)
             """
 
-    if (
-        default_filters.graduate_program_id
-    ):  # Acessando via filters.graduate_program_id
+    if default_filters.graduate_program_id:
         filter_distinct = 'DISTINCT'
-        params['graduate_program_id'] = str(
-            default_filters.graduate_program_id
-        )  # Convertido para string
+        params['graduate_program_id'] = str(default_filters.graduate_program_id)
         join_program = """
             INNER JOIN graduate_program_researcher gpr
                 ON gpr.researcher_id = bp.researcher_id
@@ -1404,9 +1398,7 @@ async def list_book_chapter(
             AND gpr.graduate_program_id = %(graduate_program_id)s
             """
 
-    if (
-        default_filters.graduate_program
-    ):  # Acessando via filters.graduate_program
+    if default_filters.graduate_program:
         filter_distinct = 'DISTINCT'
         params['graduate_program'] = default_filters.graduate_program.split(';')
         join_program = """
@@ -1419,7 +1411,7 @@ async def list_book_chapter(
             AND gp.name = ANY(%(graduate_program)s)
             """
 
-    if default_filters.city:  # Acessando via filters.city
+    if default_filters.city:
         params['city'] = default_filters.city.split(';')
         join_researcher_production = """
             LEFT JOIN researcher_production rp
@@ -1428,11 +1420,9 @@ async def list_book_chapter(
         query_filters += """
             AND rp.city = ANY(%(city)s)
             """
-    if default_filters.area:  # Acessando via filters.area
+    if default_filters.area:
         params['area'] = default_filters.area.replace(' ', '_').split(';')
-        if (
-            not join_researcher_production
-        ):  # Adicionado para evitar duplicidade do join
+        if not join_researcher_production:
             join_researcher_production = """
                 LEFT JOIN researcher_production rp
                     ON rp.researcher_id = bp.researcher_id
@@ -1441,7 +1431,7 @@ async def list_book_chapter(
             AND rp.great_area_ && %(area)s
             """
 
-    if default_filters.modality:  # Acessando via filters.modality
+    if default_filters.modality:
         filter_distinct = 'DISTINCT'
         params['modality'] = default_filters.modality.split(';')
         join_foment = """
@@ -1452,7 +1442,7 @@ async def list_book_chapter(
             AND f.modality_name = ANY(%(modality)s)
             """
 
-    if default_filters.graduation:  # Acessando via filters.graduation
+    if default_filters.graduation:
         params['graduation'] = default_filters.graduation.split(';')
         query_filters += """
             AND r.graduation = ANY(%(graduation)s)
@@ -1486,13 +1476,13 @@ async def list_book_chapter(
         ORDER BY bp.title DESC
         {filter_pagination};
         """
-    result = await conn.select(SCRIPT_SQL, params)  # Adicionado await
+    result = await conn.select(SCRIPT_SQL, params)
     return result
 
 
 async def list_software(
     conn: Connection,
-    filters: DefaultFilters,  # Recebe a instância DefaultFilters
+    filters: DefaultFilters,
     page: int | None,
     lenght: int | None,
 ):

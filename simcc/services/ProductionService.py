@@ -69,8 +69,6 @@ async def list_brand(
 async def list_book(
     conn: Connection,
     default_filters: DefaultFilters,
-    page: int | None,
-    lenght: int | None,
 ):
     books = await ProductionRepository.list_book(conn, default_filters)
     if not books:
@@ -115,15 +113,8 @@ async def list_article_production(
     return production.to_dict(orient='records')
 
 
-async def list_book_chapter(
-    conn: Connection,
-    default_filters: DefaultFilters,
-    page: int | None,
-    lenght: int | None,
-):
-    return await ProductionRepository.list_book_chapter(
-        conn, default_filters, page, lenght
-    )
+async def list_book_chapter(conn: Connection, default_filters: DefaultFilters):
+    return await ProductionRepository.list_book_chapter(conn, default_filters)
 
 
 async def list_software(
