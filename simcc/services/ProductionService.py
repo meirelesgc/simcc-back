@@ -8,7 +8,7 @@ from simcc.schemas import DefaultFilters  # Adicionado
 from simcc.schemas.Production.Article import ArticleMetric, ArticleProduction
 from simcc.schemas.Production.Brand import BrandProduction
 from simcc.schemas.Production.Guidance import GuidanceMetrics
-from simcc.schemas.Production.Patent import PatentMetric, PatentProduction
+from simcc.schemas.Production.Patent import PatentMetric
 from simcc.schemas.Researcher import AcademicMetric
 
 
@@ -43,15 +43,8 @@ async def professional_experience(
     )
 
 
-async def list_patent(
-    conn: Connection,
-    default_filters: DefaultFilters,
-    page: int | None,
-    lenght: int | None,
-) -> list[PatentProduction]:
-    return await ProductionRepository.list_patent(
-        conn, default_filters, page, lenght
-    )
+async def list_patent(conn: Connection, default_filters: DefaultFilters):
+    return await ProductionRepository.list_patent(conn, default_filters)
 
 
 async def list_brand(

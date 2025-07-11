@@ -33,7 +33,7 @@ class DefaultFilters(BaseModel):
         ]
         | str
     ] = None
-    distinct: int = 1
+    distinct: int | str = 1
     institution: Optional[str] = None
     graduate_program: Optional[str] = None
     city: Optional[str] = None

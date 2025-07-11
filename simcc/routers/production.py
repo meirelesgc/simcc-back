@@ -47,13 +47,9 @@ async def get_professional_experience(
 )
 async def list_patent_production(
     default_filters: DefaultFilters = Depends(),
-    page: int | None = None,
-    lenght: int | None = None,
     conn: Connection = Depends(get_conn),
 ):
-    return await ProductionService.list_patent(
-        conn, default_filters, page, lenght
-    )
+    return await ProductionService.list_patent(conn, default_filters)
 
 
 @router.get('/pevent_researcher')
