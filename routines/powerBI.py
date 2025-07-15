@@ -130,7 +130,7 @@ def dim_city():
 
 def ufmg_researcher():
     SCRIPT_SQL = """
-        SELECT 
+        SELECT
         FROM ufmg.researcher;
         """
     result = conn.select(SCRIPT_SQL)
@@ -1190,13 +1190,13 @@ def fat_co_authorship():
     SCRIPT_SQL = r"""
         WITH co_articles AS (
             SELECT title, ARRAY_AGG(researcher_id) AS co_authors
-            FROM bibliographic_production 
+            FROM bibliographic_production
             WHERE type = 'ARTICLE'
             GROUP BY title
         ),
         co_authors AS (
             SELECT co_articles.title, bp.researcher_id, UNNEST(co_authors) AS co_author
-            FROM bibliographic_production bp 
+            FROM bibliographic_production bp
             INNER JOIN co_articles ON co_articles.title = bp.title
         )
         SELECT co_authors.title, co_authors.researcher_id, co_authors.co_author
