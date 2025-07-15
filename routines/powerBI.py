@@ -1242,9 +1242,9 @@ def guidance():
         guidance,
         columns=[
             'id',
-            'student_researcher_id',
-            'supervisor_researcher_id',
-            'co_supervisor_researcher_id',
+            'student_lattes_id',
+            'supervisor_lattes_id',
+            'co_supervisor_lattes_id',
             'graduate_program_id',
             'start_date',
             'planned_date_project',
@@ -1253,6 +1253,9 @@ def guidance():
             'done_date_qualification',
             'planned_date_conclusion',
             'done_date_conclusion',
+            'student_name',
+            'supervisor_name',
+            'co_name',
         ],
     )
 
@@ -1265,49 +1268,41 @@ def guidance():
         researchers, columns=['researcher_id', 'lattes_id']
     )
 
-    guidance = guidance.rename(
-        columns={
-            'student_researcher_id': 'student_lattes_id',
-            'supervisor_researcher_id': 'supervisor_lattes_id',
-            'co_supervisor_researcher_id': 'co_supervisor_lattes_id',
-        }
+    guidance = (
+        guidance.merge(
+            researchers,
+            left_on='student_lattes_id',
+            right_on='lattes_id',
+            how='left',
+        )
+        .rename(columns={'researcher_id': 'student_researcher_id'})
+        .drop(columns=['lattes_id'])
     )
 
-    guidance = guidance.merge(
-        researchers,
-        left_on='student_lattes_id',
-        right_on='lattes_id',
-        how='left',
+    guidance = (
+        guidance.merge(
+            researchers,
+            left_on='supervisor_lattes_id',
+            right_on='lattes_id',
+            how='left',
+        )
+        .rename(columns={'researcher_id': 'supervisor_researcher_id'})
+        .drop(columns=['lattes_id'])
     )
-    guidance = guidance.rename(
-        columns={'researcher_id': 'student_researcher_id'}
-    )
-    guidance = guidance.drop(columns=['lattes_id'])
 
-    guidance = guidance.merge(
-        researchers,
-        left_on='supervisor_lattes_id',
-        right_on='lattes_id',
-        how='left',
-    )
-    guidance = guidance.rename(
-        columns={'researcher_id': 'supervisor_researcher_id'}
-    )
-    guidance = guidance.drop(columns=['lattes_id'])
-
-    guidance = guidance.merge(
-        researchers,
-        left_on='co_supervisor_lattes_id',
-        right_on='lattes_id',
-        how='left',
-    )
-    guidance = guidance.rename(
-        columns={'researcher_id': 'co_supervisor_researcher_id'}
+    guidance = (
+        guidance.merge(
+            researchers,
+            left_on='co_supervisor_lattes_id',
+            right_on='lattes_id',
+            how='left',
+        )
+        .rename(columns={'researcher_id': 'co_supervisor_researcher_id'})
+        .drop(columns=['lattes_id'])
     )
 
     csv = guidance.drop(
         columns=[
-            'lattes_id',
             'student_lattes_id',
             'supervisor_lattes_id',
             'co_supervisor_lattes_id',
