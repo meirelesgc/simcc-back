@@ -505,3 +505,11 @@ def guidance_csv():
     file_name = 'guidance.csv'
     file_path = os.path.join(STORAGE_PATH, file_name)
     return FileResponse(file_path, filename=file_name)
+
+
+@router.get('/supervisor.csv')
+def supervisor_csv():
+    powerBI.supervisor()
+    file_name = 'supervisor.csv'
+    file_path = os.path.join(STORAGE_PATH, file_name)
+    return FileResponse(file_path, filename=file_name)
