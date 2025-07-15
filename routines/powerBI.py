@@ -1211,7 +1211,7 @@ def fat_co_authorship():
     csv.to_csv(csv_path)
 
 
-def guidance():
+def _guidance():
     SCRIPT_SQL = """
         SELECT
             gt.id,
@@ -1309,6 +1309,40 @@ def guidance():
         ]
     )
 
+    return csv
+
+
+def guidance():
+    today = datetime.now().date()
+    csv: pd.DataFrame = _guidance()
+
+    def peding_days(row):
+        delays = []
+
+        if row['done_date_conclusion'] is None:
+            if row['planned_date_conclusion'] < today:
+                days = (today - row['planned_date_conclusion']).days
+                delays.append(days)
+        if row['done_date_qualification'] is None:
+            if row['planned_date_qualification'] < today:
+                days = (today - row['planned_date_qualification']).days
+                delays.append(days)
+        if row['done_date_project'] is None:
+            if row['planned_date_project'] < today:
+                days = (today - row['planned_date_project']).days
+                delays.append(days)
+        if delays:
+            return max(delays)
+        return 0
+
+    def pending(row):
+        if peding_days(row) > 0:
+            return 'EM ATRASO'
+        return 'CONCLUSÃO EM DIA'
+
+    csv['peding_days'] = csv.apply(peding_days, axis=1)
+    csv['peding'] = csv.apply(pending, axis=1)
+
     csv_path = os.path.join(PATH, 'guidance.csv')
     csv.to_csv(csv_path, index=True, quoting=QUOTE_ALL, encoding='utf-8-sig')
 
@@ -1317,65 +1351,66 @@ if __name__ == '__main__':
     for directory in [PATH]:
         if not os.path.exists(directory):
             os.makedirs(directory)
-    dim_titulacao()
-    fat_area_specialty()
-    fat_great_area()
-    dim_area_specialty()
-    dim_great_area()
-    fat_openalex_researcher()
-    researcher_area_leader()
-    fat_openalex_article()
-    dim_area_leader()
-    npai()
-    iapos()
-    dim_city()
-    ufmg_researcher()
-    DimensaoAno()
-    DimensaoTipoProducao()
-    platform_image()
-    Qualis()
-    dim_departament()
-    data()
-    cimatec_graduate_program_student()
-    graduate_program_student_year_unnest()
-    dim_graduate_program_acronym()
-    graduate_program_researcher_year_unnest()
-    dim_departament_technician()
-    dim_departament_researcher()
-    fat_group_leaders()
-    dim_research_group()
-    dim_category_level_code()
-    fat_foment()
-    fat_production_tecnical_year_novo_csv_db()
-    dim_institution()
-    researcher_city()
-    dim_researcher('xpto')
-    fat_simcc_bibliographic_production()
-    production_tecnical_year()
-    researcher()
-    article_qualis_year_institution()
-    production_researcher()
-    article_qualis_year()
-    production_year_distinct()
-    production_year()
-    production_coauthors_csv_db()
-    fat_researcher_ind_prod()
-    graduate_program_ind_prod()
-    researcher_production_novo_csv_db()
-    article_distinct_novo_csv_db()
-    production_distinct_novo_csv_db()
-    cimatec_graduate_program_researcher()
-    cimatec_graduate_program()
-    dim_research_project()
-    fat_research_project_foment()
-    dim_bibliographic_production_terms()
-    dim_tecnical_production_terms()
-    dim_logs_routine()
-    fat_logs_routine()
-    fat_event_organization()
-    fat_participation_events()
-    materialized_vision()
-    fat_article_keyword_()
-    dim_article_keyword()
-    fat_article_co_authorship()
-    fat_keywords_cooccurrences()
+    # dim_titulacao()
+    # fat_area_specialty()
+    # fat_great_area()
+    # dim_area_specialty()
+    # dim_great_area()
+    # fat_openalex_researcher()
+    # researcher_area_leader()
+    # fat_openalex_article()
+    # dim_area_leader()
+    # npai()
+    # iapos()
+    # dim_city()
+    # ufmg_researcher()
+    # DimensaoAno()
+    # DimensaoTipoProducao()
+    # platform_image()
+    # Qualis()
+    # dim_departament()
+    # data()
+    # cimatec_graduate_program_student()
+    # graduate_program_student_year_unnest()
+    # dim_graduate_program_acronym()
+    # graduate_program_researcher_year_unnest()
+    # dim_departament_technician()
+    # dim_departament_researcher()
+    # fat_group_leaders()
+    # dim_research_group()
+    # dim_category_level_code()
+    # fat_foment()
+    # fat_production_tecnical_year_novo_csv_db()
+    # dim_institution()
+    # researcher_city()
+    # dim_researcher('xpto')
+    # fat_simcc_bibliographic_production()
+    # production_tecnical_year()
+    # researcher()
+    # article_qualis_year_institution()
+    # production_researcher()
+    # article_qualis_year()
+    # production_year_distinct()
+    # production_year()
+    # production_coauthors_csv_db()
+    # fat_researcher_ind_prod()
+    # graduate_program_ind_prod()
+    # researcher_production_novo_csv_db()
+    # article_distinct_novo_csv_db()
+    # production_distinct_novo_csv_db()
+    # cimatec_graduate_program_researcher()
+    # cimatec_graduate_program()
+    # dim_research_project()
+    # fat_research_project_foment()
+    # dim_bibliographic_production_terms()
+    # dim_tecnical_production_terms()
+    # dim_logs_routine()
+    # fat_logs_routine()
+    # fat_event_organization()
+    # fat_participation_events()
+    # materialized_vision()
+    # fat_article_keyword_()
+    # dim_article_keyword()
+    # fat_article_co_authorship()
+    # fat_keywords_cooccurrences()
+    guidance()
