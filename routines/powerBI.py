@@ -1213,17 +1213,29 @@ def fat_co_authorship():
 
 def guidance():
     SCRIPT_SQL = """
-        SELECT id, r.lattes_id AS student_researcher_id, r.lattes_id
-            AS supervisor_researcher_id, r.lattes_id
-            AS co_supervisor_researcher_id, graduate_program_id, start_date,
-               planned_date_project, done_date_project,
-               planned_date_qualification, done_date_qualification,
-               planned_date_conclusion, done_date_conclusion
+        SELECT
+            gt.id,
+            r_student.lattes_id AS student_lattes_id,
+            r_supervisor.lattes_id AS supervisor_lattes_id,
+            r_co.lattes_id AS co_supervisor_lattes_id,
+            gt.graduate_program_id,
+            gt.start_date,
+            gt.planned_date_project,
+            gt.done_date_project,
+            gt.planned_date_qualification,
+            gt.done_date_qualification,
+            gt.planned_date_conclusion,
+            gt.done_date_conclusion,
+            r_student.name AS student_name,
+            r_supervisor.name AS supervisor_name,
+            r_co.name AS co_name
         FROM public.guidance_tracking gt
-        LEFT JOIN researcher r
-            ON r.researcher_id = gt.co_supervisor_researcher_id
-            OR r.researcher_id = gt.student_researcher_id
-            OR r.researcher_id = gt.supervisor_researcher_id
+        LEFT JOIN researcher r_student
+            ON r_student.researcher_id = gt.student_researcher_id
+        LEFT JOIN researcher r_supervisor
+            ON r_supervisor.researcher_id = gt.supervisor_researcher_id
+        LEFT JOIN researcher r_co
+            ON r_co.researcher_id = gt.co_supervisor_researcher_id
     """
     guidance = conn_admin.select(SCRIPT_SQL)
     guidance = pd.DataFrame(
