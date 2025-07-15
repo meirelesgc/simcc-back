@@ -1,15 +1,15 @@
 services:
-    simcc-postgres:
-        image: pgvector/pgvector:pg17
-        container_name: simcc-postgres-dev
-        environment:
-            POSTGRES_USER: postgres
-            POSTGRES_DB: simcc
-            POSTGRES_PASSWORD: postgres
-        ports:
-            - "5432:5432"
-        volumes:
-            - simcc-postgres-dev:/var/lib/postgresql/data
+  db:
+    image: pgvector/pgvector:pg17
+    container_name: db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - db:/var/lib/postgresql/data
 
 volumes:
-    simcc-postgres-dev:
+  db:

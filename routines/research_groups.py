@@ -35,7 +35,7 @@ botao_pesquisar.click()
 time.sleep(20)
 
 
-csv_file_grupos = 'grupos_pesquisa.csv'
+csv_file_grupos = 'storage/research_groups/research_groups.csvv'
 
 
 def extrair_dados():

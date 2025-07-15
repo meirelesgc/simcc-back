@@ -587,8 +587,8 @@ CREATE TABLE public.graduate_program_ind_prod (
     ind_prod_not_granted_patent numeric(10, 3),
     ind_prod_guidance numeric(10, 3)
 );
-CREATE TABLE IF NOT EXISTS research_group(
-    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+CREATE TABLE IF NOT EXISTS research_group (
+    id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
     name character varying(200),
     institution character varying(200),
     first_leader character varying(200),
@@ -602,7 +602,9 @@ CREATE TABLE IF NOT EXISTS research_group(
     group_identifier character varying(200),
     year int,
     institution_name character varying(200),
-    category character varying(200)
+    category character varying(200),
+    UNIQUE (name, institution),
+    UNIQUE (group_identifier)
 );
 CREATE TABLE research_lines(
     id uuid NOT NULL DEFAULT uuid_generate_v4(),
