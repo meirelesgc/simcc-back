@@ -1349,12 +1349,12 @@ def guidance():
                 delays.append(days)
         if delays:
             return max(delays)
-        return 0
+        return row['planned_date_conclusion'] - today
 
     def pending(row):
         if peding_days(row) > 0:
             return 'EM ATRASO'
-        return 'CONCLUSÃO EM DIA'
+        return 'EM DIA'
 
     def type_(row):
         if row['done_date_project'] is None:
