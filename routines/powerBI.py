@@ -1313,20 +1313,51 @@ def _guidance():
 
 
 def supervisor():
-    csv: pd.DataFrame = _guidance()
+    df_original = _guidance()
+    df_original['year'] = pd.to_datetime(
+        df_original['planned_date_conclusion']
+    ).dt.year
+    df_original = df_original[['year', 'supervisor_researcher_id']]
 
-    csv['year'] = pd.to_datetime(csv['start_date']).dt.year
+    df_expanded = pd.DataFrame(
+        [
+            (supervisor, year)
+            for supervisor, group in df_original.groupby(
+                'supervisor_researcher_id'
+            )
+            for year in range(group['year'].min(), group['year'].max() + 1)
+        ],
+        columns=['supervisor_researcher_id', 'year'],
+    )
 
-    mask = csv['done_date_conclusion'].isna()
-    pending = csv[mask]
-
-    csv = (
-        pending.groupby(['supervisor_researcher_id', 'year'])
+    end_counts = (
+        df_original.groupby(['supervisor_researcher_id', 'year'])
         .size()
-        .reset_index(name='count')
+        .reset_index(name='ended_in_year')
+    )
+
+    csv = pd.merge(
+        df_expanded,
+        end_counts,
+        on=['supervisor_researcher_id', 'year'],
+        how='left',
+    ).fillna(0)
+
+    csv = csv.sort_values(
+        by=['supervisor_researcher_id', 'year'], ascending=[True, False]
+    )
+    csv['count'] = (
+        csv.groupby('supervisor_researcher_id')['ended_in_year']
+        .cumsum()
+        .astype(int)
+    )
+
+    csv = csv[['supervisor_researcher_id', 'year', 'count']]
+    csv = csv.sort_values(by=['supervisor_researcher_id', 'year']).reset_index(
+        drop=True
     )
     csv_path = os.path.join(PATH, 'supervisor.csv')
-    csv.to_csv(csv_path, index=False)
+    csv.to_csv(csv_path)
 
 
 def guidance():
@@ -1395,67 +1426,67 @@ if __name__ == '__main__':
     for directory in [PATH]:
         if not os.path.exists(directory):
             os.makedirs(directory)
-    # dim_titulacao()
-    # fat_area_specialty()
-    # fat_great_area()
-    # dim_area_specialty()
-    # dim_great_area()
-    # fat_openalex_researcher()
-    # researcher_area_leader()
-    # fat_openalex_article()
-    # dim_area_leader()
-    # npai()
-    # iapos()
-    # dim_city()
-    # ufmg_researcher()
-    # DimensaoAno()
-    # DimensaoTipoProducao()
-    # platform_image()
-    # Qualis()
-    # dim_departament()
-    # data()
-    # cimatec_graduate_program_student()
-    # graduate_program_student_year_unnest()
-    # dim_graduate_program_acronym()
-    # graduate_program_researcher_year_unnest()
-    # dim_departament_technician()
-    # dim_departament_researcher()
-    # fat_group_leaders()
-    # dim_research_group()
-    # dim_category_level_code()
-    # fat_foment()
-    # fat_production_tecnical_year_novo_csv_db()
-    # dim_institution()
-    # researcher_city()
-    # dim_researcher('xpto')
-    # fat_simcc_bibliographic_production()
-    # production_tecnical_year()
-    # researcher()
-    # article_qualis_year_institution()
-    # production_researcher()
-    # article_qualis_year()
-    # production_year_distinct()
-    # production_year()
-    # production_coauthors_csv_db()
-    # fat_researcher_ind_prod()
-    # graduate_program_ind_prod()
-    # researcher_production_novo_csv_db()
-    # article_distinct_novo_csv_db()
-    # production_distinct_novo_csv_db()
-    # cimatec_graduate_program_researcher()
-    # cimatec_graduate_program()
-    # dim_research_project()
-    # fat_research_project_foment()
-    # dim_bibliographic_production_terms()
-    # dim_tecnical_production_terms()
-    # dim_logs_routine()
-    # fat_logs_routine()
-    # fat_event_organization()
-    # fat_participation_events()
-    # materialized_vision()
-    # fat_article_keyword_()
-    # dim_article_keyword()
-    # fat_article_co_authorship()
-    # fat_keywords_cooccurrences()
+    dim_titulacao()
+    fat_area_specialty()
+    fat_great_area()
+    dim_area_specialty()
+    dim_great_area()
+    fat_openalex_researcher()
+    researcher_area_leader()
+    fat_openalex_article()
+    dim_area_leader()
+    npai()
+    iapos()
+    dim_city()
+    ufmg_researcher()
+    DimensaoAno()
+    DimensaoTipoProducao()
+    platform_image()
+    Qualis()
+    dim_departament()
+    data()
+    cimatec_graduate_program_student()
+    graduate_program_student_year_unnest()
+    dim_graduate_program_acronym()
+    graduate_program_researcher_year_unnest()
+    dim_departament_technician()
+    dim_departament_researcher()
+    fat_group_leaders()
+    dim_research_group()
+    dim_category_level_code()
+    fat_foment()
+    fat_production_tecnical_year_novo_csv_db()
+    dim_institution()
+    researcher_city()
+    dim_researcher('xpto')
+    fat_simcc_bibliographic_production()
+    production_tecnical_year()
+    researcher()
+    article_qualis_year_institution()
+    production_researcher()
+    article_qualis_year()
+    production_year_distinct()
+    production_year()
+    production_coauthors_csv_db()
+    fat_researcher_ind_prod()
+    graduate_program_ind_prod()
+    researcher_production_novo_csv_db()
+    article_distinct_novo_csv_db()
+    production_distinct_novo_csv_db()
+    cimatec_graduate_program_researcher()
+    cimatec_graduate_program()
+    dim_research_project()
+    fat_research_project_foment()
+    dim_bibliographic_production_terms()
+    dim_tecnical_production_terms()
+    dim_logs_routine()
+    fat_logs_routine()
+    fat_event_organization()
+    fat_participation_events()
+    materialized_vision()
+    fat_article_keyword_()
+    dim_article_keyword()
+    fat_article_co_authorship()
+    fat_keywords_cooccurrences()
     guidance()
     supervisor()
