@@ -1349,7 +1349,6 @@ def guidance():
 
     def peding_days(row):
         delays = []
-
         if row['done_date_conclusion'] is None:
             if row['planned_date_conclusion'] < today:
                 days = (today - row['planned_date_conclusion']).days
@@ -1371,8 +1370,30 @@ def guidance():
             return 'EM ATRASO'
         return 'CONCLUSÃO EM DIA'
 
+    def type_(row):
+        types = []
+        if (
+            row['done_date_conclusion'] is None
+            and row['planned_date_conclusion'] < today
+        ):
+            types.append('CONCLUSÃO')
+        if (
+            row['done_date_qualification'] is None
+            and row['planned_date_qualification'] < today
+        ):
+            types.append('QUALIFICAÇÃO')
+        if (
+            row['done_date_project'] is None
+            and row['planned_date_project'] < today
+        ):
+            types.append('PROJETO')
+        if types:
+            return ', '.join(types)
+        return 'SEM ATRASO'
+
     csv['peding_days'] = csv.apply(peding_days, axis=1)
     csv['peding'] = csv.apply(pending, axis=1)
+    csv['type'] = csv.apply(type_, axis=1)
 
     csv_path = os.path.join(PATH, 'guidance.csv')
     csv.to_csv(csv_path, index=True, quoting=QUOTE_ALL, encoding='utf-8-sig')

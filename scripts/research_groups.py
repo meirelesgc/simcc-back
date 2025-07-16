@@ -52,7 +52,6 @@ def insert_researchers():
         SELECT institution_id, acronym
         FROM institution
         """
-    # [{institution_id: UUID, acronym: str}]
     institutions = conn_admin.select(SCRIPT_SQL)
     SCRIPT_SQL = """
         INSERT INTO researcher (name, lattes_id, institution_id)
@@ -61,7 +60,6 @@ def insert_researchers():
     for file in os.listdir('storage/research_groups/'):
         if file.startswith('researchers_'):
             group = sanitize(file[11:-4])
-            # Nome,Titulação,Data de inclusão,Lattes
             csv = pd.read_csv(f'storage/research_groups/{file}')
             acronym = [n for n in i if sanitize(n['name']) == group]
             acronym = acronym[0]['institution']
