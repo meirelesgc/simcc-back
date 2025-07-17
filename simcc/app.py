@@ -19,8 +19,6 @@ from simcc.routers import (
 )
 from simcc.routers.conectee import departament
 
-# from simcc.security import get_current_key
-
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -36,7 +34,6 @@ app = FastAPI(
     lifespan=lifespan,
     docs_url='/swagger',
     openapi_url='/openapi.json',
-    # dependencies=[Depends(get_current_key)],
 )
 
 
