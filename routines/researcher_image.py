@@ -41,11 +41,7 @@ def list_researchers():
     SCRIPT_SQL = """
         SELECT r.id as researcher_id, r.lattes_id as lattes_id
         FROM researcher r
-        LEFT JOIN logs.researcher_routine lrr
-            ON r.id = lrr.researcher_id
-            AND lrr.type = 'LATTES_10'
-        WHERE r.lattes_10_id IS NULL
-            OR lrr.created_at < NOW() - INTERVAL '30 days';
+        WHERE r.lattes_10_id IS NULL;
         """
     result = conn.select(SCRIPT_SQL)
     return result
