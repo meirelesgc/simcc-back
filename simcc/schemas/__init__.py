@@ -42,7 +42,7 @@ class DefaultFilters(BaseModel):
     graduation: Optional[str] = None
 
     page: Optional[int] = 1
-    lenght: Optional[int] = 10
+    lenght: Optional[int] = 24
 
     model_config = {
         'populate_by_name': True,

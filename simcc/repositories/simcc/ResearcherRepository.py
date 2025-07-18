@@ -905,7 +905,7 @@ async def search_in_name(
         join_program = """
             INNER JOIN graduate_program_researcher gpr
                 ON gpr.researcher_id = r.id
-        """
+            """
         filters += 'AND gpr.graduate_program_id = %(graduate_program_id)s\n'
 
     if default_filters.institution:
@@ -988,7 +988,6 @@ async def search_in_name(
         ORDER BY among DESC
         {filter_pagination};
     """
-
     return await conn.select(SCRIPT_SQL, params)
 
 
