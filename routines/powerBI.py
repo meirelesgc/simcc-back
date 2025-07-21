@@ -1259,6 +1259,7 @@ def _guidance():
             'student_name',
             'supervisor_name',
             'co_name',
+            'type',
         ],
     )
 
@@ -1421,7 +1422,7 @@ def guidance():
 
     csv['days_offset'] = csv.apply(
         lambda row: (row['done_date_conclusion'] - row['start_date']).days
-        - durations.get(row['TYPE'], 0)
+        - durations.get(row['type'], 0)
         if pd.notnull(row['done_date_conclusion'])
         else None,
         axis=1,
