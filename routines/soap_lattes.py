@@ -74,6 +74,8 @@ def download_xml(lattes_id, researcher_id):
     except httpx.Timeout as E:
         logger_researcher_routine(researcher_id, 'SOAP_LATTES', True, str(E))
         return
+    if response is None:
+        return
     try:
         zip_path = os.path.join(HOP_PATH, ZIP_XML_PATH, lattes_id + '.zip')
         with open(zip_path, 'wb') as XML:
