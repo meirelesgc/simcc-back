@@ -27,7 +27,7 @@ driver.get('http://dgp.cnpq.br/dgp/faces/consulta/consulta_parametrizada.jsf')
 termo_busca = driver.find_element(
     By.ID, 'idFormConsultaParametrizada:idTextoFiltro'
 )
-termo_busca.send_keys('NeX - Nucleo of Economics and Complexity *')
+termo_busca.send_keys('%')
 botao_pesquisar = driver.find_element(
     By.ID, 'idFormConsultaParametrizada:idPesquisar'
 )

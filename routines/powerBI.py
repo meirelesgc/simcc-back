@@ -1228,7 +1228,8 @@ def _guidance():
             gt.done_date_conclusion,
             r_student.name AS student_name,
             r_supervisor.name AS supervisor_name,
-            r_co.name AS co_name
+            r_co.name AS co_name,
+            gp.type AS type
         FROM public.guidance_tracking gt
         LEFT JOIN researcher r_student
             ON r_student.researcher_id = gt.student_researcher_id
@@ -1236,6 +1237,8 @@ def _guidance():
             ON r_supervisor.researcher_id = gt.supervisor_researcher_id
         LEFT JOIN researcher r_co
             ON r_co.researcher_id = gt.co_supervisor_researcher_id
+        LEFT JOIN graduate_program gp
+            ON gp.graduate_program_id = gt.graduate_program_id
     """
     guidance = conn_admin.select(SCRIPT_SQL)
     guidance = pd.DataFrame(
@@ -1414,6 +1417,15 @@ def guidance():
             return 'CONCLUSÃO'
         return 'FINALIZADO'
 
+    durations = {'MESTRADO': 1460, 'DOUTORADO': 1826, 'ESPECIALIZAÇÃO': 365}
+
+    csv['days_offset'] = csv.apply(
+        lambda row: (row['done_date_conclusion'] - row['start_date']).days
+        - durations.get(row['TYPE'], 0)
+        if pd.notnull(row['done_date_conclusion'])
+        else None,
+        axis=1,
+    )
     csv['peding_days'] = csv.apply(peding_days, axis=1)
     csv['peding'] = csv.apply(pending, axis=1)
     csv['type'] = csv.apply(type_, axis=1)
