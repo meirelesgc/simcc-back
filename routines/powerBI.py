@@ -1418,15 +1418,17 @@ def guidance():
             return 'CONCLUSÃO'
         return 'FINALIZADO'
 
-    durations = {'MESTRADO': 1460, 'DOUTORADO': 1826, 'ESPECIALIZAÇÃO': 365}
     csv['peding_days'] = csv.apply(peding_days, axis=1)
     csv['peding'] = csv.apply(pending, axis=1)
     csv['type'] = csv.apply(type_, axis=1)
     csv['days_offset'] = csv.apply(
-        lambda row: (row['done_date_conclusion'] - row['start_date']).days
-        - durations.get(row['type'], 0)
-        if pd.notnull(row['done_date_conclusion'])
-        else None,
+        lambda row: (
+            (row['done_date_conclusion'] - row['start_date']).days
+            if pd.notnull(row['done_date_conclusion'])
+            else (row['planned_date_project'] - row['start_date']).days
+            if pd.notnull(row['planned_date_project'])
+            else None
+        ),
         axis=1,
     )
 
