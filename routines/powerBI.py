@@ -1425,8 +1425,8 @@ def guidance():
         lambda row: (
             (row['done_date_conclusion'] - row['start_date'])
             if pd.notnull(row['done_date_conclusion'])
-            else (row['done_date_conclusion'] - row['start_date'])
-            if pd.notnull(row['done_date_conclusion'])
+            else (row['planned_date_conclusion'] - row['start_date'])
+            if pd.notnull(row['planned_date_conclusion'])
             else None
         ),
         axis=1,
