@@ -1423,10 +1423,10 @@ def guidance():
     csv['type'] = csv.apply(type_, axis=1)
     csv['days_offset'] = csv.apply(
         lambda row: (
-            (row['done_date_conclusion'] - row['start_date']).days
+            (row['done_date_conclusion'] - row['start_date'])
             if pd.notnull(row['done_date_conclusion'])
-            else (row['planned_date_project'] - row['start_date']).days
-            if pd.notnull(row['planned_date_project'])
+            else (row['done_date_conclusion'] - row['start_date'])
+            if pd.notnull(row['done_date_conclusion'])
             else None
         ),
         axis=1,
