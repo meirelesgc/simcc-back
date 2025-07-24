@@ -606,6 +606,17 @@ CREATE TABLE IF NOT EXISTS research_group (
     UNIQUE (name, institution),
     UNIQUE (group_identifier)
 );
+CREATE TABLE IF NOT EXISTS research_group_researcher (
+      research_group_id uuid NOT NULL,
+      researcher_id uuid NOT NULL,
+
+      PRIMARY KEY (research_group_id, researcher_id),
+      FOREIGN KEY (researcher_id) REFERENCES public.researcher (researcher_id) ON DELETE CASCADE ON UPDATE CASCADE,
+      FOREIGN KEY (research_group_id) REFERENCES research_group (id) ON DELETE CASCADE ON UPDATE CASCADE,
+
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP
+);
 CREATE TABLE research_lines(
     id uuid NOT NULL DEFAULT uuid_generate_v4(),
     research_group_id uuid,
@@ -985,7 +996,6 @@ CREATE TABLE IF NOT EXISTS admin.graduate_program(
       FOREIGN KEY (institution_id) REFERENCES admin.institution (institution_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
--- Tabela Graduate_Program_Researcher no esquema admin
 CREATE TABLE IF NOT EXISTS admin.graduate_program_researcher(
       graduate_program_id uuid NOT NULL,
       researcher_id uuid NOT NULL,
@@ -997,8 +1007,6 @@ CREATE TABLE IF NOT EXISTS admin.graduate_program_researcher(
       FOREIGN KEY (researcher_id) REFERENCES admin.researcher (researcher_id) ON DELETE CASCADE ON UPDATE CASCADE,
       FOREIGN KEY (graduate_program_id) REFERENCES admin.graduate_program (graduate_program_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
-
--- Tabela Graduate_Program_Student no esquema admin
 CREATE TABLE IF NOT EXISTS admin.graduate_program_student(
       graduate_program_id uuid NOT NULL,
       researcher_id uuid NOT NULL,

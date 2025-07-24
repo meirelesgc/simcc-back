@@ -248,7 +248,4 @@ while True:
         print(f'Erro: {e}')
         break
 
-# Fechar o navegador
 driver.quit()
-
-print('Dados extraídos e exportados para grupos_pesquisa.csv')
