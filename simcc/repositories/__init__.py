@@ -2,7 +2,7 @@ import psycopg
 import psycopg.rows
 from psycopg_pool import ConnectionPool
 
-from simcc.config import settings
+from simcc.config import Settings
 
 
 class Connection:
@@ -53,5 +53,5 @@ class Connection:
         self.pool.close()
 
 
-conn = Connection(settings.get_conn_str())
-conn_admin = Connection(settings.get_admin_conn_str())
+conn = Connection(Settings().DATABASE_URL)
+conn_admin = Connection(Settings().ADMIN_DATABASE_URL)

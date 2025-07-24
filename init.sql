@@ -133,7 +133,7 @@ CREATE TABLE IF NOT EXISTS public.researcher (
     orcid character(31),
     abstract TEXT,
     abstract_en TEXT,
-    abstract_ia TEXT,
+    abstract_ai TEXT,
     other_information character varying(5000),
     city_id uuid,
     country_id uuid,
@@ -611,7 +611,7 @@ CREATE TABLE IF NOT EXISTS research_group_researcher (
       researcher_id uuid NOT NULL,
 
       PRIMARY KEY (research_group_id, researcher_id),
-      FOREIGN KEY (researcher_id) REFERENCES public.researcher (researcher_id) ON DELETE CASCADE ON UPDATE CASCADE,
+      FOREIGN KEY (researcher_id) REFERENCES public.researcher (id) ON DELETE CASCADE ON UPDATE CASCADE,
       FOREIGN KEY (research_group_id) REFERENCES research_group (id) ON DELETE CASCADE ON UPDATE CASCADE,
 
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

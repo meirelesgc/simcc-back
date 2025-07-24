@@ -2,12 +2,12 @@ from simcc.config import Settings
 from simcc.core.connection import Connection
 
 conn = Connection(
-    Settings().get_conn_str(),
+    Settings().DATABASE_URL,
     max_size=20,
     timeout=10,
 )
 admin_conn = Connection(
-    Settings().get_admin_conn_str(),
+    Settings().ADMIN_DATABASE_URL,
     max_size=20,
     timeout=10,
 )

@@ -1,36 +1,19 @@
-from pydantic import DirectoryPath
 from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    DATABASE: str = 'simcc'
-    PG_USER: str = 'postgres'
-    PASSWORD: str = 'postgres'
-    HOST: str = 'localhost'
-    PORT: int = 5432
+    DATABASE_URL: str
+    ADMIN_DATABASE_URL: str
 
-    ADMIN_DATABASE: str = 'simcc_admin'
-
-    ROOT_PATH: str = ''
     PROXY_URL: str = 'http://localhost:8080'
     ALTERNATIVE_CNPQ_SERVICE: bool = False
     FIREBASE_COLLECTION: str = 'termos_busca'
 
     OPENAI_API_KEY: str = None
-    JADE_EXTRATOR_FOLTER: DirectoryPath
 
     class Config:
         env_file = '.env'
         env_file_encoding = 'utf-8'
-
-    def get_conn_str(self) -> str:
-        return f'postgresql://{self.PG_USER}:{self.PASSWORD}@{self.HOST}:{self.PORT}/{self.DATABASE}'
-
-    def _get_conn_str(self) -> str:
-        return f'postgresql+psycopg://{self.PG_USER}:{self.PASSWORD}@{self.HOST}:{self.PORT}/{self.DATABASE}'
-
-    def get_admin_conn_str(self) -> str:
-        return f'postgresql://{self.PG_USER}:{self.PASSWORD}@{self.HOST}:{self.PORT}/{self.ADMIN_DATABASE}'
 
 
 settings = Settings()
