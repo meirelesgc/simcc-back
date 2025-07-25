@@ -2,11 +2,29 @@
 
 cd "$(dirname "$0")"
 
+if [ -z "$1" ]; then
+    echo "Erro: O caminho para o arquivo .env não foi fornecido como primeiro argumento."
+    echo "Uso: $0 <caminho_para_o_arquivo_.env>"
+    exit 1
+fi
+
+ENV_FILE="$1"
+
+if [ ! -f "$ENV_FILE" ]; then
+    echo "Erro: O arquivo .env especificado ('$ENV_FILE') não existe ou não é um arquivo." | tee -a "./routine.log" # Loga mesmo antes de carregar o log_file
+    exit 1
+fi
+
+echo "Carregando variáveis do ambiente de: $ENV_FILE"
+source "$ENV_FILE"
+
 DEFAULT_LOG_FILE="./routine.log"
-DEFAULT_API_CONTAINER="simcc-back"
+DEFAULT_API_CONTAINER="simcc-api"
+DEFAULT_JADE_HOP_DIR="Jade-Extrator-Hop"
 
 LOG_FILE="${LOG_FILE:-$DEFAULT_LOG_FILE}"
 API_CONTAINER="${CONTAINER_API:-$DEFAULT_API_CONTAINER}"
+JADE_HOP_DIR="${JADE_HOP_DIR:-$DEFAULT_JADE_HOP_DIR}"
 
 CONTAINER_NETWORK=$(docker inspect -f '{{range $name, $network := .NetworkSettings.Networks}}{{$name}}{{end}}' "$API_CONTAINER" 2>/dev/null)
 
@@ -19,6 +37,7 @@ echo "--- Início da Rotina ---" | tee -a "$LOG_FILE"
 echo "Usando container: $API_CONTAINER" | tee -a "$LOG_FILE"
 echo "Usando rede do container: $CONTAINER_NETWORK" | tee -a "$LOG_FILE"
 echo "Registrando logs em: $LOG_FILE" | tee -a "$LOG_FILE"
+echo "Diretório do Jade-Hop: $JADE_HOP_DIR" | tee -a "$LOG_FILE"
 
 set -e
 trap 'echo -e "\n\nErro na linha $LINENO: $BASH_COMMAND" | tee -a "$LOG_FILE"' ERR
@@ -32,13 +51,13 @@ echo "Executando: soap_lattes.py" | tee -a "$LOG_FILE"
 docker exec "$API_CONTAINER" poetry run python /app/routines/soap_lattes.py || handle_error
 
 echo "Criando diretório XML" | tee -a "$LOG_FILE"
-mkdir -p Jade-Extrator-Hop/metadata/dataset/xml || handle_error
+mkdir -p "$JADE_HOP_DIR/metadata/dataset/xml" || handle_error
 
 echo "Removendo arquivos XML antigos" | tee -a "$LOG_FILE"
-rm -f Jade-Extrator-Hop/metadata/dataset/xml/*.xml || handle_error
+rm -f "$JADE_HOP_DIR/metadata/dataset/xml/"*.xml || handle_error
 
 echo "Copiando arquivos XML do container" | tee -a "$LOG_FILE"
-docker cp "$API_CONTAINER":/app/storage/xml/. Jade-Extrator-Hop/metadata/dataset/xml/ || handle_error
+docker cp "$API_CONTAINER":/app/storage/xml/. "$JADE_HOP_DIR/metadata/dataset/xml/" || handle_error
 
 echo "Executando Apache Hop" | tee -a "$LOG_FILE"
 docker run --rm \
@@ -49,8 +68,9 @@ docker run --rm \
     --env HOP_PROJECT_FOLDER=/files \
     --env HOP_PROJECT_NAME=Jade-Extrator-Hop \
     --env HOP_RUN_CONFIG=local \
-    -v "$(pwd)/Jade-Extrator-Hop:/files" \
+    -v "$JADE_HOP_DIR:/files" \
     apache/hop:2.13.0 || handle_error
+
 
 echo "Executando: population.py" | tee -a "$LOG_FILE"
 docker exec "$API_CONTAINER" poetry run python /app/routines/population.py || handle_error

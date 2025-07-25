@@ -3,8 +3,8 @@ services:
     image: pgvector/pgvector:pg17
     container_name: ${CONTAINER_DB}
     environment:
-      POSTGRES_USER: ${DB_NAME}
-      POSTGRES_DB: ${DB_USER}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_DB: ${DB_NAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
       - "${DB_PORT}:5432"

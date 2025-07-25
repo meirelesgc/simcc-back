@@ -132,7 +132,8 @@ def software_indprod():
         GROUP BY year, researcher_id;
         """
     result = conn.select(SCRIPT_SQL)
-    software = pd.DataFrame(result)
+    columns = ['year', 'software_count', 'researcher_id']
+    software = pd.DataFrame(result, columns=columns)
     software['software_prod'] = software['software_count'] * barema.get(
         'SOFTWARE', 0
     )
@@ -209,19 +210,23 @@ def main():
     on = ['researcher_id', 'year']
 
     articles = article_indprod()
-    articles = pd.DataFrame(articles)
+    columns = ['researcher_id', 'year', 'article_prod']
+    articles = pd.DataFrame(articles, columns=columns)
     researchers = researchers.merge(articles, on=on, how='left')
 
     books = book_indprod()
-    books = pd.DataFrame(books)
+    columns = ['researcher_id', 'year', 'book_prod']
+    books = pd.DataFrame(books, columns=columns)
     researchers = researchers.merge(books, on=on, how='left')
 
     book_chapter = book_chapter_indprod()
-    book_chapter = pd.DataFrame(book_chapter)
+    columns = ['researcher_id', 'year', 'book_chapter_prod']
+    book_chapter = pd.DataFrame(book_chapter, columns=columns)
     researchers = researchers.merge(book_chapter, on=on, how='left')
 
     software = software_indprod()
-    software = pd.DataFrame(software)
+    columns = ['researcher_id', 'year', 'software_prod']
+    software = pd.DataFrame(software, columns=columns)
     researchers = researchers.merge(software, on=on, how='left')
 
     patent = patent_indprod()
@@ -230,10 +235,12 @@ def main():
     researchers = researchers.merge(patent, on=on, how='left')
 
     report = report_indprod()
-    report = pd.DataFrame(report)
+    columns = ['researcher_id', 'year', 'report_prod']
+    report = pd.DataFrame(report, columns=columns)
     researchers = researchers.merge(report, on=on, how='left')
 
     guidance = guidance_indprod()
+    columns = ['researcher_id', 'year', 'guidance_prod']
     guidance = pd.DataFrame(guidance)
     researchers = researchers.merge(guidance, on=on, how='left')
 

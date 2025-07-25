@@ -1,12 +1,9 @@
 import os
-import time
 import zipfile
 from datetime import datetime
 
 import httpx
-from requests.exceptions import RequestException
 from zeep import Client
-from zeep.exceptions import XMLSyntaxError
 
 from routines.logger import logger_researcher_routine, logger_routine
 from simcc.config import settings
@@ -17,23 +14,8 @@ CURRENT_XML_PATH = 'current'
 ZIP_XML_PATH = 'zip'
 PROXY = settings.ALTERNATIVE_CNPQ_SERVICE
 
-
-def create_zeep_client_with_retries(wsdl_url: str, max_retries=3, delay=3):
-    attempt = 0
-    while attempt < max_retries:
-        try:
-            return Client(wsdl_url)
-        except (RequestException, XMLSyntaxError, ConnectionResetError) as e:
-            attempt += 1
-            print(f'Tentativa {attempt} falhou ao conectar ao WSDL: {e}')
-            if attempt >= max_retries:
-                raise
-            time.sleep(delay)
-
-
-client = create_zeep_client_with_retries(
-    'http://servicosweb.cnpq.br/srvcurriculo/WSCurriculo?wsdl'
-)
+if not PROXY:
+    client = Client('http://servicosweb.cnpq.br/srvcurriculo/WSCurriculo?wsdl')
 
 
 def list_admin_researchers():
