@@ -1450,6 +1450,10 @@ def guidance():
         ),
         axis=1,
     )
+    cols = [col for col in csv.columns if col != 'program_type'] + [
+        'program_type'
+    ]
+    csv = csv[cols]
     csv_path = os.path.join(PATH, 'guidance.csv')
     csv.to_csv(csv_path, index=True, quoting=QUOTE_ALL, encoding='utf-8-sig')
 
