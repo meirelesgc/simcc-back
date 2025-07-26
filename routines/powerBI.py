@@ -1435,6 +1435,8 @@ def guidance():
             return 'CONCLUSÃO'
         return 'FINALIZADO'
 
+    csv = csv.rename(columns={'type': 'program_type'})
+
     csv['peding_days'] = csv.apply(peding_days, axis=1)
     csv['peding'] = csv.apply(pending, axis=1)
     csv['type'] = csv.apply(type_, axis=1)
@@ -1448,7 +1450,6 @@ def guidance():
         ),
         axis=1,
     )
-
     csv_path = os.path.join(PATH, 'guidance.csv')
     csv.to_csv(csv_path, index=True, quoting=QUOTE_ALL, encoding='utf-8-sig')
 
@@ -1519,5 +1520,5 @@ if __name__ == '__main__':
     dim_article_keyword()
     fat_article_co_authorship()
     fat_keywords_cooccurrences()
-    #guidance()
-    #supervisor()
+    # guidance()
+    # supervisor()
