@@ -1312,24 +1312,6 @@ def _guidance():
             'co_supervisor_lattes_id',
         ]
     )
-    columns = [
-        'id',
-        'student_lattes_id',
-        'supervisor_lattes_id',
-        'co_supervisor_lattes_id',
-        'graduate_program_id',
-        'start_date',
-        'planned_date_project',
-        'done_date_project',
-        'planned_date_qualification',
-        'done_date_qualification',
-        'planned_date_conclusion',
-        'done_date_conclusion',
-        'student_name',
-        'supervisor_name',
-        'co_name',
-        'type',
-    ]
     return csv
 
 
@@ -1384,6 +1366,7 @@ def supervisor():
 def guidance():
     today = datetime.now().date()
     csv: pd.DataFrame = _guidance()
+    csv = csv.rename(columns={'type': 'program_type'})
 
     def peding_days(row):
         delays = []
@@ -1448,7 +1431,7 @@ def guidance():
         ),
         axis=1,
     )
-
+    csv['days_offset'] = csv['days_offset'].dt.days
     csv_path = os.path.join(PATH, 'guidance.csv')
     csv.to_csv(csv_path, index=True, quoting=QUOTE_ALL, encoding='utf-8-sig')
 
@@ -1519,5 +1502,5 @@ if __name__ == '__main__':
     dim_article_keyword()
     fat_article_co_authorship()
     fat_keywords_cooccurrences()
-    #guidance()
-    #supervisor()
+    guidance()
+    supervisor()
