@@ -348,11 +348,11 @@ def fat_production_tecnical_year_novo_csv_db():
             title, development_year::int AS year, 'PATENTE' AS TYPE,
             p.researcher_id, c.id AS city_id, r.institution_id AS institution_id,
             unaccent(LOWER(title)) AS sanitized_title, p.id
-        FROM patent p, researcher r, researcher_production rp, city c
+        FROM patent p, researcher r, researcher_production rp
+        LEFT JOIN city c ON rp.city = c.name
         WHERE 1 = 1
             AND r.id = p.researcher_id
             AND rp.researcher_id = p.researcher_id
-            AND rp.city = c.name
 
         UNION
 
