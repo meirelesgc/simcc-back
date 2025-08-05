@@ -49,14 +49,10 @@ def merge_researcher_data(researchers: pd.DataFrame) -> pd.DataFrame:
 
 
 def search_in_articles(
-    terms: str = None,
-    graduate_program_id: UUID = None,
-    university: str = None,
-    page: int = None,
-    lenght: int = None,
+    terms, graduate_program_id, university, group_id, page, lenght
 ) -> list[Researcher]:
     researchers = ResearcherRepository.search_in_articles(
-        terms, graduate_program_id, university, page, lenght
+        terms, graduate_program_id, university, group_id, page, lenght
     )
     if not researchers:
         return []
@@ -69,14 +65,10 @@ def search_in_articles(
 
 
 def search_in_abstracts(
-    terms: str,
-    graduate_program_id: UUID,
-    university: str,
-    page: int = None,
-    lenght: int = None,
+    terms, graduate_program_id, university, group_id, page, lenght
 ) -> list[Researcher]:
     researchers = ResearcherRepository.search_in_abstracts(
-        terms, graduate_program_id, university, page, lenght
+        terms, graduate_program_id, university, group_id, page, lenght
     )
     if not researchers:
         return []

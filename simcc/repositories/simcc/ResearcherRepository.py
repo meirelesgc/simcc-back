@@ -46,11 +46,7 @@ def list_article_production(
 
 
 def search_in_articles(
-    terms: str,
-    graduate_program_id: UUID,
-    university: str,
-    page: int,
-    lenght: int,
+    terms, graduate_program_id, university, group_id, page, lenght
 ):
     params = {}
 
@@ -78,6 +74,16 @@ def search_in_articles(
         params['institution']
         filter_institution = 'AND i.name = %(institution)s'
 
+    filter_group = str()
+    join_group = str()
+    if group_id:
+        params['group_id'] = group_id
+        join_group = """
+            LEFT JOIN research_group_researcher rgr
+                ON rgr.researcher_id = r.id
+            """
+        filter_group = 'AND rgr.research_group_id = %(group_id)s'
+
     SCRIPT_SQL = f"""
         SELECT
             r.id, r.name, r.lattes_id, r.lattes_10_id, r.abstract, r.orcid,
@@ -100,9 +106,11 @@ def search_in_articles(
                     {filter_terms}
                 GROUP BY researcher_id) bp ON bp.researcher_id = r.id
             {join_program}
+            {join_group}
         WHERE 1 = 1
             {filter_program}
             {filter_institution}
+            {filter_group}
         ORDER BY
             among DESC
             {filter_pagination};
@@ -112,11 +120,7 @@ def search_in_articles(
 
 
 def search_in_abstracts(
-    terms: str,
-    graduate_program_id: UUID,
-    university: str,
-    page: int = None,
-    lenght: int = None,
+    terms, graduate_program_id, university, group_id, page, lenght
 ):
     params = {}
 
@@ -144,6 +148,16 @@ def search_in_abstracts(
         params['institution']
         filter_institution = 'AND i.name = %(institution)s'
 
+    filter_group = str()
+    join_group = str()
+    if group_id:
+        params['group_id'] = group_id
+        join_group = """
+            LEFT JOIN research_group_researcher rgr
+                ON rgr.researcher_id = r.id
+            """
+        filter_group = 'AND rgr.research_group_id = %(group_id)s'
+
     SCRIPT_SQL = f"""
         SELECT
             r.id, r.name, r.lattes_id, r.lattes_10_id, r.abstract, r.orcid,
@@ -159,10 +173,12 @@ def search_in_abstracts(
             LEFT JOIN researcher_production rp ON rp.researcher_id = r.id
             LEFT JOIN openalex_researcher opr ON opr.researcher_id = r.id
             {join_program}
+            {join_group}
         WHERE 1 = 1
             {filter_terms}
             {filter_program}
             {filter_institution}
+            {filter_group}
         ORDER BY
             among DESC
             {filter_pagination};

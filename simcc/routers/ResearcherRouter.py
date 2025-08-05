@@ -22,18 +22,18 @@ def search_in_abstract_or_article(
     type: ResearcherOptions = 'ABSTRACT',
     graduate_program_id: UUID | str = None,
     university: str = None,
+    group_id: UUID | str = None,
     page: int = None,
     lenght: int = None,
 ):
     if type == 'ARTICLE':
-        researchers = ResearcherService.search_in_articles(
-            terms, graduate_program_id, university, page, lenght
+        return ResearcherService.search_in_articles(
+            terms, graduate_program_id, university, group_id, page, lenght
         )
     elif type == 'ABSTRACT':
-        researchers = ResearcherService.search_in_abstracts(
-            terms, graduate_program_id, university
+        return ResearcherService.search_in_abstracts(
+            terms, graduate_program_id, university, group_id, page, lenght
         )
-    return researchers
 
 
 @router.get(
