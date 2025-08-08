@@ -26,7 +26,7 @@ for _, data in programs.iterrows():
         VALUES
         (%(código)s, %(nome)s, %(nomeAreaAvaliacao)s, %(modalidade)s, %(grau)s,
          %(conceito)s, %(institution_id)s, %(visible)s, %(cidade)s)
-        ON CONFLICT (code) DO UPDATE
+        ON CONFLICT (name, institution_id) DO UPDATE
         SET name          = COALESCE(graduate_program.name, EXCLUDED.name),
             area          = COALESCE(graduate_program.area, EXCLUDED.area),
             modality      = COALESCE(graduate_program.modality, EXCLUDED.modality),
