@@ -2,13 +2,13 @@ from enum import Enum
 from typing import Literal, Optional
 from uuid import UUID
 
-from pydantic import AliasChoices, BaseModel, Field
+from fastapi import Query
+from pydantic import BaseModel, Field, root_validator
 
 
 class DefaultFilters(BaseModel):
-    term: Optional[str] = Field(
-        default=None, validation_alias=AliasChoices('term', 'terms')
-    )
+    term: Optional[str] = Query(None, alias='term')
+    terms: Optional[str] = Query(None, alias='terms')
     researcher_id: Optional[UUID | str] = Field(
         default=None, alias='researcher_id'
     )
@@ -48,6 +48,13 @@ class DefaultFilters(BaseModel):
         'populate_by_name': True,
         'json_encoders': {UUID: str},
     }
+
+    @root_validator(pre=True)
+    def unify_term_fields(cls, values):
+        # Se 'term' estiver vazio, mas 'terms' vier preenchido, copia o valor
+        if not values.get('term') and values.get('terms'):
+            values['term'] = values['terms']
+        return values
 
 
 class ResearcherOptions(str, Enum):
