@@ -729,7 +729,6 @@ async def search_in_articles(conn: Connection, default_filters: DefaultFilters):
             among DESC
             {filter_pagination};
     """
-    print(SCRIPT_SQL, params)
     result = await conn.select(SCRIPT_SQL, params)
     return result
 
