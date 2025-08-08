@@ -1239,6 +1239,7 @@ def _guidance():
             ON r_co.researcher_id = gt.co_supervisor_researcher_id
         LEFT JOIN graduate_program gp
             ON gp.graduate_program_id = gt.graduate_program_id
+        WHERE deleted_at IS NULL
     """
     guidance = conn_admin.select(SCRIPT_SQL)
     guidance = pd.DataFrame(
