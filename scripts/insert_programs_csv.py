@@ -13,7 +13,7 @@ def get_institution_id(program):
     """
     params = program.to_dict()
     result = conn_admin.select(SCRIPT_SQL, params, one=True)
-    return result['id'] if result else '7477a2a8-3fcb-47ac-8f66-12338ab298df'
+    return result['id'] if result else '89858fed-23e6-417c-b978-2acf2fb843cc'
 
 
 programs['institution_id'] = programs.apply(get_institution_id, axis=1)

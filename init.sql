@@ -4,7 +4,7 @@ create EXTENSION pg_trgm;
 CREATE EXTENSION unaccent;
 CREATE EXTENSION vector;
 
-CREATE TYPE relationship AS ENUM ('COLABORADOR', 'PERMANENTE');
+CREATE TYPE relationship AS ENUM ('COLABORADOR', 'PERMANENTE', 'VISITANTE');
 CREATE TYPE classification_class AS ENUM ('A+', 'A', 'B+', 'B', 'C+', 'C', 'D+', 'D', 'E+', 'E');
 CREATE TYPE routine_type AS ENUM ('SOAP_LATTES', 'HOP', 'POPULATION', 'PRODUCTION', 'LATTES_10', 'IND_PROD', 'POG', 'OPEN_ALEX', 'SEARCH_TERM');
 
@@ -388,7 +388,7 @@ CREATE TABLE IF NOT EXISTS public.research_dictionary (
 );
 CREATE TABLE IF NOT EXISTS public.graduate_program(
     graduate_program_id uuid NOT NULL DEFAULT uuid_generate_v4(),
-    code VARCHAR(100),
+    code VARCHAR(100) UNIQUE,
     name VARCHAR(100) NOT NULL,
     area VARCHAR(100) NOT NULL,
     modality VARCHAR(100) NOT NULL,
@@ -406,7 +406,8 @@ CREATE TABLE IF NOT EXISTS public.graduate_program(
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (graduate_program_id),
-    FOREIGN KEY (institution_id) REFERENCES institution (id)
+    FOREIGN KEY (institution_id) REFERENCES institution (id),
+    UNIQUE (name, institution_id)
 );
 CREATE TABLE IF NOT EXISTS public.graduate_program_researcher(
     graduate_program_id uuid NOT NULL,
