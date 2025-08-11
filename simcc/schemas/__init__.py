@@ -3,18 +3,14 @@ from typing import Literal, Optional
 from uuid import UUID
 
 from fastapi import Query
-from pydantic import BaseModel, Field, root_validator
+from pydantic import BaseModel, root_validator
 
 
 class DefaultFilters(BaseModel):
     term: Optional[str] = Query(None, alias='term')
     terms: Optional[str] = Query(None, alias='terms')
-    researcher_id: Optional[UUID | str] = Field(
-        default=None, alias='researcher_id'
-    )
-    graduate_program_id: Optional[UUID | str] = Field(
-        default=None, alias='graduate_program_id'
-    )
+    researcher_id: Optional[UUID | str] = None
+    graduate_program_id: Optional[UUID | str] = None
     dep_id: Optional[str] = None
     departament: Optional[str] = None
     year: int = 2020

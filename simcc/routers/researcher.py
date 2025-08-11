@@ -1,3 +1,4 @@
+from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends
@@ -10,52 +11,22 @@ from simcc.schemas.Researcher import (
     CoAuthorship,
     Researcher,
 )
-from simcc.services import ResearcherService
+from simcc.services import researcher_service
 
 router = APIRouter()
 
+Conn = Annotated[Connection, Depends(get_conn)]
+Filters = Annotated[DefaultFilters, Depends()]
+
 
 @router.get('/researcher_filter')
-async def get_researcher_filter(
-    conn: Connection = Depends(get_conn),
-):
-    return await ResearcherService.get_researcher_filter(conn)
+async def get_researcher_filter(conn: Conn):
+    return await researcher_service.get_researcher_filter(conn)
 
 
-@router.get(
-    '/researcherParticipationEvent',
-    response_model=list[Researcher],
-)
-def search_in_participation_event(
-    type: str = None,
-    term: str = None,
-    graduate_program_id: UUID | str = None,
-    dep_id: str = None,
-    departament: str = None,
-    institution: str = None,
-    graduate_program: str = None,
-    city: str = None,
-    area: str = None,
-    modality: str = None,
-    graduation: str = None,
-    page: int = None,
-    lenght: int = None,
-):
-    return ResearcherService.search_in_participation_event(
-        type,
-        term,
-        graduate_program_id,
-        dep_id,
-        departament,
-        institution,
-        graduate_program,
-        city,
-        area,
-        modality,
-        graduation,
-        page,
-        lenght,
-    )
+@router.get('/researcherParticipationEvent', response_model=list[Researcher])
+def search_in_participation_event(conn: Conn, filters: Filters):
+    return researcher_service.search_in_participation_event(conn, filters)
 
 
 @router.get(
@@ -69,7 +40,7 @@ async def search_in_area_specialty(
 ):
     if area_specialty:
         default_filters.term = area_specialty
-    return await ResearcherService.search_in_area_specialty(
+    return await researcher_service.search_in_area_specialty(
         conn, default_filters
     )
 
@@ -93,7 +64,7 @@ def search_in_book(
     page: int = None,
     lenght: int = None,
 ):
-    return ResearcherService.search_in_book(
+    return researcher_service.search_in_book(
         type,
         term,
         graduate_program_id,
@@ -119,9 +90,11 @@ async def search_in_abstract_or_article(
     conn: Connection = Depends(get_conn),
 ):
     if default_filters.type == 'ARTICLE':
-        return await ResearcherService.search_in_articles(conn, default_filters)
+        return await researcher_service.search_in_articles(conn, default_filters)
     elif default_filters.type == 'ABSTRACT':
-        return await ResearcherService.search_in_abstracts(conn, default_filters)
+        return await researcher_service.search_in_abstracts(
+            conn, default_filters
+        )
 
 
 @router.get('/researcher/foment', response_model=list[Researcher])
@@ -129,7 +102,9 @@ async def list_foment_researchers(
     default_filters: DefaultFilters = Depends(),
     conn: Connection = Depends(get_conn),
 ):
-    return await ResearcherService.list_foment_researchers(default_filters, conn)
+    return await researcher_service.list_foment_researchers(
+        default_filters, conn
+    )
 
 
 @router.get(
@@ -141,7 +116,7 @@ async def list_researchers(
     conn: Connection = Depends(get_conn),
     name: str = None,
 ):
-    return await ResearcherService.serch_in_name(conn, default_filters, name)
+    return await researcher_service.serch_in_name(conn, default_filters, name)
 
 
 @router.get(
@@ -155,7 +130,7 @@ def list_outstanding_researchers(
     page: int = None,
     lenght: int = None,
 ):
-    return ResearcherService.list_outstanding_researchers(
+    return researcher_service.list_outstanding_researchers(
         name, graduate_program_id, dep_id, page, lenght
     )
 
@@ -175,7 +150,7 @@ def list_researchers_by_patent(
     page: int = None,
     lenght: int = None,
 ):
-    return ResearcherService.search_in_patents(
+    return researcher_service.search_in_patents(
         term,
         graduate_program_id,
         dep_id,
@@ -196,7 +171,7 @@ def list_researchers_by_patent(
     response_model=list[CoAuthorship],
 )
 def co_authorship(researcher_id: UUID):
-    return ResearcherService.list_co_authorship(researcher_id)
+    return researcher_service.list_co_authorship(researcher_id)
 
 
 @router.get(
@@ -207,16 +182,14 @@ async def get_academic_degree(
     default_filters: DefaultFilters = Depends(),
     conn: Connection = Depends(get_conn),
 ):
-    metrics = await ResearcherService.get_academic_degree(conn, default_filters)
+    metrics = await researcher_service.get_academic_degree(conn, default_filters)
     return metrics
 
 
-@router.get(
-    '/great_area',
-)
+@router.get('/great_area')
 async def get_great_area(
     default_filters: DefaultFilters = Depends(),
     conn: Connection = Depends(get_conn),
 ):
-    metrics = await ResearcherService.get_great_area(conn, default_filters)
+    metrics = await researcher_service.get_great_area(conn, default_filters)
     return metrics

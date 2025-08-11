@@ -7,6 +7,12 @@ from simcc.app import app
 from simcc.core.connection import Connection
 from simcc.core.database import get_conn
 
+POSTGRES_IMAGE = 'pgvector/pgvector:pg17'
+INIT_SQL_FILE = 'init.sql'
+DB_CONN_MAX_SIZE = 20
+DB_CONN_TIMEOUT = 10
+INIT_PATH = 'init.sql'
+
 
 @pytest.fixture(scope='session', autouse=True)
 def postgres():
@@ -14,7 +20,7 @@ def postgres():
         yield pg
 
 
-async def reset_database(conn: Connection):
+async def restore_db(conn: Connection):
     SCRIPT_SQL = """
         DROP SCHEMA IF EXISTS public CASCADE;
         DROP SCHEMA IF EXISTS logs CASCADE;
@@ -24,28 +30,37 @@ async def reset_database(conn: Connection):
         CREATE SCHEMA public;
     """
     await conn.exec(SCRIPT_SQL)
-    with open('init.sql', 'r', encoding='utf-8') as buffer:
+
+    with open(INIT_PATH, 'r', encoding='utf-8') as buffer:
         await conn.exec(buffer.read())
 
 
 @pytest_asyncio.fixture
 async def conn(postgres):
-    connection_url = (
+    conn = Connection(
         f'postgresql://{postgres.username}:{postgres.password}'
         f'@{postgres.get_container_host_ip()}:{postgres.get_exposed_port(5432)}'
-        f'/{postgres.dbname}'
+        f'/{postgres.dbname}',
+        max_size=DB_CONN_MAX_SIZE,
+        timeout=DB_CONN_TIMEOUT,
     )
-    conn = Connection(connection_url, max_size=20, timeout=10)
+
     await conn.connect()
-    await reset_database(conn)
+
+    await restore_db(conn)
+
     yield conn
+
     await conn.disconnect()
 
 
 @pytest.fixture
-def client(conn):
+def client(conn: Connection):
     async def get_conn_override():
         yield conn
 
     app.dependency_overrides[get_conn] = get_conn_override
-    return TestClient(app)
+
+    yield TestClient(app)
+
+    app.dependency_overrides.clear()

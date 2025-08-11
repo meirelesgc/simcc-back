@@ -1,5 +1,5 @@
 from simcc.integrations import ai_integrations
-from simcc.repositories.simcc import ProductionRepository, ResearcherRepository
+from simcc.repositories.simcc import ProductionRepository, researcher_repository
 
 
 def extract_fields(result, fields):
@@ -32,7 +32,7 @@ async def ai_summary_search(conn, model, default_filters):
             fields = ['year', 'title', 'publishing_company']
             search = extract_fields(result, fields)
         case 'ABSTRACT':
-            result = await ResearcherRepository.search_in_abstracts(
+            result = await researcher_repository.search_in_abstracts(
                 conn, default_filters
             )
             fields = [
@@ -52,7 +52,7 @@ async def ai_summary_search(conn, model, default_filters):
             ]
             search = extract_fields(result, fields)
         case 'NAME':
-            result = await ResearcherRepository.search_in_name(
+            result = await researcher_repository.search_in_name(
                 conn, default_filters, None
             )
             fields = [
@@ -91,7 +91,7 @@ async def ai_summary_search(conn, model, default_filters):
             fields = ['title', 'category', 'grant_date', 'details']
             search = extract_fields(result, fields)
         case 'AREA':
-            result = await ResearcherRepository.search_in_area_specialty(
+            result = await researcher_repository.search_in_area_specialty(
                 conn, default_filters
             )
             fields = [

@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Annotated, Optional
 
 from fastapi import APIRouter, Depends
 
@@ -14,28 +14,25 @@ from simcc.services import ProductionService
 
 router = APIRouter()
 
+Conn = Annotated[Connection, Depends(get_conn)]
+Filters = Annotated[DefaultFilters, Depends()]
+
 
 @router.get('/magazine_metrics')
 async def get_magazine_metrics(
+    conn: Conn,
     issn: Optional[str] = None,
     initials: Optional[str] = None,
-    conn: Connection = Depends(get_conn),
 ):
     return await ProductionService.get_magazine_metrics(conn, issn, initials)
 
 
-@router.get(
-    '/researcher_metrics',
-    tags=['Metrics'],
-)
-async def get_researcher_metrics(
-    default_filters: DefaultFilters = Depends(),
-    conn: Connection = Depends(get_conn),
-):
-    return await ProductionService.get_researcher_metrics(conn, default_filters)
+@router.get('/researcher_metrics')
+async def get_researcher_metrics(conn: Conn, filters: Filters):
+    return await ProductionService.get_researcher_metrics(conn, filters)
 
 
-@router.get('/brand_metrics', tags=['Metrics'])
+@router.get('/brand_metrics')
 async def get_brand_metrics(
     nature: str = None,
     default_filters: DefaultFilters = Depends(),
@@ -46,7 +43,7 @@ async def get_brand_metrics(
     )
 
 
-@router.get('/speaker_metrics', tags=['Metrics'])
+@router.get('/speaker_metrics')
 async def get_speaker_metrics(
     default_filters: DefaultFilters = Depends(),
     conn: Connection = Depends(get_conn),
@@ -54,7 +51,7 @@ async def get_speaker_metrics(
     return await ProductionService.get_speaker_metrics(conn, default_filters)
 
 
-@router.get('/research_report_metrics', tags=['Metrics'])
+@router.get('/research_report_metrics')
 async def get_research_report_metrics(
     default_filters: DefaultFilters = Depends(),
     conn: Connection = Depends(get_conn),
@@ -64,7 +61,7 @@ async def get_research_report_metrics(
     )
 
 
-@router.get('/events_metrics', tags=['Metrics'])
+@router.get('/events_metrics')
 async def get_events_metrics(
     default_filters: DefaultFilters = Depends(),
     conn: Connection = Depends(get_conn),
@@ -72,7 +69,7 @@ async def get_events_metrics(
     return await ProductionService.get_events_metrics(conn, default_filters)
 
 
-@router.get('/papers_magazine_metrics', tags=['Metrics'])
+@router.get('/papers_magazine_metrics')
 async def get_papers_magazine_metrics(
     default_filters: DefaultFilters = Depends(),
     conn: Connection = Depends(get_conn),
@@ -82,7 +79,7 @@ async def get_papers_magazine_metrics(
     )
 
 
-@router.get('/book_metrics', tags=['Metrics'])
+@router.get('/book_metrics')
 async def get_book_metrics(
     default_filters: DefaultFilters = Depends(),
     conn: Connection = Depends(get_conn),
@@ -90,7 +87,7 @@ async def get_book_metrics(
     return await ProductionService.get_book_metrics(conn, default_filters)
 
 
-@router.get('/book_chapter_metrics', tags=['Metrics'])
+@router.get('/book_chapter_metrics')
 async def get_book_chapter_metrics(
     default_filters: DefaultFilters = Depends(),
     conn: Connection = Depends(get_conn),

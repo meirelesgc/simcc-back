@@ -5,7 +5,7 @@ import pandas as pd
 from simcc.core.connection import Connection
 from simcc.repositories.simcc import (
     GraduateProgramRepository,
-    ResearcherRepository,
+    researcher_repository,
 )
 from simcc.schemas.Researcher import ResearcherArticleProduction
 
@@ -38,7 +38,7 @@ async def list_graduate_programs(
 def list_article_production(
     program_id: UUID, dep_id: str, year: int
 ) -> ResearcherArticleProduction:
-    article_production = ResearcherRepository.list_article_production(
+    article_production = researcher_repository.list_article_production(
         program_id, dep_id, year
     )
     if not article_production:

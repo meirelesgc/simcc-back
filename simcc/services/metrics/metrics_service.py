@@ -2,14 +2,14 @@ from uuid import UUID
 
 import pandas as pd
 
-from simcc.repositories.simcc import ResearcherRepository
+from simcc.repositories.simcc import researcher_repository
 from simcc.schemas.Researcher import ResearcherArticleProduction
 
 
 def list_article_production(
     program_id: UUID, year: int
 ) -> ResearcherArticleProduction:
-    article_production = ResearcherRepository.list_article_production(
+    article_production = researcher_repository.list_article_production(
         program_id, year
     )
     if not article_production:

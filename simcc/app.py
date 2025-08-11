@@ -39,7 +39,7 @@ app = FastAPI(
 app.include_router(production.router, tags=['Production'])
 app.include_router(researcher.router, tags=['Researcher'])
 app.include_router(powerBI.router, tags=['PowerBI Data'])
-app.include_router(metrics.router, tags=['Metrics'])
+app.include_router(metrics.router)
 app.include_router(departament.router, prefix='/ufmg', tags=['Conectee'])
 app.include_router(graduate_program.router, tags=['Graduate Program'])
 app.include_router(generic.router, tags=['Generic'])

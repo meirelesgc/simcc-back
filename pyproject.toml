@@ -60,7 +60,8 @@ addopts = '-p no:warnings'
 [tool.taskipy.tasks]
 lint = 'ruff check; ruff check --fix --unsafe-fixes; ruff format'
 run = 'fastapi dev simcc/app.py'
-test = 'pytest -s -x --cov=simcc -vv; coverage html'
+test = 'pytest -s -x --cov=simcc -vv'
+cov = 'coverage html'
 
 [build-system]
 requires = ["poetry-core"]

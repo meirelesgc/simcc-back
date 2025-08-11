@@ -107,28 +107,34 @@ def process_program_row(pg):
 
 
 def insert_or_update_program(pg):
-    sql = """
-        INSERT INTO public.graduate_program (
-            code, name, name_en, basic_area, cooperation_project, area, modality, type,
-            institution_id, state, city, visible, site, coordinator, email, start, phone, periodicity
-        )
-        VALUES (
-            %(codigo)s, %(nome)s, %(name_en)s, %(basic_area)s, %(cooperation_project)s, %(area de avaliacao)s,
-            %(modality)s, %(type)s, %(institution_id)s, %(state)s, %(city)s, %(visible)s, %(ies_url)s,
-            %(coordinator)s, %(email)s, %(start)s, %(phone)s, %(periodicity)s
-        )
+    SCRIPT_SQL = """
+        INSERT INTO public.graduate_program (code, name, name_en, basic_area,
+            cooperation_project, area, modality, type, institution_id, state,
+            city, visible, site, coordinator, email, "start", phone, periodicity)
+        VALUES (%(codigo)s, %(nome)s, %(name_en)s, %(basic_area)s,
+            %(cooperation_project)s, %(area de avaliacao)s, %(modality)s,
+            %(type)s, %(institution_id)s, %(state)s, %(city)s, %(visible)s, %(ies_url)s,
+            %(coordinator)s, %(email)s, %(start)s, %(phone)s, %(periodicity)s)
         ON CONFLICT (code) DO UPDATE SET
-            name = EXCLUDED.name,
-            area = EXCLUDED.area,
-            modality = EXCLUDED.modality,
-            type = EXCLUDED.type,
-            institution_id = EXCLUDED.institution_id,
-            state = EXCLUDED.state,
-            city = EXCLUDED.city,
-            site = EXCLUDED.site,
-            visible = EXCLUDED.visible
-    """
-    conn_admin.exec(sql, pg)
+            name = COALESCE(public.graduate_program.name, EXCLUDED.name),
+            name_en = COALESCE(public.graduate_program.name_en, EXCLUDED.name_en),
+            basic_area = COALESCE(public.graduate_program.basic_area, EXCLUDED.basic_area),
+            cooperation_project = COALESCE(public.graduate_program.cooperation_project, EXCLUDED.cooperation_project),
+            area = COALESCE(public.graduate_program.area, EXCLUDED.area),
+            modality = COALESCE(public.graduate_program.modality, EXCLUDED.modality),
+            type = COALESCE(public.graduate_program.type, EXCLUDED.type),
+            institution_id = COALESCE(public.graduate_program.institution_id, EXCLUDED.institution_id),
+            state = COALESCE(public.graduate_program.state, EXCLUDED.state),
+            city = COALESCE(public.graduate_program.city, EXCLUDED.city),
+            visible = COALESCE(public.graduate_program.visible, EXCLUDED.visible),
+            site = COALESCE(public.graduate_program.site, EXCLUDED.site),
+            coordinator = COALESCE(public.graduate_program.coordinator, EXCLUDED.coordinator),
+            email = COALESCE(public.graduate_program.email, EXCLUDED.email),
+            "start" = COALESCE(public.graduate_program."start", EXCLUDED."start"),
+            phone = COALESCE(public.graduate_program.phone, EXCLUDED.phone),
+            periodicity = COALESCE(public.graduate_program.periodicity, EXCLUDED.periodicity);
+            """
+    conn_admin.exec(SCRIPT_SQL, pg)
 
 
 def format_program_names():
