@@ -57,8 +57,8 @@ async def search_in_area_specialty(conn, default_filters):
     return researchers.to_dict(orient='records')
 
 
-def search_in_participation_event(conn, filters):
-    researchers = researcher_repository.search_in_participation_event(
+async def search_in_participation_event(conn, filters):
+    researchers = await researcher_repository.search_in_participation_event(
         conn, filters
     )
 

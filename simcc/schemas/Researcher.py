@@ -2,7 +2,7 @@ from datetime import date, datetime
 from typing import Any, Optional
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 
 class ResearcherMetric(BaseModel): ...
@@ -54,7 +54,6 @@ class ResearcherUFMG(BaseModel):
 
 
 class Researcher(BaseModel):
-    # Researcher Data
     id: UUID
     name: str
     lattes_id: str
@@ -101,6 +100,16 @@ class Researcher(BaseModel):
 
     class Config:
         json_encoders = {datetime: lambda v: v.strftime('%d/%m/%Y')}
+
+    @field_validator('lattes_update', mode='before')
+    @classmethod
+    def parse_lattes_update(cls, value):
+        if isinstance(value, str):
+            try:
+                return datetime.strptime(value, '%d/%m/%Y')
+            except ValueError:
+                raise ValueError('Formato de data inválido, esperado dd/mm/yyyy')
+        return value
 
 
 class AcademicDegree(BaseModel):

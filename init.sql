@@ -438,7 +438,7 @@ CREATE TABLE IF NOT EXISTS public.graduate_program(
     coordinator VARCHAR(100), 
     email VARCHAR(100),
     start DATE, 
-    phone VARCHAR(20), 
+    phone VARCHAR(255), 
     periodicity VARCHAR(50), 
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -774,7 +774,6 @@ CREATE TABLE IF NOT EXISTS ufmg.departament (
     dep_site TEXT,
     dep_sigla VARCHAR(255),
     dep_tel VARCHAR(255),
-    img_data BYTEA,
     PRIMARY KEY (dep_id)
 );
 CREATE TABLE IF NOT EXISTS ufmg.researcher (

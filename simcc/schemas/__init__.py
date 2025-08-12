@@ -47,7 +47,6 @@ class DefaultFilters(BaseModel):
 
     @root_validator(pre=True)
     def unify_term_fields(cls, values):
-        # Se 'term' estiver vazio, mas 'terms' vier preenchido, copia o valor
         if not values.get('term') and values.get('terms'):
             values['term'] = values['terms']
         return values

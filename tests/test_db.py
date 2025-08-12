@@ -4,3 +4,266 @@ import pytest
 @pytest.mark.asyncio
 async def test_session(client, conn):
     assert await conn.select('SELECT TRUE', None, True)
+
+
+@pytest.mark.asyncio
+async def test_create_country(conn, create_country):
+    EXPECTED_COUNT = 1
+    for _ in range(EXPECTED_COUNT):
+        await create_country()
+
+    SQL = 'SELECT COUNT(*) AS among FROM public.country'
+    result = await conn.select(SQL, None, True)
+    assert result['among'] == EXPECTED_COUNT
+
+
+@pytest.mark.asyncio
+async def test_create_state(conn, create_state):
+    EXPECTED_COUNT = 1
+    await create_state()
+
+    SQL_STATE = 'SELECT COUNT(*) AS among FROM public.state'
+    result_state = await conn.select(SQL_STATE, None, True)
+    assert result_state['among'] == EXPECTED_COUNT
+
+    SQL_COUNTRY = 'SELECT COUNT(*) AS among FROM public.country'
+    result_country = await conn.select(SQL_COUNTRY, None, True)
+    assert result_country['among'] == EXPECTED_COUNT
+
+
+@pytest.mark.asyncio
+async def test_create_city(conn, create_city):
+    EXPECTED_COUNT = 1
+    city_data = await create_city()
+
+    assert city_data.get('state_id') is not None
+    assert city_data.get('country_id') is not None
+
+    SQL = 'SELECT COUNT(*) AS among FROM public.city'
+    result = await conn.select(SQL, None, True)
+    assert result['among'] == EXPECTED_COUNT
+
+
+@pytest.mark.asyncio
+async def test_create_institution(conn, create_institution):
+    EXPECTED_COUNT = 1
+    specific_name = 'Instituto de Testes Avançados'
+
+    institution_data = await create_institution(name=specific_name)
+
+    assert institution_data['name'] == specific_name
+
+    SQL = 'SELECT COUNT(*) AS among FROM public.institution'
+    result = await conn.select(SQL, None, True)
+    assert result['among'] == EXPECTED_COUNT
+
+
+@pytest.mark.asyncio
+async def test_create_researcher(conn, create_researcher):
+    EXPECTED_COUNT = 1
+
+    researcher_data = await create_researcher(name='Ada Lovelace')
+
+    assert researcher_data['name'] == 'Ada Lovelace'
+
+    assert researcher_data.get('city_id') is not None
+    assert researcher_data.get('institution_id') is not None
+
+    SQL = 'SELECT COUNT(*) AS among FROM public.researcher'
+    result = await conn.select(SQL, None, True)
+    assert result['among'] == EXPECTED_COUNT
+
+
+@pytest.mark.asyncio
+async def test_create_event_with_automatic_researcher(
+    create_participation_event,
+):
+    event_data = await create_participation_event(title='Evento Automático')
+
+    assert event_data['title'] == 'Evento Automático'
+    assert event_data.get('researcher_id') is not None
+
+
+@pytest.mark.asyncio
+async def test_create_event_for_specific_researcher(
+    create_researcher, create_participation_event
+):
+    pesquisadora_alvo = await create_researcher(name='Marie Curie')
+    pesquisadora_id = pesquisadora_alvo['id']
+
+    event_data = await create_participation_event(
+        title='Estudos sobre a radioatividade', researcher_id=pesquisadora_id
+    )
+
+    assert event_data['title'] == 'Estudos sobre a radioatividade'
+    assert event_data['researcher_id'] == pesquisadora_id
+
+
+@pytest.mark.asyncio
+async def test_create_program_with_auto_institution(
+    conn, create_graduate_program
+):
+    EXPECTED_COUNT = 1
+
+    program_data = await create_graduate_program(
+        name='Programa de Pós-Graduação em IA'
+    )
+
+    assert program_data['name'] == 'Programa de Pós-Graduação em IA'
+    assert program_data.get('institution_id') is not None
+
+    SQL = 'SELECT COUNT(*) AS among FROM public.graduate_program'
+    result = await conn.select(SQL, None, True)
+    assert result['among'] == EXPECTED_COUNT
+
+
+@pytest.mark.asyncio
+async def test_create_program_for_specific_institution(
+    create_institution, create_graduate_program
+):
+    instituicao_alvo = await create_institution(
+        name='Universidade Federal da Bahia'
+    )
+    instituicao_id = instituicao_alvo['id']
+
+    program_data = await create_graduate_program(
+        name='Mestrado em Ciência da Computação', institution_id=instituicao_id
+    )
+
+    assert program_data['name'] == 'Mestrado em Ciência da Computação'
+    assert program_data['institution_id'] == instituicao_id
+
+
+# No seu arquivo de testes
+
+
+# Cenário 1: Criar uma relação automaticamente
+@pytest.mark.asyncio
+async def test_link_researcher_program_automatically(
+    conn, link_researcher_to_program
+):
+    """
+    Testa a criação automática de uma relação entre um novo pesquisador e um novo programa.
+    """
+    EXPECTED_COUNT = 1
+
+    # A fixture cuidará de criar um pesquisador e um programa e depois ligá-los
+    link_info = await link_researcher_to_program()
+
+    assert link_info.get('researcher_id') is not None
+    assert link_info.get('graduate_program_id') is not None
+
+    # Confirma que o registro de junção foi inserido
+    SQL = 'SELECT COUNT(*) AS among FROM public.graduate_program_researcher'
+    result = await conn.select(SQL, None, True)
+    assert result['among'] == EXPECTED_COUNT
+
+
+@pytest.mark.asyncio
+async def test_link_specific_researcher_to_program(
+    conn, create_researcher, create_graduate_program, link_researcher_to_program
+):
+    pesquisador = await create_researcher(name='Isaac Newton')
+    programa = await create_graduate_program(name='Mestrado em Física Clássica')
+
+    await link_researcher_to_program(
+        researcher_id=pesquisador['id'],
+        graduate_program_id=programa['graduate_program_id'],
+        type_='COLABORADOR',
+    )
+
+    SQL = """
+        SELECT type_ FROM public.graduate_program_researcher
+        WHERE researcher_id = %(researcher_id)s AND graduate_program_id = %(graduate_program_id)s
+    """
+    params = {
+        'researcher_id': pesquisador['id'],
+        'graduate_program_id': programa['graduate_program_id'],
+    }
+    result = await conn.select(SQL, params, True)
+
+    assert result is not None
+    assert result['type_'] == 'COLABORADOR'
+
+
+@pytest.mark.asyncio
+async def test_create_department(conn, create_department):
+    EXPECTED_COUNT = 1
+
+    await create_department(dep_nom='Departamento de Ciência da Computação')
+
+    SQL = 'SELECT COUNT(*) AS among FROM ufmg.departament'
+    result = await conn.select(SQL, None, True)
+    assert result['among'] == EXPECTED_COUNT
+
+
+@pytest.mark.asyncio
+async def test_link_department_researcher_automatically(
+    conn, link_researcher_to_department
+):
+    EXPECTED_COUNT = 1
+
+    link_info = await link_researcher_to_department()
+
+    assert link_info.get('researcher_id') is not None
+    assert link_info.get('dep_id') is not None
+
+    SQL = 'SELECT COUNT(*) AS among FROM ufmg.departament_researcher'
+    result = await conn.select(SQL, None, True)
+    assert result['among'] == EXPECTED_COUNT
+
+
+@pytest.mark.asyncio
+async def test_link_specific_researcher_to_department(
+    conn, create_researcher, create_department, link_researcher_to_department
+):
+    pesquisador = await create_researcher(name='Alan Turing')
+    departamento = await create_department(dep_nom='Inteligência Artificial')
+
+    await link_researcher_to_department(
+        researcher_id=pesquisador['id'], dep_id=departamento['dep_id']
+    )
+
+    SQL = """
+        SELECT researcher_id FROM ufmg.departament_researcher
+        WHERE dep_id = %(dep_id)s
+        """
+    result = await conn.select(SQL, {'dep_id': departamento['dep_id']}, True)
+
+    assert result is not None
+    assert str(result['researcher_id']) == pesquisador['id']
+
+
+# Cenário 1: Criar o fomento com um pesquisador automático
+@pytest.mark.asyncio
+async def test_create_foment_automatically(conn, create_foment):
+    """
+    Testa a criação de um registro de fomento sem especificar o pesquisador.
+    """
+    EXPECTED_COUNT = 1
+
+    # A fixture `create_researcher` será chamada em background
+    foment_info = await create_foment(call_title='Edital Universal CNPq')
+
+    assert foment_info['call_title'] == 'Edital Universal CNPq'
+    assert foment_info.get('researcher_id') is not None
+
+    # Confirma que o registro foi inserido no banco
+    SQL = 'SELECT COUNT(*) AS among FROM public.foment'
+    result = await conn.select(SQL, None, True)
+    assert result['among'] == EXPECTED_COUNT
+
+
+@pytest.mark.asyncio
+async def test_create_foment_for_specific_researcher(
+    create_researcher, create_foment
+):
+    pesquisador_alvo = await create_researcher(name='Albert Einstein')
+
+    foment_info = await create_foment(
+        researcher_id=pesquisador_alvo['id'],
+        modality_name='Bolsa de Produtividade em Pesquisa',
+    )
+
+    assert foment_info['researcher_id'] == pesquisador_alvo['id']
+    assert foment_info['modality_name'] == 'Bolsa de Produtividade em Pesquisa'

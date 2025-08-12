@@ -25,8 +25,8 @@ async def get_researcher_filter(conn: Conn):
 
 
 @router.get('/researcherParticipationEvent', response_model=list[Researcher])
-def search_in_participation_event(conn: Conn, filters: Filters):
-    return researcher_service.search_in_participation_event(conn, filters)
+async def search_in_participation_event(conn: Conn, filters: Filters):
+    return await researcher_service.search_in_participation_event(conn, filters)
 
 
 @router.get(

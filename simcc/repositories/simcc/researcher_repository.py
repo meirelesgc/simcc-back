@@ -153,11 +153,12 @@ async def search_in_area_specialty(
     return result
 
 
-def search_in_participation_event(conn, filters):
+async def search_in_participation_event(conn, filters):
     PARAMS = {}
     DISTINCT_SQL = ''
     FILTERS_SQL = ''
     FILTER_PAGINATION = ''
+    FILTER_TERMS = ''
 
     join_dep = str()
     join_program = str()
@@ -190,9 +191,9 @@ def search_in_participation_event(conn, filters):
             AND dp.dep_id = %(dep_id)s
             """
 
-    if filters.dep:
+    if filters.departament:
         DISTINCT_SQL = 'DISTINCT'
-        PARAMS['dep'] = filters.dep.split(';')
+        PARAMS['dep'] = filters.departament.split(';')
         join_dep = """
             INNER JOIN ufmg.departament_researcher dpr
                 ON dpr.researcher_id = r.id
@@ -205,7 +206,7 @@ def search_in_participation_event(conn, filters):
 
     if filters.institution:
         PARAMS['institution'] = filters.institution.split(';')
-        FILTER_INSTITUTION = """
+        FILTERS_SQL += """
             AND i.name = ANY(%(institution)s)
             """
 
@@ -214,7 +215,7 @@ def search_in_participation_event(conn, filters):
         FILTERS_SQL = 'AND r.graduation = ANY(%(graduation)s)'
 
     if filters.term:
-        filter_terms, term = tools.websearch_filter(
+        FILTER_TERMS, term = tools.websearch_filter(
             'pe.event_name', filters.term
         )
         PARAMS |= term
@@ -229,7 +230,7 @@ def search_in_participation_event(conn, filters):
             INNER JOIN foment f
                 ON f.researcher_id = r.id
             """
-        FILTER_MODALITY = 'AND modality_name = ANY(%(modality)s)'
+        FILTERS_SQL += 'AND modality_name = ANY(%(modality)s)'
 
     if filters.graduate_program_id and filters.graduate_program_id != '0':
         PARAMS['graduate_program_id'] = filters.graduate_program_id
@@ -239,7 +240,7 @@ def search_in_participation_event(conn, filters):
             INNER JOIN graduate_program gp
                 ON gpr.graduate_program_id = gp.graduate_program_id
             """
-        FILTER_PROGRAM = 'AND gpr.graduate_program_id = %(graduate_program_id)s'
+        FILTERS_SQL += 'AND gpr.graduate_program_id = %(graduate_program_id)s'
 
     if filters.city:
         PARAMS['city'] = filters.city.split(';')
@@ -278,19 +279,16 @@ def search_in_participation_event(conn, filters):
                 FROM participation_events pe
                 WHERE 1 = 1
                     AND type_participation in ('Apresentação Oral', 'Conferencista','Moderador','Simposista')
-                    {filter_terms}
+                    {FILTER_TERMS}
                 GROUP BY researcher_id
             ) pe ON pe.researcher_id = r.id
         WHERE 1 = 1
             {FILTER_MODALITY}
-            {FILTER_PROGRAM}
-            {FILTER_INSTITUTION}
         ORDER BY
             among DESC
             {FILTER_PAGINATION};
     """
-    result = conn.select(SCRIPT_SQL, PARAMS)
-    return result
+    return await conn.select(SCRIPT_SQL, PARAMS)
 
 
 def search_in_book(
