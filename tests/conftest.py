@@ -321,7 +321,7 @@ def create_foment(conn: Connection, create_researcher):
         researcher_id = kwargs.pop('researcher_id', None)
 
         if not researcher_id:
-            researcher = await create_researcher()
+            researcher = await create_researcher(**kwargs)
             researcher_id = researcher['id']
 
         foment_data = factories.FomentFactory.build(**kwargs)

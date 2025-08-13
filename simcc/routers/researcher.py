@@ -49,23 +49,22 @@ async def search_in_book(conn: Conn, filters: Filters):
 
 
 @router.get('/researcher', response_model=list[Researcher])
-async def search_in_abstract_or_article(conn: Conn, filters: Filters):
+async def search_in_abstract_or_article(
+    conn: Conn, filters: Filters, name: str = None
+):
     if filters.type == 'ARTICLE':
         return await researcher_service.search_in_bibliographic_production(
             conn, filters, 'ARTICLE'
         )
     elif filters.type == 'ABSTRACT':
-        return await researcher_service.search_in_abstracts(conn, filters)
+        return await researcher_service.search_in_researcher(conn, filters, name)
 
 
 @router.get('/researcher/foment', response_model=list[Researcher])
-async def list_foment_researchers(
-    default_filters: DefaultFilters = Depends(),
-    conn: Connection = Depends(get_conn),
-):
-    return await researcher_service.list_foment_researchers(
-        default_filters, conn
-    )
+async def list_foment_researchers(conn: Conn, filters: Filters):
+    if not filters.modality:
+        filters.modality = '*'
+    return await researcher_service.search_in_researcher(conn, filters, None)
 
 
 @router.get(

@@ -100,9 +100,9 @@ async def search_in_articles(conn, default_filters):
     return researchers.to_dict(orient='records')
 
 
-async def search_in_abstracts(conn, default_filters):
-    researchers = await researcher_repository.search_in_abstracts(
-        conn, default_filters
+async def search_in_researcher(conn, filters, name):
+    researchers = await researcher_repository.search_in_researcher(
+        conn, filters, name
     )
     if not researchers:
         return []
@@ -220,20 +220,6 @@ def search_in_patents(
     researchers = merge_researcher_data(researchers)
 
     researchers = researchers.replace(nan, '')
-    return researchers.to_dict(orient='records')
-
-
-async def list_foment_researchers(default_filters, conn):
-    researchers = await researcher_repository.list_foment_researchers(
-        default_filters, conn
-    )
-    if not researchers:
-        return []
-
-    researchers = pd.DataFrame(researchers)
-    researchers = merge_researcher_data(researchers)
-
-    researchers = researchers.replace(nan, str())
     return researchers.to_dict(orient='records')
 
 

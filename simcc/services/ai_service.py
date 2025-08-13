@@ -32,7 +32,7 @@ async def ai_summary_search(conn, model, default_filters):
             fields = ['year', 'title', 'publishing_company']
             search = extract_fields(result, fields)
         case 'ABSTRACT':
-            result = await researcher_repository.search_in_abstracts(
+            result = await researcher_repository.search_in_researcher(
                 conn, default_filters
             )
             fields = [
