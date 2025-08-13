@@ -425,6 +425,47 @@ def link_researcher_to_research_group(
 
 
 @pytest_asyncio.fixture
+def create_bibliographic_production(
+    conn: Connection, create_country, create_researcher
+):
+    async def _create_bibliographic_production(**kwargs):
+        country_id = kwargs.pop('country_id', None)
+        researcher_id = kwargs.pop('researcher_id', None)
+
+        if not country_id:
+            country = await create_country()
+            country_id = country['id']
+
+        if not researcher_id:
+            researcher = await create_researcher()
+            researcher_id = researcher['id']
+
+        production_data = factories.BibliographicProductionFactory.build(
+            **kwargs
+        )
+
+        production_data['country_id'] = country_id
+        production_data['researcher_id'] = researcher_id
+
+        SQL = """
+            INSERT INTO public.bibliographic_production(id, title, title_en, type, doi, nature, year, country_id,
+                language, means_divulgation, homepage, relevance, has_image,
+                scientific_divulgation, researcher_id, authors, year_, is_new)
+            VALUES (%(id)s, %(title)s, %(title_en)s, %(type)s, %(doi)s, %(nature)s,
+                %(year)s, %(country_id)s, %(language)s, %(means_divulgation)s,
+                %(homepage)s, %(relevance)s, %(has_image)s,
+                %(scientific_divulgation)s, %(researcher_id)s, %(authors)s,
+                %(year)s, %(is_new)s);
+            """
+
+        await conn.exec(SQL, production_data)
+
+        return production_data
+
+    return _create_bibliographic_production
+
+
+@pytest_asyncio.fixture
 def create_bibliographic_production_book(
     conn: Connection, create_country, create_researcher
 ):
@@ -469,3 +510,60 @@ def create_bibliographic_production_book(
         return book_data
 
     return _create_bibliographic_production_book
+
+
+@pytest_asyncio.fixture
+def create_periodical_magazine(conn: Connection):
+    async def _create_periodical_magazine(**kwargs):
+        magazine_data = factories.PeriodicalMagazineFactory.build()
+        magazine_data.update(kwargs)
+
+        SCRIPT_SQL = """
+            INSERT INTO public.periodical_magazine(id, name, issn, qualis, jcr, jcr_link)
+            VALUES (%(id)s, %(name)s, %(issn)s, %(qualis)s, %(jcr)s, %(jcr_link)s);
+            """
+
+        await conn.exec(SCRIPT_SQL, magazine_data)
+
+        return magazine_data
+
+    return _create_periodical_magazine
+
+
+@pytest_asyncio.fixture
+def create_bibliographic_production_article(
+    conn: Connection, create_bibliographic_production, create_periodical_magazine
+):
+    async def _create_bibliographic_production_article(**kwargs):
+        production = await create_bibliographic_production(
+            **kwargs, type='ARTICLE'
+        )
+
+        magazine = await create_periodical_magazine()
+
+        article_data = factories.BibliographicProductionArticleFactory.build(
+            **kwargs
+        )
+
+        article_data['bibliographic_production_id'] = production['id']
+        article_data['periodical_magazine_id'] = magazine['id']
+
+        SQL_ARTICLE = """
+            INSERT INTO public.bibliographic_production_article(
+                id, bibliographic_production_id, periodical_magazine_id, volume,
+                fascicle, series, start_page, end_page, place_publication,
+                periodical_magazine_name, issn, qualis, jcr, jcr_link)
+            VALUES (%(id)s, %(bibliographic_production_id)s, %(periodical_magazine_id)s,
+                %(volume)s, %(fascicle)s, %(series)s, %(start_page)s, %(end_page)s,
+                %(place_publication)s, %(periodical_magazine_name)s, %(issn)s,
+                %(qualis)s, %(jcr)s, %(jcr_link)s);
+            """
+
+        await conn.exec(SQL_ARTICLE, article_data)
+
+        article_data['bibliographic_production'] = production
+        article_data['periodical_magazine'] = magazine
+
+        return article_data
+
+    return _create_bibliographic_production_article

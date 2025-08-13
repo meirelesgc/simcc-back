@@ -359,3 +359,39 @@ async def test_link_researcher_to_specific_group(
     params = {'researcher_id': pesquisador_id, 'group_id': grupo_id}
     result = await conn.select(SQL, params, False)
     assert len(result) == 1
+
+
+@pytest.mark.asyncio
+async def test_create_periodical_magazine(conn, create_periodical_magazine):
+    EXPECTED_COUNT = 1
+
+    await create_periodical_magazine()
+
+    SQL = 'SELECT COUNT(*) AS total FROM public.periodical_magazine'
+
+    result = await conn.select(SQL, None, True)
+
+    assert result['total'] == EXPECTED_COUNT
+
+
+@pytest.mark.asyncio
+async def test_create_bibliographic_production_article(
+    conn, create_bibliographic_production_article
+):
+    EXPECTED_COUNT = 1
+
+    await create_bibliographic_production_article()
+
+    SQL = 'SELECT COUNT(*) AS total FROM public.bibliographic_production_article'
+    result_article = await conn.select(SQL, None, True)
+    assert result_article['total'] == EXPECTED_COUNT
+
+    SQL_PRODUCTION = (
+        'SELECT COUNT(*) AS total FROM public.bibliographic_production'
+    )
+    result_production = await conn.select(SQL_PRODUCTION, None, True)
+    assert result_production['total'] == EXPECTED_COUNT
+
+    SQL_MAGAZINE = 'SELECT COUNT(*) AS total FROM public.periodical_magazine'
+    result_magazine = await conn.select(SQL_MAGAZINE, None, True)
+    assert result_magazine['total'] == EXPECTED_COUNT

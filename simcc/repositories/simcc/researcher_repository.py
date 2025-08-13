@@ -326,7 +326,7 @@ async def search_in_participation_event(conn, filters):
     return await conn.select(SCRIPT_SQL, PARAMS)
 
 
-async def search_in_book(conn, filters):
+async def search_in_bibliographic_production(conn, filters, type):
     PARAMS = {}
     DISTINCT_SQL = ''
     FILTERS_SQL = ''
@@ -453,7 +453,7 @@ async def search_in_book(conn, filters):
                     bp.researcher_id,
                     COUNT(*) AS among
                 FROM bibliographic_production bp
-                WHERE bp.type = 'BOOK'
+                WHERE bp.type = '{type}'
                     {FILTER_TERMS}
                     {FILTER_YEAR}
                 GROUP BY bp.researcher_id

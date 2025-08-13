@@ -329,3 +329,48 @@ class BibliographicProductionBookFactory(factory.Factory):
 
     publishing_company = factory.Faker('company')
     publishing_company_city = factory.Faker('city')
+
+
+QUALIS_OPTIONS = ('A1', 'A2', 'A3', 'A4', 'B1', 'B2', 'B3', 'B4', 'C')
+
+
+def generate_issn():
+    part1 = random.randint(1000, 9999)
+    part2 = random.randint(1000, 9999)
+    return f'{part1}-{part2}'
+
+
+class PeriodicalMagazineFactory(factory.Factory):
+    class Meta:
+        model = dict
+
+    id = factory.Faker('uuid4')
+    name = factory.Faker('company', locale='pt_BR')
+    issn = factory.LazyFunction(generate_issn)
+    qualis = factory.Faker('random_element', elements=QUALIS_OPTIONS)
+    jcr = factory.LazyFunction(lambda: f'{random.uniform(0.1, 10.0):.3f}')
+    jcr_link = factory.Faker('url')
+
+
+class BibliographicProductionArticleFactory(factory.Factory):
+    class Meta:
+        model = dict
+
+    id = factory.Faker('uuid4')
+
+    volume = factory.LazyFunction(lambda: str(random.randint(1, 50)))
+    fascicle = factory.LazyFunction(lambda: str(random.randint(1, 12)))
+    series = factory.LazyFunction(lambda: str(random.randint(1, 5)))
+
+    start_page = factory.LazyFunction(lambda: str(random.randint(1, 100)))
+    end_page = factory.LazyAttribute(
+        lambda obj: str(int(obj.start_page) + random.randint(5, 30))
+    )
+
+    place_publication = factory.Faker('city', locale='pt_BR')
+
+    periodical_magazine_name = factory.Faker('company', locale='pt_BR')
+    issn = factory.LazyFunction(generate_issn)
+    qualis = factory.Faker('random_element', elements=QUALIS_OPTIONS)
+    jcr = factory.LazyFunction(lambda: f'{random.uniform(0.1, 10.0):.3f}')
+    jcr_link = factory.Faker('url')
