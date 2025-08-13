@@ -1,3 +1,5 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Depends
 
 from simcc.core.connection import Connection
@@ -25,6 +27,9 @@ from simcc.services import ProductionService
 
 router = APIRouter()
 
+Conn = Annotated[Connection, Depends(get_conn)]
+Filters = Annotated[DefaultFilters, Depends()]
+
 
 @router.get(
     '/professional_experience',
@@ -42,14 +47,10 @@ async def get_professional_experience(
 
 
 @router.get(
-    '/patent_production_researcher',
-    response_model=list[PatentProduction],
+    '/patent_production_researcher', response_model=list[PatentProduction]
 )
-async def list_patent_production(
-    default_filters: DefaultFilters = Depends(),
-    conn: Connection = Depends(get_conn),
-):
-    return await ProductionService.list_patent(conn, default_filters)
+async def list_patent_production(conn: Conn, filters: Filters):
+    return await ProductionService.list_patent(conn, filters)
 
 
 @router.get('/pevent_researcher')

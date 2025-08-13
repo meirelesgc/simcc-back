@@ -24,3 +24,5 @@ class PatentProduction(BaseModel):
     patent: None = None
     has_image: bool | None
     relevance: bool | None
+
+    code: str | list[str]

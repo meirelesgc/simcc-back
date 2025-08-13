@@ -92,10 +92,7 @@ def co_authorship(researcher_id: UUID):
     return researcher_service.list_co_authorship(researcher_id)
 
 
-@router.get(
-    '/academic_degree',
-    response_model=list[AcademicDegree],
-)
+@router.get('/academic_degree', response_model=list[AcademicDegree])
 async def get_academic_degree(
     default_filters: DefaultFilters = Depends(),
     conn: Connection = Depends(get_conn),

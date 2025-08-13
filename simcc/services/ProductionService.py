@@ -2,9 +2,9 @@ from collections import Counter
 
 import pandas as pd
 
-from simcc.core.connection import Connection  # Adicionado
+from simcc.core.connection import Connection
 from simcc.repositories.simcc import ProductionRepository
-from simcc.schemas import DefaultFilters  # Adicionado
+from simcc.schemas import DefaultFilters
 from simcc.schemas.Production.Article import ArticleMetric, ArticleProduction
 from simcc.schemas.Production.Brand import BrandProduction
 from simcc.schemas.Production.Guidance import GuidanceMetrics
@@ -43,8 +43,8 @@ async def professional_experience(
     )
 
 
-async def list_patent(conn: Connection, default_filters: DefaultFilters):
-    return await ProductionRepository.list_patent(conn, default_filters)
+async def list_patent(conn, filters):
+    return await ProductionRepository.list_patent(conn, filters)
 
 
 async def list_brand(

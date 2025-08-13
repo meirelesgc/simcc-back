@@ -385,16 +385,8 @@ PATENT_CATEGORIES = [
 ]
 
 
-# --- Factory Principal para a Tabela Patent ---
-
-
 class PatentFactory(factory.Factory):
-    """
-    Gera dados de teste para a estrutura da tabela 'patent'.
-    """
-
     class Meta:
-        # O modelo de destino é um dicionário Python
         model = dict
 
     id = factory.Faker('uuid4')
@@ -406,14 +398,14 @@ class PatentFactory(factory.Factory):
     relevance = factory.Faker('boolean')
     has_image = factory.Faker('boolean')
 
-    development_year = factory.Faker('year')
+    development_year = factory.Faker('pyint', min_value=last_quadriennial_year())
     details = factory.Faker('paragraph', nb_sentences=5)
     code = factory.Sequence(lambda n: f'BR{datetime.datetime.now().year}{n:07d}')
     grant_date = factory.Faker(
-        'date_time_between', start_date='-5y', end_date='now', tzinfo=None
+        'date_time_between', start_date='-4y', end_date='now', tzinfo=None
     )
     deposit_date = factory.LazyFunction(
-        lambda: fake.date_between(start_date='-10y', end_date='-5y').strftime(
+        lambda: fake.date_between(start_date='-4y', end_date='now').strftime(
             '%d/%m/%Y'
         )
     )
