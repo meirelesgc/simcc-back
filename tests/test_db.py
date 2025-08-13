@@ -395,3 +395,18 @@ async def test_create_bibliographic_production_article(
     SQL_MAGAZINE = 'SELECT COUNT(*) AS total FROM public.periodical_magazine'
     result_magazine = await conn.select(SQL_MAGAZINE, None, True)
     assert result_magazine['total'] == EXPECTED_COUNT
+
+
+@pytest.mark.asyncio
+async def test_create_patent(conn, create_patent):
+    EXPECTED_COUNT = 1
+
+    await create_patent()
+
+    SQL_PATENT = 'SELECT COUNT(*) AS total FROM public.patent'
+    result_patent = await conn.select(SQL_PATENT, None, True)
+    assert result_patent['total'] == EXPECTED_COUNT
+
+    SQL_RESEARCHER = 'SELECT COUNT(*) AS total FROM public.researcher'
+    result_researcher = await conn.select(SQL_RESEARCHER, None, True)
+    assert result_researcher['total'] == EXPECTED_COUNT

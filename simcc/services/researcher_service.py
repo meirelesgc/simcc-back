@@ -4,7 +4,7 @@ import pandas as pd
 from numpy import nan
 
 from simcc.repositories.simcc import InstitutionRepository, researcher_repository
-from simcc.schemas.Researcher import CoAuthorship, Researcher
+from simcc.schemas.Researcher import CoAuthorship
 
 
 def merge_researcher_data(researchers: pd.DataFrame) -> pd.DataFrame:
@@ -114,15 +114,9 @@ async def search_in_researcher(conn, filters, name):
     return researchers.to_dict(orient='records')
 
 
-def list_outstanding_researchers(
-    name: str,
-    graduate_program_id: UUID,
-    dep_id: UUID,
-    page: int,
-    lenght: int,
-) -> list[Researcher]:
-    researchers = researcher_repository.list_outstanding_researchers(
-        name, graduate_program_id, dep_id, page, lenght
+async def list_outstanding_researchers(conn, filters):
+    researchers = await researcher_repository.search_in_researcher(
+        conn, filters, None
     )
     if not researchers:
         return []
@@ -185,34 +179,8 @@ def list_co_authorship(researcher_id: UUID) -> list[CoAuthorship]:
     return co_authorship.to_dict(orient='records')
 
 
-def search_in_patents(
-    term,
-    graduate_program_id,
-    dep_id,
-    departament,
-    institution,
-    graduate_program,
-    city,
-    area,
-    modality,
-    graduation,
-    page,
-    lenght,
-):
-    researchers = researcher_repository.search_in_patents(
-        term,
-        graduate_program_id,
-        dep_id,
-        departament,
-        institution,
-        graduate_program,
-        city,
-        area,
-        modality,
-        graduation,
-        page,
-        lenght,
-    )
+async def search_in_patents(conn, filters):
+    researchers = await researcher_repository.search_in_patents(conn, filters)
     if not researchers:
         return []
 

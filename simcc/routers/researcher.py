@@ -72,51 +72,16 @@ async def list_researchers(conn: Conn, filters: Filters, name: str = None):
     return await researcher_service.search_in_researcher(conn, filters, name)
 
 
-@router.get(
-    '/outstanding_researchers',
-    response_model=list[Researcher],
-)
-def list_outstanding_researchers(
-    name: str = None,
-    graduate_program_id: UUID | str = None,
-    dep_id: str = None,
-    page: int = None,
-    lenght: int = None,
-):
-    return researcher_service.list_outstanding_researchers(
-        name, graduate_program_id, dep_id, page, lenght
-    )
+@router.get('/outstanding_researchers', response_model=list[Researcher])
+def list_outstanding_researchers(conn: Conn, filters: Filters):
+    filters.page = 0
+    filters.lenght = 10
+    return researcher_service.list_outstanding_researchers(conn, filters, None)
 
 
 @router.get('/researcherPatent', response_model=list[Researcher])
-def list_researchers_by_patent(
-    term: str = None,
-    graduate_program_id: UUID | str = None,
-    dep_id: str = None,
-    departament: str = None,
-    institution: str = None,
-    graduate_program: str = None,
-    city: str = None,
-    area: str = None,
-    modality: str = None,
-    graduation: str = None,
-    page: int = None,
-    lenght: int = None,
-):
-    return researcher_service.search_in_patents(
-        term,
-        graduate_program_id,
-        dep_id,
-        departament,
-        institution,
-        graduate_program,
-        city,
-        area,
-        modality,
-        graduation,
-        page,
-        lenght,
-    )
+async def list_researchers_by_patent(conn: Conn, filters: Filters):
+    return await researcher_service.search_in_patents(conn, filters)
 
 
 @router.get(

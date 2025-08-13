@@ -567,3 +567,29 @@ def create_bibliographic_production_article(
         return article_data
 
     return _create_bibliographic_production_article
+
+
+@pytest_asyncio.fixture
+def create_patent(conn: Connection, create_researcher):
+    async def _create_patent(**kwargs):
+        researcher_id = kwargs.pop('researcher_id', None)
+
+        if not researcher_id:
+            researcher = await create_researcher()
+            researcher_id = researcher['id']
+
+        patent_data = factories.PatentFactory.build(**kwargs)
+        patent_data['researcher_id'] = researcher_id
+
+        SCRIPT_SQL = """
+            INSERT INTO public.patent(id, title, category, relevance, has_image,
+                                      development_year, details, researcher_id, code,
+                                      grant_date, deposit_date, is_new, created_at)
+            VALUES (%(id)s, %(title)s, %(category)s, %(relevance)s, %(has_image)s,
+                    %(development_year)s, %(details)s, %(researcher_id)s, %(code)s,
+                    %(grant_date)s, %(deposit_date)s, %(is_new)s, %(created_at)s);
+        """
+        await conn.exec(SCRIPT_SQL, patent_data)
+        return patent_data
+
+    return _create_patent
