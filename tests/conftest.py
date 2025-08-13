@@ -422,3 +422,50 @@ def link_researcher_to_research_group(
         return link_data
 
     return _link_researcher_to_research_group
+
+
+@pytest_asyncio.fixture
+def create_bibliographic_production_book(
+    conn: Connection, create_country, create_researcher
+):
+    async def _create_bibliographic_production_book(**kwargs):
+        country_id = kwargs.pop('country_id', None)
+        researcher_id = kwargs.pop('researcher_id', None)
+
+        if not country_id:
+            country = await create_country()
+            country_id = country['id']
+        if not researcher_id:
+            researcher = await create_researcher()
+            researcher_id = researcher['id']
+
+        production = factories.BibliographicProductionFactory.build(**kwargs)
+        production['country_id'] = country_id
+        production['researcher_id'] = researcher_id
+        production['type'] = 'BOOK'
+
+        book_data = factories.BibliographicProductionBookFactory.build(
+            **kwargs, bibliographic_production_id=production['id']
+        )
+
+        SQL = """
+            INSERT INTO public.bibliographic_production(id, title, title_en,
+                type, doi, nature, year, country_id, language, means_divulgation,
+                homepage, relevance, has_image, scientific_divulgation,
+                researcher_id, authors, year_, is_new)
+            VALUES (%(id)s, %(title)s, %(title_en)s, %(type)s, %(doi)s, %(nature)s, %(year)s, %(country_id)s,
+                %(language)s, %(means_divulgation)s, %(homepage)s, %(relevance)s, %(has_image)s,
+                %(scientific_divulgation)s, %(researcher_id)s, %(authors)s, %(year)s, %(is_new)s);
+            """
+        await conn.exec(SQL, production)
+
+        SQL = """
+            INSERT INTO public.bibliographic_production_book(id, bibliographic_production_id, isbn, qtt_volume, qtt_pages,
+                num_edition_revision, num_series, publishing_company, publishing_company_city)
+            VALUES (%(id)s, %(bibliographic_production_id)s, %(isbn)s, %(qtt_volume)s, %(qtt_pages)s,
+                %(num_edition_revision)s, %(num_series)s, %(publishing_company)s, %(publishing_company_city)s);
+            """
+        await conn.exec(SQL, book_data)
+        return book_data
+
+    return _create_bibliographic_production_book

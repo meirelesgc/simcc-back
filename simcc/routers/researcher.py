@@ -34,47 +34,16 @@ async def search_in_participation_event(conn: Conn, filters: Filters):
     response_model=list[Researcher],
 )
 async def search_in_area_specialty(
-    filters: Filters, conn: Conn, area_specialty: str = None
+    conn: Conn, filters: Filters, area_specialty: str = None
 ):
     if area_specialty:
         filters.term = area_specialty
     return await researcher_service.search_in_area_specialty(conn, filters)
 
 
-@router.get(
-    '/researcherBook',
-    response_model=list[Researcher],
-)
-def search_in_book(
-    type: str = None,
-    term: str = None,
-    graduate_program_id: UUID | str = None,
-    dep_id: str = None,
-    departament: str = None,
-    institution: str = None,
-    graduate_program: str = None,
-    city: str = None,
-    area: str = None,
-    modality: str = None,
-    graduation: str = None,
-    page: int = None,
-    lenght: int = None,
-):
-    return researcher_service.search_in_book(
-        type,
-        term,
-        graduate_program_id,
-        dep_id,
-        departament,
-        institution,
-        graduate_program,
-        city,
-        area,
-        modality,
-        graduation,
-        page,
-        lenght,
-    )
+@router.get('/researcherBook', response_model=list[Researcher])
+async def search_in_book(conn: Conn, filters: Filters):
+    return await researcher_service.search_in_book(conn, filters)
 
 
 @router.get(

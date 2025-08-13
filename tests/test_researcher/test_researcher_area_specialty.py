@@ -28,9 +28,6 @@ async def test_get_researcher_area_specialty(
 
 @pytest.mark.asyncio
 async def test_term_filter(client, create_researcher_production):
-    """
-    Testa o filtro principal por termo na área de especialidade.
-    """
     # Arrange
     target_specialty = 'Inteligência Artificial'
     await create_researcher_production(area_specialty='Computação Gráfica')
@@ -46,7 +43,7 @@ async def test_term_filter(client, create_researcher_production):
     # Assert
     assert response.status_code == HTTPStatus.OK
     assert len(data) == expected_count
-    assert data[0]['id'] is not None  # Verificação básica
+    assert data[0]['id'] is not None
 
 
 @pytest.mark.asyncio
@@ -56,16 +53,13 @@ async def test_graduate_program_filter(
     create_graduate_program,
     link_researcher_to_program,
 ):
-    """
-    Testa o filtro por nome do programa de pós-graduação.
-    """
     # Arrange
     graduate_program = await create_graduate_program()
     researcher_linked = await link_researcher_to_program(
         graduate_program_id=graduate_program['graduate_program_id']
     )
 
-    await create_researcher_production()  # Pesquisador de controle
+    await create_researcher_production()
     await create_researcher_production(
         researcher_id=researcher_linked['researcher_id']
     )
@@ -89,9 +83,6 @@ async def test_graduate_program_id_filter(
     create_graduate_program,
     link_researcher_to_program,
 ):
-    """
-    Testa o filtro por ID do programa de pós-graduação.
-    """
     # Arrange
     graduate_program = await create_graduate_program()
     researcher_linked = await link_researcher_to_program(
@@ -117,9 +108,6 @@ async def test_graduate_program_id_filter(
 
 @pytest.mark.asyncio
 async def test_researcher_id_filter(client, create_researcher_production):
-    """
-    Testa o filtro por ID do pesquisador.
-    """
     # Arrange
     await create_researcher_production()
     target_production = await create_researcher_production()
@@ -143,9 +131,6 @@ async def test_department_filter(
     create_department,
     link_researcher_to_department,
 ):
-    """
-    Testa o filtro por nome do departamento.
-    """
     # Arrange
     department = await create_department()
     link_info = await link_researcher_to_department(dep_id=department['dep_id'])
@@ -172,9 +157,6 @@ async def test_department_id_filter(
     create_department,
     link_researcher_to_department,
 ):
-    """
-    Testa o filtro por ID do departamento.
-    """
     # Arrange
     department = await create_department()
     link_info = await link_researcher_to_department(dep_id=department['dep_id'])
@@ -198,9 +180,6 @@ async def test_department_id_filter(
 async def test_institution_filter(
     client, create_researcher_production, create_institution, create_researcher
 ):
-    """
-    Testa o filtro por nome da instituição.
-    """
     # Arrange
     institution = await create_institution()
     researcher = await create_researcher(institution_id=institution['id'])
@@ -222,9 +201,6 @@ async def test_institution_filter(
 
 @pytest.mark.asyncio
 async def test_city_filter(client, create_researcher_production):
-    """
-    Testa o filtro por cidade.
-    """
     # Arrange
     target_city = 'Belo Horizonte'
     await create_researcher_production(city='Qualquer Outra')

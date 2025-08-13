@@ -1,3 +1,4 @@
+import datetime
 import random
 import string
 import uuid
@@ -7,6 +8,14 @@ import factory
 from faker import Faker
 
 fake = Faker()
+
+
+def last_quadriennial_year():
+    now = datetime.date.today()
+    current_year = now.year
+    last_quad = current_year - (current_year % 4)
+    return last_quad - 4
+
 
 CLASSIFICATION_CLASSES = ('A+', 'A', 'B+', 'B', 'C+', 'C', 'D+', 'D', 'E+', 'E')
 TYPE_PARTICIPATION = (
@@ -39,6 +48,14 @@ AREA_SPECIALTY = [
     'Saúde Coletiva',
     'Direito Civil',
 ]
+BIBLIOGRAPHIC_PRODUCTION_TYPES = [
+    'BOOK',
+    'BOOK_CHAPTER',
+    'ARTICLE',
+    'WORK_IN_EVENT',
+    'TEXT_IN_NEWSPAPER_MAGAZINE',
+]
+LANG_CODES = ['en', 'pt', 'es', 'fr', 'de', 'it']
 letters = string.ascii_uppercase
 alpha2_list = [''.join(p) for p in product(letters, repeat=2)]
 alpha3_list = [''.join(p) for p in product(letters, repeat=3)]
@@ -256,3 +273,59 @@ class ResearchGroupFactory(factory.Factory):
     year = factory.Faker('pyint', min_value=2000, max_value=2024)
     institution_name = factory.Faker('company')
     category = factory.Faker('word')
+
+
+class BibliographicProductionFactory(factory.Factory):
+    class Meta:
+        model = dict
+
+    id = factory.Faker('uuid4')
+    title = factory.Faker('sentence', nb_words=6)
+    title_en = factory.Faker('sentence', nb_words=6, locale='en_US')
+
+    type = factory.Faker(
+        'random_element', elements=BIBLIOGRAPHIC_PRODUCTION_TYPES
+    )
+
+    doi = factory.Faker('doi')
+    nature = factory.Faker('word')
+
+    language = factory.LazyFunction(lambda: random.choice(LANG_CODES))
+    means_divulgation = factory.Faker(
+        'random_element', elements=('WEB', 'PRINT', 'EVENTO')
+    )
+    homepage = factory.Faker('url')
+    relevance = factory.Faker('boolean')
+    has_image = factory.Faker('boolean')
+    scientific_divulgation = factory.Faker('boolean')
+
+    authors = factory.LazyFunction(
+        lambda: ', '.join(fake.name() for _ in range(random.randint(1, 4)))
+    )
+
+    is_new = factory.Faker('boolean')
+
+    country = factory.SubFactory(CountryFactory)
+    researcher = factory.SubFactory(ResearcherFactory)
+
+    country_id = factory.LazyAttribute(lambda obj: obj.country['id'])
+    researcher_id = factory.LazyAttribute(lambda obj: obj.researcher['id'])
+    year = factory.Faker('pyint', min_value=last_quadriennial_year())
+    year_ = factory.Faker('pyint', min_value=last_quadriennial_year())
+
+
+class BibliographicProductionBookFactory(factory.Factory):
+    class Meta:
+        model = dict
+
+    id = factory.Faker('uuid4')
+    isbn = factory.Faker('isbn13', separator='')
+    qtt_volume = factory.LazyFunction(lambda: str(random.randint(1, 5)))
+    qtt_pages = factory.LazyFunction(lambda: str(random.randint(50, 800)))
+    num_edition_revision = factory.LazyFunction(
+        lambda: str(random.randint(1, 10))
+    )
+    num_series = factory.LazyFunction(lambda: str(random.randint(1, 3)))
+
+    publishing_company = factory.Faker('company')
+    publishing_company_city = factory.Faker('city')

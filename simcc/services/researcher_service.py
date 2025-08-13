@@ -72,36 +72,8 @@ async def search_in_participation_event(conn, filters):
     return researchers.to_dict(orient='records')
 
 
-def search_in_book(
-    type,
-    term,
-    graduate_program_id,
-    dep_id,
-    departament,
-    institution,
-    graduate_program,
-    city,
-    area,
-    modality,
-    graduation,
-    page,
-    lenght,
-):
-    researchers = researcher_repository.search_in_book(
-        type,
-        term,
-        graduate_program_id,
-        dep_id,
-        departament,
-        institution,
-        graduate_program,
-        city,
-        area,
-        modality,
-        graduation,
-        page,
-        lenght,
-    )
+async def search_in_book(conn, filters):
+    researchers = await researcher_repository.search_in_book(conn, filters)
     if not researchers:
         return []
 

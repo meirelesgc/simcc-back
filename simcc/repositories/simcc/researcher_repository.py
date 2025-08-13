@@ -326,125 +326,116 @@ async def search_in_participation_event(conn, filters):
     return await conn.select(SCRIPT_SQL, PARAMS)
 
 
-def search_in_book(
-    type,
-    term,
-    graduate_program_id,
-    dep_id,
-    dep,
-    institution,
-    graduate_program,
-    city,
-    area,
-    modality,
-    graduation,
-    page,
-    lenght,
-):
-    params = {}
-    filter_terms = str()
-    filter_graduation = str()
-    filter_pagination = str()
-    join_dep = str()
-    filter_dep = str()
-    filter_institution = str()
-    filter_distinct = str()
+async def search_in_book(conn, filters):
+    PARAMS = {}
+    DISTINCT_SQL = ''
+    FILTERS_SQL = ''
+    FILTER_PAGINATION = ''
+    FILTER_TERMS = ''
+    FILTER_YEAR = ''
 
-    if institution:
-        params['institution'] = institution.split(';')
-        filter_institution = """
-            AND i.name = ANY(%(institution)s)
-            """
+    join_dep = ''
+    join_program = ''
+    join_modality = ''
+    join_group = ''
 
-    if dep_id:
-        filter_distinct = 'DISTINCT'
-        params['dep_id'] = dep_id.split(';')
-        join_dep = """
-            INNER JOIN ufmg.departament_researcher dpr
-                ON dpr.researcher_id = r.id
-            INNER JOIN ufmg.departament dp
-                ON dp.dep_id = dpr.dep_id
-            """
-        filter_dep = """
-            AND dp.dep_id = ANY(%(dep_id)s)
-            """
-
-    if dep:
-        filter_distinct = 'DISTINCT'
-        params['dep'] = dep.split(';')
-        join_dep = """
-            INNER JOIN ufmg.departament_researcher dpr
-                ON dpr.researcher_id = r.id
-            INNER JOIN ufmg.departament dp
-                ON dp.dep_id = dpr.dep_id
-            """
-        filter_dep = """
-            AND dp.dep_nom = ANY(%(dep)s)
-            """
-    if graduation:
-        params['graduation'] = graduation.split(';')
-        filter_graduation = 'AND r.graduation = ANY(%(graduation)s)'
-
-    if term:
-        filter_terms, term = tools.websearch_filter('bp.title', term)
-        params |= term
-
-    if page and lenght:
-        filter_pagination = tools.pagination(page, lenght)
-
-    join_modality = str()
-    filter_modality = str()
-    if modality:
-        params['modality'] = modality.split(';')
-        join_modality = """
-            INNER JOIN foment f
-                ON f.researcher_id = r.id
-        """
-        filter_modality = 'AND modality_name = ANY(%(modality)s)'
-
-    join_program = str()
-    filter_program = str()
-    if graduate_program_id and graduate_program_id != '0':
-        params['graduate_program_id'] = graduate_program_id
+    if filters.graduate_program:
+        DISTINCT_SQL = 'DISTINCT'
+        PARAMS['graduate_program'] = filters.graduate_program.split(';')
         join_program = """
-            INNER JOIN graduate_program_researcher gpr
-                ON gpr.researcher_id = r.id
+            INNER JOIN graduate_program_researcher gpr ON gpr.researcher_id = r.id
+            INNER JOIN graduate_program gp ON gpr.graduate_program_id = gp.graduate_program_id
         """
-        filter_program = 'AND gpr.graduate_program_id = %(graduate_program_id)s'
-
-    if graduate_program:
-        filter_distinct = 'DISTINCT'
-        params['graduate_program'] = graduate_program.split(';')
-        join_program = """
-            INNER JOIN graduate_program_researcher gpr
-                ON gpr.researcher_id = r.id
-            INNER JOIN graduate_program gp
-                ON gpr.graduate_program_id = gp.graduate_program_id
-            """
-        filter_program = """
+        FILTERS_SQL += """
             AND gp.name = ANY(%(graduate_program)s)
             AND gpr.type_ = 'PERMANENTE'
-            """
-
-    filter_city = str()
-    if city:
-        params['city'] = city.split(';')
-        filter_city = 'AND rp.city = ANY(%(city)s)'
-
-    filter_area = str()
-    if area:
-        params['area'] = area.replace(' ', '_').split(';')
-        filter_area = """
-            AND STRING_TO_ARRAY(REPLACE(rp.great_area, ' ', '_'), ';') && %(area)s
         """
 
+    if filters.graduate_program_id and filters.graduate_program_id != '0':
+        PARAMS['graduate_program_id'] = filters.graduate_program_id
+        join_program = 'INNER JOIN graduate_program_researcher gpr ON gpr.researcher_id = r.id'
+        FILTERS_SQL += ' AND gpr.graduate_program_id = %(graduate_program_id)s'
+
+    if filters.dep_id:
+        PARAMS['dep_id'] = filters.dep_id
+        join_dep = """
+            INNER JOIN ufmg.departament_researcher dpr ON dpr.researcher_id = r.id
+            INNER JOIN ufmg.departament dp ON dp.dep_id = dpr.dep_id
+        """
+        FILTERS_SQL += ' AND dp.dep_id = %(dep_id)s'
+
+    if filters.departament:
+        DISTINCT_SQL = 'DISTINCT'
+        PARAMS['dep'] = filters.departament.split(';')
+        join_dep = """
+            INNER JOIN ufmg.departament_researcher dpr ON dpr.researcher_id = r.id
+            INNER JOIN ufmg.departament dp ON dp.dep_id = dpr.dep_id
+        """
+        FILTERS_SQL += ' AND dp.dep_nom = ANY(%(dep)s)'
+
+    if filters.institution:
+        PARAMS['institution'] = filters.institution.split(';')
+        FILTERS_SQL += ' AND i.name = ANY(%(institution)s)'
+
+    if filters.graduation:
+        PARAMS['graduation'] = filters.graduation.split(';')
+        FILTERS_SQL += ' AND r.graduation = ANY(%(graduation)s)'
+
+    if filters.term:
+        FILTER_TERMS, term_params = tools.websearch_filter(
+            'bp.title', filters.term
+        )
+        PARAMS.update(term_params)
+
+    if filters.year:
+        PARAMS['year'] = filters.year
+        FILTER_YEAR = 'AND bp.year_ >= %(year)s'
+
+    if filters.page and filters.lenght:
+        FILTER_PAGINATION = tools.pagination(filters.page, filters.lenght)
+
+    if filters.modality:
+        PARAMS['modality'] = filters.modality.split(';')
+        join_modality = 'INNER JOIN foment f ON f.researcher_id = r.id'
+        FILTERS_SQL += ' AND f.modality_name = ANY(%(modality)s)'
+
+    if filters.city:
+        PARAMS['city'] = filters.city.split(';')
+        FILTERS_SQL += ' AND rp.city = ANY(%(city)s)'
+
+    if filters.area:
+        PARAMS['area'] = filters.area.replace(' ', '_').split(';')
+        FILTERS_SQL += ' AND rp.great_area_ && %(area)s'
+
+    if filters.researcher_id:
+        PARAMS['researcher_id'] = filters.researcher_id
+        FILTERS_SQL += ' AND r.id = %(researcher_id)s'
+
+    if filters.lattes_id:
+        PARAMS['lattes_id'] = filters.lattes_id
+        FILTERS_SQL += ' AND r.lattes_id = %(lattes_id)s'
+
+    if filters.group:
+        DISTINCT_SQL = 'DISTINCT'
+        PARAMS['group'] = filters.group.split(';')
+        join_group = """
+            INNER JOIN research_group_researcher rgr ON rgr.researcher_id = r.id
+            INNER JOIN research_group rg ON rgr.research_group_id = rg.id
+        """
+        FILTERS_SQL += ' AND rg.name = ANY(%(group)s)'
+
+    if filters.group_id:
+        PARAMS['group_id'] = filters.group_id
+        join_group = 'INNER JOIN research_group_researcher rgr ON rgr.researcher_id = r.id'
+        FILTERS_SQL += ' AND rgr.research_group_id = %(group_id)s'
+
     SCRIPT_SQL = f"""
-        SELECT {filter_distinct}
+        SELECT {DISTINCT_SQL}
             r.id, r.name, r.lattes_id, r.lattes_10_id, r.abstract, r.orcid,
             r.graduation, r.last_update AS lattes_update,
             REPLACE(rp.great_area, '_', ' ') AS area, rp.city,
             i.image AS image_university, i.name AS university,
-            1 AS among, rp.articles, rp.book_chapters, rp.book, rp.patent,
+            bp.among, rp.articles, rp.book_chapters, rp.book, rp.patent,
             rp.software, rp.brand, opr.h_index, opr.relevance_score,
             opr.works_count, opr.cited_by_count, opr.i10_index, opr.scopus,
             opr.openalex, r.classification, r.status, r.institution_id,
@@ -455,29 +446,24 @@ def search_in_book(
             LEFT JOIN openalex_researcher opr ON opr.researcher_id = r.id
             {join_modality}
             {join_program}
+            {join_group}
             {join_dep}
             INNER JOIN (
-                SELECT bp.researcher_id, COUNT(*) AS among
+                SELECT
+                    bp.researcher_id,
+                    COUNT(*) AS among
                 FROM bibliographic_production bp
-                WHERE 1 = 1
-                    AND TYPE = 'BOOK'
-                    {filter_terms}
-                    {filter_institution}
-                GROUP BY researcher_id
+                WHERE bp.type = 'BOOK'
+                    {FILTER_TERMS}
+                    {FILTER_YEAR}
+                GROUP BY bp.researcher_id
             ) bp ON bp.researcher_id = r.id
         WHERE 1 = 1
-            {filter_graduation}
-            {filter_dep}
-            {filter_modality}
-            {filter_program}
-            {filter_city}
-            {filter_area}
-        ORDER BY
-            among DESC
-            {filter_pagination};
+            {FILTERS_SQL}
+        ORDER BY bp.among DESC
+        {FILTER_PAGINATION};
     """
-    result = conn.select(SCRIPT_SQL, params)
-    return result
+    return await conn.select(SCRIPT_SQL, PARAMS)
 
 
 async def get_area_filter(conn):
