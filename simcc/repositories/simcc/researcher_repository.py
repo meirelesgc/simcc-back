@@ -164,6 +164,7 @@ async def search_in_participation_event(conn, filters):
     join_dep = ''
     join_program = ''
     join_modality = ''
+    join_group = ''
 
     if filters.graduate_program:
         DISTINCT_SQL = 'DISTINCT'
@@ -263,6 +264,32 @@ async def search_in_participation_event(conn, filters):
         PARAMS['year'] = filters.year
         FILTER_YEAR = 'AND pe.year >= %(year)s'
 
+    if filters.lattes_id:
+        PARAMS['lattes_id'] = filters.lattes_id
+        FILTERS_SQL += 'AND r.lattes_id = %(lattes_id)s'
+
+    if filters.group:
+        DISTINCT_SQL = 'DISTINCT'
+        PARAMS['group'] = filters.group.split(';')
+        join_group = """
+            INNER JOIN research_group_researcher rgr
+                ON rgr.researcher_id = r.id
+            INNER JOIN research_group rg
+                ON rgr.research_group_id = rg.id
+        """
+        FILTERS_SQL += """
+            AND rg.name = ANY(%(group)s)
+        """
+
+    if filters.group_id:
+        PARAMS['group_id'] = filters.group_id
+        join_group = """
+            INNER JOIN research_group_researcher rgr
+                ON rgr.researcher_id = r.id
+        """
+        FILTERS_SQL += """
+            AND rgr.research_group_id = %(group_id)s
+        """
     SCRIPT_SQL = f"""
         SELECT {DISTINCT_SQL}
             r.id, r.name, r.lattes_id, r.lattes_10_id, r.abstract, r.orcid,
@@ -280,6 +307,7 @@ async def search_in_participation_event(conn, filters):
             LEFT JOIN openalex_researcher opr ON opr.researcher_id = r.id
             {join_modality}
             {join_program}
+            {join_group}
             {join_dep}
             INNER JOIN (
                 SELECT pe.researcher_id, COUNT(*) AS among

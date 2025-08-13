@@ -366,3 +366,59 @@ def create_researcher_production(conn: Connection, create_researcher):
         return production_data
 
     return _create_researcher_production
+
+
+@pytest_asyncio.fixture
+def create_research_group(conn: Connection):
+    async def _create_research_group(**kwargs):
+        group = factories.ResearchGroupFactory.build(**kwargs)
+
+        SCRIPT_SQL = """
+            INSERT INTO public.research_group(
+                id, name, institution, first_leader, first_leader_id,
+                second_leader, second_leader_id, area, census,
+                start_of_collection, end_of_collection, group_identifier,
+                year, institution_name, category
+            )
+            VALUES (
+                %(id)s, %(name)s, %(institution)s, %(first_leader)s, %(first_leader_id)s,
+                %(second_leader)s, %(second_leader_id)s, %(area)s, %(census)s,
+                %(start_of_collection)s, %(end_of_collection)s, %(group_identifier)s,
+                %(year)s, %(institution_name)s, %(category)s
+            );
+        """
+        await conn.exec(SCRIPT_SQL, group)
+        return group
+
+    return _create_research_group
+
+
+@pytest_asyncio.fixture
+def link_researcher_to_research_group(
+    conn: Connection, create_researcher, create_research_group
+):
+    async def _link_researcher_to_research_group(**kwargs):
+        researcher_id = kwargs.pop('researcher_id', None)
+        research_group_id = kwargs.pop('research_group_id', None)
+
+        if not researcher_id:
+            researcher = await create_researcher()
+            researcher_id = researcher['id']
+
+        if not research_group_id:
+            group = await create_research_group()
+            research_group_id = group['id']
+
+        link_data = {
+            'researcher_id': researcher_id,
+            'research_group_id': research_group_id,
+        }
+
+        SQL = """
+            INSERT INTO public.research_group_researcher(research_group_id, researcher_id)
+            VALUES (%(research_group_id)s, %(researcher_id)s);
+            """
+        await conn.exec(SQL, link_data)
+        return link_data
+
+    return _link_researcher_to_research_group

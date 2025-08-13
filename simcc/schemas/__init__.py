@@ -43,6 +43,10 @@ class DefaultFilters(BaseModel):
     modality: Optional[str] = None
     graduation: Optional[str] = None
 
+    lattes_id: Optional[str] = None
+    group: Optional[str] = None
+    group_id: Optional[UUID] = None
+
     page: Optional[int] = 1
     lenght: Optional[int] = 24
 

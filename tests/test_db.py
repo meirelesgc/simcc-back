@@ -297,3 +297,65 @@ async def test_create_production_for_specific_researcher(
         SQL, {'researcher_id': pesquisador_alvo['id']}, True
     )
     assert result['articles'] == 5
+
+
+@pytest.mark.asyncio
+async def test_create_research_group(conn, create_research_group):
+    EXPECTED_COUNT = 1
+    test_name = 'Grupo de Pesquisa em Sistemas Inteligentes'
+
+    group_data = await create_research_group(name=test_name)
+
+    assert group_data['name'] == test_name
+    assert group_data.get('id') is not None
+
+    SQL = 'SELECT COUNT(*) AS total FROM public.research_group'
+    result = await conn.select(SQL, None, True)
+    assert result['total'] == EXPECTED_COUNT
+
+
+@pytest.mark.asyncio
+async def test_link_researcher_to_group_with_auto_creation(
+    conn, link_researcher_to_research_group
+):
+    EXPECTED_COUNT = 1
+
+    link_data = await link_researcher_to_research_group()
+
+    assert link_data.get('researcher_id') is not None
+    assert link_data.get('research_group_id') is not None
+
+    SQL = 'SELECT COUNT(*) AS total FROM public.research_group_researcher'
+    result = await conn.select(SQL, None, True)
+    assert result['total'] == EXPECTED_COUNT
+
+
+@pytest.mark.asyncio
+async def test_link_researcher_to_specific_group(
+    conn,
+    create_researcher,
+    create_research_group,
+    link_researcher_to_research_group,
+):
+    pesquisador_alvo = await create_researcher(name='Ada Lovelace')
+    grupo_alvo = await create_research_group(
+        name='Grupo de Estudos de Motores Analíticos'
+    )
+
+    pesquisador_id = pesquisador_alvo['id']
+    grupo_id = grupo_alvo['id']
+
+    link_data = await link_researcher_to_research_group(
+        researcher_id=pesquisador_id, research_group_id=grupo_id
+    )
+
+    assert link_data['researcher_id'] == pesquisador_id
+    assert link_data['research_group_id'] == grupo_id
+
+    SQL = """
+        SELECT * FROM public.research_group_researcher
+        WHERE researcher_id = %(researcher_id)s AND research_group_id = %(group_id)s
+    """
+    params = {'researcher_id': pesquisador_id, 'group_id': grupo_id}
+    result = await conn.select(SQL, params, False)
+    assert len(result) == 1

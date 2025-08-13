@@ -309,3 +309,86 @@ async def test_page_filter(client, create_participation_event):
     # Assert
     assert response.status_code == HTTPStatus.OK
     assert len(data) == EXPECTED_COUNT - 1
+
+
+@pytest.mark.asyncio
+async def test_lattes_id_filter(
+    client, create_participation_event, create_researcher
+):
+    # Arrange
+    lattes_id = 'XPTO'
+    researcher = await create_researcher(lattes_id=lattes_id)
+    await create_participation_event()
+    await create_participation_event(researcher_id=researcher['id'])
+
+    expected_events_count = 1
+    params = {'lattes_id': lattes_id}
+
+    # Act
+    response = client.get('/researcherParticipationEvent', params=params)
+    data = response.json()
+
+    # Assert
+    assert response.status_code == HTTPStatus.OK
+    assert len(data) == expected_events_count
+
+
+@pytest.mark.asyncio
+async def test_research_group_filter_by_id(
+    client,
+    create_participation_event,
+    create_research_group,
+    link_researcher_to_research_group,
+):
+    # Arrange
+    research_group = await create_research_group()
+
+    linked_researcher = await link_researcher_to_research_group(
+        research_group_id=research_group['id']
+    )
+
+    await create_participation_event()
+    await create_participation_event(
+        researcher_id=linked_researcher['researcher_id']
+    )
+
+    expected_events_count = 1
+    params = {'group_id': research_group['id']}
+
+    # Act
+    response = client.get('/researcherParticipationEvent', params=params)
+    data = response.json()
+
+    # Assert
+    assert response.status_code == HTTPStatus.OK
+    assert len(data) == expected_events_count
+
+
+@pytest.mark.asyncio
+async def test_research_group_filter_by_group_param(
+    client,
+    create_participation_event,
+    create_research_group,
+    link_researcher_to_research_group,
+):
+    # Arrange
+    research_group = await create_research_group()
+    linked_researcher = await link_researcher_to_research_group(
+        research_group_id=research_group['id']
+    )
+
+    await create_participation_event()
+    await create_participation_event(
+        researcher_id=linked_researcher['researcher_id']
+    )
+
+    expected_events_count = 1
+    params = {'group': research_group['name']}
+
+    # Act
+    response = client.get('/researcherParticipationEvent', params=params)
+    data = response.json()
+
+    # Assert
+    assert response.status_code == HTTPStatus.OK
+    assert len(data) == expected_events_count

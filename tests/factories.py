@@ -80,7 +80,7 @@ class InstitutionFactory(factory.Factory):
         model = dict
 
     id = factory.Faker('uuid4')
-    name = factory.Faker('company')
+    name = factory.Sequence(lambda n: f'INST{n}')
     acronym = factory.Sequence(lambda n: f'INST{n}')
     description = factory.Faker('paragraph', nb_sentences=3)
     cnpj = factory.Faker('numerify', text='##############')
@@ -234,3 +234,25 @@ class FomentFactory(factory.Factory):
     institute_name = factory.Faker('company')
     aid_quantity = factory.Faker('pyint', min_value=0, max_value=5)
     scholarship_quantity = factory.Faker('pyint', min_value=1, max_value=10)
+
+
+class ResearchGroupFactory(factory.Factory):
+    class Meta:
+        model = dict
+
+    id = factory.Faker('uuid4')
+
+    name = factory.Faker('company')
+    institution = factory.Faker('company')
+    first_leader = factory.Faker('name')
+    first_leader_id = factory.Faker('uuid4')
+    second_leader = factory.Faker('name')
+    second_leader_id = factory.Faker('uuid4')
+    area = factory.Faker('bs')
+    census = factory.Faker('pyint', min_value=10, max_value=500)
+    start_of_collection = factory.Faker('year')
+    end_of_collection = factory.Faker('year')
+    group_identifier = factory.Sequence(lambda n: f'GRP-ID-{n:06}')
+    year = factory.Faker('pyint', min_value=2000, max_value=2024)
+    institution_name = factory.Faker('company')
+    category = factory.Faker('word')
