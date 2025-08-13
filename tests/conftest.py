@@ -447,7 +447,7 @@ def create_bibliographic_production_book(
         book_data = factories.BibliographicProductionBookFactory.build(
             **kwargs, bibliographic_production_id=production['id']
         )
-
+        book_data['bibliographic_production'] = production
         SQL = """
             INSERT INTO public.bibliographic_production(id, title, title_en,
                 type, doi, nature, year, country_id, language, means_divulgation,

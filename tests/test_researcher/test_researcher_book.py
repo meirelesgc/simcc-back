@@ -236,3 +236,181 @@ async def test_research_group_filter_by_name(
     # Assert
     assert response.status_code == HTTPStatus.OK
     assert len(data) == expected_count
+
+
+@pytest.mark.asyncio
+async def test_modality_filter(
+    client, create_bibliographic_production_book, create_foment
+):
+    # Arrange
+    foment_info = await create_foment(
+        modality_name='Bolsa de Produtividade em Pesquisa',
+    )
+    await create_bibliographic_production_book()
+    await create_bibliographic_production_book(
+        researcher_id=foment_info['researcher_id']
+    )
+
+    expected_events_count = 1
+    params = {'modality': foment_info['modality_name']}
+
+    # Act
+    response = client.get(ENDPOINT_URL, params=params)
+    data = response.json()
+
+    # Assert
+    assert response.status_code == HTTPStatus.OK
+    assert len(data) == expected_events_count
+
+
+@pytest.mark.asyncio
+async def test_researcher_id_filter(
+    client, create_bibliographic_production_book
+):
+    # Arrange
+    await create_bibliographic_production_book()
+    book = await create_bibliographic_production_book()
+
+    expected_events_count = 1
+    params = {'researcher_id': book['bibliographic_production']['researcher_id']}
+
+    # Act
+    response = client.get(ENDPOINT_URL, params=params)
+    data = response.json()
+
+    # Assert
+    assert response.status_code == HTTPStatus.OK
+    assert len(data) == expected_events_count
+
+
+@pytest.mark.asyncio
+async def test_lattes_id_filter(
+    client, create_bibliographic_production_book, create_researcher
+):
+    # Arrange
+    lattes_id = 'XPTO'
+    researcher = await create_researcher(lattes_id=lattes_id)
+    await create_bibliographic_production_book()
+    await create_bibliographic_production_book(researcher_id=researcher['id'])
+
+    expected_count = 1
+    params = {'lattes_id': lattes_id}
+
+    # Act
+    response = client.get(ENDPOINT_URL, params=params)
+    data = response.json()
+
+    # Assert
+    assert response.status_code == HTTPStatus.OK
+    assert len(data) == expected_count
+
+
+@pytest.mark.asyncio
+async def test_graduation_filter(
+    client, create_bibliographic_production_book, create_researcher
+):
+    # Arrange
+    graduation = 'Doutorado'
+    researcher = await create_researcher(graduation=graduation)
+    await create_bibliographic_production_book()
+    await create_bibliographic_production_book(researcher_id=researcher['id'])
+
+    expected_count = 1
+    params = {'graduation': graduation}
+
+    # Act
+    response = client.get(ENDPOINT_URL, params=params)
+    data = response.json()
+
+    # Assert
+    assert response.status_code == HTTPStatus.OK
+    assert len(data) == expected_count
+
+
+@pytest.mark.asyncio
+async def test_department_id_filter(
+    client,
+    create_bibliographic_production_book,
+    create_department,
+    link_researcher_to_department,
+):
+    # Arrange
+    department = await create_department()
+    link_info = await link_researcher_to_department(dep_id=department['dep_id'])
+
+    await create_bibliographic_production_book()
+    await create_bibliographic_production_book(
+        researcher_id=link_info['researcher_id']
+    )
+
+    expected_events_count = 1
+    params = {'dep_id': department['dep_id']}
+
+    # Act
+    response = client.get(ENDPOINT_URL, params=params)
+    data = response.json()
+
+    # Assert
+    assert response.status_code == HTTPStatus.OK
+    assert len(data) == expected_events_count
+
+
+@pytest.mark.asyncio
+async def test_graduate_program_id_filter(
+    client,
+    create_bibliographic_production_book,
+    create_graduate_program,
+    link_researcher_to_program,
+):
+    # Arrange
+    graduate_program = await create_graduate_program()
+    researcher = await link_researcher_to_program(
+        graduate_program_id=graduate_program['graduate_program_id']
+    )
+
+    await create_bibliographic_production_book()
+    await create_bibliographic_production_book(
+        researcher_id=researcher['researcher_id']
+    )
+
+    expected_events_count = 1
+    params = {'graduate_program_id': graduate_program['graduate_program_id']}
+
+    # Act
+    response = client.get(ENDPOINT_URL, params=params)
+    data = response.json()
+
+    # Assert
+    assert response.status_code == HTTPStatus.OK
+    assert len(data) == expected_events_count
+
+
+@pytest.mark.asyncio
+async def test_research_group_filter_by_id(
+    client,
+    create_bibliographic_production_book,
+    create_research_group,
+    link_researcher_to_research_group,
+):
+    # Arrange
+    research_group = await create_research_group()
+
+    linked_researcher = await link_researcher_to_research_group(
+        research_group_id=research_group['id']
+    )
+
+    await create_bibliographic_production_book()
+    await create_bibliographic_production_book(
+        researcher_id=linked_researcher['researcher_id']
+    )
+
+    expected_events_count = 1
+    params = {'group_id': research_group['id']}
+
+    # Act
+    response = client.get(ENDPOINT_URL, params=params)
+    data = response.json()
+
+    # Assert
+    assert response.status_code == HTTPStatus.OK
+    assert len(data) == expected_events_count
