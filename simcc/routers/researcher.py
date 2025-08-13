@@ -67,16 +67,9 @@ async def list_foment_researchers(conn: Conn, filters: Filters):
     return await researcher_service.search_in_researcher(conn, filters, None)
 
 
-@router.get(
-    '/researcherName',
-    response_model=list[Researcher],
-)
-async def list_researchers(
-    default_filters: DefaultFilters = Depends(),
-    conn: Connection = Depends(get_conn),
-    name: str = None,
-):
-    return await researcher_service.serch_in_name(conn, default_filters, name)
+@router.get('/researcherName', response_model=list[Researcher])
+async def list_researchers(conn: Conn, filters: Filters, name: str = None):
+    return await researcher_service.search_in_researcher(conn, filters, name)
 
 
 @router.get(
