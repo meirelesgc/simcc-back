@@ -146,13 +146,17 @@ def create_institution(conn: Connection):
 def create_researcher(conn: Connection, create_city, create_institution):
     async def _create_researcher(**kwargs):
         city = await create_city()
-        institution = await create_institution()
+
+        institution_id = kwargs.pop('institution_id', None)
+        if not institution_id:
+            institution = await create_institution()
+            institution_id = institution['id']
 
         researcher = factories.ResearcherFactory.build(**kwargs)
 
         researcher['city_id'] = city['id']
         researcher['country_id'] = city['country_id']
-        researcher['institution_id'] = institution['id']
+        researcher['institution_id'] = institution_id
 
         SCRIPT_SQL = """
             INSERT INTO public.researcher(
@@ -172,9 +176,6 @@ def create_researcher(conn: Connection, create_city, create_institution):
         return researcher
 
     return _create_researcher
-
-
-# No seu arquivo de fixtures (ex: conftest.py)
 
 
 @pytest_asyncio.fixture
@@ -314,51 +315,6 @@ def link_researcher_to_department(
     return _link_researcher_to_department
 
 
-# Cenário 1: Criar a produção com um pesquisador automático
-@pytest.mark.asyncio
-async def test_create_researcher_production_auto(
-    conn, create_researcher_production
-):
-    """
-    Testa a criação de dados de produção sem especificar o pesquisador.
-    """
-    EXPECTED_COUNT = 1
-
-    # A fixture `create_researcher` será chamada automaticamente
-    production_info = await create_researcher_production(articles=10)
-
-    assert production_info['articles'] == 10
-    assert production_info.get('researcher_id') is not None
-
-    # Confirma que o registro foi inserido no banco
-    SQL = 'SELECT COUNT(*) AS among FROM public.researcher_production'
-    result = await conn.select(SQL, None, True)
-    assert result['among'] == EXPECTED_COUNT
-
-
-@pytest.mark.asyncio
-async def test_create_production_for_specific_researcher(
-    conn, create_researcher, create_researcher_production
-):
-    pesquisador_alvo = await create_researcher(name='Galileu Galilei')
-
-    production_info = await create_researcher_production(
-        researcher_id=pesquisador_alvo['id'], book=2, articles=5
-    )
-
-    assert production_info['researcher_id'] == pesquisador_alvo['id']
-    assert production_info['book'] == 2
-
-    SQL = """
-        SELECT articles FROM public.researcher_production
-        WHERE researcher_id = %(researcher_id)s
-    """
-    result = await conn.select(
-        SQL, {'researcher_id': pesquisador_alvo['id']}, True
-    )
-    assert result['articles'] == 5
-
-
 @pytest_asyncio.fixture
 def create_foment(conn: Connection, create_researcher):
     async def _create_foment(**kwargs):
@@ -384,3 +340,29 @@ def create_foment(conn: Connection, create_researcher):
         return foment_data
 
     return _create_foment
+
+
+@pytest_asyncio.fixture
+def create_researcher_production(conn: Connection, create_researcher):
+    async def _create_researcher_production(**kwargs):
+        researcher_id = kwargs.pop('researcher_id', None)
+
+        if not researcher_id:
+            researcher = await create_researcher()
+            researcher_id = researcher['id']
+
+        production_data = factories.ResearcherProductionFactory.build(**kwargs)
+
+        production_data['researcher_id'] = researcher_id
+        SCRIPT_SQL = """
+            INSERT INTO public.researcher_production(researcher_production_id, researcher_id, articles, book_chapters,
+                book, work_in_event, patent, software, brand, great_area,
+                great_area_, area_specialty, city, organ)
+            VALUES (%(researcher_production_id)s, %(researcher_id)s, %(articles)s, %(book_chapters)s,
+                %(book)s, %(work_in_event)s, %(patent)s, %(software)s, %(brand)s, %(great_area)s,
+                %(great_area_)s, %(area_specialty)s, %(city)s, %(organ)s);
+            """
+        await conn.exec(SCRIPT_SQL, production_data)
+        return production_data
+
+    return _create_researcher_production

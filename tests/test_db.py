@@ -134,26 +134,17 @@ async def test_create_program_for_specific_institution(
     assert program_data['institution_id'] == instituicao_id
 
 
-# No seu arquivo de testes
-
-
-# Cenário 1: Criar uma relação automaticamente
 @pytest.mark.asyncio
 async def test_link_researcher_program_automatically(
     conn, link_researcher_to_program
 ):
-    """
-    Testa a criação automática de uma relação entre um novo pesquisador e um novo programa.
-    """
     EXPECTED_COUNT = 1
 
-    # A fixture cuidará de criar um pesquisador e um programa e depois ligá-los
     link_info = await link_researcher_to_program()
 
     assert link_info.get('researcher_id') is not None
     assert link_info.get('graduate_program_id') is not None
 
-    # Confirma que o registro de junção foi inserido
     SQL = 'SELECT COUNT(*) AS among FROM public.graduate_program_researcher'
     result = await conn.select(SQL, None, True)
     assert result['among'] == EXPECTED_COUNT
@@ -267,3 +258,42 @@ async def test_create_foment_for_specific_researcher(
 
     assert foment_info['researcher_id'] == pesquisador_alvo['id']
     assert foment_info['modality_name'] == 'Bolsa de Produtividade em Pesquisa'
+
+
+@pytest.mark.asyncio
+async def test_create_researcher_production_auto(
+    conn, create_researcher_production
+):
+    EXPECTED_COUNT = 1
+
+    production_info = await create_researcher_production(articles=10)
+
+    assert production_info['articles'] == 10
+    assert production_info.get('researcher_id') is not None
+
+    SQL = 'SELECT COUNT(*) AS among FROM public.researcher_production'
+    result = await conn.select(SQL, None, True)
+    assert result['among'] == EXPECTED_COUNT
+
+
+@pytest.mark.asyncio
+async def test_create_production_for_specific_researcher(
+    conn, create_researcher, create_researcher_production
+):
+    pesquisador_alvo = await create_researcher(name='Galileu Galilei')
+
+    production_info = await create_researcher_production(
+        researcher_id=pesquisador_alvo['id'], book=2, articles=5
+    )
+
+    assert production_info['researcher_id'] == pesquisador_alvo['id']
+    assert production_info['book'] == 2
+
+    SQL = """
+        SELECT articles FROM public.researcher_production
+        WHERE researcher_id = %(researcher_id)s
+    """
+    result = await conn.select(
+        SQL, {'researcher_id': pesquisador_alvo['id']}, True
+    )
+    assert result['articles'] == 5

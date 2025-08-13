@@ -159,10 +159,11 @@ async def search_in_participation_event(conn, filters):
     FILTERS_SQL = ''
     FILTER_PAGINATION = ''
     FILTER_TERMS = ''
+    FILTER_YEAR = ''
 
-    join_dep = str()
-    join_program = str()
-    join_modality = str()
+    join_dep = ''
+    join_program = ''
+    join_modality = ''
 
     if filters.graduate_program:
         DISTINCT_SQL = 'DISTINCT'
@@ -172,24 +173,23 @@ async def search_in_participation_event(conn, filters):
                 ON gpr.researcher_id = r.id
             INNER JOIN graduate_program gp
                 ON gpr.graduate_program_id = gp.graduate_program_id
-            """
+        """
         FILTERS_SQL += """
             AND gp.name = ANY(%(graduate_program)s)
             AND gpr.type_ = 'PERMANENTE'
-            """
+        """
 
     if filters.dep_id:
-        DISTINCT_SQL = 'DISTINCT'
         PARAMS['dep_id'] = filters.dep_id
         join_dep = """
             INNER JOIN ufmg.departament_researcher dpr
                 ON dpr.researcher_id = r.id
             INNER JOIN ufmg.departament dp
                 ON dp.dep_id = dpr.dep_id
-            """
+        """
         FILTERS_SQL += """
             AND dp.dep_id = %(dep_id)s
-            """
+        """
 
     if filters.departament:
         DISTINCT_SQL = 'DISTINCT'
@@ -199,10 +199,10 @@ async def search_in_participation_event(conn, filters):
                 ON dpr.researcher_id = r.id
             INNER JOIN ufmg.departament dp
                 ON dp.dep_id = dpr.dep_id
-            """
+        """
         FILTERS_SQL += """
             AND dp.dep_nom = ANY(%(dep)s)
-            """
+        """
 
     if filters.institution:
         PARAMS['institution'] = filters.institution.split(';')
@@ -212,7 +212,7 @@ async def search_in_participation_event(conn, filters):
 
     if filters.graduation:
         PARAMS['graduation'] = filters.graduation.split(';')
-        FILTERS_SQL = 'AND r.graduation = ANY(%(graduation)s)'
+        FILTERS_SQL += 'AND r.graduation = ANY(%(graduation)s)'
 
     if filters.term:
         FILTER_TERMS, term = tools.websearch_filter(
@@ -223,7 +223,6 @@ async def search_in_participation_event(conn, filters):
     if filters.page and filters.lenght:
         FILTER_PAGINATION = tools.pagination(filters.page, filters.lenght)
 
-    FILTER_MODALITY = str()
     if filters.modality:
         PARAMS['modality'] = filters.modality.split(';')
         join_modality = """
@@ -239,22 +238,30 @@ async def search_in_participation_event(conn, filters):
                 ON gpr.researcher_id = r.id
             INNER JOIN graduate_program gp
                 ON gpr.graduate_program_id = gp.graduate_program_id
-            """
+        """
         FILTERS_SQL += 'AND gpr.graduate_program_id = %(graduate_program_id)s'
 
     if filters.city:
         PARAMS['city'] = filters.city.split(';')
-        FILTERS_SQL = 'AND rp.city = ANY(%(city)s)'
+        FILTERS_SQL += 'AND rp.city = ANY(%(city)s)'
 
     if filters.area:
         PARAMS['area'] = filters.area.replace(' ', '_').split(';')
-        FILTERS_SQL = """
-            AND STRING_TO_ARRAY(REPLACE(rp.great_area, ' ', '_'), ';') && %(area)s
-            """
+        FILTERS_SQL += """
+            AND rp.great_area_ && %(area)s
+        """
 
     if filters.type:
         PARAMS['type'] = filters.type.split(';')
-        FILTERS_SQL = 'AND bp.type = ANY(%(type)s)'
+        FILTERS_SQL += 'AND bp.type = ANY(%(type)s)'
+
+    if filters.researcher_id:
+        PARAMS['researcher_id'] = filters.researcher_id
+        FILTERS_SQL += 'AND r.id = %(researcher_id)s'
+
+    if filters.year:
+        PARAMS['year'] = filters.year
+        FILTER_YEAR = 'AND pe.year >= %(year)s'
 
     SCRIPT_SQL = f"""
         SELECT {DISTINCT_SQL}
@@ -278,15 +285,15 @@ async def search_in_participation_event(conn, filters):
                 SELECT pe.researcher_id, COUNT(*) AS among
                 FROM participation_events pe
                 WHERE 1 = 1
-                    AND type_participation in ('Apresentação Oral', 'Conferencista','Moderador','Simposista')
+                    AND type_participation in ('Apresentação Oral', 'Conferencista', 'Moderador', 'Simposista')
                     {FILTER_TERMS}
+                    {FILTER_YEAR}
                 GROUP BY researcher_id
             ) pe ON pe.researcher_id = r.id
         WHERE 1 = 1
-            {FILTER_MODALITY}
-        ORDER BY
-            among DESC
-            {FILTER_PAGINATION};
+            {FILTERS_SQL}
+        ORDER BY among DESC
+        {FILTER_PAGINATION};
     """
     return await conn.select(SCRIPT_SQL, PARAMS)
 

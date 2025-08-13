@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 from http import HTTPStatus
 
 import httpx
-from fastapi import FastAPI, Request, Response  # , Depends,
+from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 

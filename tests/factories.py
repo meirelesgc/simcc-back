@@ -1,3 +1,8 @@
+import random
+import string
+import uuid
+from itertools import product
+
 import factory
 from faker import Faker
 
@@ -34,26 +39,29 @@ AREA_SPECIALTY = [
     'Saúde Coletiva',
     'Direito Civil',
 ]
+letters = string.ascii_uppercase
+alpha2_list = [''.join(p) for p in product(letters, repeat=2)]
+alpha3_list = [''.join(p) for p in product(letters, repeat=3)]
 
 
 class CountryFactory(factory.Factory):
     class Meta:
         model = dict
 
-    id = factory.Faker('uuid4')
-    name = factory.Faker('country')
+    id = factory.LazyFunction(lambda: str(uuid.uuid4()))
+    name = factory.Sequence(lambda n: f'Country {n}')
     name_pt = factory.Sequence(lambda n: f'País {n}')
-    alpha_2_code = factory.Faker('country_code')
-    alpha_3_code = factory.Sequence(lambda n: f'C{n:02}')
+    alpha_2_code = factory.Sequence(lambda n: alpha2_list[n % len(alpha2_list)])
+    alpha_3_code = factory.Sequence(lambda n: alpha3_list[n % len(alpha3_list)])
 
 
 class StateFactory(factory.Factory):
     class Meta:
         model = dict
 
-    id = factory.Faker('uuid4')
-    name = factory.Faker('state')
-    abbreviation = factory.Faker('state_abbr')
+    id = factory.LazyFunction(lambda: str(uuid.uuid4()))
+    name = factory.Sequence(lambda n: f'Estado {n}')
+    abbreviation = factory.Sequence(lambda n: alpha2_list[n % len(alpha2_list)])
     country = factory.SubFactory(CountryFactory)
 
 
@@ -130,7 +138,7 @@ class ParticipationEventsFactory(factory.Factory):
 
     researcher = factory.SubFactory(ResearcherFactory)
 
-    year = factory.Faker('year')
+    year = factory.LazyFunction(lambda: random.randint(2021, 2035))
     is_new = factory.Faker('boolean', chance_of_getting_true=80)
 
 
@@ -193,9 +201,6 @@ class ResearcherProductionFactory(factory.Factory):
 
     researcher_production_id = factory.Faker('uuid4')
 
-    researcher = factory.SubFactory(ResearcherFactory)
-    researcher_id = factory.LazyAttribute(lambda obj: obj.researcher['id'])
-
     articles = factory.Faker('pyint', min_value=0, max_value=50)
     book_chapters = factory.Faker('pyint', min_value=0, max_value=20)
     book = factory.Faker('pyint', min_value=0, max_value=5)
@@ -205,8 +210,10 @@ class ResearcherProductionFactory(factory.Factory):
     brand = factory.Faker('pyint', min_value=0, max_value=2)
 
     great_area = factory.Faker('random_element', elements=GREAT_AREA)
-    great_area_ = factory.Faker(
-        'random_element', elements=GREAT_AREA_ * fake.random_int(min=1, max=3)
+    great_area_ = factory.LazyAttribute(
+        lambda o: fake.random_choices(
+            elements=GREAT_AREA_, length=fake.random_int(min=1, max=3)
+        )
     )
     area_specialty = factory.Faker('random_element', elements=AREA_SPECIALTY)
     city = factory.LazyAttribute(lambda o: fake.city())
