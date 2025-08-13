@@ -34,15 +34,11 @@ async def search_in_participation_event(conn: Conn, filters: Filters):
     response_model=list[Researcher],
 )
 async def search_in_area_specialty(
-    area_specialty: str = None,
-    default_filters: DefaultFilters = Depends(),
-    conn: Connection = Depends(get_conn),
+    filters: Filters, conn: Conn, area_specialty: str = None
 ):
     if area_specialty:
-        default_filters.term = area_specialty
-    return await researcher_service.search_in_area_specialty(
-        conn, default_filters
-    )
+        filters.term = area_specialty
+    return await researcher_service.search_in_area_specialty(conn, filters)
 
 
 @router.get(
