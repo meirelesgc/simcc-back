@@ -1438,7 +1438,6 @@ def guidance():
 
 
 def guidance_per_year():
-    today = datetime.now().date()
     csv: pd.DataFrame = _guidance()
     csv = csv.rename(columns={'type': 'program_type'})
 
@@ -1494,7 +1493,7 @@ def guidance_per_year():
                 or row['planned_date_qualification']
             )
             return date.year if date is not None else None
-        if row['type'] in ['CONCLUIDO', 'FINALIZADO']:
+        if row['type'] in {'CONCLUIDO', 'FINALIZADO'}:
             date = row['done_date_conclusion'] or row['planned_date_conclusion']
             return date.year if date is not None else None
         return None
@@ -1518,7 +1517,10 @@ def guidance_per_year():
         'status_',
         'year',
     ]
-    print(csv[columns])
+    csv_path = os.path.join(PATH, 'guidance_per_year.csv')
+    csv[[columns]].to_csv(
+        csv_path, index=True, quoting=QUOTE_ALL, encoding='utf-8-sig'
+    )
 
 
 if __name__ == '__main__':
