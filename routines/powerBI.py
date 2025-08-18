@@ -1437,6 +1437,90 @@ def guidance():
     csv.to_csv(csv_path, index=True, quoting=QUOTE_ALL, encoding='utf-8-sig')
 
 
+def guidance_per_year():
+    today = datetime.now().date()
+    csv: pd.DataFrame = _guidance()
+    csv = csv.rename(columns={'type': 'program_type'})
+
+    def type_(row):
+        t = []
+        if row['done_date_project'] is None:
+            return ['PROJETO']
+        if row['done_date_project'] is not None:
+            t.append('PROJETO')
+        if row['done_date_qualification'] is not None:
+            t.append('QUALIFICAÇÃO')
+            if row['done_date_conclusion'] is None:
+                t.append('CONCLUIDO')
+        if row['done_date_conclusion'] is not None:
+            t = ['FINALIZADO']
+        return t
+
+    def status(row):
+        if row['type'] == 'FINALIZADO':
+            return 'FINALIZADO'
+        return 'EM CURSO'
+
+    def status_(row):
+        if row['type'] == 'PROJETO':
+            return (
+                'REALIZADO'
+                if row['done_date_project'] is not None
+                else 'EM ANDAMENTO'
+            )
+        if row['type'] == 'QUALIFICAÇÃO':
+            return (
+                'REALIZADO'
+                if row['done_date_qualification'] is not None
+                else 'EM ANDAMENTO'
+            )
+        if row['type'] == 'CONCLUIDO':
+            return (
+                'REALIZADO'
+                if row['done_date_conclusion'] is not None
+                else 'EM ANDAMENTO'
+            )
+        if row['type'] == 'FINALIZADO':
+            return 'REALIZADO'
+        return 'EM ANDAMENTO'
+
+    def year_(row):
+        if row['type'] == 'PROJETO':
+            date = row['done_date_project'] or row['planned_date_project']
+            return date.year if date is not None else None
+        if row['type'] == 'QUALIFICAÇÃO':
+            date = (
+                row['done_date_qualification']
+                or row['planned_date_qualification']
+            )
+            return date.year if date is not None else None
+        if row['type'] in ['CONCLUIDO', 'FINALIZADO']:
+            date = row['done_date_conclusion'] or row['planned_date_conclusion']
+            return date.year if date is not None else None
+        return None
+
+    csv['type'] = csv.apply(type_, axis=1)
+    csv = csv.explode('type')
+    csv['status'] = csv.apply(status, axis=1)
+    csv['status_'] = csv.apply(status_, axis=1)
+    csv['year'] = csv.apply(year_, axis=1)
+    csv = csv.sort_values(by='student_name')
+    columns = [
+        'id',
+        'graduate_program_id',
+        'student_name',
+        'student_researcher_id',
+        'supervisor_name',
+        'supervisor_researcher_id',
+        'co_name',
+        'co_supervisor_researcher_id',
+        'type',
+        'status_',
+        'year',
+    ]
+    print(csv[columns])
+
+
 if __name__ == '__main__':
     for directory in [PATH]:
         if not os.path.exists(directory):
@@ -1505,3 +1589,4 @@ if __name__ == '__main__':
     fat_keywords_cooccurrences()
     guidance()
     supervisor()
+    guidance_per_year()
