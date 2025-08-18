@@ -9,6 +9,13 @@ from faker import Faker
 
 fake = Faker()
 
+BRAND_GOALS = [
+    'Product Identification',
+    'Service Differentiation',
+    'Corporate Identity',
+    'Market Positioning',
+]
+BRAND_NATURES = ['Figurative', 'Nominative', 'Mixed', 'Three-dimensional']
 
 EMPLOYMENT_TYPES = [
     'Empregado com carteira assinada',
@@ -435,6 +442,23 @@ class PatentFactory(factory.Factory):
         )
     )
     is_new = factory.Faker('boolean', chance_of_getting_true=75)
+    researcher = factory.SubFactory(ResearcherFactory)
+    researcher_id = factory.LazyAttribute(lambda obj: obj.researcher['id'])
+
+
+class BrandFactory(factory.Factory):
+    class Meta:
+        model = dict
+
+    id = factory.Faker('uuid4')
+    created_at = factory.Faker('date_time_this_decade', tzinfo=None)
+    title = factory.Faker('sentence', nb_words=6)
+    relevance = factory.Faker('boolean', chance_of_getting_true=30)
+    has_image = factory.Faker('boolean', chance_of_getting_true=80)
+    goal = factory.Faker('random_element', elements=BRAND_GOALS)
+    nature = factory.Faker('random_element', elements=BRAND_NATURES)
+    year = factory.Faker('pyint', min_value=last_quadriennial_year())
+    is_new = factory.Faker('boolean', chance_of_getting_true=50)
     researcher = factory.SubFactory(ResearcherFactory)
     researcher_id = factory.LazyAttribute(lambda obj: obj.researcher['id'])
 

@@ -596,6 +596,30 @@ def create_patent(conn: Connection, create_researcher):
 
 
 @pytest_asyncio.fixture
+def create_brand(conn, create_researcher):
+    async def _create_brand(**kwargs):
+        researcher_id = kwargs.pop('researcher_id', None)
+
+        if not researcher_id:
+            researcher = await create_researcher()
+            researcher_id = researcher['id']
+
+        brand_data = factories.BrandFactory.build(**kwargs)
+        brand_data['researcher_id'] = researcher_id
+
+        SCRIPT_SQL = """
+            INSERT INTO public.brand(id, created_at, title, relevance, has_image,
+                                     goal, nature, researcher_id, year, is_new)
+            VALUES (%(id)s, %(created_at)s, %(title)s, %(relevance)s, %(has_image)s,
+                    %(goal)s, %(nature)s, %(researcher_id)s, %(year)s, %(is_new)s);
+        """
+        await conn.exec(SCRIPT_SQL, brand_data)
+        return brand_data
+
+    return _create_brand
+
+
+@pytest_asyncio.fixture
 def create_researcher_professional_experience(
     conn: Connection, create_researcher
 ):

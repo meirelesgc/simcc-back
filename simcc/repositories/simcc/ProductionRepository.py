@@ -515,7 +515,6 @@ async def list_patent(conn, filters):
         PARAMS['graduation'] = filters.graduation.split(';')
         FILTERS_SQL += ' AND r.graduation = ANY(%(graduation)s)'
 
-    # >>> FILTRO group_id ADICIONADO AQUI <<<
     if filters.group_id:
         join_group = 'INNER JOIN research_group_researcher rgr ON rgr.researcher_id = p.researcher_id'
         PARAMS['group_id'] = filters.group_id
@@ -562,6 +561,7 @@ async def list_brand(conn, filters):
     join_program = ''
     join_institution = ''
     join_departament = ''
+    join_group = ''
 
     if filters.term:
         filter_terms_str, term_params = tools.websearch_filter(
@@ -640,6 +640,15 @@ async def list_brand(conn, filters):
     if filters.page and filters.lenght:
         FILTER_PAGINATION = tools.pagination(filters.page, filters.lenght)
 
+    if filters.lattes_id:
+        PARAMS['lattes_id'] = filters.lattes_id
+        FILTERS_SQL += ' AND r.lattes_id = %(lattes_id)s'
+
+    if filters.group_id:
+        join_group = 'INNER JOIN research_group_researcher rgr ON rgr.researcher_id = r.id'
+        PARAMS['group_id'] = filters.group_id
+        FILTERS_SQL += ' AND rgr.research_group_id = %(group_id)s'
+
     if filters.distinct:
         DISTINCT_SQL = 'DISTINCT ON (b.title)'
 
@@ -655,6 +664,7 @@ async def list_brand(conn, filters):
             {join_program}
             {join_departament}
             {join_institution}
+            {join_group}
         WHERE 1 = 1
             {FILTERS_SQL}
         ORDER BY b.title DESC

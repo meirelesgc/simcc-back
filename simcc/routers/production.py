@@ -61,7 +61,7 @@ async def list_book_production(conn: Conn, filters: Filters):
     '/brand_production_researcher',
     response_model=list[BrandProduction],
 )
-async def list_brand_production(conn, filters):
+async def list_brand_production(conn: Conn, filters: Filters):
     return await ProductionService.list_brand(conn, filters)
 
 
