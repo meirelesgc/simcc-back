@@ -350,9 +350,7 @@ async def professional_experience(conn, filters):
 
     if filters.year:
         PARAMS['year'] = filters.year
-        FILTERS_SQL += (
-            ' AND (rpe.start_year >= %(year)s OR rpe.end_year >= %(year)s)'
-        )
+        FILTERS_SQL += ' AND COALESCE(rpe.end_year, rpe.start_year) >= %(year)s'
 
     if filters.dep_id:
         join_departament = """
@@ -457,7 +455,6 @@ async def professional_experience(conn, filters):
         ORDER BY rpe.researcher_id, rpe.enterprise
         {FILTER_PAGINATION}
         """
-
     return await conn.select(SCRIPT_SQL, PARAMS)
 
 
@@ -474,6 +471,7 @@ async def list_patent(conn, filters):
     join_program = ''
     join_institution = ''
     join_departament = ''
+    join_group = ''  # Variável para o novo join
 
     if filters.term:
         FILTER_TERMS, term_params = tools.websearch_filter(
@@ -501,6 +499,12 @@ async def list_patent(conn, filters):
     if filters.researcher_id:
         PARAMS['researcher_id'] = str(filters.researcher_id)
         FILTERS_SQL += ' AND p.researcher_id = %(researcher_id)s'
+
+    # >>> FILTRO lattes_id ADICIONADO AQUI <<<
+    if filters.lattes_id:
+        PARAMS['lattes_id'] = filters.lattes_id
+        # A tabela 'researcher' (alias 'r') já está na consulta, então só adicionamos a condição
+        FILTERS_SQL += ' AND r.lattes_id = %(lattes_id)s'
 
     if filters.institution:
         PARAMS['institution'] = filters.institution.split(';')
@@ -546,6 +550,12 @@ async def list_patent(conn, filters):
         PARAMS['graduation'] = filters.graduation.split(';')
         FILTERS_SQL += ' AND r.graduation = ANY(%(graduation)s)'
 
+    # >>> FILTRO group_id ADICIONADO AQUI <<<
+    if filters.group_id:
+        join_group = 'INNER JOIN research_group_researcher rgr ON rgr.researcher_id = p.researcher_id'
+        PARAMS['group_id'] = filters.group_id
+        FILTERS_SQL += ' AND rgr.research_group_id = %(group_id)s'
+
     if filters.page and filters.lenght:
         FILTER_PAGINATION = tools.pagination(filters.page, filters.lenght)
 
@@ -564,6 +574,7 @@ async def list_patent(conn, filters):
             {join_program}
             {join_departament}
             {join_institution}
+            {join_group}
         WHERE 1 = 1
             {FILTERS_SQL}
             {FILTER_TERMS}
@@ -571,6 +582,7 @@ async def list_patent(conn, filters):
         ORDER BY p.title DESC
         {FILTER_PAGINATION};
     """
+    print(SCRIPT_SQL, PARAMS)
     return await conn.select(SCRIPT_SQL, PARAMS)
 
 
@@ -2977,7 +2989,7 @@ async def list_article_metrics(
     SCRIPT_SQL = f"""
         SELECT bp.year, SUM(opa.citations_count) AS citations,
             ARRAY_AGG(bpa.qualis) AS qualis, ARRAY_AGG(bpa.jcr) AS jcr,
-            COUNT({filter_distinct} bp.title) AS among, COUNT(DISTINCT bp.doi) 
+            COUNT({filter_distinct} bp.title) AS among, COUNT(DISTINCT bp.doi)
             AS count_doi
         FROM researcher r
             LEFT JOIN bibliographic_production bp ON bp.researcher_id = r.id

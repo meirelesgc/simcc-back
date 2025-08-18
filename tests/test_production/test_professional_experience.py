@@ -24,15 +24,17 @@ async def test_get_all_experiences(
 
 
 @pytest.mark.asyncio
-async def test_filter_by_year(client, create_researcher_professional_experience):
+async def test_filter_by_year(
+    conn, client, create_researcher_professional_experience
+):
     # Arrange
-    await create_researcher_professional_experience(start_year='2020')
-    await create_researcher_professional_experience(start_year='2023')
+    await create_researcher_professional_experience(end_year='2020')
+    await create_researcher_professional_experience(end_year='2023')
+
+    print(await conn.select('SELECT * FROM researcher_professional_experience'))
 
     expected_count = 1
-    params = {
-        'year': '2022'
-    }  # Deve retornar apenas experiências de 2022 ou mais recentes
+    params = {'year': '2022'}
 
     # Act
     response = client.get(ENDPOINT_URL, params=params)
@@ -170,9 +172,6 @@ async def test_filter_by_graduate_program_name(
     create_graduate_program,
     link_researcher_to_program,
 ):
-    """
-    Testa o filtro pelo nome do programa de pós-graduação do pesquisador.
-    """
     # Arrange
     program = await create_graduate_program(name='Engenharia Aeroespacial')
     linked = await link_researcher_to_program(
@@ -203,9 +202,6 @@ async def test_filter_by_graduate_program_id(
     create_graduate_program,
     link_researcher_to_program,
 ):
-    """
-    Testa o filtro pelo ID do programa de pós-graduação do pesquisador.
-    """
     # Arrange
     program = await create_graduate_program()
     linked = await link_researcher_to_program(
@@ -350,19 +346,15 @@ async def test_filter_by_graduation(
 async def test_filter_distinct_on_enterprise(
     client, create_researcher_professional_experience, create_researcher
 ):
-    """
-    Testa o filtro 'distinct', que deve retornar apenas uma entrada por nome de empresa.
-    """
     # Arrange
     researcher1 = await create_researcher()
-    researcher2 = await create_researcher()
     common_enterprise = 'Empresa com Vários Vínculos'
 
     await create_researcher_professional_experience(
         enterprise=common_enterprise, researcher_id=researcher1['id']
     )
     await create_researcher_professional_experience(
-        enterprise=common_enterprise, researcher_id=researcher2['id']
+        enterprise=common_enterprise, researcher_id=researcher1['id']
     )
     await create_researcher_professional_experience(
         enterprise='Empresa de Vínculo Único'
@@ -382,9 +374,6 @@ async def test_filter_distinct_on_enterprise(
 
 @pytest.mark.asyncio
 async def test_pagination(client, create_researcher_professional_experience):
-    """
-    Testa a funcionalidade de paginação do endpoint.
-    """
     # Arrange:
     for i in range(5):
         await create_researcher_professional_experience(

@@ -331,3 +331,55 @@ async def test_pagination(client, create_patent):
     # Assert
     assert response.status_code == HTTPStatus.OK
     assert len(data) == expected_count
+
+
+@pytest.mark.asyncio
+async def test_filter_by_lattes_id(client, create_patent, create_researcher):
+    # Arrange
+    target_lattes_id = '1234567890123456'
+    researcher = await create_researcher(lattes_id=target_lattes_id)
+
+    await create_patent()  # Patente de outro pesquisador
+    await create_patent(
+        researcher_id=researcher['id']
+    )  # Patente do pesquisador alvo
+
+    expected_count = 1
+    params = {'lattes_id': target_lattes_id}
+
+    # Act
+    response = client.get(ENDPOINT_URL, params=params)
+    data = response.json()
+
+    # Assert
+    assert response.status_code == HTTPStatus.OK
+    assert len(data) == expected_count
+    assert data[0]['lattes_id'] == target_lattes_id
+
+
+@pytest.mark.asyncio
+async def test_filter_by_group_id(
+    client,
+    create_patent,
+    create_research_group,
+    link_researcher_to_research_group,
+):
+    # Arrange
+    group = await create_research_group()
+    linked = await link_researcher_to_research_group(
+        research_group_id=group['id']
+    )
+
+    await create_patent()
+    await create_patent(researcher_id=linked['researcher_id'])
+
+    expected_count = 1
+    params = {'group_id': group['id']}
+
+    # Act
+    response = client.get(ENDPOINT_URL, params=params)
+    data = response.json()
+
+    # Assert
+    assert response.status_code == HTTPStatus.OK
+    assert len(data) == expected_count
