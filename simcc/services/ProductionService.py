@@ -6,7 +6,6 @@ from simcc.core.connection import Connection
 from simcc.repositories.simcc import ProductionRepository
 from simcc.schemas import DefaultFilters
 from simcc.schemas.Production.Article import ArticleMetric, ArticleProduction
-from simcc.schemas.Production.Brand import BrandProduction
 from simcc.schemas.Production.Guidance import GuidanceMetrics
 from simcc.schemas.Production.Patent import PatentMetric
 from simcc.schemas.Researcher import AcademicMetric
@@ -34,23 +33,13 @@ async def list_patent(conn, filters):
     return await ProductionRepository.list_patent(conn, filters)
 
 
-async def list_brand(
-    conn: Connection,
-    default_filters: DefaultFilters,
-    page: int | None,
-    lenght: int | None,
-) -> list[BrandProduction]:
-    brands = await ProductionRepository.list_brand(
-        conn, default_filters, page, lenght
-    )
+async def list_brand(conn, filters):
+    brands = await ProductionRepository.list_brand(conn, filters)
     return sorted(brands, key=lambda x: x['year'], reverse=True)
 
 
-async def list_book(
-    conn: Connection,
-    default_filters: DefaultFilters,
-):
-    books = await ProductionRepository.list_book(conn, default_filters)
+async def list_book(conn, filters):
+    books = await ProductionRepository.list_book(conn, filters)
     if not books:
         return []
     return books

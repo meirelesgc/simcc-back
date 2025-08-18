@@ -53,26 +53,16 @@ async def get_pevent_researcher(
     '/book_production_researcher',
     response_model=list[BookProduction],
 )
-async def list_book_production(
-    default_filters: DefaultFilters = Depends(),
-    conn: Connection = Depends(get_conn),
-):
-    return await ProductionService.list_book(conn, default_filters)
+async def list_book_production(conn: Conn, filters: Filters):
+    return await ProductionService.list_book(conn, filters)
 
 
 @router.get(
     '/brand_production_researcher',
     response_model=list[BrandProduction],
 )
-async def list_brand_production(
-    default_filters: DefaultFilters = Depends(),
-    page: int | None = None,
-    lenght: int | None = None,
-    conn: Connection = Depends(get_conn),
-):
-    return await ProductionService.list_brand(
-        conn, default_filters, page, lenght
-    )
+async def list_brand_production(conn, filters):
+    return await ProductionService.list_brand(conn, filters)
 
 
 @router.get(
