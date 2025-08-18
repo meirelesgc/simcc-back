@@ -10,11 +10,21 @@ from faker import Faker
 fake = Faker()
 
 
-def last_quadriennial_year():
-    now = datetime.date.today()
-    current_year = now.year
-    last_quad = current_year - (current_year % 4)
-    return last_quad - 4
+EMPLOYMENT_TYPES = [
+    'Empregado com carteira assinada',
+    'Servidor público',
+    'Autônomo',
+    'Estagiário',
+    'Bolsista',
+]
+
+FUNCTIONAL_CLASSIFICATIONS = [
+    'Pesquisador',
+    'Professor',
+    'Analista de Sistemas',
+    'Gerente de Projetos',
+    'Consultor',
+]
 
 
 CLASSIFICATION_CLASSES = ('A+', 'A', 'B+', 'B', 'C+', 'C', 'D+', 'D', 'E+', 'E')
@@ -59,6 +69,13 @@ LANG_CODES = ['en', 'pt', 'es', 'fr', 'de', 'it']
 letters = string.ascii_uppercase
 alpha2_list = [''.join(p) for p in product(letters, repeat=2)]
 alpha3_list = [''.join(p) for p in product(letters, repeat=3)]
+
+
+def last_quadriennial_year():
+    now = datetime.date.today()
+    current_year = now.year
+    last_quad = current_year - (current_year % 4)
+    return last_quad - 4
 
 
 class CountryFactory(factory.Factory):
@@ -412,3 +429,25 @@ class PatentFactory(factory.Factory):
     is_new = factory.Faker('boolean', chance_of_getting_true=75)
     researcher = factory.SubFactory(ResearcherFactory)
     researcher_id = factory.LazyAttribute(lambda obj: obj.researcher['id'])
+
+
+class ResearcherProfessionalExperienceFactory(factory.Factory):
+    class Meta:
+        model = dict
+
+    id = factory.Faker('uuid4')
+    researcher_id = factory.Faker('uuid4')
+    enterprise = factory.Faker('company', locale='pt_BR')
+    start_year = factory.Faker('pyint', min_value=last_quadriennial_year())
+    end_year = factory.Faker('pyint', min_value=last_quadriennial_year())
+    employment_type = factory.Faker('random_element', elements=EMPLOYMENT_TYPES)
+    other_employment_type = factory.Faker('job', locale='pt_BR')
+    functional_classification = factory.Faker(
+        'random_element', elements=FUNCTIONAL_CLASSIFICATIONS
+    )
+    other_functional_classification = factory.Faker('job', locale='pt_BR')
+    workload_hours_weekly = factory.Faker(
+        'random_element', elements=['20', '30', '40', '44']
+    )
+    exclusive_dedication = factory.Faker('boolean')
+    additional_info = factory.Faker('paragraph', nb_sentences=3, locale='pt_BR')

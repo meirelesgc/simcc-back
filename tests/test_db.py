@@ -410,3 +410,22 @@ async def test_create_patent(conn, create_patent):
     SQL_RESEARCHER = 'SELECT COUNT(*) AS total FROM public.researcher'
     result_researcher = await conn.select(SQL_RESEARCHER, None, True)
     assert result_researcher['total'] == EXPECTED_COUNT
+
+
+@pytest.mark.asyncio
+async def test_create_researcher_professional_experience(
+    conn, create_researcher_professional_experience
+):
+    EXPECTED_COUNT = 1
+
+    await create_researcher_professional_experience()
+
+    SQL_EXPERIENCE = (
+        'SELECT COUNT(*) AS total FROM public.researcher_professional_experience'
+    )
+    result_experience = await conn.select(SQL_EXPERIENCE, None, True)
+    assert result_experience['total'] == EXPECTED_COUNT
+
+    SQL_RESEARCHER = 'SELECT COUNT(*) AS total FROM public.researcher'
+    result_researcher = await conn.select(SQL_RESEARCHER, None, True)
+    assert result_researcher['total'] == EXPECTED_COUNT

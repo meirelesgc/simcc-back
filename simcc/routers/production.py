@@ -4,11 +4,7 @@ from fastapi import APIRouter, Depends
 
 from simcc.core.connection import Connection
 from simcc.core.database import get_conn
-from simcc.schemas import (
-    ArticleOptions,
-    DefaultFilters,
-    QualisOptions,
-)
+from simcc.schemas import ArticleOptions, DefaultFilters, QualisOptions
 from simcc.schemas.Production.Article import ArticleProduction
 from simcc.schemas.Production.Book import BookProduction
 from simcc.schemas.Production.BookChapter import BookChapterProduction
@@ -35,15 +31,8 @@ Filters = Annotated[DefaultFilters, Depends()]
     '/professional_experience',
     response_model=list[ProfessionalExperience],
 )
-async def get_professional_experience(
-    default_filters: DefaultFilters = Depends(),
-    page: int | None = None,
-    lenght: int | None = None,
-    conn: Connection = Depends(get_conn),
-):
-    return await ProductionService.professional_experience(
-        conn, default_filters, page, lenght
-    )
+async def get_professional_experience(conn: Conn, filters: Filters):
+    return await ProductionService.professional_experience(conn, filters)
 
 
 @router.get(

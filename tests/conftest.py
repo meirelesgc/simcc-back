@@ -593,3 +593,40 @@ def create_patent(conn: Connection, create_researcher):
         return patent_data
 
     return _create_patent
+
+
+@pytest_asyncio.fixture
+def create_researcher_professional_experience(
+    conn: Connection, create_researcher
+):
+    async def _create_experience(**kwargs):
+        researcher_id = kwargs.pop('researcher_id', None)
+
+        if not researcher_id:
+            researcher = await create_researcher()
+            researcher_id = researcher['id']
+
+        experience_data = (
+            factories.ResearcherProfessionalExperienceFactory.build(**kwargs)
+        )
+        experience_data['researcher_id'] = researcher_id
+
+        SCRIPT_SQL = """
+            INSERT INTO public.researcher_professional_experience(
+                id, researcher_id, enterprise, start_year, end_year,
+                employment_type, other_employment_type,
+                functional_classification, other_functional_classification,
+                workload_hours_weekly, exclusive_dedication, additional_info
+            )
+            VALUES (
+                %(id)s, %(researcher_id)s, %(enterprise)s, %(start_year)s,
+                %(end_year)s, %(employment_type)s, %(other_employment_type)s,
+                %(functional_classification)s, %(other_functional_classification)s,
+                %(workload_hours_weekly)s, %(exclusive_dedication)s,
+                %(additional_info)s
+            );
+        """
+        await conn.exec(SCRIPT_SQL, experience_data)
+        return experience_data
+
+    return _create_experience

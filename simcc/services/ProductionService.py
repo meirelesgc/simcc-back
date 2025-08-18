@@ -32,15 +32,8 @@ async def get_pevent_researcher(
     )
 
 
-async def professional_experience(
-    conn: Connection,
-    default_filters: DefaultFilters,
-    page: int | None,
-    lenght: int | None,
-):
-    return await ProductionRepository.professional_experience(
-        conn, default_filters, page, lenght
-    )
+async def professional_experience(conn, filters):
+    return await ProductionRepository.professional_experience(conn, filters)
 
 
 async def list_patent(conn, filters):
