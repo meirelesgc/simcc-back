@@ -44,15 +44,9 @@ async def list_patent_production(conn: Conn, filters: Filters):
 
 @router.get('/pevent_researcher')
 async def get_pevent_researcher(
-    default_filters: DefaultFilters = Depends(),
-    nature: str | None = None,
-    page: int | None = None,
-    lenght: int | None = None,
-    conn: Connection = Depends(get_conn),
+    conn: Conn, filters: Filters, nature: str = None
 ):
-    return await ProductionService.get_pevent_researcher(
-        conn, default_filters, nature, page, lenght
-    )
+    return await ProductionService.get_pevent_researcher(conn, filters, nature)
 
 
 @router.get(

@@ -17,7 +17,15 @@ EMPLOYMENT_TYPES = [
     'Estagiário',
     'Bolsista',
 ]
-
+PARTICIPATION_NATURES = [
+    'Apresentação de Trabalho',
+    'Congresso',
+    'Simpósio',
+    'Seminário',
+    'Outra',
+]
+PARTICIPATION_FORMS = ['Ouvinte', 'Palestrante', 'Organizador', 'Moderador']
+PARTICIPATION_TYPES = ['Nacional', 'Internacional', 'Regional', 'Local']
 FUNCTIONAL_CLASSIFICATIONS = [
     'Pesquisador',
     'Professor',
@@ -172,7 +180,7 @@ class ParticipationEventsFactory(factory.Factory):
 
     researcher = factory.SubFactory(ResearcherFactory)
 
-    year = factory.LazyFunction(lambda: random.randint(2021, 2035))
+    year = factory.Faker('pyint', min_value=last_quadriennial_year())
     is_new = factory.Faker('boolean', chance_of_getting_true=80)
 
 

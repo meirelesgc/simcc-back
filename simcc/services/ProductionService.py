@@ -20,15 +20,9 @@ async def get_events_metrics(conn, default_filters):
     return await ProductionRepository.get_events_metrics(conn, default_filters)
 
 
-async def get_pevent_researcher(
-    conn: Connection,
-    default_filters: DefaultFilters,
-    nature: str | None,
-    page: int | None,
-    lenght: int | None,
-):
+async def get_pevent_researcher(conn, filters, nature):
     return await ProductionRepository.get_pevent_researcher(
-        conn, default_filters, nature, page, lenght
+        conn, filters, nature
     )
 
 
