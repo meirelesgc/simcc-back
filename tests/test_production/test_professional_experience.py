@@ -390,3 +390,30 @@ async def test_pagination(client, create_researcher_professional_experience):
     # Assert
     assert response.status_code == HTTPStatus.OK
     assert len(data) == expected_count
+
+
+@pytest.mark.asyncio
+async def test_filter_by_lattes_id(
+    client, create_researcher_professional_experience, create_researcher
+):
+    # Arrange
+    target_lattes_id = '1234567890123456'
+    researcher = await create_researcher(lattes_id=target_lattes_id)
+
+    await (
+        create_researcher_professional_experience()
+    )  # Patente de outro pesquisador
+    await create_researcher_professional_experience(
+        researcher_id=researcher['id']
+    )  # Patente do pesquisador alvo
+
+    expected_count = 1
+    params = {'lattes_id': target_lattes_id}
+
+    # Act
+    response = client.get(ENDPOINT_URL, params=params)
+    data = response.json()
+
+    # Assert
+    assert response.status_code == HTTPStatus.OK
+    assert len(data) == expected_count

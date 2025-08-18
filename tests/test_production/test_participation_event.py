@@ -20,9 +20,6 @@ async def test_get_all_pevents(client, create_participation_event):
 
 @pytest.mark.asyncio
 async def test_filter_by_term_on_title(client, create_participation_event):
-    """
-    Testa o filtro por termo no título do evento.
-    """
     target_title = 'Apresentação sobre Inteligência Artificial'
     await create_participation_event(title='Outro Evento Aleatório')
     await create_participation_event(title=target_title)
@@ -343,6 +340,22 @@ async def test_filter_by_group_id(
 
     expected_count = 1
     params = {'group_id': group['id']}
+
+    response = client.get(ENDPOINT_URL, params=params)
+    data = response.json()
+
+    assert response.status_code == HTTPStatus.OK
+    assert len(data) == expected_count
+
+
+@pytest.mark.asyncio
+async def test_filter_by_nature(client, create_participation_event):
+    target_nature = 'Natureza morta'
+    await create_participation_event(nature='Outra Natureza Aleatório')
+    await create_participation_event(nature=target_nature)
+
+    expected_count = 1
+    params = {'nature': target_nature}
 
     response = client.get(ENDPOINT_URL, params=params)
     data = response.json()
