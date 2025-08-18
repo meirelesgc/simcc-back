@@ -7,12 +7,17 @@ from simcc.repositories.simcc import InstitutionRepository, researcher_repositor
 from simcc.schemas.Researcher import CoAuthorship
 
 
-def merge_researcher_data(researchers: pd.DataFrame) -> pd.DataFrame:
+async def merge_researcher_data(researchers: pd.DataFrame, conn) -> pd.DataFrame:
+    gp = await researcher_repository.list_graduate_programs(conn)
+    rg = await researcher_repository.list_research_groups(conn)
+    subsidy = await researcher_repository.list_foment_data(conn)
+    dep = await researcher_repository.list_departament_data(conn)
+
     sources = {
-        'graduate_programs': researcher_repository.list_graduate_programs(),
-        'research_groups': researcher_repository.list_research_groups(),
-        'subsidy': researcher_repository.list_foment_data(),
-        'departments': researcher_repository.list_departament_data(),
+        'graduate_programs': gp,
+        'research_groups': rg,
+        'subsidy': subsidy,
+        'departments': dep,
     }
 
     for column, source in sources.items():
@@ -22,14 +27,14 @@ def merge_researcher_data(researchers: pd.DataFrame) -> pd.DataFrame:
         else:
             researchers[column] = None
 
-    ufmg_data = researcher_repository.list_ufmg_data()
+    ufmg_data = await researcher_repository.list_ufmg_data(conn)
     if ufmg_data:
         ufmg_df = pd.DataFrame(ufmg_data)[['id']]
         ufmg_df['ufmg'] = ufmg_data
         researchers = researchers.merge(ufmg_df, on='id', how='left')
     else:
         researchers['ufmg'] = None
-    user_data = researcher_repository.list_user_data()
+    user_data = await researcher_repository.list_user_data(conn)
     if user_data:
         user_df = pd.DataFrame(user_data)[['lattes_id', 'user']]
         researchers = researchers.merge(user_df, on='lattes_id', how='left')
@@ -51,7 +56,7 @@ async def search_in_area_specialty(conn, filters):
         return []
 
     researchers = pd.DataFrame(researchers)
-    researchers = merge_researcher_data(researchers)
+    researchers = await merge_researcher_data(researchers, conn)
 
     researchers = researchers.replace(nan, '')
     return researchers.to_dict(orient='records')
@@ -66,7 +71,7 @@ async def search_in_participation_event(conn, filters):
         return []
 
     researchers = pd.DataFrame(researchers)
-    researchers = merge_researcher_data(researchers)
+    researchers = await merge_researcher_data(researchers, conn)
 
     researchers = researchers.replace(nan, '')
     return researchers.to_dict(orient='records')
@@ -80,7 +85,7 @@ async def search_in_bibliographic_production(conn, filters, type):
         return []
 
     researchers = pd.DataFrame(researchers)
-    researchers = merge_researcher_data(researchers)
+    researchers = await merge_researcher_data(researchers, conn)
 
     researchers = researchers.replace(nan, '')
     return researchers.to_dict(orient='records')
@@ -94,7 +99,7 @@ async def search_in_articles(conn, default_filters):
         return []
 
     researchers = pd.DataFrame(researchers)
-    researchers = merge_researcher_data(researchers)
+    researchers = await merge_researcher_data(researchers, conn)
 
     researchers = researchers.replace(nan, '')
     return researchers.to_dict(orient='records')
@@ -108,7 +113,7 @@ async def search_in_researcher(conn, filters, name):
         return []
 
     researchers = pd.DataFrame(researchers)
-    researchers = merge_researcher_data(researchers)
+    researchers = await merge_researcher_data(researchers, conn)
 
     researchers = researchers.replace(nan, '')
     return researchers.to_dict(orient='records')
@@ -122,7 +127,7 @@ async def list_outstanding_researchers(conn, filters):
         return []
 
     researchers = pd.DataFrame(researchers)
-    researchers = merge_researcher_data(researchers)
+    researchers = await merge_researcher_data(researchers, conn)
 
     researchers = researchers.replace(nan, '')
     return researchers.to_dict(orient='records')
@@ -136,7 +141,7 @@ async def serch_in_name(conn, default_filters, name):
         return []
 
     researchers = pd.DataFrame(researchers)
-    researchers = merge_researcher_data(researchers)
+    researchers = await merge_researcher_data(researchers, conn)
 
     researchers = researchers.replace(nan, '')
     return researchers.to_dict(orient='records')
@@ -185,7 +190,7 @@ async def search_in_patents(conn, filters):
         return []
 
     researchers = pd.DataFrame(researchers)
-    researchers = merge_researcher_data(researchers)
+    researchers = await merge_researcher_data(researchers, conn)
 
     researchers = researchers.replace(nan, '')
     return researchers.to_dict(orient='records')

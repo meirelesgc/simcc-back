@@ -997,7 +997,7 @@ async def search_in_name(
     return await conn.select(SCRIPT_SQL, params)
 
 
-def list_graduate_programs():
+async def list_graduate_programs(conn):
     SCRIPT_SQL = """
         SELECT gpr.researcher_id AS id,
             JSONB_AGG(JSONB_BUILD_OBJECT(
@@ -1033,11 +1033,10 @@ def list_graduate_programs():
         ON gpr.graduate_program_id = gp.graduate_program_id
         GROUP BY gpr.researcher_id
         """
-    result = conn.select(SCRIPT_SQL)
-    return result
+    return await conn.select(SCRIPT_SQL)
 
 
-def list_research_groups():
+async def list_research_groups(conn):
     SCRIPT_SQL = """
         SELECT r.id AS id,
             JSONB_AGG(JSONB_BUILD_OBJECT(
@@ -1057,11 +1056,10 @@ def list_research_groups():
             ON rg.second_leader_id = r.id OR rg.first_leader_id = r.id
         GROUP BY r.id
         """
-    result = conn.select(SCRIPT_SQL)
-    return result
+    return await conn.select(SCRIPT_SQL)
 
 
-def list_foment_data():
+async def list_foment_data(conn):
     SCRIPT_SQL = """
         SELECT s.researcher_id AS id,
             JSONB_AGG(JSONB_BUILD_OBJECT(
@@ -1078,11 +1076,10 @@ def list_foment_data():
         FROM foment s
         GROUP BY s.researcher_id
         """
-    result = conn.select(SCRIPT_SQL)
-    return result
+    return await conn.select(SCRIPT_SQL)
 
 
-def list_departament_data():
+async def list_departament_data(conn):
     SCRIPT_SQL = """
         SELECT dpr.researcher_id AS id,
             JSONB_AGG(JSONB_BUILD_OBJECT(
@@ -1099,11 +1096,10 @@ def list_departament_data():
             LEFT JOIN ufmg.departament dp ON dpr.dep_id = dp.dep_id
         GROUP BY dpr.researcher_id;
         """
-    result = conn.select(SCRIPT_SQL)
-    return result
+    return await conn.select(SCRIPT_SQL)
 
 
-def list_user_data():
+async def list_user_data(conn):
     SCRIPT_SQL = """
         SELECT u.lattes_id,
             JSONB_BUILD_OBJECT(
@@ -1133,11 +1129,10 @@ def list_user_data():
         FROM admin.users u
         WHERE u.lattes_id IS NOT NULL;
     """
-    result = conn.select(SCRIPT_SQL)
-    return result
+    return await conn.select(SCRIPT_SQL)
 
 
-def list_ufmg_data():
+async def list_ufmg_data(conn):
     SCRIPT_SQL = """
         SELECT researcher_id AS id, full_name, gender, status_code,
             work_regime, job_class, job_title, job_rank,
@@ -1149,8 +1144,7 @@ def list_ufmg_data():
             ufmg_registration_number, semester_reference
         FROM ufmg.researcher;
         """
-    result = conn.select(SCRIPT_SQL)
-    return result
+    return await conn.select(SCRIPT_SQL)
 
 
 def list_co_authorship(researcher_id: UUID):
