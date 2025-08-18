@@ -1518,9 +1518,8 @@ def guidance_per_year():
         'year',
     ]
     csv_path = os.path.join(PATH, 'guidance_per_year.csv')
-    csv[[columns]].to_csv(
-        csv_path, index=True, quoting=QUOTE_ALL, encoding='utf-8-sig'
-    )
+    csv = csv[columns]
+    csv.to_csv(csv_path, index=True, quoting=QUOTE_ALL, encoding='utf-8-sig')
 
 
 if __name__ == '__main__':
