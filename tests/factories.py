@@ -483,3 +483,28 @@ class ResearcherProfessionalExperienceFactory(factory.Factory):
     )
     exclusive_dedication = factory.Faker('boolean')
     additional_info = factory.Faker('paragraph', nb_sentences=3, locale='pt_BR')
+
+
+class ResearchReportFactory(factory.Factory):
+    class Meta:
+        model = dict
+
+    id = factory.Faker('uuid4')
+
+    created_at = factory.Faker('date_time_this_decade', tzinfo=None)
+
+    title = factory.Faker('sentence', nb_words=10)
+    project_name = factory.Faker('sentence', nb_words=5)
+
+    financing_institutionc = factory.Faker('company')
+
+    year = factory.Faker(
+        'pyint',
+        min_value=last_quadriennial_year(),
+    )
+
+    is_new = factory.Faker('boolean', chance_of_getting_true=50)
+
+    researcher = factory.SubFactory(ResearcherFactory)
+
+    researcher_id = factory.LazyAttribute(lambda obj: obj.researcher['id'])

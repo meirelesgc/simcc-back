@@ -444,3 +444,18 @@ async def test_create_researcher_professional_experience(
     SQL_RESEARCHER = 'SELECT COUNT(*) AS total FROM public.researcher'
     result_researcher = await conn.select(SQL_RESEARCHER, None, True)
     assert result_researcher['total'] == EXPECTED_COUNT
+
+
+@pytest.mark.asyncio
+async def test_create_research_report(conn, create_research_report):
+    EXPECTED_COUNT = 1
+
+    await create_research_report()
+
+    SQL_REPORT = 'SELECT COUNT(*) AS total FROM public.research_report'
+    result_report = await conn.select(SQL_REPORT, None, True)
+    assert result_report['total'] == EXPECTED_COUNT
+
+    SQL_RESEARCHER = 'SELECT COUNT(*) AS total FROM public.researcher'
+    result_researcher = await conn.select(SQL_RESEARCHER, None, True)
+    assert result_researcher['total'] == EXPECTED_COUNT

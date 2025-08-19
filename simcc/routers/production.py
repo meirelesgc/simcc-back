@@ -69,15 +69,8 @@ async def list_brand_production(conn: Conn, filters: Filters):
     '/researcher_report',
     response_model=list[ReportProduction],
 )
-async def list_researcher_report(
-    default_filters: DefaultFilters = Depends(),
-    page: int | None = None,
-    lenght: int | None = None,
-    conn: Connection = Depends(get_conn),
-):
-    return await ProductionService.list_researcher_report(
-        conn, default_filters, page, lenght
-    )
+async def list_researcher_report(conn: Conn, filters: Filters):
+    return await ProductionService.list_researcher_report(conn, filters)
 
 
 @router.get(

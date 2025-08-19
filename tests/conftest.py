@@ -654,3 +654,27 @@ def create_researcher_professional_experience(
         return experience_data
 
     return _create_experience
+
+
+@pytest_asyncio.fixture
+def create_research_report(conn: Connection, create_researcher):
+    async def _create_research_report(**kwargs):
+        researcher_id = kwargs.pop('researcher_id', None)
+
+        if not researcher_id:
+            researcher = await create_researcher()
+            researcher_id = researcher['id']
+
+        report = factories.ResearchReportFactory.build(**kwargs)
+        report['researcher_id'] = researcher_id
+
+        SCRIPT_SQL = """
+            INSERT INTO public.research_report(id, created_at, researcher_id, title,
+                project_name, financing_institutionc, year, is_new)
+            VALUES (%(id)s, %(created_at)s, %(researcher_id)s, %(title)s,
+                %(project_name)s, %(financing_institutionc)s, %(year)s, %(is_new)s);
+            """
+        await conn.exec(SCRIPT_SQL, report)
+        return report
+
+    return _create_research_report
