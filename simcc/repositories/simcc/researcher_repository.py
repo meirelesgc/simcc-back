@@ -1706,3 +1706,29 @@ async def get_great_area(
 
     result = await conn.select(SCRIPT_SQL, params)
     return result
+
+
+async def get_labs(conn, lattes_id, researcher_id):
+    params = {}
+    FILTERS = ''
+    join_researcher = ''
+    if lattes_id:
+        params['lattes_id'] = lattes_id
+        join_researcher = 'LEFT JOIN researcher r ON r.id = l.researcher_id'
+        FILTERS += """
+            AND r.lattes_id = %(lattes_id)s
+            """
+    if researcher_id:
+        params['researcher_id'] = researcher_id
+        FILTERS += """
+            AND l.researcher_id = %(researcher_id)s
+            """
+    SCRIPT_SQL = f"""
+        SELECT id, hashed_id, type, location, name, description, website,
+            activities, areas, campus, institution_id, researcher_id, responsible
+        FROM public.labs l
+            {join_researcher}
+        WHERE 1 = 1
+            {FILTERS}
+        """
+    return await conn.select(SCRIPT_SQL, params)

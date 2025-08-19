@@ -202,3 +202,7 @@ async def get_academic_degree(conn, default_filters):
 
 async def get_great_area(conn, default_filters):
     return await researcher_repository.get_great_area(conn, default_filters)
+
+
+async def get_labs(conn, lattes_id, researcher_id):
+    return await researcher_repository.get_labs(conn, lattes_id, researcher_id)

@@ -27,5 +27,20 @@ for _, lab in enumerate(labs):
                     %(institution_id)s, %(researcher_id)s,
                     %(responsavel)s);
                     """
+            lab['descricao'] = (
+                lab.get('description', '')
+                .replace('\r', '')
+                .replace('\n', ' ')
+                .strip()
+            )
+            lab['atividades'] = (
+                lab.get('atividades', '')
+                .replace('\r', '')
+                .replace('\n', ' ')
+                .strip()
+            )
+            lab['areas'] = (
+                lab.get('areas', '').replace('\r', '').replace('\n', ' ').strip()
+            )
             conn.exec(SCRIPT_SQL, lab)
             print(_, 'XPTO')

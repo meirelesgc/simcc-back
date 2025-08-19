@@ -108,3 +108,10 @@ async def get_great_area(
 ):
     metrics = await researcher_service.get_great_area(conn, default_filters)
     return metrics
+
+
+@router.get('/labs')
+async def get_labs(
+    conn: Conn, lattes_id: str = None, researcher_id: UUID = None
+):
+    return await researcher_service.get_labs(conn, lattes_id, researcher_id)
