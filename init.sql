@@ -753,6 +753,23 @@ CREATE TABLE IF NOT EXISTS public.researcher_professional_experience (
     exclusive_dedication BOOLEAN,
     additional_info TEXT
 );
+CREATE TABLE public.labs (
+    id uuid NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
+    hashed_id VARCHAR(32) NOT NULL,
+    type VARCHAR(100) NOT NULL,
+    location TEXT,
+    name TEXT NOT NULL,
+    description TEXT,
+    website TEXT,
+    activities TEXT,
+    areas TEXT,
+    campus TEXT,
+    institution_id UUID,
+    researcher_id UUID,
+    responsible TEXT,
+    FOREIGN KEY (researcher_id) REFERENCES researcher (id) ON UPDATE CASCADE ON DELETE CASCADE,
+    FOREIGN KEY (institution_id) REFERENCES institution (id) ON UPDATE CASCADE ON DELETE CASCADE
+);
 CREATE TABLE IF NOT EXISTS logs.routine (
     type routine_type NOT NULL,
     error BOOLEAN DEFAULT FALSE,
