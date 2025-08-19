@@ -1585,7 +1585,6 @@ async def list_researcher_report(conn, filters):
         ORDER BY rr.title DESC
         {FILTER_PAGINATION};
     """
-    print(SCRIPT_SQL, PARAMS)
     return await conn.select(SCRIPT_SQL, PARAMS)
 
 

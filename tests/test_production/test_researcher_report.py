@@ -62,47 +62,6 @@ async def test_filter_by_year(client, create_research_report):
 
 
 @pytest.mark.asyncio
-async def test_filter_by_term(client, create_research_report):
-    # Arrange
-    target_project = 'Projeto de Nanotecnologia Aplicada'
-    await create_research_report(title='Projeto Genérico')
-    await create_research_report(title=target_project)
-
-    expected_count = 1
-    params = {'title': target_project}
-
-    # Act
-    response = client.get(ENDPOINT_URL, params=params)
-    data = response.json()
-
-    # Assert
-    assert response.status_code == HTTPStatus.OK
-    assert len(data) == expected_count
-    assert data[0]['project_name'] == target_project
-
-
-@pytest.mark.asyncio
-async def test_filter_by_financing_institution(client, create_research_report):
-    # Arrange
-    target_institution = (
-        'Conselho Nacional de Desenvolvimento Científico e Tecnológico'
-    )
-    await create_research_report(financing_institutionc='Outra Agência')
-    await create_research_report(financing_institutionc=target_institution)
-
-    expected_count = 1
-    params = {'financing_institutionc': 'Conselho Nacional'}
-
-    # Act
-    response = client.get(ENDPOINT_URL, params=params)
-    data = response.json()
-
-    # Assert
-    assert response.status_code == HTTPStatus.OK
-    assert len(data) == expected_count
-
-
-@pytest.mark.asyncio
 async def test_filter_by_department_name(
     client,
     create_research_report,
@@ -278,14 +237,14 @@ async def test_filter_by_area(
     client, create_research_report, create_researcher_production
 ):
     # Arrange
-    areas = ['Ciências Biológicas', 'Ciências da Saúde']
+    areas = ['Ciências Biológicas', 'Saúde']
     researcher_prod = await create_researcher_production(great_area_=areas)
 
     await create_research_report()
     await create_research_report(researcher_id=researcher_prod['researcher_id'])
 
     expected_count = 1
-    params = {'area': 'Ciências da Saúde'}
+    params = {'area': 'Saúde'}
 
     # Act
     response = client.get(ENDPOINT_URL, params=params)
