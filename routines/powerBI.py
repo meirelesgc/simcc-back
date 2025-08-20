@@ -1473,7 +1473,7 @@ def guidance_per_year():
                 if row['done_date_qualification'] is not None
                 else 'EM ANDAMENTO'
             )
-        if row['type'] == 'CONCLUIDO':
+        if row['type'] == 'CONCLUSÃO':
             return (
                 'REALIZADO'
                 if row['done_date_conclusion'] is not None
@@ -1493,7 +1493,7 @@ def guidance_per_year():
                 or row['planned_date_qualification']
             )
             return date.year if date is not None else None
-        if row['type'] in {'CONCLUIDO', 'FINALIZADO'}:
+        if row['type'] in {'CONCLUSÃO', 'FINALIZADO'}:
             date = row['done_date_conclusion'] or row['planned_date_conclusion']
             return date.year if date is not None else None
         return None
