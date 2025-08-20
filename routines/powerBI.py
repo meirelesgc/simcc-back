@@ -1450,7 +1450,7 @@ def guidance_per_year():
         if row['done_date_qualification'] is not None:
             t.append('QUALIFICAÇÃO')
             if row['done_date_conclusion'] is None:
-                t.append('CONCLUSÃO')
+                t.append('DEFESA')
         if row['done_date_conclusion'] is not None:
             t = ['FINALIZADO']
         return t
@@ -1473,7 +1473,7 @@ def guidance_per_year():
                 if row['done_date_qualification'] is not None
                 else 'EM ANDAMENTO'
             )
-        if row['type'] == 'CONCLUSÃO':
+        if row['type'] == 'DEFESA':
             return (
                 'REALIZADO'
                 if row['done_date_conclusion'] is not None
@@ -1493,16 +1493,22 @@ def guidance_per_year():
                 or row['planned_date_qualification']
             )
             return date.year if date is not None else None
-        if row['type'] in {'CONCLUSÃO', 'FINALIZADO'}:
+        if row['type'] in {'DEFESA', 'FINALIZADO'}:
             date = row['done_date_conclusion'] or row['planned_date_conclusion']
             return date.year if date is not None else None
         return None
+
+    def graph(row):
+        if row['type'] == 'FINALIZADO' and row['status_'] == 'REALIZADO':
+            return 'FINALIZADO'
+        return 'EM CURSO'
 
     csv['type'] = csv.apply(type_, axis=1)
     csv = csv.explode('type')
     csv['status'] = csv.apply(status, axis=1)
     csv['status_'] = csv.apply(status_, axis=1)
     csv['year'] = csv.apply(year_, axis=1)
+    csv['in_progress'] = csv.apply(graph, axis=1)
     csv = csv.sort_values(by='student_name')
     columns = [
         'id',
@@ -1516,6 +1522,7 @@ def guidance_per_year():
         'type',
         'status_',
         'year',
+        'in_progress',
     ]
     csv_path = os.path.join(PATH, 'guidance_per_year.csv')
     csv = csv[columns]
