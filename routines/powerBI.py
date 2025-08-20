@@ -1450,7 +1450,7 @@ def guidance_per_year():
         if row['done_date_qualification'] is not None:
             t.append('QUALIFICAÇÃO')
             if row['done_date_conclusion'] is None:
-                t.append('CONCLUIDO')
+                t.append('CONCLUSÃO')
         if row['done_date_conclusion'] is not None:
             t = ['FINALIZADO']
         return t
