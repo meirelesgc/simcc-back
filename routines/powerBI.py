@@ -1619,6 +1619,7 @@ def in_progress_per_year():
         'year',
         'supervisor_name',
         'supervisor_researcher_id',
+        'graduate_program_id',
     ]
     df = csv[columns].copy()
 
@@ -1630,23 +1631,29 @@ def in_progress_per_year():
         ['supervisor_name', 'supervisor_researcher_id']
     ].drop_duplicates()
     statuses = df[['in_progress']].drop_duplicates()
+    programs = df[['graduate_program_id']].drop_duplicates()
 
-    # produto cartesiano: todos supervisores × anos × status
-    full = supervisors.merge(years, how='cross').merge(statuses, how='cross')
+    # produto cartesiano: supervisores × anos × status × programas
+    full = (
+        supervisors.merge(years, how='cross')
+        .merge(statuses, how='cross')
+        .merge(programs, how='cross')
+    )
 
-    # conta real
+    # contagem real
     counts = (
         df.groupby([
             'supervisor_name',
             'supervisor_researcher_id',
             'year',
             'in_progress',
+            'graduate_program_id',
         ])
         .size()
         .reset_index(name='count')
     )
 
-    # junta com o grid completo
+    # junta o grid completo com as contagens reais
     result = full.merge(
         counts,
         on=[
@@ -1654,14 +1661,20 @@ def in_progress_per_year():
             'supervisor_researcher_id',
             'year',
             'in_progress',
+            'graduate_program_id',
         ],
         how='left',
     )
 
     result['count'] = result['count'].fillna(0).astype(int)
-    result = result.sort_values(['supervisor_name', 'year', 'in_progress'])
+    result = result.sort_values([
+        'supervisor_name',
+        'year',
+        'graduate_program_id',
+        'in_progress',
+    ])
 
-    result = result.sort_values(['supervisor_name', 'year'])
+    print(result.head(20))
     csv_path = os.path.join(PATH, 'in_progress_per_year.csv')
     result.to_csv(csv_path, index=False, encoding='utf-8-sig')
 
