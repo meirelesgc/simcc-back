@@ -1637,9 +1637,7 @@ def in_progress_per_year():
 
     result = result.sort_values(['year', 'supervisor_name'])
     print(result)
-    result.to_csv(
-        'in_progress_per_year_grouped.csv', index=False, encoding='utf-8-sig'
-    )
+    result.to_csv('in_progress_per_year.csv', index=False, encoding='utf-8-sig')
 
 
 if __name__ == '__main__':
