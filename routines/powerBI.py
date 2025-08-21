@@ -1529,6 +1529,119 @@ def guidance_per_year():
     csv.to_csv(csv_path, index=True, quoting=QUOTE_ALL, encoding='utf-8-sig')
 
 
+def in_progress_per_year():
+    csv: pd.DataFrame = _guidance()
+    csv = csv.rename(columns={'type': 'program_type'})
+
+    def type_(row):
+        t = []
+        if row['done_date_project'] is None:
+            return ['PROJETO']
+        if row['done_date_project'] is not None:
+            t.append('PROJETO')
+        if row['done_date_qualification'] is not None:
+            t.append('QUALIFICAÇÃO')
+            if row['done_date_conclusion'] is None:
+                t.append('DEFESA')
+        if row['done_date_conclusion'] is not None:
+            t = ['FINALIZADO']
+        return t
+
+    def status(row):
+        if row['type'] == 'FINALIZADO':
+            return 'FINALIZADO'
+        return 'EM CURSO'
+
+    def status_(row):
+        if row['type'] == 'PROJETO':
+            return (
+                'REALIZADO'
+                if row['done_date_project'] is not None
+                else 'EM ANDAMENTO'
+            )
+        if row['type'] == 'QUALIFICAÇÃO':
+            return (
+                'REALIZADO'
+                if row['done_date_qualification'] is not None
+                else 'EM ANDAMENTO'
+            )
+        if row['type'] == 'DEFESA':
+            return (
+                'REALIZADO'
+                if row['done_date_conclusion'] is not None
+                else 'EM ANDAMENTO'
+            )
+        if row['type'] == 'FINALIZADO':
+            return 'REALIZADO'
+        return 'EM ANDAMENTO'
+
+    def year_(row):
+        if row['type'] == 'PROJETO':
+            date = row['done_date_project'] or row['planned_date_project']
+            return date.year if date is not None else None
+        if row['type'] == 'QUALIFICAÇÃO':
+            date = (
+                row['done_date_qualification']
+                or row['planned_date_qualification']
+            )
+            return date.year if date is not None else None
+        if row['type'] in {'DEFESA', 'FINALIZADO'}:
+            date = row['done_date_conclusion'] or row['planned_date_conclusion']
+            return date.year if date is not None else None
+        return None
+
+    def graph(row):
+        if row['type'] == 'FINALIZADO' and row['status_'] == 'REALIZADO':
+            return 'FINALIZADO'
+        return 'EM CURSO'
+
+    csv['type'] = csv.apply(type_, axis=1)
+    csv = csv.explode('type')
+    csv['status'] = csv.apply(status, axis=1)
+    csv['status_'] = csv.apply(status_, axis=1)
+    csv['in_progress'] = csv.apply(graph, axis=1)
+    csv['year'] = csv.apply(year_, axis=1)
+    csv = csv.sort_values(by='student_name')
+    columns = [
+        'in_progress',
+        'year',
+        'supervisor_name',
+        'supervisor_researcher_id',
+    ]
+    df = csv[columns].copy()
+
+    min_year = df['year'].min()
+    max_year = df['year'].max()
+
+    years = pd.Series(range(min_year, max_year + 1), name='year')
+
+    counts = (
+        df.groupby(['supervisor_name', 'supervisor_researcher_id', 'year'])
+        .size()
+        .reset_index(name='count')
+    )
+
+    supervisors = df[
+        ['supervisor_name', 'supervisor_researcher_id']
+    ].drop_duplicates()
+    full = supervisors.merge(years, how='cross')
+
+    result = full.merge(
+        counts,
+        on=['supervisor_name', 'supervisor_researcher_id', 'year'],
+        how='left',
+    )
+    result['count'] = result['count'].fillna(0).astype(int)
+
+    result = result.sort_values(['supervisor_name', 'year'])
+
+    result = result.sort_values(['year', 'supervisor_name'])
+    print(result)
+    result.to_csv(
+        'in_progress_per_year_grouped.csv', index=False, encoding='utf-8-sig'
+    )
+
+
 if __name__ == '__main__':
     for directory in [PATH]:
         if not os.path.exists(directory):
