@@ -1614,28 +1614,54 @@ def in_progress_per_year():
     max_year = df['year'].max()
 
     years = pd.Series(range(min_year, max_year + 1), name='year')
+    columns = [
+        'in_progress',
+        'year',
+        'supervisor_name',
+        'supervisor_researcher_id',
+    ]
+    df = csv[columns].copy()
 
-    counts = (
-        df.groupby(['supervisor_name', 'supervisor_researcher_id', 'year'])
-        .size()
-        .reset_index(name='count')
-    )
+    min_year = df['year'].min()
+    max_year = df['year'].max()
+    years = pd.Series(range(min_year, max_year + 1), name='year')
 
     supervisors = df[
         ['supervisor_name', 'supervisor_researcher_id']
     ].drop_duplicates()
-    full = supervisors.merge(years, how='cross')
+    statuses = df[['in_progress']].drop_duplicates()
 
+    # produto cartesiano: todos supervisores × anos × status
+    full = supervisors.merge(years, how='cross').merge(statuses, how='cross')
+
+    # conta real
+    counts = (
+        df.groupby([
+            'supervisor_name',
+            'supervisor_researcher_id',
+            'year',
+            'in_progress',
+        ])
+        .size()
+        .reset_index(name='count')
+    )
+
+    # junta com o grid completo
     result = full.merge(
         counts,
-        on=['supervisor_name', 'supervisor_researcher_id', 'year'],
+        on=[
+            'supervisor_name',
+            'supervisor_researcher_id',
+            'year',
+            'in_progress',
+        ],
         how='left',
     )
+
     result['count'] = result['count'].fillna(0).astype(int)
+    result = result.sort_values(['supervisor_name', 'year', 'in_progress'])
 
     result = result.sort_values(['supervisor_name', 'year'])
-
-    result = result.sort_values(['year', 'supervisor_name'])
     csv_path = os.path.join(PATH, 'in_progress_per_year.csv')
     result.to_csv(csv_path, index=False, encoding='utf-8-sig')
 
