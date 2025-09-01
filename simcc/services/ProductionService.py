@@ -5,7 +5,7 @@ import pandas as pd
 from simcc.core.connection import Connection
 from simcc.repositories.simcc import ProductionRepository
 from simcc.schemas import DefaultFilters
-from simcc.schemas.Production.Article import ArticleMetric, ArticleProduction
+from simcc.schemas.Production.Article import ArticleMetric
 from simcc.schemas.Production.Guidance import GuidanceMetrics
 from simcc.schemas.Production.Patent import PatentMetric
 from simcc.schemas.Researcher import AcademicMetric
@@ -49,30 +49,11 @@ async def list_bibliographic_production(
     conn: Connection,
     default_filters: DefaultFilters,
     qualis: str | None,
-) -> list[ArticleProduction]:
+):
     production = await ProductionRepository.list_bibliographic_production(
         conn, default_filters, qualis
     )
 
-    if not production:
-        return []
-
-    production = pd.DataFrame(production)
-    production = production.fillna('')
-
-    return production.to_dict(orient='records')
-
-
-async def list_article_production(
-    conn: Connection,
-    default_filters: DefaultFilters,
-    qualis: str | None,
-    page: int | None,
-    lenght: int | None,
-):
-    production = await ProductionRepository.list_article_production(
-        conn, default_filters, qualis, page, lenght
-    )
     if not production:
         return []
 

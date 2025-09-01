@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends
 
 from simcc.core.connection import Connection
 from simcc.core.database import get_conn
-from simcc.schemas import ArticleOptions, DefaultFilters, QualisOptions
+from simcc.schemas import DefaultFilters, QualisOptions
 from simcc.schemas.Production.Article import ArticleProduction
 from simcc.schemas.Production.Book import BookProduction
 from simcc.schemas.Production.BookChapter import BookChapterProduction
@@ -100,23 +100,24 @@ async def list_outstanding_articles(
 
 
 @router.get(
+    '/bibliographic_production_article',
+    response_model=list[ArticleProduction],
+)
+@router.get(
     '/bibliographic_production_researcher',
     response_model=list[ArticleProduction],
 )
 async def list_bibliographic_production(
-    default_filters: DefaultFilters = Depends(),
+    conn: Conn,
+    filters: Filters,
     terms: str | None = None,
-    type: ArticleOptions = 'ARTICLE',
     qualis: QualisOptions | str = None,
-    conn: Connection = Depends(get_conn),
 ):
-    default_filters.type = type
     if terms:
-        default_filters.term = terms
-    articles = await ProductionService.list_bibliographic_production(
-        conn, default_filters, qualis
+        filters.term = terms
+    return await ProductionService.list_bibliographic_production(
+        conn, filters, qualis
     )
-    return articles
 
 
 @router.get(
@@ -131,25 +132,6 @@ async def list_software_production(
 ):
     return await ProductionService.list_software(
         conn, default_filters, page, lenght
-    )
-
-
-@router.get(
-    '/bibliographic_production_article',
-    response_model=list[ArticleProduction],
-)
-async def list_article_production(
-    default_filters: DefaultFilters = Depends(),
-    terms: str | None = None,
-    qualis: str | None = None,
-    page: int | None = None,
-    lenght: int | None = None,
-    conn: Connection = Depends(get_conn),
-):
-    if terms:
-        default_filters.term = terms
-    return await ProductionService.list_article_production(
-        conn, default_filters, qualis, page, lenght
     )
 
 
