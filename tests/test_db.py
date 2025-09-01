@@ -459,3 +459,22 @@ async def test_create_research_report(conn, create_research_report):
     SQL_RESEARCHER = 'SELECT COUNT(*) AS total FROM public.researcher'
     result_researcher = await conn.select(SQL_RESEARCHER, None, True)
     assert result_researcher['total'] == EXPECTED_COUNT
+
+
+@pytest.mark.asyncio
+async def test_create_bibliographic_production_book_chapter(
+    conn, create_bibliographic_production_book_chapter
+):
+    EXPECTED_COUNT = 1
+
+    await create_bibliographic_production_book_chapter()
+
+    SQL = 'SELECT COUNT(*) AS total FROM public.bibliographic_production_book_chapter'
+    result_book_chapter = await conn.select(SQL, None, True)
+    assert result_book_chapter['total'] == EXPECTED_COUNT
+
+    SQL_PRODUCTION = (
+        'SELECT COUNT(*) AS total FROM public.bibliographic_production'
+    )
+    result_production = await conn.select(SQL_PRODUCTION, None, True)
+    assert result_production['total'] == EXPECTED_COUNT

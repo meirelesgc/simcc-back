@@ -77,11 +77,8 @@ async def list_researcher_report(conn: Conn, filters: Filters):
     '/book_chapter_production_researcher',
     response_model=list[BookChapterProduction],
 )
-async def list_book_chapter_production(
-    default_filters: DefaultFilters = Depends(),
-    conn: Connection = Depends(get_conn),
-):
-    result = await ProductionService.list_book_chapter(conn, default_filters)
+async def list_book_chapter_production(conn: Conn, filters: Filters):
+    result = await ProductionService.list_book_chapter(conn, filters)
     return result
 
 

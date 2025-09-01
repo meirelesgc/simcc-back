@@ -678,3 +678,53 @@ def create_research_report(conn: Connection, create_researcher):
         return report
 
     return _create_research_report
+
+
+@pytest_asyncio.fixture
+def create_bibliographic_production_book_chapter(
+    conn: Connection, create_country, create_researcher
+):
+    async def _create_bibliographic_production_book_chapter(**kwargs):
+        country_id = kwargs.pop('country_id', None)
+        researcher_id = kwargs.pop('researcher_id', None)
+
+        if not country_id:
+            country = await create_country()
+            country_id = country['id']
+        if not researcher_id:
+            researcher = await create_researcher()
+            researcher_id = researcher['id']
+
+        production = factories.BibliographicProductionFactory.build(**kwargs)
+        production['country_id'] = country_id
+        production['researcher_id'] = researcher_id
+        production['type'] = 'BOOK_CHAPTER'
+
+        chapter_data = factories.BibliographicProductionBookChapterFactory.build(
+            **kwargs, bibliographic_production_id=production['id']
+        )
+        chapter_data['bibliographic_production'] = production
+
+        SQL = """
+            INSERT INTO public.bibliographic_production(id, title, title_en,
+                type, doi, nature, year, country_id, language, means_divulgation,
+                homepage, relevance, has_image, scientific_divulgation,
+                researcher_id, authors, year_, is_new)
+            VALUES (%(id)s, %(title)s, %(title_en)s, %(type)s, %(doi)s, %(nature)s, %(year)s, %(country_id)s,
+                %(language)s, %(means_divulgation)s, %(homepage)s, %(relevance)s, %(has_image)s,
+                %(scientific_divulgation)s, %(researcher_id)s, %(authors)s, %(year)s, %(is_new)s);
+            """
+        await conn.exec(SQL, production)
+
+        SQL = """
+            INSERT INTO public.bibliographic_production_book_chapter(id, bibliographic_production_id, book_title, isbn,
+                start_page, end_page, qtt_volume, organizers, num_edition_revision, num_series,
+                publishing_company, publishing_company_city)
+            VALUES (%(id)s, %(bibliographic_production_id)s, %(book_title)s, %(isbn)s, %(start_page)s,
+                %(end_page)s, %(qtt_volume)s, %(organizers)s, %(num_edition_revision)s, %(num_series)s,
+                %(publishing_company)s, %(publishing_company_city)s);
+            """
+        await conn.exec(SQL, chapter_data)
+        return chapter_data
+
+    return _create_bibliographic_production_book_chapter

@@ -82,8 +82,8 @@ async def list_article_production(
     return production.to_dict(orient='records')
 
 
-async def list_book_chapter(conn: Connection, default_filters: DefaultFilters):
-    return await ProductionRepository.list_book_chapter(conn, default_filters)
+async def list_book_chapter(conn, filters):
+    return await ProductionRepository.list_book_chapter(conn, filters)
 
 
 async def list_software(

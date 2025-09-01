@@ -9,6 +9,7 @@ from faker import Faker
 
 fake = Faker()
 
+QUALIS_OPTIONS = ['A1', 'A2', 'A3', 'A4', 'B1', 'B2', 'B3', 'B4', 'C']
 BRAND_GOALS = [
     'Product Identification',
     'Service Differentiation',
@@ -16,7 +17,6 @@ BRAND_GOALS = [
     'Market Positioning',
 ]
 BRAND_NATURES = ['Figurative', 'Nominative', 'Mixed', 'Three-dimensional']
-
 EMPLOYMENT_TYPES = [
     'Empregado com carteira assinada',
     'Servidor público',
@@ -40,8 +40,6 @@ FUNCTIONAL_CLASSIFICATIONS = [
     'Gerente de Projetos',
     'Consultor',
 ]
-
-
 CLASSIFICATION_CLASSES = ('A+', 'A', 'B+', 'B', 'C+', 'C', 'D+', 'D', 'E+', 'E')
 TYPE_PARTICIPATION = (
     'Apresentação Oral',
@@ -81,6 +79,7 @@ BIBLIOGRAPHIC_PRODUCTION_TYPES = [
     'TEXT_IN_NEWSPAPER_MAGAZINE',
 ]
 LANG_CODES = ['en', 'pt', 'es', 'fr', 'de', 'it']
+
 letters = string.ascii_uppercase
 alpha2_list = [''.join(p) for p in product(letters, repeat=2)]
 alpha3_list = [''.join(p) for p in product(letters, repeat=3)]
@@ -363,9 +362,6 @@ class BibliographicProductionBookFactory(factory.Factory):
     publishing_company_city = factory.Faker('city')
 
 
-QUALIS_OPTIONS = ('A1', 'A2', 'A3', 'A4', 'B1', 'B2', 'B3', 'B4', 'C')
-
-
 def generate_issn():
     part1 = random.randint(1000, 9999)
     part2 = random.randint(1000, 9999)
@@ -508,3 +504,23 @@ class ResearchReportFactory(factory.Factory):
     researcher = factory.SubFactory(ResearcherFactory)
 
     researcher_id = factory.LazyAttribute(lambda obj: obj.researcher['id'])
+
+
+class BibliographicProductionBookChapterFactory(factory.Factory):
+    class Meta:
+        model = dict
+
+    id = factory.Faker('uuid4')
+    bibliographic_production_id = factory.Faker('uuid4')
+    book_title = factory.Faker('sentence', nb_words=6)
+    isbn = factory.Faker('isbn13', separator='')
+    start_page = factory.LazyFunction(lambda: str(random.randint(1, 50)))
+    end_page = factory.LazyFunction(lambda: str(random.randint(51, 100)))
+    qtt_volume = factory.LazyFunction(lambda: str(random.randint(1, 3)))
+    organizers = factory.Faker('name')
+    num_edition_revision = factory.LazyFunction(
+        lambda: str(random.randint(1, 10))
+    )
+    num_series = factory.LazyFunction(lambda: str(random.randint(1, 5)))
+    publishing_company = factory.Faker('company')
+    publishing_company_city = factory.Faker('city')
