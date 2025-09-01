@@ -478,3 +478,14 @@ async def test_create_bibliographic_production_book_chapter(
     )
     result_production = await conn.select(SQL_PRODUCTION, None, True)
     assert result_production['total'] == EXPECTED_COUNT
+
+
+@pytest.mark.asyncio
+async def test_create_software(conn, create_software):
+    EXPECTED_COUNT = 1
+
+    await create_software()
+
+    SQL = 'SELECT COUNT(*) AS total FROM public.software'
+    result_software = await conn.select(SQL, None, True)
+    assert result_software['total'] == EXPECTED_COUNT

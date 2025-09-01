@@ -125,14 +125,10 @@ async def list_bibliographic_production(
     response_model=list[SoftwareProduction],
 )
 async def list_software_production(
-    default_filters: DefaultFilters = Depends(),
-    page: int | None = None,
-    lenght: int | None = None,
-    conn: Connection = Depends(get_conn),
+    conn: Conn,
+    filters: Filters,
 ):
-    return await ProductionService.list_software(
-        conn, default_filters, page, lenght
-    )
+    return await ProductionService.list_software(conn, filters)
 
 
 @router.get(

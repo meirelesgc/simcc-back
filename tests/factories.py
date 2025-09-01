@@ -524,3 +524,28 @@ class BibliographicProductionBookChapterFactory(factory.Factory):
     num_series = factory.LazyFunction(lambda: str(random.randint(1, 5)))
     publishing_company = factory.Faker('company')
     publishing_company_city = factory.Faker('city')
+
+
+class SoftwareFactory(factory.Factory):
+    class Meta:
+        model = dict
+
+    id = factory.Faker('uuid4')
+    title = factory.Faker('sentence', nb_words=5)
+    platform = factory.Faker(
+        'random_element', elements=('Windows', 'Linux', 'macOS', 'Web', 'Mobile')
+    )
+    goal = factory.Faker('paragraph', nb_sentences=3)
+    relevance = factory.Faker('boolean')
+    has_image = factory.Faker('boolean')
+    environment = factory.Faker('word')
+    availability = factory.Faker(
+        'random_element', elements=('RESTRICTED', 'OPEN', 'PROPRIETARY')
+    )
+    financing_institutionc = factory.Faker('company')
+    researcher_id = factory.Faker('uuid4')
+    year = factory.Faker(
+        'pyint',
+        min_value=last_quadriennial_year(),
+    )
+    is_new = factory.Faker('boolean')

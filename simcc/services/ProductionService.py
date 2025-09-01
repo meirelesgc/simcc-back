@@ -67,15 +67,8 @@ async def list_book_chapter(conn, filters):
     return await ProductionRepository.list_book_chapter(conn, filters)
 
 
-async def list_software(
-    conn: Connection,
-    default_filters: DefaultFilters,
-    page: int | None,
-    lenght: int | None,
-):
-    return await ProductionRepository.list_software(
-        conn, default_filters, page, lenght
-    )
+async def list_software(conn, filters):
+    return await ProductionRepository.list_software(conn, filters)
 
 
 async def list_researcher_report(conn, filters):

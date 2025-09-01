@@ -728,3 +728,29 @@ def create_bibliographic_production_book_chapter(
         return chapter_data
 
     return _create_bibliographic_production_book_chapter
+
+
+@pytest_asyncio.fixture
+def create_software(conn: Connection, create_researcher):
+    async def _create_software(**kwargs):
+        researcher_id = kwargs.pop('researcher_id', None)
+
+        if not researcher_id:
+            researcher = await create_researcher()
+            researcher_id = researcher['id']
+
+        software_data = factories.SoftwareFactory.build(**kwargs)
+        software_data['researcher_id'] = researcher_id
+
+        SQL = """
+            INSERT INTO public.software(id, title, platform, goal, relevance,
+                has_image, environment, availability, financing_institutionc,
+                researcher_id, year, is_new)
+            VALUES (%(id)s, %(title)s, %(platform)s, %(goal)s, %(relevance)s,
+                %(has_image)s, %(environment)s, %(availability)s,
+                %(financing_institutionc)s, %(researcher_id)s, %(year)s, %(is_new)s);
+            """
+        await conn.exec(SQL, software_data)
+        return software_data
+
+    return _create_software
