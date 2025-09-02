@@ -226,7 +226,7 @@ def search_in_name(
         filter_program = 'AND gpr.graduate_program_id = %(graduate_program_id)s'
 
     if lattes_id:
-        filter_lattes = 'AND lattes_id = %(lattes_id)s'
+        filter_lattes = 'AND  r.lattes_id = %(lattes_id)s'
         params['lattes_id'] = lattes_id
 
     SCRIPT_SQL = f"""
