@@ -193,6 +193,7 @@ def search_in_name(
     dep_id: UUID,
     page: int = None,
     lenght: int = None,
+    lattes_id: str = None,
 ):
     params = {}
 
@@ -224,6 +225,10 @@ def search_in_name(
             """
         filter_program = 'AND gpr.graduate_program_id = %(graduate_program_id)s'
 
+    if lattes_id:
+        filter_lattes = 'AND lattes_id = %(lattes_id)s'
+        params['lattes_id'] = lattes_id
+
     SCRIPT_SQL = f"""
         SELECT
             r.id, r.name, r.lattes_id, r.lattes_10_id, r.abstract, r.orcid,
@@ -242,6 +247,7 @@ def search_in_name(
             {join_departament}
         WHERE 1 = 1
             {filter_program}
+            {filter_lattes}
             {filter_name}
             {filter_departament}
         ORDER BY
