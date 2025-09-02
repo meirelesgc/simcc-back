@@ -13,8 +13,8 @@ for _, lab in enumerate(labs):
     if lattes_id:
         lab['researcher_id'] = lattes_id.get('id')
         SCRIPT_SQL = """
-                SELECT id FROM institution WHERE acronym = %(instituicao)s
-                """
+            SELECT id FROM institution WHERE acronym = %(instituicao)s
+        """
         institution_id = conn.select(SCRIPT_SQL, lab, True)
         if institution_id:
             lab['institution_id'] = institution_id.get('id')
@@ -26,21 +26,24 @@ for _, lab in enumerate(labs):
                     %(descricao)s, %(site)s, %(atividades)s, %(areas)s, %(campus)s,
                     %(institution_id)s, %(researcher_id)s,
                     %(responsavel)s);
-                    """
+            """
             lab['descricao'] = (
-                lab.get('description', '')
-                .replace('\r', '')
+                (lab.get('description') or ' ')
+                .replace('\r', ' ')
                 .replace('\n', ' ')
                 .strip()
             )
             lab['atividades'] = (
-                lab.get('atividades', '')
-                .replace('\r', '')
+                (lab.get('atividades') or ' ')
+                .replace('\r', ' ')
                 .replace('\n', ' ')
                 .strip()
             )
             lab['areas'] = (
-                lab.get('areas', '').replace('\r', '').replace('\n', ' ').strip()
+                (lab.get('areas') or ' ')
+                .replace('\r', ' ')
+                .replace('\n', ' ')
+                .strip()
             )
             conn.exec(SCRIPT_SQL, lab)
             print(_, 'XPTO')

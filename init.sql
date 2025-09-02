@@ -1,15 +1,12 @@
-BEGIN;
-
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 create EXTENSION fuzzystrmatch;
 create EXTENSION pg_trgm;
 CREATE EXTENSION unaccent;
 CREATE EXTENSION vector;
 
-CREATE TYPE public.relationship AS ENUM ('COLABORADOR', 'PERMANENTE');
-CREATE TYPE public.classification_class AS ENUM ('A+', 'A', 'B+', 'B', 'C+', 'C', 'D+', 'D', 'E+', 'E');
-CREATE TYPE public.routine_type AS ENUM ('SOAP_LATTES', 'HOP', 'POPULATION', 'PRODUCTION', 'LATTES_10', 'IND_PROD', 'POG', 'OPEN_ALEX', 'SEARCH_TERM');
-CREATE TYPE public.bibliographic_production_type_enum AS ENUM ('BOOK', 'BOOK_CHAPTER', 'ARTICLE', 'WORK_IN_EVENT', 'TEXT_IN_NEWSPAPER_MAGAZINE');
+CREATE TYPE relationship AS ENUM ('COLABORADOR', 'PERMANENTE', 'VISITANTE');
+CREATE TYPE classification_class AS ENUM ('A+', 'A', 'B+', 'B', 'C+', 'C', 'D+', 'D', 'E+', 'E');
+CREATE TYPE routine_type AS ENUM ('SOAP_LATTES', 'HOP', 'POPULATION', 'PRODUCTION', 'LATTES_10', 'IND_PROD', 'POG', 'OPEN_ALEX', 'SEARCH_TERM', 'STEP_RESEARCHER', 'STEP_PRODUCTION', 'STEP_ARTICLE', 'STEP_BOOK', 'STEP_TECHNICAL_PRODUCTION', 'STEP_GERAL_PRODUCTION');
 
 CREATE SCHEMA IF NOT EXISTS embeddings;
 CREATE SCHEMA IF NOT EXISTS ufmg;
@@ -41,7 +38,7 @@ CREATE TABLE IF NOT EXISTS public.state (
     CONSTRAINT "PK_549ffd046ebab1336c3a8030a12" PRIMARY KEY (id),
     CONSTRAINT "UQ_a4925b2350673eb963998d27ec3" UNIQUE (abbreviation),
     CONSTRAINT "UQ_b2c4aef5929860729007ac32f6f" UNIQUE (name),
-    CONSTRAINT "FKCountryState" FOREIGN KEY (country_id) REFERENCES public.country (id) ON UPDATE CASCADE ON DELETE CASCADE
+    CONSTRAINT "FKCountryState" FOREIGN KEY (country_id) REFERENCES public.country (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE
 );
 CREATE TABLE IF NOT EXISTS public.city (
     id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -52,8 +49,8 @@ CREATE TABLE IF NOT EXISTS public.city (
     updated_at timestamp without time zone,
     deleted_at timestamp without time zone,
     CONSTRAINT "PK_b222f51ce26f7e5ca86944a6739" PRIMARY KEY (id),
-    CONSTRAINT "FKCountryCity" FOREIGN KEY (country_id) REFERENCES public.country (id) ON UPDATE CASCADE ON DELETE CASCADE,
-    CONSTRAINT "FKStateCity" FOREIGN KEY (state_id) REFERENCES public.state (id) ON UPDATE CASCADE ON DELETE CASCADE
+    CONSTRAINT "FKCountryCity" FOREIGN KEY (country_id) REFERENCES public.country (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT "FKStateCity" FOREIGN KEY (state_id) REFERENCES public.state (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE
 );
 CREATE TABLE IF NOT EXISTS public.institution (
     id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -101,7 +98,7 @@ CREATE TABLE IF NOT EXISTS public.area_expertise (
     deleted_at timestamp without time zone,
     great_area_expertise_id uuid,
     CONSTRAINT "PK_44d189c8477ad880b9ec101d453" PRIMARY KEY (id),
-    CONSTRAINT "FK_great_area_expertise" FOREIGN KEY (great_area_expertise_id) REFERENCES public.great_area_expertise (id) ON UPDATE CASCADE ON DELETE CASCADE
+    CONSTRAINT "FK_great_area_expertise" FOREIGN KEY (great_area_expertise_id) REFERENCES public.great_area_expertise (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE
 );
 CREATE TABLE IF NOT EXISTS public.sub_area_expertise (
     id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -111,7 +108,7 @@ CREATE TABLE IF NOT EXISTS public.sub_area_expertise (
     updated_at timestamp without time zone,
     deleted_at timestamp without time zone,
     CONSTRAINT pk_id_sub_area_expertise PRIMARY KEY (id),
-    CONSTRAINT sub_area_expertise_area_expertise_id_fkey FOREIGN KEY (area_expertise_id) REFERENCES public.area_expertise (id) ON UPDATE CASCADE ON DELETE CASCADE
+    CONSTRAINT sub_area_expertise_area_expertise_id_fkey FOREIGN KEY (area_expertise_id) REFERENCES public.area_expertise (id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE CASCADE
 );
 CREATE TABLE IF NOT EXISTS public.area_specialty (
     id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -121,7 +118,7 @@ CREATE TABLE IF NOT EXISTS public.area_specialty (
     updated_at timestamp without time zone,
     deleted_at timestamp without time zone,
     CONSTRAINT pk_id_area_specialty PRIMARY KEY (id),
-    CONSTRAINT area_specialty_sub_area_expertise_id_fkey FOREIGN KEY (sub_area_expertise_id) REFERENCES public.sub_area_expertise (id) ON UPDATE CASCADE ON DELETE CASCADE
+    CONSTRAINT area_specialty_sub_area_expertise_id_fkey FOREIGN KEY (sub_area_expertise_id) REFERENCES public.sub_area_expertise (id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE CASCADE
 );
 CREATE TABLE IF NOT EXISTS public.researcher (
     id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -131,9 +128,8 @@ CREATE TABLE IF NOT EXISTS public.researcher (
     last_update timestamp without time zone NOT NULL DEFAULT now(),
     citations character varying,
     orcid character(31),
-    abstract TEXT,
-    abstract_en TEXT,
-    abstract_ai TEXT,
+    abstract character varying(5000),
+    abstract_en character varying(5000),
     other_information character varying(5000),
     city_id uuid,
     country_id uuid,
@@ -154,9 +150,9 @@ CREATE TABLE IF NOT EXISTS public.researcher (
     CONSTRAINT "PK_7b53850398061862ebe70d4ce44" PRIMARY KEY (id),
     CONSTRAINT "UQ_cd7166a27f090d19d4e985592db" UNIQUE (lattes_10_id),
     CONSTRAINT "UQ_fdf2bde0f46501e3e84ec154c32" UNIQUE (lattes_id),
-    CONSTRAINT "FKCityResearcher" FOREIGN KEY (city_id) REFERENCES public.city (id) ON UPDATE CASCADE ON DELETE CASCADE,
-    CONSTRAINT "FKCountryResearcher" FOREIGN KEY (country_id) REFERENCES public.country (id) ON UPDATE CASCADE ON DELETE CASCADE,
-    CONSTRAINT "FKInstitutionResearcher" FOREIGN KEY (institution_id) REFERENCES public.institution (id) ON UPDATE CASCADE ON DELETE CASCADE
+    CONSTRAINT "FKCityResearcher" FOREIGN KEY (city_id) REFERENCES public.city (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT "FKCountryResearcher" FOREIGN KEY (country_id) REFERENCES public.country (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT "FKInstitutionResearcher" FOREIGN KEY (institution_id) REFERENCES public.institution (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE
 );
 CREATE TABLE IF NOT EXISTS public.researcher_address (
     id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -178,7 +174,7 @@ CREATE TABLE IF NOT EXISTS public.researcher_address (
     country character varying(100),
     uf character varying(5),
     CONSTRAINT "PK_180e58d987170694c2c11424916" PRIMARY KEY (id),
-    CONSTRAINT "FKAddressResearcher" FOREIGN KEY (researcher_id) REFERENCES public.researcher (id) ON UPDATE CASCADE ON DELETE CASCADE
+    CONSTRAINT "FKAddressResearcher" FOREIGN KEY (researcher_id) REFERENCES public.researcher (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE
 );
 CREATE TABLE IF NOT EXISTS public.researcher_area_expertise (
     id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -192,13 +188,19 @@ CREATE TABLE IF NOT EXISTS public.researcher_area_expertise (
     great_area_expertise_id uuid,
     area_specialty_id uuid,
     CONSTRAINT "PK_35338c2e178fa10e7b30966a4fc" PRIMARY KEY (id),
-    CONSTRAINT "FKResearcherAreaExpertise" FOREIGN KEY (researcher_id) REFERENCES public.researcher (id) ON UPDATE CASCADE ON DELETE CASCADE,
-    CONSTRAINT "FKSubAreaExpertise" FOREIGN KEY (sub_area_expertise_id) REFERENCES public.sub_area_expertise (id) ON UPDATE CASCADE ON DELETE CASCADE,
-    CONSTRAINT "FkAreaExpertise" FOREIGN KEY (area_expertise_id) REFERENCES public.area_expertise (id) ON UPDATE CASCADE ON DELETE CASCADE,
-    CONSTRAINT "FkAreaSpecialty" FOREIGN KEY (area_specialty_id) REFERENCES public.area_specialty (id) ON UPDATE CASCADE ON DELETE CASCADE,
-    CONSTRAINT "FkGreatAreaExpertise" FOREIGN KEY (great_area_expertise_id) REFERENCES public.great_area_expertise (id) ON UPDATE CASCADE ON DELETE CASCADE
+    CONSTRAINT "FKResearcherAreaExpertise" FOREIGN KEY (researcher_id) REFERENCES public.researcher (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT "FKSubAreaExpertise" FOREIGN KEY (sub_area_expertise_id) REFERENCES public.sub_area_expertise (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT "FkAreaExpertise" FOREIGN KEY (area_expertise_id) REFERENCES public.area_expertise (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT "FkAreaSpecialty" FOREIGN KEY (area_specialty_id) REFERENCES public.area_specialty (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT "FkGreatAreaExpertise" FOREIGN KEY (great_area_expertise_id) REFERENCES public.great_area_expertise (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE
 );
-
+CREATE TYPE public.bibliographic_production_type_enum AS ENUM (
+    'BOOK',
+    'BOOK_CHAPTER',
+    'ARTICLE',
+    'WORK_IN_EVENT',
+    'TEXT_IN_NEWSPAPER_MAGAZINE'
+);
 CREATE TABLE IF NOT EXISTS public.bibliographic_production (
     id uuid NOT NULL DEFAULT uuid_generate_v4(),
     title character varying(500) NOT NULL,
@@ -239,8 +241,7 @@ CREATE TABLE IF NOT EXISTS public.software (
     researcher_id uuid,
     year smallint,
     is_new boolean DEFAULT true,
-    CONSTRAINT software_pkey PRIMARY KEY (id),
-    CONSTRAINT fk_researcher_id FOREIGN KEY (researcher_id) REFERENCES public.researcher (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE
+    CONSTRAINT software_pkey PRIMARY KEY (id)
 );
 CREATE TABLE IF NOT EXISTS public.patent (
     id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -250,14 +251,12 @@ CREATE TABLE IF NOT EXISTS public.patent (
     relevance boolean NOT NULL DEFAULT false,
     has_image boolean NOT NULL DEFAULT false,
     development_year character varying(10),
-    details TEXT,
+    details character varying(2500),
     researcher_id uuid,
-    code VARCHAR UNIQUE,
     grant_date timestamp without time zone,
     deposit_date character varying(255),
     is_new boolean DEFAULT true,
-    CONSTRAINT patent_pkey PRIMARY KEY (id),
-    CONSTRAINT fk_researcher_id FOREIGN KEY (researcher_id) REFERENCES public.researcher (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE
+    CONSTRAINT patent_pkey PRIMARY KEY (id)
 );
 CREATE TABLE IF NOT EXISTS public.research_report (
     id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -268,8 +267,7 @@ CREATE TABLE IF NOT EXISTS public.research_report (
     financing_institutionc character varying(255),
     year smallint,
     is_new boolean DEFAULT true,
-    CONSTRAINT research_report_pkey PRIMARY KEY (id),
-    CONSTRAINT fk_researcher_id FOREIGN KEY (researcher_id) REFERENCES public.researcher (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE
+    CONSTRAINT research_report_pkey PRIMARY KEY (id)
 );
 CREATE TABLE IF NOT EXISTS public.guidance (
     id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -282,8 +280,7 @@ CREATE TABLE IF NOT EXISTS public.guidance (
     status character varying(100),
     year smallint,
     is_new boolean DEFAULT true,
-    CONSTRAINT guidance_pkey PRIMARY KEY (id),
-    CONSTRAINT fk_researcher_id FOREIGN KEY (researcher_id) REFERENCES public.researcher (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE
+    CONSTRAINT guidance_pkey PRIMARY KEY (id)
 );
 CREATE TABLE IF NOT EXISTS public.brand (
     id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -296,8 +293,7 @@ CREATE TABLE IF NOT EXISTS public.brand (
     researcher_id uuid,
     year smallint,
     is_new boolean DEFAULT true,
-    CONSTRAINT brand_pkey PRIMARY KEY (id),
-    CONSTRAINT fk_researcher_id FOREIGN KEY (researcher_id) REFERENCES public.researcher (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE
+    CONSTRAINT brand_pkey PRIMARY KEY (id)
 );
 CREATE TABLE IF NOT EXISTS public.participation_events (
     id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -310,8 +306,7 @@ CREATE TABLE IF NOT EXISTS public.participation_events (
     researcher_id uuid,
     year smallint,
     is_new boolean DEFAULT true,
-    CONSTRAINT participation_events_pkey PRIMARY KEY (id),
-    CONSTRAINT fk_researcher_id FOREIGN KEY (researcher_id) REFERENCES public.researcher (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE
+    CONSTRAINT participation_events_pkey PRIMARY KEY (id)
 );
 CREATE TABLE IF NOT EXISTS public.event_organization (
     id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -324,8 +319,7 @@ CREATE TABLE IF NOT EXISTS public.event_organization (
     duration_in_weeks smallint,
     year smallint,
     is_new boolean DEFAULT true,
-    CONSTRAINT event_organization_pkey PRIMARY KEY (id),
-    CONSTRAINT fk_researcher_id FOREIGN KEY (researcher_id) REFERENCES public.researcher (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE
+    CONSTRAINT event_organization_pkey PRIMARY KEY (id)
 );
 CREATE TABLE IF NOT EXISTS public.bibliographic_production_article (
     id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -348,30 +342,6 @@ CREATE TABLE IF NOT EXISTS public.bibliographic_production_article (
     CONSTRAINT "PK_3a53ca9c0bd82c629e7a14ef0f4" PRIMARY KEY (id),
     CONSTRAINT "FKPeriodicalMagazineArticle" FOREIGN KEY (periodical_magazine_id) REFERENCES public.periodical_magazine (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE,
     CONSTRAINT "FKPublicationArticle" FOREIGN KEY (bibliographic_production_id) REFERENCES public.bibliographic_production (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE
-);
-CREATE TABLE IF NOT EXISTS public.bibliographic_production_work_in_event(
-    bibliographic_production_id uuid NOT NULL UNIQUE,
-    event_classification character varying(100),
-    event_name character varying(600),
-    event_city character varying(255),
-    event_year integer,
-    proceedings_title character varying(600),
-    volume character varying(30),
-    issue character varying(30),
-    series character varying(100),
-    start_page character varying(30),
-    end_page character varying(30),
-    publisher_name character varying(255),
-    publisher_city character varying(255),
-    event_name_english character varying(600),
-    identifier_number character varying(100),
-    isbn character varying(20),
-    created_at timestamp without time zone NOT NULL DEFAULT now(),
-    updated_at timestamp without time zone,
-    deleted_at timestamp without time zone,
-    CONSTRAINT pk_bibliographic_production_event_work PRIMARY KEY (bibliographic_production_id),
-    CONSTRAINT fk_bibliographic_production_event_work_production FOREIGN KEY (bibliographic_production_id) 
-        REFERENCES public.bibliographic_production (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE
 );
 CREATE TABLE IF NOT EXISTS public.bibliographic_production_book (
     id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -418,11 +388,8 @@ CREATE TABLE IF NOT EXISTS public.research_dictionary (
 );
 CREATE TABLE IF NOT EXISTS public.graduate_program(
     graduate_program_id uuid NOT NULL DEFAULT uuid_generate_v4(),
-    code VARCHAR(100),
+    code VARCHAR(100) UNIQUE,
     name VARCHAR(100) NOT NULL,
-    name_en VARCHAR(100),
-    basic_area VARCHAR(100), 
-    cooperation_project VARCHAR(100),
     area VARCHAR(100) NOT NULL,
     modality VARCHAR(100) NOT NULL,
     TYPE VARCHAR(100) NULL,
@@ -436,15 +403,11 @@ CREATE TABLE IF NOT EXISTS public.graduate_program(
     description TEXT,
     visible bool DEFAULT FALSE,
     site TEXT,
-    coordinator VARCHAR(100), 
-    email VARCHAR(100),
-    start DATE, 
-    phone VARCHAR(255), 
-    periodicity VARCHAR(50), 
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (graduate_program_id),
-    FOREIGN KEY (institution_id) REFERENCES institution (id) ON UPDATE CASCADE ON DELETE CASCADE
+    FOREIGN KEY (institution_id) REFERENCES institution (id),
+    UNIQUE (name, institution_id)
 );
 CREATE TABLE IF NOT EXISTS public.graduate_program_researcher(
     graduate_program_id uuid NOT NULL,
@@ -454,8 +417,8 @@ CREATE TABLE IF NOT EXISTS public.graduate_program_researcher(
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (graduate_program_id, researcher_id),
-    FOREIGN KEY (researcher_id) REFERENCES researcher (id) ON UPDATE  CASCADE ON DELETE CASCADE,
-    FOREIGN KEY (graduate_program_id) REFERENCES graduate_program (graduate_program_id) ON UPDATE  CASCADE ON DELETE CASCADE
+    FOREIGN KEY (researcher_id) REFERENCES researcher (id),
+    FOREIGN KEY (graduate_program_id) REFERENCES graduate_program (graduate_program_id)
 );
 CREATE TABLE IF NOT EXISTS public.graduate_program_student(
     graduate_program_id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -464,17 +427,8 @@ CREATE TABLE IF NOT EXISTS public.graduate_program_student(
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (graduate_program_id, researcher_id, year),
-    FOREIGN KEY (researcher_id) REFERENCES researcher (id) ON UPDATE  CASCADE ON DELETE CASCADE,
-    FOREIGN KEY (graduate_program_id) REFERENCES graduate_program (graduate_program_id) ON UPDATE  CASCADE ON DELETE CASCADE
-);
-CREATE TABLE IF NOT EXISTS public.research_lines_programs (
-    graduate_program_id uuid NOT NULL DEFAULT uuid_generate_v4(),
-    name TEXT NOT NULL,
-    area VARCHAR(255) NOT NULL,
-    start_year INT,
-    end_year INT,
-    PRIMARY KEY (graduate_program_id, name),
-    FOREIGN KEY (graduate_program_id) REFERENCES graduate_program (graduate_program_id) ON UPDATE  CASCADE ON DELETE CASCADE
+    FOREIGN KEY (researcher_id) REFERENCES researcher (id),
+    FOREIGN KEY (graduate_program_id) REFERENCES graduate_program (graduate_program_id)
 );
 CREATE TABLE IF NOT EXISTS public.JCR (
     rank character varying,
@@ -488,7 +442,7 @@ CREATE TABLE IF NOT EXISTS public.JCR (
     citableItems character varying,
     citedHalfLife character varying,
     citingHalfLife character varying,
-    jif2019 double precision,
+    jif2019 character varying,
     url_revista character varying
 );
 CREATE TABLE IF NOT EXISTS public.researcher_production (
@@ -502,16 +456,15 @@ CREATE TABLE IF NOT EXISTS public.researcher_production (
     software integer,
     brand integer,
     great_area text,
-    great_area_ text[],
     area_specialty text,
     city character varying(100),
     organ character varying(100),
     CONSTRAINT researcher_production_pkey PRIMARY KEY (researcher_production_id),
-    CONSTRAINT researcher_production_researcher_id_fkey FOREIGN KEY (researcher_id) REFERENCES public.researcher (id) ON UPDATE  CASCADE ON DELETE CASCADE
+    CONSTRAINT researcher_production_researcher_id_fkey FOREIGN KEY (researcher_id) REFERENCES public.researcher (id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION
 );
 CREATE TABLE IF NOT EXISTS public.foment (
     id uuid NOT NULL DEFAULT uuid_generate_v4(),
-    researcher_id uuid REFERENCES researcher(id) ON DELETE CASCADE ON UPDATE  CASCADE,
+    researcher_id uuid REFERENCES researcher(id) ON DELETE CASCADE,
     modality_code character varying(50),
     modality_name character varying(255),
     call_title character varying(255),
@@ -531,7 +484,7 @@ CREATE TABLE education (
     key_words VARCHAR(255),
     institution VARCHAR(255),
     CONSTRAINT pk_education PRIMARY KEY (id),
-    CONSTRAINT fk_researcher_education FOREIGN KEY (researcher_id) REFERENCES public.researcher (id) ON UPDATE  CASCADE ON DELETE CASCADE
+    CONSTRAINT fk_researcher_education FOREIGN KEY (researcher_id) REFERENCES public.researcher (id)
 );
 CREATE TABLE IF NOT EXISTS public.openalex_article (
     id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -558,7 +511,7 @@ CREATE TABLE IF NOT EXISTS public.openalex_researcher (
     scopus character varying(255),
     orcid character varying(255),
     openalex character varying(255),
-    CONSTRAINT fk_researcher_op FOREIGN KEY (researcher_id) REFERENCES public.researcher (id) ON UPDATE  CASCADE ON DELETE CASCADE
+    CONSTRAINT fk_researcher_op FOREIGN KEY (researcher_id) REFERENCES public.researcher (id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION
 );
 CREATE TABLE IF NOT EXISTS public.researcher_ind_prod (
     id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -573,7 +526,7 @@ CREATE TABLE IF NOT EXISTS public.researcher_ind_prod (
     ind_prod_not_granted_patent numeric(10, 3),
     ind_prod_guidance numeric(10, 3),
     CONSTRAINT "PKRIndProd" PRIMARY KEY (researcher_id, year),
-    CONSTRAINT "FKRIndProd" FOREIGN KEY (researcher_id) REFERENCES public.researcher (id) ON UPDATE CASCADE ON DELETE CASCADE
+    CONSTRAINT "FKRIndProd" FOREIGN KEY (researcher_id) REFERENCES public.researcher (id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION
 );
 CREATE TABLE public.graduate_program_ind_prod (
     id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
@@ -588,8 +541,8 @@ CREATE TABLE public.graduate_program_ind_prod (
     ind_prod_not_granted_patent numeric(10, 3),
     ind_prod_guidance numeric(10, 3)
 );
-CREATE TABLE IF NOT EXISTS research_group (
-    id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+CREATE TABLE IF NOT EXISTS research_group(
+    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
     name character varying(200),
     institution character varying(200),
     first_leader character varying(200),
@@ -603,20 +556,28 @@ CREATE TABLE IF NOT EXISTS research_group (
     group_identifier character varying(200),
     year int,
     institution_name character varying(200),
-    category character varying(200),
-    UNIQUE (name, institution),
-    UNIQUE (group_identifier)
+    category character varying(200)
 );
-CREATE TABLE IF NOT EXISTS research_group_researcher (
-      research_group_id uuid NOT NULL,
-      researcher_id uuid NOT NULL,
-
-      PRIMARY KEY (research_group_id, researcher_id),
-      FOREIGN KEY (researcher_id) REFERENCES public.researcher (id) ON DELETE CASCADE ON UPDATE CASCADE,
-      FOREIGN KEY (research_group_id) REFERENCES research_group (id) ON DELETE CASCADE ON UPDATE CASCADE,
-
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP
+CREATE TABLE incite_graduate_program(
+    incite_graduate_program_id uuid NOT NULL DEFAULT uuid_generate_v4(),
+    name VARCHAR(255) NOT NULL,
+    description VARCHAR(500) NULL,
+    link VARCHAR(500) NULL,
+    institution_id uuid NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    visible bool DEFAULT FALSE,
+    PRIMARY KEY (incite_graduate_program_id),
+    FOREIGN KEY (institution_id) REFERENCES institution (id)
+);
+CREATE TABLE incite_graduate_program_researcher(
+    incite_graduate_program_id uuid NOT NULL DEFAULT uuid_generate_v4(),
+    researcher_id uuid NOT NULL DEFAULT uuid_generate_v4(),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (incite_graduate_program_id, researcher_id),
+    FOREIGN KEY (researcher_id) REFERENCES researcher (id),
+    FOREIGN KEY (incite_graduate_program_id) REFERENCES incite_graduate_program (incite_graduate_program_id)
 );
 CREATE TABLE research_lines(
     id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -631,7 +592,7 @@ CREATE TABLE research_lines(
 );
 CREATE TABLE research_project (
     id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-    researcher_id uuid NOT NULL REFERENCES public.researcher(id) ON UPDATE CASCADE ON DELETE CASCADE,
+    researcher_id uuid NOT NULL REFERENCES public.researcher(id),
     start_year INT,
     end_year INT,
     agency_code VARCHAR(255),
@@ -646,19 +607,19 @@ CREATE TABLE research_project (
     description TEXT
 );
 CREATE TABLE research_project_components (
-    project_id uuid NOT NULL REFERENCES public.research_project(id) ON UPDATE CASCADE ON DELETE CASCADE,
+    project_id uuid NOT NULL REFERENCES public.research_project(id),
     name VARCHAR(255),
     lattes_id VARCHAR(255),
     citations VARCHAR
 );
 CREATE TABLE research_project_foment (
-    project_id uuid NOT NULL REFERENCES public.research_project(id) ON UPDATE CASCADE ON DELETE CASCADE,
+    project_id uuid NOT NULL REFERENCES public.research_project(id),
     agency_name VARCHAR(255),
     agency_code VARCHAR(255),
     nature VARCHAR(255)
 );
 CREATE TABLE research_project_production (
-    project_id uuid NOT NULL REFERENCES public.research_project(id) ON UPDATE CASCADE ON DELETE CASCADE,
+    project_id uuid NOT NULL REFERENCES public.research_project(id),
     title TEXT,
     type VARCHAR(255)
 );
@@ -672,7 +633,7 @@ CREATE TABLE IF NOT EXISTS public.technical_work (
     duration INT,
     year INT,
     CONSTRAINT fk_researcher
-        FOREIGN KEY (researcher_id) REFERENCES public.researcher(id) ON UPDATE CASCADE ON DELETE CASCADE
+        FOREIGN KEY (researcher_id) REFERENCES public.researcher(id)
 );
 CREATE TABLE IF NOT EXISTS public.technical_work_presentation (
     id uuid NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
@@ -684,7 +645,7 @@ CREATE TABLE IF NOT EXISTS public.technical_work_presentation (
 	event_name VARCHAR,
 	promoting_institution VARCHAR,
     CONSTRAINT fk_researcher
-        FOREIGN KEY (researcher_id) REFERENCES public.researcher(id) ON UPDATE CASCADE ON DELETE CASCADE
+        FOREIGN KEY (researcher_id) REFERENCES public.researcher(id)
 );
 CREATE TABLE IF NOT EXISTS public.technical_work_program (
     id uuid NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
@@ -695,7 +656,7 @@ CREATE TABLE IF NOT EXISTS public.technical_work_program (
     year INT,
 	theme VARCHAR,
     CONSTRAINT fk_researcher
-        FOREIGN KEY (researcher_id) REFERENCES public.researcher(id) ON UPDATE CASCADE ON DELETE CASCADE
+        FOREIGN KEY (researcher_id) REFERENCES public.researcher(id)
 );
 CREATE TABLE IF NOT EXISTS public.technological_product (
     id uuid NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
@@ -706,7 +667,7 @@ CREATE TABLE IF NOT EXISTS public.technological_product (
 	type VARCHAR,
     year INT,
     CONSTRAINT fk_researcher
-        FOREIGN KEY (researcher_id) REFERENCES public.researcher(id) ON UPDATE CASCADE ON DELETE CASCADE
+        FOREIGN KEY (researcher_id) REFERENCES public.researcher(id)
 );
 CREATE TABLE IF NOT EXISTS public.didactic_material (
     id uuid NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
@@ -717,7 +678,7 @@ CREATE TABLE IF NOT EXISTS public.didactic_material (
 	description TEXT,
     year INT,
     CONSTRAINT fk_researcher
-        FOREIGN KEY (researcher_id) REFERENCES public.researcher(id) ON UPDATE CASCADE ON DELETE CASCADE
+        FOREIGN KEY (researcher_id) REFERENCES public.researcher(id)
 );
 CREATE TABLE IF NOT EXISTS public.artistic_production (
     id uuid NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
@@ -725,7 +686,7 @@ CREATE TABLE IF NOT EXISTS public.artistic_production (
     title TEXT NOT NULL,
     year INT,
     CONSTRAINT fk_researcher
-        FOREIGN KEY (researcher_id) REFERENCES public.researcher(id) ON UPDATE CASCADE ON DELETE CASCADE
+        FOREIGN KEY (researcher_id) REFERENCES public.researcher(id)
 );
 CREATE TABLE IF NOT EXISTS public.relevant_production (
     researcher_id uuid NOT NULL,
@@ -737,11 +698,11 @@ CREATE TABLE IF NOT EXISTS public.relevant_production (
     CONSTRAINT fk_researcher
         FOREIGN KEY (researcher_id)
         REFERENCES public.researcher(id)
-        ON UPDATE CASCADE ON DELETE CASCADE
+        ON DELETE CASCADE
 );
 CREATE TABLE IF NOT EXISTS public.researcher_professional_experience (
     id uuid NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
-    researcher_id uuid NOT NULL REFERENCES public.researcher(id) ON UPDATE CASCADE ON DELETE CASCADE, 
+    researcher_id uuid NOT NULL REFERENCES public.researcher(id),
     enterprise VARCHAR(255),
     start_year INT, 
     end_year INT, 
@@ -752,23 +713,6 @@ CREATE TABLE IF NOT EXISTS public.researcher_professional_experience (
     workload_hours_weekly VARCHAR(255),
     exclusive_dedication BOOLEAN,
     additional_info TEXT
-);
-CREATE TABLE public.labs (
-    id uuid NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
-    hashed_id VARCHAR(32) NOT NULL,
-    type VARCHAR(100) NOT NULL,
-    location TEXT,
-    name TEXT NOT NULL,
-    description TEXT,
-    website TEXT,
-    activities TEXT,
-    areas TEXT,
-    campus TEXT,
-    institution_id UUID,
-    researcher_id UUID,
-    responsible TEXT,
-    FOREIGN KEY (researcher_id) REFERENCES researcher (id) ON UPDATE CASCADE ON DELETE CASCADE,
-    FOREIGN KEY (institution_id) REFERENCES institution (id) ON UPDATE CASCADE ON DELETE CASCADE
 );
 CREATE TABLE IF NOT EXISTS logs.routine (
     type routine_type NOT NULL,
@@ -792,89 +736,59 @@ CREATE TABLE IF NOT EXISTS ufmg.departament (
     dep_site TEXT,
     dep_sigla VARCHAR(255),
     dep_tel VARCHAR(255),
+    img_data BYTEA,
     PRIMARY KEY (dep_id)
 );
 CREATE TABLE IF NOT EXISTS ufmg.researcher (
-    researcher_id UUID PRIMARY KEY REFERENCES public.researcher(id) ON UPDATE CASCADE ON DELETE CASCADE,
-    
-    -- Campos comuns
-    full_name VARCHAR(255),
-    gender VARCHAR(255),
-    status_code VARCHAR(255),
-    work_regime VARCHAR(255),
-    job_class CHAR,
-    job_title VARCHAR(255),
-    job_rank VARCHAR(255),
-    job_reference_code VARCHAR(255),
-    academic_degree VARCHAR(255),
-    organization_entry_date DATE,
-    last_promotion_date DATE,
-    
-    -- Novos campos
-    employment_status_description VARCHAR(255),
-    department_name VARCHAR(255),
-    career_category VARCHAR(255),
-    academic_unit VARCHAR(255),
-    unit_code VARCHAR(255),
-    function_code VARCHAR(255),
-    position_code VARCHAR(255),
-    leadership_start_date DATE,
-    leadership_end_date DATE,
-    current_function_name VARCHAR(255),
-    function_location VARCHAR(255),
-    
-    -- Campos que estavam só na tabela antiga
-    registration_number VARCHAR(200),           
-    ufmg_registration_number VARCHAR(200),      
-    semester_reference VARCHAR(6)               
+    researcher_id uuid,
+    matric character varying(255),
+    inscUFMG character varying(255),
+    nome character varying(255),
+    genero character varying(255),
+    situacao character varying(255),
+    rt character varying(255),
+    clas character varying(255),
+    cargo character varying(255),
+    classe character varying(255),
+    ref character varying(255),
+    titulacao character varying(255),
+    entradaNaUFMG DATE,
+    progressao DATE,
+    semester character varying(6)
 );
 CREATE TABLE IF NOT EXISTS ufmg.technician (
-    technician_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-
-    -- Campos comuns
-    full_name VARCHAR(255),
-    gender VARCHAR(255),
-    status_code VARCHAR(255),
-    work_regime VARCHAR(255),
-    job_class CHAR,
-    job_title VARCHAR(255),
-    job_rank VARCHAR(255),
-    job_reference_code VARCHAR(255),
-    academic_degree VARCHAR(255),
-    organization_entry_date DATE,
-    last_promotion_date DATE,
-
-    -- Novos campos
-    employment_status_description VARCHAR(255),
-    department_name VARCHAR(255),
-    career_category VARCHAR(255),
-    academic_unit VARCHAR(255),
-    unit_code VARCHAR(255),
-    function_code VARCHAR(255),
-    position_code VARCHAR(255),
-    leadership_start_date DATE,
-    leadership_end_date DATE,
-    current_function_name VARCHAR(255),
-    function_location VARCHAR(255),
-
-    -- Campos antigos
-    registration_number VARCHAR(255),
-    ufmg_registration_number VARCHAR(255),
-    semester_reference VARCHAR(6)
+    technician_id uuid,
+    matric INT UNIQUE,
+    ins_ufmg VARCHAR(255),
+    nome VARCHAR(255),
+    genero VARCHAR(255),
+    deno_sit VARCHAR(255),
+    rt VARCHAR(255),
+    classe VARCHAR(255),
+    cargo VARCHAR(255),
+    nivel VARCHAR(255),
+    ref VARCHAR(255),
+    titulacao VARCHAR(255),
+    setor VARCHAR(255),
+    detalhe_setor VARCHAR(255),
+    dting_org DATE,
+    data_prog DATE,
+    semester character varying(255),
+    PRIMARY KEY (technician_id)
 );
 CREATE TABLE IF NOT EXISTS ufmg.departament_technician (
     dep_id character varying(255),
     technician_id uuid,
     PRIMARY KEY (dep_id, technician_id),
-    FOREIGN KEY (dep_id) REFERENCES ufmg.departament (dep_id) ON UPDATE CASCADE ON DELETE CASCADE,
-    FOREIGN KEY (technician_id) REFERENCES ufmg.technician (technician_id) ON UPDATE CASCADE ON DELETE CASCADE
+    FOREIGN KEY (dep_id) REFERENCES ufmg.departament (dep_id),
+    FOREIGN KEY (technician_id) REFERENCES ufmg.technician (technician_id)
 );
 CREATE TABLE IF NOT EXISTS ufmg.departament_researcher (
     dep_id VARCHAR(20),
     researcher_id uuid NOT NULL,
     PRIMARY KEY (dep_id, researcher_id),
-    FOREIGN KEY (dep_id) REFERENCES ufmg.departament (dep_id) ON UPDATE CASCADE ON DELETE CASCADE,
-    FOREIGN KEY (researcher_id) REFERENCES researcher (id) ON UPDATE CASCADE ON DELETE CASCADE
+    FOREIGN KEY (dep_id) REFERENCES ufmg.departament (dep_id),
+    FOREIGN KEY (researcher_id) REFERENCES researcher (id)
 );
 CREATE TABLE IF NOT EXISTS ufmg.researcher_data(
     nome VARCHAR(255),
@@ -896,37 +810,37 @@ CREATE TABLE IF NOT EXISTS ufmg.mandate(
 );
 CREATE TABLE IF NOT EXISTS embeddings.abstract (
     id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-    reference_id uuid REFERENCES public.researcher(id) ON UPDATE CASCADE ON DELETE CASCADE,
+    reference_id uuid REFERENCES public.researcher(id),
     embeddings vector,
     price numeric(20, 18)
 );
 CREATE TABLE IF NOT EXISTS embeddings.article (
     id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-    reference_id uuid REFERENCES public.bibliographic_production(id) ON UPDATE CASCADE ON DELETE CASCADE, 
+    reference_id uuid REFERENCES public.bibliographic_production(id),
     embeddings vector,
     price numeric(20, 18)
 );
 CREATE TABLE IF NOT EXISTS embeddings.article_abstract (
     id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-    reference_id uuid REFERENCES public.openalex_article(article_id) ON UPDATE CASCADE ON DELETE CASCADE,
+    reference_id uuid REFERENCES public.openalex_article(article_id),
     embeddings vector,
     price numeric(20, 18)
 );
 CREATE TABLE IF NOT EXISTS embeddings.book (
     id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-    reference_id uuid REFERENCES public.bibliographic_production(id) ON UPDATE CASCADE ON DELETE CASCADE,
+    reference_id uuid REFERENCES public.bibliographic_production(id),
     embeddings vector,
     price numeric(20, 18)
 );
 CREATE TABLE IF NOT EXISTS embeddings.event (
     id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-    reference_id uuid REFERENCES public.bibliographic_production(id) ON UPDATE CASCADE ON DELETE CASCADE,
+    reference_id uuid REFERENCES public.bibliographic_production(id),
     embeddings vector,
     price numeric(20, 18)
 );
 CREATE TABLE IF NOT EXISTS embeddings.patent (
     id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-    reference_id uuid REFERENCES public.patent(id) ON UPDATE CASCADE ON DELETE CASCADE,
+    reference_id uuid REFERENCES public.patent(id),
     embeddings vector,
     price numeric(20, 18)
 );
@@ -943,322 +857,3 @@ CREATE INDEX ON bibliographic_production USING gin (title gin_trgm_ops);
 CREATE INDEX ON brand USING gin (title gin_trgm_ops);
 CREATE INDEX ON software USING gin (title gin_trgm_ops);
 CREATE INDEX ON event_organization USING gin (title gin_trgm_ops);
-
---- admin
--- Criação dos novos esquemas
-CREATE SCHEMA IF NOT EXISTS admin;
-CREATE SCHEMA IF NOT EXISTS admin_ufmg;
-
--- Tabela Institution no esquema admin
-CREATE TABLE IF NOT EXISTS admin.institution(
-    institution_id uuid DEFAULT uuid_generate_v4(),
-    name VARCHAR(255) NOT NULL,
-    acronym VARCHAR(50) UNIQUE,
-    lattes_id CHAR(16),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (institution_id)
-);
-
--- Tabela Researcher no esquema admin
-CREATE TABLE IF NOT EXISTS admin.researcher(
-    researcher_id uuid NOT NULL DEFAULT uuid_generate_v4(),
-    name VARCHAR(150) NOT NULL,
-    lattes_id VARCHAR(20),
-    extra_field VARCHAR(255),
-    status BOOL NOT NULL DEFAULT True,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (researcher_id),
-    UNIQUE (lattes_id)
-);
-
--- Tabela de Junção Researcher_Institution no esquema admin
-CREATE TABLE IF NOT EXISTS admin.researcher_institution(
-    researcher_institution_id uuid DEFAULT uuid_generate_v4(),
-    researcher_id uuid NOT NULL,
-    institution_id uuid NOT NULL,
-    start_date DATE DEFAULT CURRENT_DATE, -- Opcional: Data de início do vínculo
-    end_date DATE, -- Opcional: Data de fim do vínculo
-    is_current BOOLEAN DEFAULT TRUE, -- Opcional: Indica se é o vínculo atual
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (researcher_institution_id),
-    FOREIGN KEY (researcher_id) REFERENCES admin.researcher (researcher_id) ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (institution_id) REFERENCES admin.institution (institution_id) ON DELETE CASCADE ON UPDATE CASCADE,
-    UNIQUE (researcher_id, institution_id, is_current) -- Garante que um pesquisador só tenha um vínculo atual com uma instituição
-);
--- Tabela Graduate_Program no esquema admin
-CREATE TABLE IF NOT EXISTS admin.graduate_program(
-      graduate_program_id uuid NOT NULL DEFAULT uuid_generate_v4(),
-      code VARCHAR(100) UNIQUE,
-      name VARCHAR(100) NOT NULL,
-      area VARCHAR(100) NOT NULL,
-      modality VARCHAR(100) NOT NULL,
-      TYPE VARCHAR(100) NULL,
-      rating VARCHAR(5),
-      institution_id uuid NOT NULL,
-      state character varying(4) DEFAULT 'BA'::character varying,
-      city character varying(100) DEFAULT 'Salvador'::character varying,
-      region character varying(100) DEFAULT 'Nordeste'::character varying,
-      url_image VARCHAR(200) NULL,
-      acronym character varying(100),
-      description TEXT,
-      visible bool DEFAULT FALSE,
-      site TEXT,
-      menagers TEXT[],
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      PRIMARY KEY (graduate_program_id),
-      FOREIGN KEY (institution_id) REFERENCES admin.institution (institution_id) ON DELETE CASCADE ON UPDATE CASCADE
-);
-
-CREATE TABLE IF NOT EXISTS admin.graduate_program_researcher(
-      graduate_program_id uuid NOT NULL,
-      researcher_id uuid NOT NULL,
-      year INT [],
-      type_ relationship,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      PRIMARY KEY (graduate_program_id, researcher_id),
-      FOREIGN KEY (researcher_id) REFERENCES admin.researcher (researcher_id) ON DELETE CASCADE ON UPDATE CASCADE,
-      FOREIGN KEY (graduate_program_id) REFERENCES admin.graduate_program (graduate_program_id) ON DELETE CASCADE ON UPDATE CASCADE
-);
-CREATE TABLE IF NOT EXISTS admin.graduate_program_student(
-      graduate_program_id uuid NOT NULL,
-      researcher_id uuid NOT NULL,
-      year INT [],
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      PRIMARY KEY (graduate_program_id, researcher_id, year),
-      FOREIGN KEY (researcher_id) REFERENCES admin.researcher (researcher_id) ON DELETE CASCADE ON UPDATE CASCADE,
-      FOREIGN KEY (graduate_program_id) REFERENCES admin.graduate_program (graduate_program_id) ON DELETE CASCADE ON UPDATE CASCADE
-);
-
--- Tabela Weights no esquema admin
-CREATE TABLE IF NOT EXISTS admin.weights (
-      institution_id uuid PRIMARY KEY,
-      a1 numeric(20, 3),
-      a2 numeric(20, 3),
-      a3 numeric(20, 3),
-      a4 numeric(20, 3),
-      b1 numeric(20, 3),
-      b2 numeric(20, 3),
-      b3 numeric(20, 3),
-      b4 numeric(20, 3),
-      c numeric(20, 3),
-      sq numeric(20, 3),
-      book numeric(20, 3),
-      book_chapter numeric(20, 3),
-      software character varying,
-      patent_granted character varying,
-      patent_not_granted character varying,
-      report character varying,
-      f1 numeric(20, 3) DEFAULT 0,
-      f2 numeric(20, 3) DEFAULT 0,
-      f3 numeric(20, 3) DEFAULT 0,
-      f4 numeric(20, 3) DEFAULT 0,
-      f5 numeric(20, 3) DEFAULT 0,
-      FOREIGN KEY (institution_id) REFERENCES admin.institution (institution_id) ON DELETE CASCADE ON UPDATE CASCADE
-);
-
--- Tabela Roles no esquema admin
-CREATE TABLE IF NOT EXISTS admin.roles (
-      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      role VARCHAR(255) NOT NULL UNIQUE
-);
-
--- Tabela Permission no esquema admin
-CREATE TABLE IF NOT EXISTS admin.permission (
-      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      role_id UUID NOT NULL REFERENCES admin.roles(id) ON DELETE CASCADE ON UPDATE CASCADE,
-      permission VARCHAR(255) NOT NULL,
-      UNIQUE (role_id, permission)
-);
-
--- Tabela Users no esquema admin
-CREATE TABLE IF NOT EXISTS admin.users (
-    user_id uuid NOT NULL DEFAULT uuid_generate_v4(),
-    display_name VARCHAR(255) NOT NULL,
-    email VARCHAR(255) UNIQUE NOT NULL,
-    uid VARCHAR(255) UNIQUE NOT NULL,
-    photo_url TEXT,
-    lattes_id VARCHAR(255),
-    institution_id uuid,
-    provider VARCHAR(255),
-    linkedin VARCHAR(255),
-    verify bool DEFAULT FALSE,
-    shib_id VARCHAR(255),
-    shib_code VARCHAR(255),
-    birth_date VARCHAR(10),
-    course_level VARCHAR(255),
-    first_name VARCHAR(255),
-    registration VARCHAR(255),
-    gender VARCHAR(50),
-    last_name VARCHAR(255),
-    email_status VARCHAR(50),
-    visible_email BOOLEAN,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (user_id),
-    FOREIGN KEY (institution_id) REFERENCES admin.institution (institution_id) ON DELETE SET NULL ON UPDATE CASCADE
-);
-
--- Tabela Users_Roles no esquema admin
-CREATE TABLE IF NOT EXISTS admin.users_roles (
-      role_id UUID NOT NULL,
-      user_id UUID NOT NULL,
-      PRIMARY KEY (role_id, user_id),
-      FOREIGN KEY (user_id) REFERENCES admin.users (user_id) ON DELETE CASCADE ON UPDATE CASCADE,
-      FOREIGN KEY (role_id) REFERENCES admin.roles (id) ON DELETE CASCADE ON UPDATE CASCADE
-);
-
--- Tabela Newsletter_Subscribers no esquema admin
-CREATE TABLE IF NOT EXISTS admin.newsletter_subscribers (
-      id uuid DEFAULT uuid_generate_v4() PRIMARY KEY,
-      email VARCHAR(255) NOT NULL UNIQUE,
-      subscribed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- Tabela Feedback no esquema admin
-CREATE TABLE IF NOT EXISTS admin.feedback (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    name VARCHAR(100) NOT NULL,
-    email VARCHAR(255) NOT NULL,
-    rating INTEGER CHECK (rating >= 0 AND rating <= 10) NOT NULL,
-    description TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
---- SCHEMA admin_ufmg ---
-
--- Tabela admin_ufmg.Researcher
-CREATE TABLE IF NOT EXISTS admin_ufmg.researcher (
-    researcher_id UUID PRIMARY KEY REFERENCES admin.researcher(researcher_id) ON DELETE CASCADE ON UPDATE CASCADE,
-
-    -- Campos comuns
-    full_name VARCHAR(255),
-    gender VARCHAR(255),
-    status_code VARCHAR(255),
-    work_regime VARCHAR(255),
-    job_class CHAR(25),
-    job_title VARCHAR(255),
-    job_rank VARCHAR(255),
-    job_reference_code VARCHAR(255),
-    academic_degree VARCHAR(255),
-    organization_entry_date DATE,
-    last_promotion_date DATE,
-
-    -- Novos campos
-    employment_status_description VARCHAR(255),
-    department_name VARCHAR(255),
-    career_category VARCHAR(255),
-    academic_unit VARCHAR(255),
-    unit_code VARCHAR(255),
-    function_code VARCHAR(255),
-    position_code VARCHAR(255),
-    leadership_start_date DATE,
-    leadership_end_date DATE,
-    current_function_name VARCHAR(255),
-    function_location VARCHAR(255),
-
-    -- Campos que estavam só na tabela antiga
-    registration_number VARCHAR(200),
-    ufmg_registration_number VARCHAR(200),
-    semester_reference VARCHAR(6)
-);
-
--- Tabela admin_ufmg.Technician
-CREATE TABLE IF NOT EXISTS admin_ufmg.technician (
-    technician_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-
-    -- Campos comuns
-    full_name VARCHAR(255),
-    gender VARCHAR(255),
-    status_code VARCHAR(255),
-    work_regime VARCHAR(255),
-    job_class CHAR(25),
-    job_title VARCHAR(255),
-    job_rank VARCHAR(255),
-    job_reference_code VARCHAR(255),
-    academic_degree VARCHAR(255),
-    organization_entry_date DATE,
-    last_promotion_date DATE,
-
-    -- Novos campos
-    employment_status_description VARCHAR(255),
-    department_name VARCHAR(255),
-    career_category VARCHAR(255),
-    academic_unit VARCHAR(255),
-    unit_code VARCHAR(255),
-    function_code VARCHAR(255),
-    position_code VARCHAR(255),
-    leadership_start_date DATE,
-    leadership_end_date DATE,
-    current_function_name VARCHAR(255),
-    function_location VARCHAR(255),
-
-    -- Campos antigos
-    registration_number VARCHAR(255),
-    ufmg_registration_number VARCHAR(255),
-    semester_reference VARCHAR(6)
-);
-
--- Tabela admin_ufmg.Department
-CREATE TABLE IF NOT EXISTS admin_ufmg.department (
-      dep_id VARCHAR(20) PRIMARY KEY,
-      org_cod VARCHAR(3),
-      dep_nom VARCHAR(100),
-      dep_des TEXT,
-      dep_email VARCHAR(100),
-      dep_site VARCHAR(100),
-      dep_sigla VARCHAR(30),
-      dep_tel VARCHAR(20),
-      img_data BYTEA
-);
-
--- Tabela admin_ufmg.Department_Technician
-CREATE TABLE IF NOT EXISTS admin_ufmg.department_technician (
-      dep_id VARCHAR(20),
-      technician_id uuid,
-      PRIMARY KEY (dep_id, technician_id),
-      FOREIGN KEY (dep_id) REFERENCES admin_ufmg.department (dep_id) ON DELETE CASCADE ON UPDATE CASCADE,
-      FOREIGN KEY (technician_id) REFERENCES admin_ufmg.technician (technician_id) ON DELETE CASCADE ON UPDATE CASCADE
-);
-
--- Tabela admin_ufmg.Department_Researcher
-CREATE TABLE IF NOT EXISTS admin_ufmg.department_researcher (
-      dep_id VARCHAR(20),
-      researcher_id uuid NOT NULL,
-      PRIMARY KEY (dep_id, researcher_id),
-      FOREIGN KEY (dep_id) REFERENCES admin_ufmg.department (dep_id) ON DELETE CASCADE ON UPDATE CASCADE,
-      FOREIGN KEY (researcher_id) REFERENCES admin.researcher (researcher_id) ON DELETE CASCADE ON UPDATE CASCADE
-);
-
--- Tabela admin_ufmg.Disciplines
-CREATE TABLE IF NOT EXISTS admin_ufmg.disciplines (
-      discipline_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-      dep_id VARCHAR(20),
-      semester VARCHAR(20),
-      department VARCHAR(255),
-      academic_activity_code VARCHAR(255),
-      academic_activity_name VARCHAR(255),
-      academic_activity_ch VARCHAR(255),
-      demanding_courses VARCHAR(255),
-      oft VARCHAR(50),
-      available_slots VARCHAR(50),
-      occupied_slots VARCHAR(50),
-      percent_occupied_slots VARCHAR(50),
-      schedule VARCHAR(255),
-      language VARCHAR(50),
-      researcher_id uuid [],
-      researcher_name VARCHAR [],
-      status VARCHAR(50),
-      workload VARCHAR [],
-      FOREIGN KEY (dep_id) REFERENCES admin_ufmg.department (dep_id) ON DELETE SET NULL ON UPDATE CASCADE
-);
-
-COMMIT;
-
-ROLLBACK;
-

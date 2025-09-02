@@ -1724,8 +1724,8 @@ async def get_labs(conn, lattes_id, researcher_id):
             AND l.researcher_id = %(researcher_id)s
             """
     SCRIPT_SQL = f"""
-        SELECT id, hashed_id, type, location, name, description, website,
-            activities, areas, campus, institution_id, researcher_id, responsible
+        SELECT l.id, l.hashed_id, l.type, l.location, l.name, l.description, l.website,
+            l.activities, l.areas,l. campus, l.institution_id, l.researcher_id, l.responsible
         FROM public.labs l
             {join_researcher}
         WHERE 1 = 1
