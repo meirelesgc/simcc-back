@@ -107,7 +107,7 @@ def serch_in_name(
     page: int,
     lenght: int,
     lattes_id,
-) -> list[Researcher]:
+):
     researchers = ResearcherRepository.search_in_name(
         name, graduate_program_id, dep_id, page, lenght, lattes_id
     )

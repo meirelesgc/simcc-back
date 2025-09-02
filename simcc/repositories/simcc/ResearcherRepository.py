@@ -196,7 +196,7 @@ def search_in_name(
     lattes_id: str = None,
 ):
     params = {}
-
+    filter_lattes = str()
     join_departament = str()
     filter_departament = str()
     if dep_id:
