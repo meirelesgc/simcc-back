@@ -75,46 +75,22 @@ async def list_researcher_report(conn, filters):
     return await ProductionRepository.list_researcher_report(conn, filters)
 
 
-async def list_guidance_production(
-    conn: Connection,
-    default_filters: DefaultFilters,
-    page: int | None,
-    lenght: int | None,
-):
-    return await ProductionRepository.list_guidance_production(
-        conn, default_filters, page, lenght
-    )
+async def list_guidance_production(conn, filters):
+    return await ProductionRepository.list_guidance_production(conn, filters)
 
 
-async def list_researcher_production_events(
-    conn: Connection,
-    default_filters: DefaultFilters,
-):
+async def list_researcher_production_events(conn, filters):
     return await ProductionRepository.list_researcher_production_events(
-        conn, default_filters
+        conn, filters
     )
 
 
-async def list_research_projects(
-    conn: Connection,
-    default_filters: DefaultFilters,
-    page: int | None,
-    lenght: int | None,
-):
-    return await ProductionRepository.list_research_projects(
-        conn, default_filters, page, lenght
-    )
+async def list_research_projects(conn, filters):
+    return await ProductionRepository.list_research_projects(conn, filters)
 
 
-async def list_papers_magazine(
-    conn: Connection,
-    default_filters: DefaultFilters,
-    page: int | None,
-    lenght: int | None,
-):
-    return await ProductionRepository.list_papers_magazine(
-        conn, default_filters, page, lenght
-    )
+async def list_papers_magazine(conn, filters):
+    return await ProductionRepository.list_papers_magazine(conn, filters)
 
 
 # ---

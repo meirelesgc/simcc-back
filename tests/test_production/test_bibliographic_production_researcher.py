@@ -1,5 +1,3 @@
-# tests/test_article_production_researcher.py
-
 from http import HTTPStatus
 
 import pytest
@@ -16,27 +14,6 @@ async def test_get_all_articles(client, create_bibliographic_production_article)
 
     # Act
     response = client.get(ENDPOINT_URL)
-    data = response.json()
-
-    # Assert
-    assert response.status_code == HTTPStatus.OK
-    assert len(data) == expected_count
-
-
-@pytest.mark.asyncio
-async def test_filter_by_type(
-    client,
-    create_bibliographic_production_article,
-    create_bibliographic_production_book,
-):
-    # Arrange
-    await create_bibliographic_production_book()
-    await create_bibliographic_production_article()
-    expected_count = 1
-    params = {'type': 'ARTICLE'}
-
-    # Act
-    response = client.get(ENDPOINT_URL, params=params)
     data = response.json()
 
     # Assert

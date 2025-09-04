@@ -294,7 +294,6 @@ async def get_pevent_researcher(conn, filters, nature):
         ORDER BY p.title
         {FILTER_PAGINATION}
         """
-    print(SCRIPT_SQL, PARAMS)
     return await conn.select(SCRIPT_SQL, PARAMS)
 
 
@@ -545,7 +544,6 @@ async def list_patent(conn, filters):
         ORDER BY p.title DESC
         {FILTER_PAGINATION};
     """
-    print(SCRIPT_SQL, PARAMS)
     return await conn.select(SCRIPT_SQL, PARAMS)
 
 
@@ -1293,150 +1291,115 @@ async def list_researcher_report(conn, filters):
     return await conn.select(SCRIPT_SQL, PARAMS)
 
 
-async def list_guidance_production(
-    conn: Connection,
-    filters: DefaultFilters,
-    page: int | None,
-    lenght: int | None,
-):
-    params = {}
+async def list_guidance_production(conn, filters):
+    PARAMS = {}
+    DISTINCT_SQL = ''
+    FILTERS_SQL = ''
+    FILTER_PAGINATION = ''
+    FILTER_TERMS = ''
+    FILTER_YEAR = ''
 
-    join_researcher_production = str()
-    join_foment = str()
-    join_program = str()
-    join_institution = str()
-    join_departament = str()
+    join_researcher_production = ''
+    join_foment = ''
+    join_program = ''
+    join_institution = ''
+    join_departament = ''
+    join_group = ''
 
-    filter_distinct = str()
-    query_filters = str()
-    filter_pagination = str()
-
-    if filters.term:  # Acessando via filters.term
-        filter_terms_str, term_params = tools.websearch_filter(
+    if filters.term:
+        FILTER_TERMS, term_params = tools.websearch_filter(
             'g.title', filters.term
         )
-        query_filters += filter_terms_str
-        params.update(term_params)
+        PARAMS.update(term_params)
 
-    if filters.year:  # Acessando via filters.year
-        params['year'] = filters.year
-        query_filters += """
-            AND g.year::INT >= %(year)s
-            """
+    if filters.year:
+        PARAMS['year'] = filters.year
+        FILTER_YEAR = 'AND g.year::INT >= %(year)s'
 
-    if filters.dep_id or filters.departament:  # Acessando via filters
+    if filters.dep_id or filters.departament:
         join_departament = """
-            INNER JOIN ufmg.departament_researcher dpr
-                ON dpr.researcher_id = g.researcher_id
-            INNER JOIN ufmg.departament dp
-                ON dp.dep_id = dpr.dep_id
-            """
-    if filters.dep_id:  # Acessando via filters.dep_id
-        params['dep_id'] = filters.dep_id
-        query_filters += """
-            AND dp.dep_id = %(dep_id)s
-            """
+            INNER JOIN ufmg.departament_researcher dpr ON dpr.researcher_id = g.researcher_id
+            INNER JOIN ufmg.departament dp ON dp.dep_id = dpr.dep_id
+        """
+        if filters.dep_id:
+            PARAMS['dep_id'] = filters.dep_id
+            FILTERS_SQL += ' AND dp.dep_id = %(dep_id)s'
+        if filters.departament:
+            PARAMS['departament'] = filters.departament.split(';')
+            FILTERS_SQL += ' AND dp.dep_nom = ANY(%(departament)s)'
 
-    if filters.departament:  # Acessando via filters.departament
-        params['departament'] = filters.departament.split(';')
-        query_filters += """
-            AND dp.dep_nom = ANY(%(departament)s)
-            """
+    if filters.researcher_id:
+        PARAMS['researcher_id'] = str(filters.researcher_id)
+        FILTERS_SQL += ' AND g.researcher_id = %(researcher_id)s'
 
-    if filters.researcher_id:  # Acessando via filters.researcher_id
-        params['researcher_id'] = str(
-            filters.researcher_id
-        )  # Convertido para string
-        query_filters += """
-            AND g.researcher_id = %(researcher_id)s
-            """
+    if filters.lattes_id:
+        PARAMS['lattes_id'] = filters.lattes_id
+        FILTERS_SQL += ' AND r.lattes_id = %(lattes_id)s'
 
-    if filters.institution:  # Acessando via filters.institution
-        params['institution'] = filters.institution.split(';')
-        join_institution = """
-            INNER JOIN institution i
-                ON r.institution_id = i.id
-            """
-        query_filters += """
-            AND i.name = ANY(%(institution)s)
-            """
+    if filters.institution:
+        join_institution = 'INNER JOIN institution i ON r.institution_id = i.id'
+        PARAMS['institution'] = filters.institution.split(';')
+        FILTERS_SQL += ' AND i.name = ANY(%(institution)s)'
 
-    if filters.graduate_program_id:  # Acessando via filters.graduate_program_id
-        filter_distinct = 'DISTINCT'
-        params['graduate_program_id'] = str(
-            filters.graduate_program_id
-        )  # Convertido para string
+    if filters.graduate_program_id or filters.graduate_program:
+        DISTINCT_SQL = 'DISTINCT'
         join_program = """
-            INNER JOIN graduate_program_researcher gpr
-                ON gpr.researcher_id = g.researcher_id
-            INNER JOIN graduate_program gp
-                ON gpr.graduate_program_id = gp.graduate_program_id
-            """
-        query_filters += """
-            AND gpr.graduate_program_id = %(graduate_program_id)s
-            """
+            INNER JOIN graduate_program_researcher gpr ON gpr.researcher_id = g.researcher_id
+            INNER JOIN graduate_program gp ON gpr.graduate_program_id = gp.graduate_program_id
+        """
+        if filters.graduate_program_id:
+            PARAMS['graduate_program_id'] = str(filters.graduate_program_id)
+            FILTERS_SQL += (
+                ' AND gpr.graduate_program_id = %(graduate_program_id)s'
+            )
+        if filters.graduate_program:
+            PARAMS['graduate_program'] = filters.graduate_program.split(';')
+            FILTERS_SQL += ' AND gp.name = ANY(%(graduate_program)s)'
 
-    if filters.graduate_program:  # Acessando via filters.graduate_program
-        filter_distinct = 'DISTINCT'
-        params['graduate_program'] = filters.graduate_program.split(';')
-        join_program = """
-            INNER JOIN graduate_program_researcher gpr
-                ON gpr.researcher_id = g.researcher_id
-            INNER JOIN graduate_program gp
-                ON gpr.graduate_program_id = gp.graduate_program_id
-            """
-        query_filters += """
-            AND gp.name = ANY(%(graduate_program)s)
-            """
+    if filters.group_id or filters.group:
+        join_group = """
+            INNER JOIN research_group_researcher rgr ON rgr.researcher_id = r.id
+            INNER JOIN research_group rg ON rg.id = rgr.research_group_id
+        """
+        if filters.group_id:
+            PARAMS['group_id'] = filters.group_id
+            FILTERS_SQL += ' AND rgr.research_group_id = %(group_id)s'
+        if filters.group:
+            PARAMS['group'] = filters.group.split(';')
+            FILTERS_SQL += ' AND rg.name = ANY(%(group)s)'
 
-    if filters.city:  # Acessando via filters.city
-        params['city'] = filters.city.split(';')
-        join_researcher_production = """
-            LEFT JOIN researcher_production rp
-                ON rp.researcher_id = g.researcher_id
-            """
-        query_filters += """
-            AND rp.city = ANY(%(city)s)
-            """
+    if filters.city or filters.area:
+        join_researcher_production = 'LEFT JOIN researcher_production rp ON rp.researcher_id = g.researcher_id'
+        if filters.city:
+            PARAMS['city'] = filters.city.split(';')
+            FILTERS_SQL += ' AND rp.city = ANY(%(city)s)'
+        if filters.area:
+            PARAMS['area'] = filters.area.replace(' ', '_').split(';')
+            FILTERS_SQL += ' AND rp.great_area_ && %(area)s'
 
-    if filters.area:  # Acessando via filters.area
-        params['area'] = filters.area.replace(' ', '_').split(';')
-        if (
-            not join_researcher_production
-        ):  # Adicionado para evitar duplicidade do join
-            join_researcher_production = """
-                LEFT JOIN researcher_production rp
-                    ON rp.researcher_id = g.researcher_id
-                """
-        query_filters += """
-            AND rp.great_area_ && %(area)s
-            """
+    if filters.modality:
+        DISTINCT_SQL = 'DISTINCT'
+        join_foment = 'INNER JOIN foment f ON f.researcher_id = g.researcher_id'
+        PARAMS['modality'] = filters.modality.split(';')
+        FILTERS_SQL += ' AND f.modality_name = ANY(%(modality)s)'
 
-    if filters.modality:  # Acessando via filters.modality
-        filter_distinct = 'DISTINCT'
-        params['modality'] = filters.modality.split(';')
-        join_foment = """
-            INNER JOIN foment f
-                ON f.researcher_id = g.researcher_id
-            """
-        query_filters += """
-            AND f.modality_name = ANY(%(modality)s)
-            """
+    if filters.graduation:
+        PARAMS['graduation'] = filters.graduation.split(';')
+        FILTERS_SQL += ' AND r.graduation = ANY(%(graduation)s)'
 
-    if filters.graduation:  # Acessando via filters.graduation
-        params['graduation'] = filters.graduation.split(';')
-        query_filters += """
-            AND r.graduation = ANY(%(graduation)s)
-            """
+    if filters.type:
+        PARAMS['type'] = filters.type.split(';')
+        FILTERS_SQL += ' AND g.type = ANY(%(type)s)'
 
-    if page and lenght:
-        filter_pagination = tools.pagination(page, lenght)
-    if filters.distinct:  # Acessando via filters.distinct
-        filter_distinct = 'DISTINCT ON (g.title)'
+    if filters.page and filters.lenght:
+        FILTER_PAGINATION = tools.pagination(filters.page, filters.lenght)
+
+    if filters.distinct:
+        DISTINCT_SQL = 'DISTINCT ON (g.title)'
 
     SCRIPT_SQL = f"""
-        SELECT {filter_distinct}
-            g.id, g.title, nature, g.oriented, g.type, g.status,
+        SELECT {DISTINCT_SQL}
+            g.id, g.title, g.nature, g.oriented, g.type, g.status,
             g.year, r.name, r.id AS researcher_id, r.lattes_id
         FROM public.guidance g
             INNER JOIN public.researcher r ON g.researcher_id = r.id
@@ -1445,330 +1408,242 @@ async def list_guidance_production(
             {join_program}
             {join_departament}
             {join_institution}
+            {join_group}
         WHERE 1 = 1
-            {query_filters}
-        ORDER BY g.title ASC
-        {filter_pagination};
-        """
-    result = await conn.select(SCRIPT_SQL, params)
-    return sorted(result, key=lambda x: x['year'], reverse=True)
+            {FILTERS_SQL}
+            {FILTER_TERMS}
+            {FILTER_YEAR}
+        ORDER BY g.title ASC, g.year DESC
+        {FILTER_PAGINATION};
+    """
+    return await conn.select(SCRIPT_SQL, PARAMS)
 
 
-async def list_researcher_production_events(
-    conn: Connection, defaul_filters: DefaultFilters
-):
-    params = {}
+async def list_researcher_production_events(conn, filters):
+    PARAMS = {}
+    DISTINCT_SQL = ''
+    FILTERS_SQL = "AND bp.type = 'WORK_IN_EVENT'"
+    FILTER_PAGINATION = ''
+    FILTER_TERMS = ''
+    FILTER_YEAR = ''
 
-    join_researcher_production = str()
-    join_foment = str()
-    join_program = str()
-    join_institution = str()
-    join_departament = str()
+    join_researcher_production = ''
+    join_foment = ''
+    join_program = ''
+    join_institution = ''
+    join_departament = ''
+    join_group = ''  # Adicionado para consistência, caso precise no futuro
 
-    filter_distinct = str()
-    query_filters = "AND bp.type = 'WORK_IN_EVENT'"
-    filter_pagination = str()
-
-    if defaul_filters.term:
-        filter_terms_str, term_params = tools.websearch_filter(
-            'bp.title', defaul_filters.term
+    if filters.term:
+        FILTER_TERMS, term_params = tools.websearch_filter(
+            'bp.title', filters.term
         )
-        query_filters += filter_terms_str
-        params.update(term_params)
+        PARAMS.update(term_params)
 
-    if defaul_filters.year:
-        params['year'] = defaul_filters.year
-        query_filters += """
-            AND bp.year_::INT >= %(year)s
-            """
+    if filters.year:
+        PARAMS['year'] = filters.year
+        FILTER_YEAR = 'AND bp.year_::INT >= %(year)s'
 
-    if defaul_filters.dep_id or defaul_filters.departament:
+    if filters.dep_id or filters.departament:
         join_departament = """
-            INNER JOIN ufmg.departament_researcher dpr
-                ON dpr.researcher_id = bp.researcher_id
-            INNER JOIN ufmg.departament dp
-                ON dp.dep_id = dpr.dep_id
-            """
-    if defaul_filters.dep_id:
-        params['dep_id'] = defaul_filters.dep_id
-        query_filters += """
-            AND dp.dep_id = %(dep_id)s
-            """
+            INNER JOIN ufmg.departament_researcher dpr ON dpr.researcher_id = bp.researcher_id
+            INNER JOIN ufmg.departament dp ON dp.dep_id = dpr.dep_id
+        """
+        if filters.dep_id:
+            PARAMS['dep_id'] = filters.dep_id
+            FILTERS_SQL += ' AND dp.dep_id = %(dep_id)s'
+        if filters.departament:
+            PARAMS['departament'] = filters.departament.split(';')
+            FILTERS_SQL += ' AND dp.dep_nom = ANY(%(departament)s)'
 
-    if defaul_filters.departament:
-        params['departament'] = defaul_filters.departament.split(';')
-        query_filters += """
-            AND dp.dep_nom = ANY(%(departament)s)
-            """
+    if filters.researcher_id:
+        PARAMS['researcher_id'] = str(filters.researcher_id)
+        FILTERS_SQL += ' AND bp.researcher_id = %(researcher_id)s'
 
-    if defaul_filters.researcher_id:
-        params['researcher_id'] = str(defaul_filters.researcher_id)
-        query_filters += """
-            AND bp.researcher_id = %(researcher_id)s
-            """
+    if filters.institution:
+        join_institution = 'INNER JOIN institution i ON r.institution_id = i.id'
+        PARAMS['institution'] = filters.institution.split(';')
+        FILTERS_SQL += ' AND i.name = ANY(%(institution)s)'
 
-    if defaul_filters.institution:
-        params['institution'] = defaul_filters.institution.split(';')
-        join_institution = """
-            INNER JOIN institution i
-                ON r.institution_id = i.id
-            """
-        query_filters += """
-            AND i.name = ANY(%(institution)s)
-            """
-
-    if defaul_filters.graduate_program_id:
-        filter_distinct = 'DISTINCT'
-        params['graduate_program_id'] = str(defaul_filters.graduate_program_id)
+    if filters.graduate_program_id or filters.graduate_program:
+        DISTINCT_SQL = 'DISTINCT'
         join_program = """
-            INNER JOIN graduate_program_researcher gpr
-                ON gpr.researcher_id = bp.researcher_id
-            INNER JOIN graduate_program gp
-                ON gpr.graduate_program_id = gp.graduate_program_id
-            """
-        query_filters += """
-            AND gpr.graduate_program_id = %(graduate_program_id)s
-            """
+            INNER JOIN graduate_program_researcher gpr ON gpr.researcher_id = bp.researcher_id
+            INNER JOIN graduate_program gp ON gpr.graduate_program_id = gp.graduate_program_id
+        """
+        if filters.graduate_program_id:
+            PARAMS['graduate_program_id'] = str(filters.graduate_program_id)
+            FILTERS_SQL += (
+                ' AND gpr.graduate_program_id = %(graduate_program_id)s'
+            )
+        if filters.graduate_program:
+            PARAMS['graduate_program'] = filters.graduate_program.split(';')
+            FILTERS_SQL += ' AND gp.name = ANY(%(graduate_program)s)'
 
-    if defaul_filters.graduate_program:
-        filter_distinct = 'DISTINCT'
-        params['graduate_program'] = defaul_filters.graduate_program.split(';')
-        join_program = """
-            INNER JOIN graduate_program_researcher gpr
-                ON gpr.researcher_id = bp.researcher_id
-            INNER JOIN graduate_program gp
-                ON gpr.graduate_program_id = gp.graduate_program_id
-            """
-        query_filters += """
-            AND gp.name = ANY(%(graduate_program)s)
-            """
+    if filters.city or filters.area:
+        join_researcher_production = 'LEFT JOIN researcher_production rp ON rp.researcher_id = bp.researcher_id'
+        if filters.city:
+            PARAMS['city'] = filters.city.split(';')
+            FILTERS_SQL += ' AND rp.city = ANY(%(city)s)'
+        if filters.area:
+            PARAMS['area'] = filters.area.replace(' ', '_').split(';')
+            FILTERS_SQL += ' AND rp.great_area_ && %(area)s'
 
-    if defaul_filters.city:
-        params['city'] = defaul_filters.city.split(';')
-        join_researcher_production = """
-            LEFT JOIN researcher_production rp
-                ON rp.researcher_id = bp.researcher_id
-            """
-        query_filters += """
-            AND rp.city = ANY(%(city)s)
-            """
-    if defaul_filters.area:
-        params['area'] = defaul_filters.area.replace(' ', '_').split(';')
-        if not join_researcher_production:
-            join_researcher_production = """
-                LEFT JOIN researcher_production rp
-                    ON rp.researcher_id = bp.researcher_id
-                """
-        query_filters += """
-            AND rp.great_area_ && %(area)s
-            """
+    if filters.modality:
+        DISTINCT_SQL = 'DISTINCT'
+        join_foment = 'INNER JOIN foment f ON f.researcher_id = bp.researcher_id'
+        PARAMS['modality'] = filters.modality.split(';')
+        FILTERS_SQL += ' AND f.modality_name = ANY(%(modality)s)'
 
-    if defaul_filters.modality:
-        filter_distinct = 'DISTINCT'
-        params['modality'] = defaul_filters.modality.split(';')
-        join_foment = """
-            INNER JOIN foment f
-                ON f.researcher_id = bp.researcher_id
-            """
-        query_filters += """
-            AND f.modality_name = ANY(%(modality)s)
-            """
+    if filters.graduation:
+        PARAMS['graduation'] = filters.graduation.split(';')
+        FILTERS_SQL += ' AND r.graduation = ANY(%(graduation)s)'
 
-    if defaul_filters.graduation:
-        params['graduation'] = defaul_filters.graduation.split(';')
-        query_filters += """
-            AND r.graduation = ANY(%(graduation)s)
-            """
+    if filters.page and filters.lenght:
+        FILTER_PAGINATION = tools.pagination(filters.page, filters.lenght)
 
-    if defaul_filters.page and defaul_filters.lenght:
-        filter_pagination = tools.pagination(
-            defaul_filters.page, defaul_filters.lenght
-        )
-    if defaul_filters.distinct:
-        filter_distinct = 'DISTINCT ON (bp.title)'
+    if filters.distinct:
+        DISTINCT_SQL = 'DISTINCT ON (bp.title)'
 
     SCRIPT_SQL = f"""
-        SELECT {filter_distinct}
+        SELECT {DISTINCT_SQL}
             bp.id, bp.title, bp.title_en, bp.nature, bp.language,
             bp.means_divulgation, bp.homepage, bp.relevance,
             bp.scientific_divulgation, bp.authors, bp.year_,
             r.name, r.id AS researcher_id, r.lattes_id, r.lattes_10_id,
-            bpew.event_classification,
-            bpew.event_name,
-            bpew.event_city,
-            bpew.event_year,
-            bpew.proceedings_title,
-            bpew.volume,
-            bpew.issue,
-            bpew.series,
-            bpew.start_page,
-            bpew.end_page,
-            bpew.publisher_name,
-            bpew.publisher_city,
-            bpew.event_name_english,
-            bpew.identifier_number,
-            bpew.isbn
+            bpew.event_classification, bpew.event_name,
+            bpew.event_city, bpew.event_year,
+            bpew.proceedings_title, bpew.volume, bpew.issue, bpew.series,
+            bpew.start_page, bpew.end_page, bpew.publisher_name, bpew.publisher_city,
+            bpew.event_name_english, bpew.identifier_number, bpew.isbn
         FROM public.bibliographic_production bp
-            LEFT JOIN public.researcher r ON r.id = bp.researcher_id
             INNER JOIN public.bibliographic_production_work_in_event bpew ON bpew.bibliographic_production_id = bp.id
+            LEFT JOIN public.researcher r ON r.id = bp.researcher_id
             {join_researcher_production}
             {join_foment}
             {join_program}
             {join_departament}
             {join_institution}
+            {join_group}
         WHERE 1 = 1
-            {query_filters}
-        ORDER BY bp.title DESC
-        {filter_pagination};
-        """
-    result = await conn.select(SCRIPT_SQL, params)  # Adicionado await
-    return result
+            {FILTERS_SQL}
+            {FILTER_TERMS}
+            {FILTER_YEAR}
+        ORDER BY bp.title ASC, bp.year_ DESC
+        {FILTER_PAGINATION};
+    """
+    return await conn.select(SCRIPT_SQL, PARAMS)
 
 
-async def list_research_projects(
-    conn: Connection,
-    filters: DefaultFilters,  # Recebe a instância DefaultFilters
-    page: int | None,
-    lenght: int | None,
-):
-    params = {}
+async def list_research_projects(conn, filters):
+    PARAMS = {}
+    DISTINCT_SQL = ''
+    FILTERS_SQL = ''
+    FILTER_PAGINATION = ''
+    FILTER_TERMS = ''
+    FILTER_YEAR = ''
 
-    join_researcher_production = str()
-    join_foment = str()
-    join_program = str()
-    join_institution = str()
-    join_departament = str()
+    join_researcher_production = ''
+    join_foment = ''
+    join_program = ''
+    join_institution = ''
+    join_departament = ''
+    join_group = ''
 
-    filter_distinct = str()
-    query_filters = str()
-    filter_pagination = str()
-
-    if filters.term:  # Acessando via filters.term
-        filter_terms_str, term_params = tools.websearch_filter(
+    if filters.term:
+        FILTER_TERMS, term_params = tools.websearch_filter(
             'rp.project_name', filters.term
         )
-        query_filters += filter_terms_str
-        params.update(term_params)
+        PARAMS.update(term_params)
 
-    if filters.year:  # Acessando via filters.year
-        params['year'] = filters.year
-        query_filters += """
-            AND rp.start_year >= %(year)s
-            """
+    if filters.year:
+        PARAMS['year'] = filters.year
+        FILTER_YEAR = 'AND rp.start_year >= %(year)s'
 
-    if filters.dep_id or filters.departament:  # Acessando via filters
+    if filters.dep_id or filters.departament:
         join_departament = """
-            INNER JOIN ufmg.departament_researcher dpr
-                ON dpr.researcher_id = rp.researcher_id
-            INNER JOIN ufmg.departament dp
-                ON dp.dep_id = dpr.dep_id
-            """
-    if filters.dep_id:  # Acessando via filters.dep_id
-        params['dep_id'] = filters.dep_id
-        query_filters += """
-            AND dp.dep_id = %(dep_id)s
-            """
+            INNER JOIN ufmg.departament_researcher dpr ON dpr.researcher_id = rp.researcher_id
+            INNER JOIN ufmg.departament dp ON dp.dep_id = dpr.dep_id
+        """
+        if filters.dep_id:
+            PARAMS['dep_id'] = filters.dep_id
+            FILTERS_SQL += ' AND dp.dep_id = %(dep_id)s'
+        if filters.departament:
+            PARAMS['departament'] = filters.departament.split(';')
+            FILTERS_SQL += ' AND dp.dep_nom = ANY(%(departament)s)'
 
-    if filters.departament:  # Acessando via filters.departament
-        params['departament'] = filters.departament.split(';')
-        query_filters += """
-            AND dp.dep_nom = ANY(%(departament)s)
-            """
+    if filters.researcher_id:
+        PARAMS['researcher_id'] = str(filters.researcher_id)
+        FILTERS_SQL += ' AND rp.researcher_id = %(researcher_id)s'
 
-    if filters.researcher_id:  # Acessando via filters.researcher_id
-        params['researcher_id'] = str(
-            filters.researcher_id
-        )  # Convertido para string
-        query_filters += """
-            AND rp.researcher_id = %(researcher_id)s
-            """
+    if filters.lattes_id:
+        PARAMS['lattes_id'] = filters.lattes_id
+        FILTERS_SQL += ' AND r.lattes_id = %(lattes_id)s'
 
-    if filters.institution:  # Acessando via filters.institution
-        params['institution'] = filters.institution.split(';')
-        join_institution = """
-            INNER JOIN institution i
-                ON r.institution_id = i.id
-            """
-        query_filters += """
-            AND i.name = ANY(%(institution)s)
-            """
+    if filters.institution:
+        join_institution = 'INNER JOIN institution i ON r.institution_id = i.id'
+        PARAMS['institution'] = filters.institution.split(';')
+        FILTERS_SQL += ' AND i.name = ANY(%(institution)s)'
 
-    if filters.graduate_program_id:  # Acessando via filters.graduate_program_id
-        filter_distinct = 'DISTINCT'
-        params['graduate_program_id'] = str(
-            filters.graduate_program_id
-        )  # Convertido para string
+    if filters.graduate_program_id or filters.graduate_program:
+        DISTINCT_SQL = 'DISTINCT'
         join_program = """
-            INNER JOIN graduate_program_researcher gpr
-                ON gpr.researcher_id = rp.researcher_id
-            INNER JOIN graduate_program gp
-                ON gpr.graduate_program_id = gp.graduate_program_id
-            """
-        query_filters += """
-            AND gpr.graduate_program_id = %(graduate_program_id)s
-            """
+            INNER JOIN graduate_program_researcher gpr ON gpr.researcher_id = rp.researcher_id
+            INNER JOIN graduate_program gp ON gpr.graduate_program_id = gp.graduate_program_id
+        """
+        if filters.graduate_program_id:
+            PARAMS['graduate_program_id'] = str(filters.graduate_program_id)
+            FILTERS_SQL += (
+                ' AND gpr.graduate_program_id = %(graduate_program_id)s'
+            )
+        if filters.graduate_program:
+            PARAMS['graduate_program'] = filters.graduate_program.split(';')
+            FILTERS_SQL += ' AND gp.name = ANY(%(graduate_program)s)'
 
-    if filters.graduate_program:  # Acessando via filters.graduate_program
-        filter_distinct = 'DISTINCT'
-        params['graduate_program'] = filters.graduate_program.split(';')
-        join_program = """
-            INNER JOIN graduate_program_researcher gpr
-                ON gpr.researcher_id = rp.researcher_id
-            INNER JOIN graduate_program gp
-                ON gpr.graduate_program_id = gp.graduate_program_id
-            """
-        query_filters += """
-            AND gp.name = ANY(%(graduate_program)s)
-            """
+    if filters.group_id or filters.group:
+        join_group = """
+            INNER JOIN research_group_researcher rgr ON rgr.researcher_id = r.id
+            INNER JOIN research_group rg ON rg.id = rgr.research_group_id
+        """
+        if filters.group_id:
+            PARAMS['group_id'] = filters.group_id
+            FILTERS_SQL += ' AND rgr.research_group_id = %(group_id)s'
+        if filters.group:
+            PARAMS['group'] = filters.group.split(';')
+            FILTERS_SQL += ' AND rg.name = ANY(%(group)s)'
 
-    if filters.city:  # Acessando via filters.city
-        params['city'] = filters.city.split(';')
-        # Renomeei a tabela de join para evitar conflito com 'rp' (research_project)
-        join_researcher_production = """
-            LEFT JOIN researcher_production rp_prod
-                ON rp_prod.researcher_id = rp.researcher_id
-            """
-        query_filters += """
-            AND rp_prod.city = ANY(%(city)s)
-            """
-    if filters.area:  # Acessando via filters.area
-        params['area'] = filters.area.replace(' ', '_').split(';')
-        if (
-            not join_researcher_production
-        ):  # Adicionado para evitar duplicidade do join
-            join_researcher_production = """
-                LEFT JOIN researcher_production rp_prod
-                    ON rp_prod.researcher_id = rp.researcher_id
-                """
-        query_filters += """
-            AND rp_prod.great_area_ && %(area)s
-            """
+    if filters.city or filters.area:
+        # Usando alias 'rp_prod' para evitar conflito com 'rp' de research_project
+        join_researcher_production = 'LEFT JOIN researcher_production rp_prod ON rp_prod.researcher_id = rp.researcher_id'
+        if filters.city:
+            PARAMS['city'] = filters.city.split(';')
+            FILTERS_SQL += ' AND rp_prod.city = ANY(%(city)s)'
+        if filters.area:
+            PARAMS['area'] = filters.area.replace(' ', '_').split(';')
+            FILTERS_SQL += ' AND rp_prod.great_area_ && %(area)s'
 
-    if filters.modality:  # Acessando via filters.modality
-        filter_distinct = 'DISTINCT'
-        params['modality'] = filters.modality.split(';')
-        join_foment = """
-            INNER JOIN foment f
-                ON f.researcher_id = rp.researcher_id
-            """
-        query_filters += """
-            AND f.modality_name = ANY(%(modality)s)
-            """
+    if filters.modality:
+        DISTINCT_SQL = 'DISTINCT'
+        join_foment = 'INNER JOIN foment f ON f.researcher_id = rp.researcher_id'
+        PARAMS['modality'] = filters.modality.split(';')
+        FILTERS_SQL += ' AND f.modality_name = ANY(%(modality)s)'
 
-    if filters.graduation:  # Acessando via filters.graduation
-        params['graduation'] = filters.graduation.split(';')
-        query_filters += """
-            AND r.graduation = ANY(%(graduation)s)
-            """
+    if filters.graduation:
+        PARAMS['graduation'] = filters.graduation.split(';')
+        FILTERS_SQL += ' AND r.graduation = ANY(%(graduation)s)'
 
-    if page and lenght:
-        filter_pagination = tools.pagination(page, lenght)
+    if filters.type:  # Mapeado para o campo 'nature' do projeto
+        PARAMS['type'] = filters.type.split(';')
+        FILTERS_SQL += ' AND rp.nature = ANY(%(type)s)'
 
-    if filters.distinct:  # Acessando via filters.distinct
-        filter_distinct = 'DISTINCT ON (rp.project_name)'
+    if filters.page and filters.lenght:
+        FILTER_PAGINATION = tools.pagination(filters.page, filters.lenght)
+
+    if filters.distinct:
+        DISTINCT_SQL = 'DISTINCT ON (rp.project_name)'
 
     SCRIPT_SQL = f"""
-        SELECT {filter_distinct}
+        SELECT {DISTINCT_SQL}
             rp.id, rp.researcher_id, r.name, rp.start_year, rp.end_year,
             rp.agency_code, rp.agency_name, rp.project_name, rp.status,
             rp.nature, rp.number_undergraduates, rp.number_specialists,
@@ -1777,172 +1652,132 @@ async def list_research_projects(
         FROM public.research_project rp
             LEFT JOIN researcher r ON r.id = rp.researcher_id
             LEFT JOIN (SELECT project_id, JSONB_AGG(JSONB_BUILD_OBJECT('title', title, 'type', type)) AS production
-                FROM public.research_project_production
-                GROUP BY project_id) rpp ON rpp.project_id = rp.id
+                FROM public.research_project_production GROUP BY project_id) rpp ON rpp.project_id = rp.id
             LEFT JOIN (SELECT project_id, JSONB_AGG(JSONB_BUILD_OBJECT('agency_name', agency_name, 'agency_code', agency_code, 'nature', nature)) AS foment
-                FROM public.research_project_foment
-                GROUP BY project_id) rpf ON rpf.project_id = rp.id
+                FROM public.research_project_foment GROUP BY project_id) rpf ON rpf.project_id = rp.id
             LEFT JOIN (SELECT project_id, JSONB_AGG(JSONB_BUILD_OBJECT('name', name, 'lattes_id', lattes_id, 'citations', citations)) AS components
-                FROM public.research_project_components
-                GROUP BY project_id) rpc ON rpc.project_id = rp.id
+                FROM public.research_project_components GROUP BY project_id) rpc ON rpc.project_id = rp.id
             {join_researcher_production}
             {join_foment}
             {join_program}
             {join_departament}
             {join_institution}
+            {join_group}
         WHERE 1 = 1
-            {query_filters}
-        ORDER BY rp.project_name DESC
-        {filter_pagination};
-        """
+            {FILTERS_SQL}
+            {FILTER_TERMS}
+            {FILTER_YEAR}
+        ORDER BY rp.project_name ASC, rp.start_year DESC
+        {FILTER_PAGINATION};
+    """
+    return await conn.select(SCRIPT_SQL, PARAMS)
 
-    result = await conn.select(SCRIPT_SQL, params)  # Adicionado await
-    return result
 
+async def list_papers_magazine(conn, filters):
+    PARAMS = {}
+    DISTINCT_SQL = ''
+    # O filtro fixo para o tipo de produção agora inicializa a string de filtros
+    FILTERS_SQL = "AND bp.type = 'TEXT_IN_NEWSPAPER_MAGAZINE'"
+    FILTER_PAGINATION = ''
+    FILTER_TERMS = ''
+    FILTER_YEAR = ''
 
-async def list_papers_magazine(
-    conn: Connection,
-    filters: DefaultFilters,  # Recebe a instância DefaultFilters
-    page: int | None,
-    lenght: int | None,
-):
-    params = {}
+    join_researcher_production = ''
+    join_foment = ''
+    join_program = ''
+    join_institution = ''
+    join_departament = ''
+    join_group = ''
 
-    join_researcher_production = str()
-    join_foment = str()
-    join_program = str()
-    join_institution = str()
-    join_departament = str()
-
-    filter_distinct = str()
-    query_filters = str()
-    filter_pagination = str()
-
-    if filters.term:  # Acessando via filters.term
-        filter_terms_str, term_params = tools.websearch_filter(
+    if filters.term:
+        FILTER_TERMS, term_params = tools.websearch_filter(
             'bp.title', filters.term
         )
-        query_filters += filter_terms_str
-        params.update(term_params)
+        PARAMS.update(term_params)
 
-    if filters.year:  # Acessando via filters.year
-        params['year'] = filters.year
-        query_filters += """
-            AND bp.year_::INT >= %(year)s
-            """
+    if filters.year:
+        PARAMS['year'] = filters.year
+        FILTER_YEAR = 'AND bp.year_::INT >= %(year)s'
 
-    if filters.dep_id or filters.departament:  # Acessando via filters
+    if filters.dep_id or filters.departament:
         join_departament = """
-            INNER JOIN ufmg.departament_researcher dpr
-                ON dpr.researcher_id = bp.researcher_id
-            INNER JOIN ufmg.departament dp
-                ON dp.dep_id = dpr.dep_id
-            """
-    if filters.dep_id:  # Acessando via filters.dep_id
-        params['dep_id'] = filters.dep_id
-        query_filters += """
-            AND dp.dep_id = %(dep_id)s
-            """
+            INNER JOIN ufmg.departament_researcher dpr ON dpr.researcher_id = bp.researcher_id
+            INNER JOIN ufmg.departament dp ON dp.dep_id = dpr.dep_id
+        """
+        if filters.dep_id:
+            PARAMS['dep_id'] = filters.dep_id
+            FILTERS_SQL += ' AND dp.dep_id = %(dep_id)s'
+        if filters.departament:
+            PARAMS['departament'] = filters.departament.split(';')
+            FILTERS_SQL += ' AND dp.dep_nom = ANY(%(departament)s)'
 
-    if filters.departament:  # Acessando via filters.departament
-        params['departament'] = filters.departament.split(';')
-        query_filters += """
-            AND dp.dep_nom = ANY(%(departament)s)
-            """
+    if filters.researcher_id:
+        PARAMS['researcher_id'] = str(filters.researcher_id)
+        FILTERS_SQL += ' AND bp.researcher_id = %(researcher_id)s'
 
-    if filters.researcher_id:  # Acessando via filters.researcher_id
-        params['researcher_id'] = str(
-            filters.researcher_id
-        )  # Convertido para string
-        query_filters += """
-            AND bp.researcher_id = %(researcher_id)s
-            """
+    if filters.lattes_id:
+        PARAMS['lattes_id'] = filters.lattes_id
+        FILTERS_SQL += ' AND r.lattes_id = %(lattes_id)s'
 
-    if filters.institution:  # Acessando via filters.institution
-        params['institution'] = filters.institution.split(';')
-        join_institution = """
-            INNER JOIN institution i
-                ON r.institution_id = i.id
-            """
-        query_filters += """
-            AND i.name = ANY(%(institution)s)
-            """
+    if filters.institution:
+        join_institution = 'INNER JOIN institution i ON r.institution_id = i.id'
+        PARAMS['institution'] = filters.institution.split(';')
+        FILTERS_SQL += ' AND i.name = ANY(%(institution)s)'
 
-    if filters.graduate_program_id:  # Acessando via filters.graduate_program_id
-        filter_distinct = 'DISTINCT'
-        params['graduate_program_id'] = str(
-            filters.graduate_program_id
-        )  # Convertido para string
+    if filters.graduate_program_id or filters.graduate_program:
+        DISTINCT_SQL = 'DISTINCT'
         join_program = """
-            INNER JOIN graduate_program_researcher gpr
-                ON gpr.researcher_id = bp.researcher_id
-            INNER JOIN graduate_program gp
-                ON gpr.graduate_program_id = gp.graduate_program_id
-            """
-        query_filters += """
-            AND gpr.graduate_program_id = %(graduate_program_id)s
-            """
+            INNER JOIN graduate_program_researcher gpr ON gpr.researcher_id = bp.researcher_id
+            INNER JOIN graduate_program gp ON gpr.graduate_program_id = gp.graduate_program_id
+        """
+        if filters.graduate_program_id:
+            PARAMS['graduate_program_id'] = str(filters.graduate_program_id)
+            FILTERS_SQL += (
+                ' AND gpr.graduate_program_id = %(graduate_program_id)s'
+            )
+        if filters.graduate_program:
+            PARAMS['graduate_program'] = filters.graduate_program.split(';')
+            FILTERS_SQL += ' AND gp.name = ANY(%(graduate_program)s)'
 
-    if filters.graduate_program:  # Acessando via filters.graduate_program
-        filter_distinct = 'DISTINCT'
-        params['graduate_program'] = filters.graduate_program.split(';')
-        join_program = """
-            INNER JOIN graduate_program_researcher gpr
-                ON gpr.researcher_id = bp.researcher_id
-            INNER JOIN graduate_program gp
-                ON gpr.graduate_program_id = gp.graduate_program_id
-            """
-        query_filters += """
-            AND gp.name = ANY(%(graduate_program)s)
-            """
+    if filters.group_id or filters.group:
+        join_group = """
+            INNER JOIN research_group_researcher rgr ON rgr.researcher_id = r.id
+            INNER JOIN research_group rg ON rg.id = rgr.research_group_id
+        """
+        if filters.group_id:
+            PARAMS['group_id'] = filters.group_id
+            FILTERS_SQL += ' AND rgr.research_group_id = %(group_id)s'
+        if filters.group:
+            PARAMS['group'] = filters.group.split(';')
+            FILTERS_SQL += ' AND rg.name = ANY(%(group)s)'
 
-    if filters.city:  # Acessando via filters.city
-        params['city'] = filters.city.split(';')
-        join_researcher_production = """
-            LEFT JOIN researcher_production rp
-                ON rp.researcher_id = bp.researcher_id
-            """
-        query_filters += """
-            AND rp.city = ANY(%(city)s)
-            """
-    if filters.area:  # Acessando via filters.area
-        params['area'] = filters.area.replace(' ', '_').split(';')
-        if (
-            not join_researcher_production
-        ):  # Adicionado para evitar duplicidade do join
-            join_researcher_production = """
-                LEFT JOIN researcher_production rp
-                    ON rp.researcher_id = bp.researcher_id
-                """
-        query_filters += """
-            AND rp.great_area_ && %(area)s
-            """
+    if filters.city or filters.area:
+        join_researcher_production = 'LEFT JOIN researcher_production rp ON rp.researcher_id = bp.researcher_id'
+        if filters.city:
+            PARAMS['city'] = filters.city.split(';')
+            FILTERS_SQL += ' AND rp.city = ANY(%(city)s)'
+        if filters.area:
+            PARAMS['area'] = filters.area.replace(' ', '_').split(';')
+            FILTERS_SQL += ' AND rp.great_area_ && %(area)s'
 
-    if filters.modality:  # Acessando via filters.modality
-        filter_distinct = 'DISTINCT'
-        params['modality'] = filters.modality.split(';')
-        join_foment = """
-            INNER JOIN foment f
-                ON f.researcher_id = bp.researcher_id
-            """
-        query_filters += """
-            AND f.modality_name = ANY(%(modality)s)
-            """
+    if filters.modality:
+        DISTINCT_SQL = 'DISTINCT'
+        join_foment = 'INNER JOIN foment f ON f.researcher_id = bp.researcher_id'
+        PARAMS['modality'] = filters.modality.split(';')
+        FILTERS_SQL += ' AND f.modality_name = ANY(%(modality)s)'
 
-    if filters.graduation:  # Acessando via filters.graduation
-        params['graduation'] = filters.graduation.split(';')
-        query_filters += """
-            AND r.graduation = ANY(%(graduation)s)
-            """
+    if filters.graduation:
+        PARAMS['graduation'] = filters.graduation.split(';')
+        FILTERS_SQL += ' AND r.graduation = ANY(%(graduation)s)'
 
-    if page and lenght:
-        filter_pagination = tools.pagination(page, lenght)
+    if filters.page and filters.lenght:
+        FILTER_PAGINATION = tools.pagination(filters.page, filters.lenght)
 
-    if filters.distinct:  # Acessando via filters.distinct
-        filter_distinct = 'DISTINCT ON (bp.title)'
+    if filters.distinct:
+        DISTINCT_SQL = 'DISTINCT ON (bp.title)'
 
     SCRIPT_SQL = f"""
-        SELECT {filter_distinct}
+        SELECT {DISTINCT_SQL}
             title, title_en, nature, language, means_divulgation, homepage,
             relevance, scientific_divulgation, authors, year_, r.name,
             bp.id, bp.researcher_id, r.lattes_id
@@ -1953,14 +1788,15 @@ async def list_papers_magazine(
             {join_program}
             {join_departament}
             {join_institution}
-        WHERE bp.type = 'TEXT_IN_NEWSPAPER_MAGAZINE'
-            {query_filters}
-        ORDER BY bp.title DESC
-        {filter_pagination};
-        """
-
-    result = await conn.select(SCRIPT_SQL, params)  # Adicionado await
-    return result
+            {join_group}
+        WHERE 1 = 1
+            {FILTERS_SQL}
+            {FILTER_TERMS}
+            {FILTER_YEAR}
+        ORDER BY bp.title ASC, bp.year_ DESC
+        {FILTER_PAGINATION};
+    """
+    return await conn.select(SCRIPT_SQL, PARAMS)
 
 
 # ---

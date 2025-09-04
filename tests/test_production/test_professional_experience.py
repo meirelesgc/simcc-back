@@ -31,8 +31,6 @@ async def test_filter_by_year(
     await create_researcher_professional_experience(end_year='2020')
     await create_researcher_professional_experience(end_year='2023')
 
-    print(await conn.select('SELECT * FROM researcher_professional_experience'))
-
     expected_count = 1
     params = {'year': '2022'}
 

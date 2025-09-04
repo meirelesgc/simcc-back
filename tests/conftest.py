@@ -754,3 +754,121 @@ def create_software(conn: Connection, create_researcher):
         return software_data
 
     return _create_software
+
+
+@pytest_asyncio.fixture
+def create_guidance(conn: Connection, create_researcher):
+    async def _create_guidance(**kwargs):
+        researcher_id = kwargs.pop('researcher_id', None)
+
+        if not researcher_id:
+            researcher = await create_researcher()
+            researcher_id = researcher['id']
+
+        guidance_data = factories.GuidanceFactory.build(**kwargs)
+        guidance_data['researcher_id'] = researcher_id
+
+        SQL = """
+            INSERT INTO public.guidance(id, title, nature, oriented,
+                type, status, year, is_new, researcher_id)
+            VALUES (%(id)s, %(title)s, %(nature)s, %(oriented)s,
+                %(type)s, %(status)s, %(year)s, %(is_new)s, %(researcher_id)s);
+            """
+        await conn.exec(SQL, guidance_data)
+        return guidance_data
+
+    return _create_guidance
+
+
+# Em seu arquivo de fixtures (ex: conftest.py)
+
+
+@pytest_asyncio.fixture
+def create_bibliographic_production_work_in_event(
+    conn: Connection, create_country, create_researcher
+):
+    async def _create_bibliographic_production_work_in_event(**kwargs):
+        country_id = kwargs.pop('country_id', None)
+        researcher_id = kwargs.pop('researcher_id', None)
+
+        if not country_id:
+            country = await create_country()
+            country_id = country['id']
+        if not researcher_id:
+            researcher = await create_researcher()
+            researcher_id = researcher['id']
+
+        # 1. Cria a produção bibliográfica base
+        production = factories.BibliographicProductionFactory.build(**kwargs)
+        production['country_id'] = country_id
+        production['researcher_id'] = researcher_id
+        production['type'] = 'WORK_IN_EVENT'  # Tipo específico
+
+        SQL_PRODUCTION = """
+            INSERT INTO public.bibliographic_production(id, title, title_en,
+                type, doi, nature, year, country_id, language, means_divulgation,
+                homepage, relevance, has_image, scientific_divulgation,
+                researcher_id, authors, year_, is_new)
+            VALUES (%(id)s, %(title)s, %(title_en)s, %(type)s, %(doi)s, %(nature)s, %(year)s, %(country_id)s,
+                %(language)s, %(means_divulgation)s, %(homepage)s, %(relevance)s, %(has_image)s,
+                %(scientific_divulgation)s, %(researcher_id)s, %(authors)s, %(year)s, %(is_new)s);
+            """
+        await conn.exec(SQL_PRODUCTION, production)
+
+        # 2. Cria os dados específicos do trabalho em evento, usando o ID da produção base
+        work_in_event_data = (
+            factories.BibliographicProductionWorkInEventFactory.build(
+                **kwargs, bibliographic_production_id=production['id']
+            )
+        )
+        work_in_event_data['bibliographic_production'] = production
+
+        SQL_WORK_IN_EVENT = """
+            INSERT INTO public.bibliographic_production_work_in_event(
+                bibliographic_production_id, event_classification, event_name, event_city,
+                event_year, proceedings_title, volume, issue, series, start_page, end_page,
+                publisher_name, publisher_city, event_name_english, identifier_number, isbn
+            )
+            VALUES (
+                %(bibliographic_production_id)s, %(event_classification)s, %(event_name)s, %(event_city)s,
+                %(event_year)s, %(proceedings_title)s, %(volume)s, %(issue)s, %(series)s, %(start_page)s,
+                %(end_page)s, %(publisher_name)s, %(publisher_city)s, %(event_name_english)s,
+                %(identifier_number)s, %(isbn)s
+            );
+            """
+        await conn.exec(SQL_WORK_IN_EVENT, work_in_event_data)
+
+        return work_in_event_data
+
+    return _create_bibliographic_production_work_in_event
+
+
+@pytest_asyncio.fixture
+def create_research_project(conn: Connection, create_researcher):
+    async def _create_research_project(**kwargs):
+        researcher_id = kwargs.pop('researcher_id', None)
+
+        if not researcher_id:
+            researcher = await create_researcher()
+            researcher_id = researcher['id']
+
+        project_data = factories.ResearchProjectFactory.build(**kwargs)
+        project_data['researcher_id'] = researcher_id
+
+        SQL = """
+            INSERT INTO public.research_project(
+                id, researcher_id, start_year, end_year, agency_code, agency_name,
+                project_name, status, nature, number_undergraduates, number_specialists,
+                number_academic_masters, number_phd, description
+            )
+            VALUES (
+                %(id)s, %(researcher_id)s, %(start_year)s, %(end_year)s, %(agency_code)s,
+                %(agency_name)s, %(project_name)s, %(status)s, %(nature)s,
+                %(number_undergraduates)s, %(number_specialists)s,
+                %(number_academic_masters)s, %(number_phd)s, %(description)s
+            );
+        """
+        await conn.exec(SQL, project_data)
+        return project_data
+
+    return _create_research_project

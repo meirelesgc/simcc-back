@@ -9,17 +9,12 @@ from pydantic import BaseModel, root_validator
 class DefaultFilters(BaseModel):
     term: Optional[str] = Query(None, alias='term')
     terms: Optional[str] = Query(None, alias='terms')
-
     graduate_program_id: Optional[UUID | str] = None
     graduate_program: Optional[str] = None
-
     researcher_id: Optional[UUID | str] = None
-
     dep_id: Optional[str] = None
     departament: Optional[str] = None
-
     year: int = 2020
-
     type: Optional[
         Literal[
             'BOOK',
@@ -36,17 +31,14 @@ class DefaultFilters(BaseModel):
         | str
     ] = None
     distinct: int | str = 1
-
     institution: Optional[str] = None
     city: Optional[str] = None
     area: Optional[str] = None
     modality: Optional[str] = None
     graduation: Optional[str] = None
-
     lattes_id: Optional[str] = None
     group: Optional[str] = None
     group_id: Optional[UUID] = None
-
     page: Optional[int] = 1
     lenght: Optional[int] = 24
 

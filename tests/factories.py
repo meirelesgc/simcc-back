@@ -8,6 +8,8 @@ import factory
 from faker import Faker
 
 fake = Faker()
+GUIDANCE_TYPE = ('Mestrado', 'Doutorado', 'Iniciação Científica', 'TCC')
+GUIDANCE_STATUS = ('Em andamento', 'Concluída')
 
 QUALIS_OPTIONS = ['A1', 'A2', 'A3', 'A4', 'B1', 'B2', 'B3', 'B4', 'C']
 BRAND_GOALS = [
@@ -549,3 +551,60 @@ class SoftwareFactory(factory.Factory):
         min_value=last_quadriennial_year(),
     )
     is_new = factory.Faker('boolean')
+
+
+class GuidanceFactory(factory.Factory):
+    class Meta:
+        model = dict
+
+    id = factory.Faker('uuid4')
+    title = factory.Faker('sentence', nb_words=10)
+    nature = factory.Faker('word')
+    oriented = factory.Faker('name')
+    type = factory.Faker('random_element', elements=GUIDANCE_TYPE)
+    status = factory.Faker('random_element', elements=GUIDANCE_STATUS)
+    year = factory.Faker('pyint', min_value=last_quadriennial_year())
+    is_new = factory.Faker('boolean', chance_of_getting_true=75)
+
+
+class BibliographicProductionWorkInEventFactory(factory.Factory):
+    class Meta:
+        model = dict
+
+    bibliographic_production_id = factory.Faker('uuid4')
+    event_classification = factory.Faker('word')
+    event_name = factory.Faker('sentence', nb_words=8)
+    event_city = factory.Faker('city')
+    event_year = factory.Faker('pyint', min_value=2000, max_value=2024)
+    proceedings_title = factory.Faker('sentence', nb_words=10)
+    volume = factory.Faker('pystr', max_chars=30)
+    issue = factory.Faker('pystr', max_chars=30)
+    series = factory.Faker('pystr', max_chars=100)
+    start_page = factory.Faker('pystr', max_chars=30)
+    end_page = factory.Faker('pystr', max_chars=30)
+    publisher_name = factory.Faker('company')
+    publisher_city = factory.Faker('city')
+    event_name_english = factory.Faker('sentence', nb_words=8)
+    identifier_number = factory.Faker('pystr', max_chars=100)
+    isbn = factory.Faker('isbn13')
+
+
+class ResearchProjectFactory(factory.Factory):
+    class Meta:
+        model = dict
+
+    id = factory.Faker('uuid4')
+    start_year = factory.Faker('pyint', min_value=last_quadriennial_year())
+    end_year = factory.Faker('pyint', min_value=last_quadriennial_year())
+    agency_code = factory.Faker('pystr', max_chars=15)
+    agency_name = factory.Faker('company')
+    project_name = factory.Faker('sentence', nb_words=8)
+    status = factory.Faker(
+        'random_element', elements=('Em andamento', 'Concluído', 'Desativado')
+    )
+    nature = factory.Faker('word')
+    number_undergraduates = factory.Faker('pyint', min_value=0, max_value=10)
+    number_specialists = factory.Faker('pyint', min_value=0, max_value=5)
+    number_academic_masters = factory.Faker('pyint', min_value=0, max_value=5)
+    number_phd = factory.Faker('pyint', min_value=0, max_value=3)
+    description = factory.Faker('paragraph', nb_sentences=4)

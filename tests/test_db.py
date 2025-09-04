@@ -489,3 +489,43 @@ async def test_create_software(conn, create_software):
     SQL = 'SELECT COUNT(*) AS total FROM public.software'
     result_software = await conn.select(SQL, None, True)
     assert result_software['total'] == EXPECTED_COUNT
+
+
+@pytest.mark.asyncio
+async def test_create_guidance(conn, create_guidance):
+    EXPECTED_COUNT = 1
+
+    await create_guidance()
+
+    SQL = 'SELECT COUNT(*) AS total FROM public.guidance'
+    result_guidance = await conn.select(SQL, None, True)
+    assert result_guidance['total'] == EXPECTED_COUNT
+
+
+# Em seu arquivo de testes
+
+
+@pytest.mark.asyncio
+async def test_create_bibliographic_production_work_in_event(
+    conn, create_bibliographic_production_work_in_event
+):
+    EXPECTED_COUNT = 1
+
+    await create_bibliographic_production_work_in_event()
+
+    SQL = 'SELECT COUNT(*) AS total FROM public.bibliographic_production_work_in_event'
+    result = await conn.select(SQL, None, True)
+
+    assert result['total'] == EXPECTED_COUNT
+
+
+@pytest.mark.asyncio
+async def test_create_research_project(conn, create_research_project):
+    EXPECTED_COUNT = 1
+
+    await create_research_project()
+
+    SQL = 'SELECT COUNT(*) AS total FROM public.research_project'
+    result = await conn.select(SQL, None, True)
+
+    assert result['total'] == EXPECTED_COUNT

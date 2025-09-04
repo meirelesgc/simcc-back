@@ -131,31 +131,17 @@ async def list_software_production(
     return await ProductionService.list_software(conn, filters)
 
 
-@router.get(
-    '/guidance_researcher',
-    response_model=list[GuidanceProduction],
-)
-async def list_guidance_production(
-    default_filters: DefaultFilters = Depends(),
-    page: int | None = None,
-    lenght: int | None = None,
-    conn: Connection = Depends(get_conn),
-):
-    return await ProductionService.list_guidance_production(
-        conn, default_filters, page, lenght
-    )
+@router.get('/guidance_researcher', response_model=list[GuidanceProduction])
+async def list_guidance_production(conn: Conn, filters: Filters):
+    return await ProductionService.list_guidance_production(conn, filters)
 
 
 @router.get(
-    '/researcher_production/events',
-    response_model=list[EventProduction],
+    '/researcher_production/events', response_model=list[EventProduction]
 )
-async def list_researcher_production_events(
-    default_filters: DefaultFilters = Depends(),
-    conn: Connection = Depends(get_conn),
-):
+async def list_researcher_production_events(conn: Conn, filters: Filters):
     return await ProductionService.list_researcher_production_events(
-        conn, default_filters
+        conn, filters
     )
 
 
@@ -163,27 +149,13 @@ async def list_researcher_production_events(
     '/researcher_research_project',
     response_model=list[ResearchProjectProduction],
 )
-async def list_research_project(
-    default_filters: DefaultFilters = Depends(),
-    page: int | None = None,
-    lenght: int | None = None,
-    conn: Connection = Depends(get_conn),
-):
-    return await ProductionService.list_research_projects(
-        conn, default_filters, page, lenght
-    )
+async def list_research_project(conn: Conn, filters: Filters):
+    return await ProductionService.list_research_projects(conn, filters)
 
 
 @router.get(
     '/researcher_production/papers_magazine',
     response_model=list[PapersProduction],
 )
-async def list_papers_magazine(
-    default_filters: DefaultFilters = Depends(),
-    page: int | None = None,
-    lenght: int | None = None,
-    conn: Connection = Depends(get_conn),
-):
-    return await ProductionService.list_papers_magazine(
-        conn, default_filters, page, lenght
-    )
+async def list_papers_magazine(conn: Conn, filters: Filters):
+    return await ProductionService.list_papers_magazine(conn, filters)
