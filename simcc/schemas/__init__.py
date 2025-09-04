@@ -1,9 +1,9 @@
 from enum import Enum
-from typing import Literal, Optional
+from typing import Optional
 from uuid import UUID
 
 from fastapi import Query
-from pydantic import BaseModel, root_validator
+from pydantic import BaseModel
 
 
 class DefaultFilters(BaseModel):
@@ -15,43 +15,22 @@ class DefaultFilters(BaseModel):
     dep_id: Optional[str] = None
     departament: Optional[str] = None
     year: int = 2020
-    type: Optional[
-        Literal[
-            'BOOK',
-            'BOOK_CHAPTER',
-            'ARTICLE',
-            'WORK_IN_EVENT',
-            'TEXT_IN_NEWSPAPER_MAGAZINE',
-            'ABSTRACT',
-            'PATENT',
-            'AREA',
-            'EVENT',
-            'NAME',
-        ]
-        | str
-    ] = None
+    type: Optional[str] = None
     distinct: int | str = 1
     institution: Optional[str] = None
+    institution_id: Optional[UUID | str] = None
+    collection_id: Optional[UUID | str] = None
     city: Optional[str] = None
     area: Optional[str] = None
     modality: Optional[str] = None
     graduation: Optional[str] = None
     lattes_id: Optional[str] = None
     group: Optional[str] = None
-    group_id: Optional[UUID] = None
+    group_id: Optional[UUID | str] = None
     page: Optional[int] = 1
     lenght: Optional[int] = 24
 
-    model_config = {
-        'populate_by_name': True,
-        'json_encoders': {UUID: str},
-    }
-
-    @root_validator(pre=True)
-    def unify_term_fields(cls, values):
-        if not values.get('term') and values.get('terms'):
-            values['term'] = values['terms']
-        return values
+    model_config = {'populate_by_name': True, 'json_encoders': {UUID: str}}
 
 
 class ResearcherOptions(str, Enum):

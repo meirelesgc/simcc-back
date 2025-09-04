@@ -2,7 +2,7 @@ from http import HTTPStatus
 
 import pytest
 
-ENDPOINT_URL = '/bibliographic_production_article'
+ENDPOINT_URL = '/production/article'
 
 
 @pytest.mark.asyncio
@@ -402,6 +402,97 @@ async def test_pagination(client, create_bibliographic_production_article):
         await create_bibliographic_production_article(title=f'Artigo {i}')
     expected_count = 2
     params = {'page': '2', 'lenght': '2'}
+
+    # Act
+    response = client.get(ENDPOINT_URL, params=params)
+    data = response.json()
+
+    # Assert
+    assert response.status_code == HTTPStatus.OK
+    assert len(data) == expected_count
+
+
+@pytest.mark.asyncio
+async def test_filter_by_institution_id(
+    client,
+    create_bibliographic_production_article,
+    create_institution,
+    create_researcher,
+):
+    """Testa o filtro por ID da instituição do pesquisador."""
+    # Arrange
+    institution = await create_institution()
+    researcher = await create_researcher(institution_id=institution['id'])
+
+    # Artigo de um pesquisador não relacionado para servir como "ruído"
+    await create_bibliographic_production_article()
+    # Artigo do pesquisador que pertence à instituição-alvo
+    await create_bibliographic_production_article(researcher_id=researcher['id'])
+
+    expected_count = 1
+    params = {'institution_id': institution['id']}
+
+    # Act
+    response = client.get(ENDPOINT_URL, params=params)
+    data = response.json()
+
+    # Assert
+    assert response.status_code == HTTPStatus.OK
+    assert len(data) == expected_count
+
+
+@pytest.mark.asyncio
+async def test_filter_by_group_name(
+    client,
+    create_bibliographic_production_article,
+    create_research_group,
+    link_researcher_to_research_group,
+):
+    """Testa o filtro por nome do grupo de pesquisa."""
+    # Arrange
+    group = await create_research_group(name='Grupo de Pesquisa em IA')
+    linked = await link_researcher_to_research_group(
+        research_group_id=group['id']
+    )
+
+    await create_bibliographic_production_article()
+    await create_bibliographic_production_article(
+        researcher_id=linked['researcher_id']
+    )
+
+    expected_count = 1
+    params = {'group': 'Grupo de Pesquisa em IA'}
+
+    # Act
+    response = client.get(ENDPOINT_URL, params=params)
+    data = response.json()
+
+    # Assert
+    assert response.status_code == HTTPStatus.OK
+    assert len(data) == expected_count
+
+
+@pytest.mark.asyncio
+async def test_filter_by_collection_id(
+    client, create_bibliographic_production_article, create_collection_entry
+):
+    """Testa o filtro por ID de uma coleção."""
+    # Arrange
+    # Cria artigos que não pertencem à coleção
+    await create_bibliographic_production_article()
+    await create_bibliographic_production_article()
+
+    # Cria o artigo que será adicionado à coleção
+    article_in_collection = await create_bibliographic_production_article()
+
+    # Adiciona o artigo à coleção
+    collection = await create_collection_entry(
+        entry_id=article_in_collection['bibliographic_production']['id'],
+        type='ARTICLE',
+    )
+
+    expected_count = 1
+    params = {'collection_id': collection['collection_id']}
 
     # Act
     response = client.get(ENDPOINT_URL, params=params)

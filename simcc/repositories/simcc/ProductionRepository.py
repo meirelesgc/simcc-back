@@ -214,11 +214,25 @@ async def get_pevent_researcher(conn, filters, nature):
         PARAMS['departament'] = filters.departament.split(';')
         FILTERS_SQL += ' AND dp.dep_nom = ANY(%(departament)s)'
 
-    if filters.institution:
+    if filters.group_id or filters.group:
+        join_group = """
+            INNER JOIN research_group_researcher rgr ON rgr.researcher_id = r.id
+            INNER JOIN research_group rg ON rg.id = rgr.research_group_id
+        """
+        if filters.group_id:
+            PARAMS['group_id'] = filters.group_id
+            FILTERS_SQL += ' AND rgr.research_group_id = %(group_id)s'
+        if filters.group:
+            PARAMS['group'] = filters.group.split(';')
+            FILTERS_SQL += ' AND rg.name = ANY(%(group)s)'
+    if filters.institution or filters.institution_id:
         join_institution = 'INNER JOIN institution i ON r.institution_id = i.id'
-        PARAMS['institution'] = filters.institution.split(';')
-        FILTERS_SQL += ' AND i.name = ANY(%(institution)s)'
-
+        if filters.institution:
+            PARAMS['institution'] = filters.institution.split(';')
+            FILTERS_SQL += ' AND i.name = ANY(%(institution)s)'
+        if filters.institution_id:
+            PARAMS['institution_id'] = filters.institution_id
+            FILTERS_SQL += ' AND i.id = %(institution_id)s'
     if filters.graduate_program_id:
         join_program = """
             INNER JOIN graduate_program_researcher gpr ON gpr.researcher_id = r.id
@@ -264,11 +278,6 @@ async def get_pevent_researcher(conn, filters, nature):
         PARAMS['lattes_id'] = filters.lattes_id
         FILTERS_SQL += ' AND r.lattes_id = %(lattes_id)s'
 
-    if filters.group_id:
-        join_group = 'INNER JOIN research_group_researcher rgr ON rgr.researcher_id = r.id'
-        PARAMS['group_id'] = filters.group_id
-        FILTERS_SQL += ' AND rgr.research_group_id = %(group_id)s'
-
     if filters.distinct:
         DISTINCT_SQL = 'DISTINCT ON (p.title)'
 
@@ -297,13 +306,14 @@ async def get_pevent_researcher(conn, filters, nature):
     return await conn.select(SCRIPT_SQL, PARAMS)
 
 
-async def professional_experience(conn, filters):
+async def list_professional_experience(conn, filters):
     PARAMS = {}
     DISTINCT_SQL = ''
     FILTERS_SQL = ''
     FILTER_PAGINATION = ''
+    FILTER_TERMS = ''
 
-    join_researcher = ''
+    join_researcher = 'LEFT JOIN researcher r ON r.id = rpe.researcher_id'
     join_researcher_production = ''
     join_foment = ''
     join_program = ''
@@ -311,74 +321,73 @@ async def professional_experience(conn, filters):
     join_departament = ''
     join_group = ''
 
+    if filters.term or filters.terms:
+        term_value = filters.term or filters.terms
+        FILTER_TERMS, term_params = tools.websearch_filter(
+            'rpe.enterprise', term_value
+        )
+        PARAMS.update(term_params)
+
     if filters.year:
         PARAMS['year'] = filters.year
         FILTERS_SQL += ' AND COALESCE(rpe.end_year, rpe.start_year) >= %(year)s'
 
-    if filters.dep_id:
+    if filters.dep_id or filters.departament:
         join_departament = """
             INNER JOIN ufmg.departament_researcher dpr ON dpr.researcher_id = rpe.researcher_id
             INNER JOIN ufmg.departament dp ON dp.dep_id = dpr.dep_id
         """
-        PARAMS['dep_id'] = filters.dep_id
-        FILTERS_SQL += ' AND dp.dep_id = %(dep_id)s'
-
-    if filters.departament:
-        join_departament = """
-            INNER JOIN ufmg.departament_researcher dpr ON dpr.researcher_id = rpe.researcher_id
-            INNER JOIN ufmg.departament dp ON dp.dep_id = dpr.dep_id
-        """
-        PARAMS['departament'] = filters.departament.split(';')
-        FILTERS_SQL += ' AND dp.dep_nom = ANY(%(departament)s)'
+        if filters.dep_id:
+            PARAMS['dep_id'] = filters.dep_id
+            FILTERS_SQL += ' AND dp.dep_id = %(dep_id)s'
+        if filters.departament:
+            PARAMS['departament'] = filters.departament.split(';')
+            FILTERS_SQL += ' AND dp.dep_nom = ANY(%(departament)s)'
 
     if filters.researcher_id:
-        join_researcher = 'LEFT JOIN researcher r ON r.id = rpe.researcher_id'
         PARAMS['researcher_id'] = filters.researcher_id
         FILTERS_SQL += ' AND rpe.researcher_id = %(researcher_id)s'
 
     if filters.lattes_id:
-        join_researcher = 'LEFT JOIN researcher r ON r.id = rpe.researcher_id'
         PARAMS['lattes_id'] = filters.lattes_id
         FILTERS_SQL += ' AND r.lattes_id = %(lattes_id)s'
 
-    if filters.institution:
-        join_researcher = 'LEFT JOIN researcher r ON r.id = rpe.researcher_id'
+    if filters.institution or filters.institution_id:
         join_institution = 'INNER JOIN institution i ON r.institution_id = i.id'
-        PARAMS['institution'] = filters.institution.split(';')
-        FILTERS_SQL += ' AND i.name = ANY(%(institution)s)'
+        if filters.institution:
+            PARAMS['institution'] = filters.institution.split(';')
+            FILTERS_SQL += ' AND i.name = ANY(%(institution)s)'
+        if filters.institution_id:
+            PARAMS['institution_id'] = filters.institution_id
+            FILTERS_SQL += ' AND i.id = %(institution_id)s'
 
     if filters.graduation:
-        join_researcher = 'LEFT JOIN researcher r ON r.id = rpe.researcher_id'
         PARAMS['graduation'] = filters.graduation.split(';')
         FILTERS_SQL += ' AND r.graduation = ANY(%(graduation)s)'
 
-    if filters.graduate_program_id:
+    if filters.graduate_program_id or filters.graduate_program:
         DISTINCT_SQL = 'DISTINCT'
         join_program = """
             INNER JOIN graduate_program_researcher gpr ON gpr.researcher_id = rpe.researcher_id
             INNER JOIN graduate_program gp ON gpr.graduate_program_id = gp.graduate_program_id
         """
-        PARAMS['graduate_program_id'] = filters.graduate_program_id
-        FILTERS_SQL += ' AND gpr.graduate_program_id = %(graduate_program_id)s'
+        if filters.graduate_program_id:
+            PARAMS['graduate_program_id'] = filters.graduate_program_id
+            FILTERS_SQL += (
+                ' AND gpr.graduate_program_id = %(graduate_program_id)s'
+            )
+        if filters.graduate_program:
+            PARAMS['graduate_program'] = filters.graduate_program.split(';')
+            FILTERS_SQL += ' AND gp.name = ANY(%(graduate_program)s)'
 
-    if filters.graduate_program:
-        DISTINCT_SQL = 'DISTINCT'
-        join_program = """
-            INNER JOIN graduate_program_researcher gpr ON gpr.researcher_id = rpe.researcher_id
-            INNER JOIN graduate_program gp ON gpr.graduate_program_id = gp.graduate_program_id
-        """
-        PARAMS['graduate_program'] = filters.graduate_program.split(';')
-        FILTERS_SQL += ' AND gp.name = ANY(%(graduate_program)s)'
-
-    if filters.city:
+    if filters.city or filters.area:
         join_researcher_production = 'LEFT JOIN researcher_production rp ON rp.researcher_id = rpe.researcher_id'
-        PARAMS['city'] = filters.city.split(';')
-        FILTERS_SQL += ' AND rp.city = ANY(%(city)s)'
-
-    if filters.area:
-        join_researcher_production = 'LEFT JOIN researcher_production rp ON rp.researcher_id = rpe.researcher_id'
-        PARAMS['area'] = filters.area.replace(' ', '_').split(';')
-        FILTERS_SQL += ' AND rp.great_area_ && %(area)s'
+        if filters.city:
+            PARAMS['city'] = filters.city.split(';')
+            FILTERS_SQL += ' AND rp.city = ANY(%(city)s)'
+        if filters.area:
+            PARAMS['area'] = filters.area.replace(' ', '_').split(';')
+            FILTERS_SQL += ' AND rp.great_area_ && %(area)s'
 
     if filters.modality:
         DISTINCT_SQL = 'DISTINCT'
@@ -388,10 +397,17 @@ async def professional_experience(conn, filters):
         PARAMS['modality'] = filters.modality.split(';')
         FILTERS_SQL += ' AND f.modality_name = ANY(%(modality)s)'
 
-    if filters.group_id:
-        join_group = 'INNER JOIN research_group_researcher rgr ON rgr.researcher_id = rpe.researcher_id'
-        PARAMS['group_id'] = filters.group_id
-        FILTERS_SQL += ' AND rgr.research_group_id = %(group_id)s'
+    if filters.group_id or filters.group:
+        join_group = """
+            INNER JOIN research_group_researcher rgr ON rgr.researcher_id = rpe.researcher_id
+            INNER JOIN research_group rg ON rg.id = rgr.research_group_id
+            """
+        if filters.group_id:
+            PARAMS['group_id'] = filters.group_id
+            FILTERS_SQL += ' AND rgr.research_group_id = %(group_id)s'
+        if filters.group:
+            PARAMS['group'] = filters.group.split(';')
+            FILTERS_SQL += ' AND rg.name = ANY(%(group)s)'
 
     if filters.page and filters.lenght:
         FILTER_PAGINATION = tools.pagination(filters.page, filters.lenght)
@@ -404,7 +420,8 @@ async def professional_experience(conn, filters):
             rpe.id, rpe.researcher_id, enterprise, start_year, end_year,
             employment_type, other_employment_type, functional_classification,
             other_functional_classification, workload_hours_weekly,
-            exclusive_dedication, additional_info
+            exclusive_dedication, additional_info,
+            r.lattes_id, r.name as researcher_name, r.graduation
         FROM public.researcher_professional_experience rpe
             {join_researcher}
             {join_institution}
@@ -415,6 +432,7 @@ async def professional_experience(conn, filters):
             {join_group}
         WHERE 1 = 1
             {FILTERS_SQL}
+            {FILTER_TERMS}
         ORDER BY rpe.researcher_id, rpe.enterprise
         {FILTER_PAGINATION}
         """
@@ -463,17 +481,29 @@ async def list_patent(conn, filters):
         PARAMS['researcher_id'] = str(filters.researcher_id)
         FILTERS_SQL += ' AND p.researcher_id = %(researcher_id)s'
 
-    # >>> FILTRO lattes_id ADICIONADO AQUI <<<
     if filters.lattes_id:
         PARAMS['lattes_id'] = filters.lattes_id
-        # A tabela 'researcher' (alias 'r') já está na consulta, então só adicionamos a condição
         FILTERS_SQL += ' AND r.lattes_id = %(lattes_id)s'
 
-    if filters.institution:
-        PARAMS['institution'] = filters.institution.split(';')
+    if filters.group_id or filters.group:
+        join_group = """
+            INNER JOIN research_group_researcher rgr ON rgr.researcher_id = r.id
+            INNER JOIN research_group rg ON rg.id = rgr.research_group_id
+        """
+        if filters.group_id:
+            PARAMS['group_id'] = filters.group_id
+            FILTERS_SQL += ' AND rgr.research_group_id = %(group_id)s'
+        if filters.group:
+            PARAMS['group'] = filters.group.split(';')
+            FILTERS_SQL += ' AND rg.name = ANY(%(group)s)'
+    if filters.institution or filters.institution_id:
         join_institution = 'INNER JOIN institution i ON r.institution_id = i.id'
-        FILTERS_SQL += ' AND i.name = ANY(%(institution)s)'
-
+        if filters.institution:
+            PARAMS['institution'] = filters.institution.split(';')
+            FILTERS_SQL += ' AND i.name = ANY(%(institution)s)'
+        if filters.institution_id:
+            PARAMS['institution_id'] = filters.institution_id
+            FILTERS_SQL += ' AND i.id = %(institution_id)s'
     if filters.graduate_program_id:
         DISTINCT_SQL = 'DISTINCT'
         PARAMS['graduate_program_id'] = str(filters.graduate_program_id)
@@ -512,11 +542,6 @@ async def list_patent(conn, filters):
     if filters.graduation:
         PARAMS['graduation'] = filters.graduation.split(';')
         FILTERS_SQL += ' AND r.graduation = ANY(%(graduation)s)'
-
-    if filters.group_id:
-        join_group = 'INNER JOIN research_group_researcher rgr ON rgr.researcher_id = p.researcher_id'
-        PARAMS['group_id'] = filters.group_id
-        FILTERS_SQL += ' AND rgr.research_group_id = %(group_id)s'
 
     if filters.page and filters.lenght:
         FILTER_PAGINATION = tools.pagination(filters.page, filters.lenght)
@@ -591,11 +616,25 @@ async def list_brand(conn, filters):
         PARAMS['researcher_id'] = str(filters.researcher_id)
         FILTERS_SQL += ' AND b.researcher_id = %(researcher_id)s'
 
-    if filters.institution:
+    if filters.group_id or filters.group:
+        join_group = """
+            INNER JOIN research_group_researcher rgr ON rgr.researcher_id = r.id
+            INNER JOIN research_group rg ON rg.id = rgr.research_group_id
+        """
+        if filters.group_id:
+            PARAMS['group_id'] = filters.group_id
+            FILTERS_SQL += ' AND rgr.research_group_id = %(group_id)s'
+        if filters.group:
+            PARAMS['group'] = filters.group.split(';')
+            FILTERS_SQL += ' AND rg.name = ANY(%(group)s)'
+    if filters.institution or filters.institution_id:
         join_institution = 'INNER JOIN institution i ON r.institution_id = i.id'
-        PARAMS['institution'] = filters.institution.split(';')
-        FILTERS_SQL += ' AND i.name = ANY(%(institution)s)'
-
+        if filters.institution:
+            PARAMS['institution'] = filters.institution.split(';')
+            FILTERS_SQL += ' AND i.name = ANY(%(institution)s)'
+        if filters.institution_id:
+            PARAMS['institution_id'] = filters.institution_id
+            FILTERS_SQL += ' AND i.id = %(institution_id)s'
     if filters.graduate_program_id:
         DISTINCT_SQL = 'DISTINCT'
         join_program = """
@@ -640,11 +679,6 @@ async def list_brand(conn, filters):
     if filters.lattes_id:
         PARAMS['lattes_id'] = filters.lattes_id
         FILTERS_SQL += ' AND r.lattes_id = %(lattes_id)s'
-
-    if filters.group_id:
-        join_group = 'INNER JOIN research_group_researcher rgr ON rgr.researcher_id = r.id'
-        PARAMS['group_id'] = filters.group_id
-        FILTERS_SQL += ' AND rgr.research_group_id = %(group_id)s'
 
     if filters.distinct:
         DISTINCT_SQL = 'DISTINCT ON (b.title)'
@@ -712,16 +746,29 @@ async def list_book(conn, filters):
         PARAMS['researcher_id'] = str(filters.researcher_id)
         FILTERS_SQL += ' AND bp.researcher_id = %(researcher_id)s'
 
-    # >>> FILTRO lattes_id ADICIONADO AQUI <<<
     if filters.lattes_id:
         PARAMS['lattes_id'] = filters.lattes_id
         FILTERS_SQL += ' AND r.lattes_id = %(lattes_id)s'
 
-    if filters.institution:
-        PARAMS['institution'] = filters.institution.split(';')
+    if filters.group_id or filters.group:
+        join_group = """
+            INNER JOIN research_group_researcher rgr ON rgr.researcher_id = r.id
+            INNER JOIN research_group rg ON rg.id = rgr.research_group_id
+        """
+        if filters.group_id:
+            PARAMS['group_id'] = filters.group_id
+            FILTERS_SQL += ' AND rgr.research_group_id = %(group_id)s'
+        if filters.group:
+            PARAMS['group'] = filters.group.split(';')
+            FILTERS_SQL += ' AND rg.name = ANY(%(group)s)'
+    if filters.institution or filters.institution_id:
         join_institution = 'INNER JOIN institution i ON r.institution_id = i.id'
-        FILTERS_SQL += ' AND i.name = ANY(%(institution)s)'
-
+        if filters.institution:
+            PARAMS['institution'] = filters.institution.split(';')
+            FILTERS_SQL += ' AND i.name = ANY(%(institution)s)'
+        if filters.institution_id:
+            PARAMS['institution_id'] = filters.institution_id
+            FILTERS_SQL += ' AND i.id = %(institution_id)s'
     if filters.graduate_program_id:
         DISTINCT_SQL = 'DISTINCT'
         PARAMS['graduate_program_id'] = str(filters.graduate_program_id)
@@ -760,12 +807,6 @@ async def list_book(conn, filters):
     if filters.graduation:
         PARAMS['graduation'] = filters.graduation.split(';')
         FILTERS_SQL += ' AND r.graduation = ANY(%(graduation)s)'
-
-    # >>> FILTRO group_id ADICIONADO AQUI <<<
-    if filters.group_id:
-        join_group = 'INNER JOIN research_group_researcher rgr ON rgr.researcher_id = bp.researcher_id'
-        PARAMS['group_id'] = filters.group_id
-        FILTERS_SQL += ' AND rgr.research_group_id = %(group_id)s'
 
     if filters.page and filters.lenght:
         FILTER_PAGINATION = tools.pagination(filters.page, filters.lenght)
@@ -854,11 +895,25 @@ async def list_bibliographic_production(conn, filters, qualis: str | None):
         PARAMS['lattes_id'] = filters.lattes_id
         FILTERS_SQL += ' AND r.lattes_id = %(lattes_id)s'
 
-    if filters.institution:
+    if filters.group_id or filters.group:
+        join_group = """
+            INNER JOIN research_group_researcher rgr ON rgr.researcher_id = r.id
+            INNER JOIN research_group rg ON rg.id = rgr.research_group_id
+        """
+        if filters.group_id:
+            PARAMS['group_id'] = filters.group_id
+            FILTERS_SQL += ' AND rgr.research_group_id = %(group_id)s'
+        if filters.group:
+            PARAMS['group'] = filters.group.split(';')
+            FILTERS_SQL += ' AND rg.name = ANY(%(group)s)'
+    if filters.institution or filters.institution_id:
         join_institution = 'INNER JOIN institution i ON r.institution_id = i.id'
-        PARAMS['institution'] = filters.institution.split(';')
-        FILTERS_SQL += ' AND i.name = ANY(%(institution)s)'
-
+        if filters.institution:
+            PARAMS['institution'] = filters.institution.split(';')
+            FILTERS_SQL += ' AND i.name = ANY(%(institution)s)'
+        if filters.institution_id:
+            PARAMS['institution_id'] = filters.institution_id
+            FILTERS_SQL += ' AND i.id = %(institution_id)s'
     if filters.graduate_program_id or filters.graduate_program:
         DISTINCT_SQL = 'DISTINCT'
         join_program = """
@@ -892,11 +947,6 @@ async def list_bibliographic_production(conn, filters, qualis: str | None):
     if filters.graduation:
         PARAMS['graduation'] = filters.graduation.split(';')
         FILTERS_SQL += ' AND r.graduation = ANY(%(graduation)s)'
-
-    if filters.group_id:
-        join_group = 'INNER JOIN research_group_researcher rgr ON rgr.researcher_id = b.researcher_id'
-        PARAMS['group_id'] = filters.group_id
-        FILTERS_SQL += ' AND rgr.research_group_id = %(group_id)s'
 
     if filters.page and filters.lenght:
         FILTER_PAGINATION = tools.pagination(filters.page, filters.lenght)
@@ -980,11 +1030,25 @@ async def list_book_chapter(conn, filters):
         PARAMS['lattes_id'] = filters.lattes_id
         FILTERS_SQL += ' AND r.lattes_id = %(lattes_id)s'
 
-    if filters.institution:
+    if filters.group_id or filters.group:
+        join_group = """
+            INNER JOIN research_group_researcher rgr ON rgr.researcher_id = r.id
+            INNER JOIN research_group rg ON rg.id = rgr.research_group_id
+        """
+        if filters.group_id:
+            PARAMS['group_id'] = filters.group_id
+            FILTERS_SQL += ' AND rgr.research_group_id = %(group_id)s'
+        if filters.group:
+            PARAMS['group'] = filters.group.split(';')
+            FILTERS_SQL += ' AND rg.name = ANY(%(group)s)'
+    if filters.institution or filters.institution_id:
         join_institution = 'INNER JOIN institution i ON r.institution_id = i.id'
-        PARAMS['institution'] = filters.institution.split(';')
-        FILTERS_SQL += ' AND i.name = ANY(%(institution)s)'
-
+        if filters.institution:
+            PARAMS['institution'] = filters.institution.split(';')
+            FILTERS_SQL += ' AND i.name = ANY(%(institution)s)'
+        if filters.institution_id:
+            PARAMS['institution_id'] = filters.institution_id
+            FILTERS_SQL += ' AND i.id = %(institution_id)s'
     if filters.graduate_program_id or filters.graduate_program:
         DISTINCT_SQL = 'DISTINCT'
         join_program = """
@@ -1018,11 +1082,6 @@ async def list_book_chapter(conn, filters):
     if filters.graduation:
         PARAMS['graduation'] = filters.graduation.split(';')
         FILTERS_SQL += ' AND r.graduation = ANY(%(graduation)s)'
-
-    if filters.group_id:
-        join_group = 'INNER JOIN research_group_researcher rgr ON rgr.researcher_id = bp.researcher_id'
-        PARAMS['group_id'] = filters.group_id
-        FILTERS_SQL += ' AND rgr.research_group_id = %(group_id)s'
 
     if filters.page and filters.lenght:
         FILTER_PAGINATION = tools.pagination(filters.page, filters.lenght)
@@ -1075,6 +1134,18 @@ async def list_software(conn, filters):
         )
         PARAMS.update(term_params)
 
+    if filters.group_id or filters.group:
+        join_group = """
+            INNER JOIN research_group_researcher rgr ON rgr.researcher_id = r.id
+            INNER JOIN research_group rg ON rg.id = rgr.research_group_id
+        """
+        if filters.group_id:
+            PARAMS['group_id'] = filters.group_id
+            FILTERS_SQL += ' AND rgr.research_group_id = %(group_id)s'
+        if filters.group:
+            PARAMS['group'] = filters.group.split(';')
+            FILTERS_SQL += ' AND rg.name = ANY(%(group)s)'
+
     if filters.year:
         PARAMS['year'] = filters.year
         FILTER_YEAR = 'AND s.year::INT >= %(year)s'
@@ -1100,10 +1171,14 @@ async def list_software(conn, filters):
         PARAMS['lattes_id'] = filters.lattes_id
         FILTERS_SQL += ' AND r.lattes_id = %(lattes_id)s'
 
-    if filters.institution:
+    if filters.institution or filters.institution_id:
         join_institution = 'INNER JOIN institution i ON r.institution_id = i.id'
-        PARAMS['institution'] = filters.institution.split(';')
-        FILTERS_SQL += ' AND i.name = ANY(%(institution)s)'
+        if filters.institution:
+            PARAMS['institution'] = filters.institution.split(';')
+            FILTERS_SQL += ' AND i.name = ANY(%(institution)s)'
+        if filters.institution_id:
+            PARAMS['institution_id'] = filters.institution_id
+            FILTERS_SQL += ' AND i.id = %(institution_id)s'
 
     if filters.graduate_program_id or filters.graduate_program:
         DISTINCT_SQL = 'DISTINCT'
@@ -1219,11 +1294,25 @@ async def list_researcher_report(conn, filters):
         PARAMS['lattes_id'] = filters.lattes_id
         FILTERS_SQL += ' AND r.lattes_id = %(lattes_id)s'
 
-    if filters.institution:
+    if filters.group_id or filters.group:
+        join_group = """
+            INNER JOIN research_group_researcher rgr ON rgr.researcher_id = r.id
+            INNER JOIN research_group rg ON rg.id = rgr.research_group_id
+        """
+        if filters.group_id:
+            PARAMS['group_id'] = filters.group_id
+            FILTERS_SQL += ' AND rgr.research_group_id = %(group_id)s'
+        if filters.group:
+            PARAMS['group'] = filters.group.split(';')
+            FILTERS_SQL += ' AND rg.name = ANY(%(group)s)'
+    if filters.institution or filters.institution_id:
         join_institution = 'INNER JOIN institution i ON r.institution_id = i.id'
-        PARAMS['institution'] = filters.institution.split(';')
-        FILTERS_SQL += ' AND i.name = ANY(%(institution)s)'
-
+        if filters.institution:
+            PARAMS['institution'] = filters.institution.split(';')
+            FILTERS_SQL += ' AND i.name = ANY(%(institution)s)'
+        if filters.institution_id:
+            PARAMS['institution_id'] = filters.institution_id
+            FILTERS_SQL += ' AND i.id = %(institution_id)s'
     if filters.graduate_program_id or filters.graduate_program:
         DISTINCT_SQL = 'DISTINCT'
         join_program = """
@@ -1257,11 +1346,6 @@ async def list_researcher_report(conn, filters):
     if filters.graduation:
         PARAMS['graduation'] = filters.graduation.split(';')
         FILTERS_SQL += ' AND r.graduation = ANY(%(graduation)s)'
-
-    if filters.group_id:
-        join_group = 'INNER JOIN research_group_researcher rgr ON rgr.researcher_id = rr.researcher_id'
-        PARAMS['group_id'] = filters.group_id
-        FILTERS_SQL += ' AND rgr.research_group_id = %(group_id)s'
 
     if filters.page and filters.lenght:
         FILTER_PAGINATION = tools.pagination(filters.page, filters.lenght)
@@ -1336,11 +1420,6 @@ async def list_guidance_production(conn, filters):
         PARAMS['lattes_id'] = filters.lattes_id
         FILTERS_SQL += ' AND r.lattes_id = %(lattes_id)s'
 
-    if filters.institution:
-        join_institution = 'INNER JOIN institution i ON r.institution_id = i.id'
-        PARAMS['institution'] = filters.institution.split(';')
-        FILTERS_SQL += ' AND i.name = ANY(%(institution)s)'
-
     if filters.graduate_program_id or filters.graduate_program:
         DISTINCT_SQL = 'DISTINCT'
         join_program = """
@@ -1367,7 +1446,14 @@ async def list_guidance_production(conn, filters):
         if filters.group:
             PARAMS['group'] = filters.group.split(';')
             FILTERS_SQL += ' AND rg.name = ANY(%(group)s)'
-
+    if filters.institution or filters.institution_id:
+        join_institution = 'INNER JOIN institution i ON r.institution_id = i.id'
+        if filters.institution:
+            PARAMS['institution'] = filters.institution.split(';')
+            FILTERS_SQL += ' AND i.name = ANY(%(institution)s)'
+        if filters.institution_id:
+            PARAMS['institution_id'] = filters.institution_id
+            FILTERS_SQL += ' AND i.id = %(institution_id)s'
     if filters.city or filters.area:
         join_researcher_production = 'LEFT JOIN researcher_production rp ON rp.researcher_id = g.researcher_id'
         if filters.city:
@@ -1432,7 +1518,7 @@ async def list_researcher_production_events(conn, filters):
     join_program = ''
     join_institution = ''
     join_departament = ''
-    join_group = ''  # Adicionado para consistência, caso precise no futuro
+    join_group = ''
 
     if filters.term:
         FILTER_TERMS, term_params = tools.websearch_filter(
@@ -1504,6 +1590,26 @@ async def list_researcher_production_events(conn, filters):
 
     if filters.distinct:
         DISTINCT_SQL = 'DISTINCT ON (bp.title)'
+
+    if filters.institution_id:
+        PARAMS['institution_id'] = filters.institution_id
+        FILTERS_SQL += ' AND r.institution_id = %(institution_id)s'
+
+    if filters.lattes_id:
+        PARAMS['lattes_id'] = filters.lattes_id
+        FILTERS_SQL += ' AND r.lattes_id = %(lattes_id)s'
+
+    if filters.group_id or filters.group:
+        join_group = """
+            INNER JOIN research_group_researcher rgr ON rgr.researcher_id = r.id
+            INNER JOIN research_group rg ON rg.id = rgr.research_group_id
+        """
+        if filters.group_id:
+            PARAMS['group_id'] = filters.group_id
+            FILTERS_SQL += ' AND rgr.research_group_id = %(group_id)s'
+        if filters.group:
+            PARAMS['group'] = filters.group.split(';')
+            FILTERS_SQL += ' AND rg.name = ANY(%(group)s)'
 
     SCRIPT_SQL = f"""
         SELECT {DISTINCT_SQL}
@@ -1635,6 +1741,9 @@ async def list_research_projects(conn, filters):
     if filters.type:  # Mapeado para o campo 'nature' do projeto
         PARAMS['type'] = filters.type.split(';')
         FILTERS_SQL += ' AND rp.nature = ANY(%(type)s)'
+    if filters.institution_id:
+        PARAMS['institution_id'] = filters.institution_id
+        FILTERS_SQL += ' AND r.institution_id = %(institution_id)s'
 
     if filters.page and filters.lenght:
         FILTER_PAGINATION = tools.pagination(filters.page, filters.lenght)
@@ -1676,7 +1785,6 @@ async def list_research_projects(conn, filters):
 async def list_papers_magazine(conn, filters):
     PARAMS = {}
     DISTINCT_SQL = ''
-    # O filtro fixo para o tipo de produção agora inicializa a string de filtros
     FILTERS_SQL = "AND bp.type = 'TEXT_IN_NEWSPAPER_MAGAZINE'"
     FILTER_PAGINATION = ''
     FILTER_TERMS = ''

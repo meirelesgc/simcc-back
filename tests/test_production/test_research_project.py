@@ -1,11 +1,9 @@
-# tests/test_researcher_research_project.py
-
 from http import HTTPStatus
 
 import pytest
 
 # Define o endpoint-alvo para todos os testes neste arquivo
-ENDPOINT_URL = '/researcher_research_project'
+ENDPOINT_URL = '/production/research-project'
 
 
 @pytest.mark.asyncio
@@ -438,3 +436,60 @@ async def test_pagination(client, create_research_project):
     assert len(data) == expected_count_page_2
     assert data[0]['project_name'] == 'Projeto 3'
     assert data[1]['project_name'] == 'Projeto 4'
+
+
+@pytest.mark.asyncio
+async def test_filter_by_institution_id(
+    client, create_research_project, create_institution, create_researcher
+):
+    """Testa o filtro por ID da instituição do pesquisador."""
+    # Arrange
+    institution = await create_institution()
+    researcher = await create_researcher(institution_id=institution['id'])
+
+    # Cria um projeto de um pesquisador não relacionado
+    await create_research_project()
+    # Cria o projeto alvo, do pesquisador na instituição correta
+    await create_research_project(researcher_id=researcher['id'])
+
+    expected_count = 1
+    params = {'institution_id': institution['id']}
+
+    # Act
+    response = client.get(ENDPOINT_URL, params=params)
+    data = response.json()
+
+    # Assert
+    assert response.status_code == HTTPStatus.OK
+    assert len(data) == expected_count
+
+
+@pytest.mark.asyncio
+async def test_filter_by_collection_id(
+    client,
+    create_research_project,
+    create_collection_entry,
+):
+    """Testa o filtro por ID da coleção à qual o projeto pertence."""
+    # Arrange
+    # Cria projetos que não pertencem à coleção
+    await create_research_project()
+    await create_research_project()
+
+    # Cria o projeto alvo e o adiciona a uma coleção
+    project = await create_research_project()
+    collection = await create_collection_entry(
+        entry_id=project['id'], type='RESEARCH_PROJECT'
+    )
+
+    expected_count = 1
+    params = {'collection_id': collection['collection_id']}
+
+    # Act
+    response = client.get(ENDPOINT_URL, params=params)
+    data = response.json()
+
+    # Assert
+    assert response.status_code == HTTPStatus.OK
+    assert len(data) == expected_count
+    assert data[0]['id'] == project['id']

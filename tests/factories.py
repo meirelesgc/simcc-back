@@ -608,3 +608,65 @@ class ResearchProjectFactory(factory.Factory):
     number_academic_masters = factory.Faker('pyint', min_value=0, max_value=5)
     number_phd = factory.Faker('pyint', min_value=0, max_value=3)
     description = factory.Faker('paragraph', nb_sentences=4)
+
+
+class UserFactory(factory.Factory):
+    class Meta:
+        model = dict
+
+    user_id = factory.LazyFunction(lambda: str(uuid.uuid4()))
+    username = factory.Faker('user_name')
+    email = factory.Faker('email')
+    password = factory.Faker('password', length=14)
+
+    orcid_id = factory.Sequence(lambda n: f'0000-0001-0002-{n:04d}')
+    provider = factory.LazyFunction(
+        lambda: random.choice(['local', 'google', 'orcid'])
+    )
+    verify = False
+
+    institution_id = factory.LazyFunction(lambda: str(uuid.uuid4()))
+
+    photo_url = factory.Faker('image_url')
+    lattes_id = factory.Sequence(lambda n: str(1000000000000000 + n))
+    linkedin = factory.LazyAttribute(
+        lambda obj: f'https://linkedin.com/in/{obj.username}'
+    )
+
+    profile_image_url = factory.Faker('image_url')
+    background_image_url = factory.Faker('image_url')
+
+
+class CollectionFactory(factory.Factory):
+    class Meta:
+        model = dict
+
+    collection_id = factory.LazyFunction(lambda: str(uuid.uuid4()))
+    user_id = factory.LazyFunction(lambda: str(uuid.uuid4()))
+    name = factory.Faker('sentence', nb_words=4)
+    description = factory.Faker('paragraph', nb_sentences=3)
+    visible = True
+
+
+class CollectionEntryFactory(factory.Factory):
+    class Meta:
+        model = dict
+
+    collection_id = factory.LazyFunction(lambda: str(uuid.uuid4()))
+    entry_id = factory.LazyFunction(lambda: str(uuid.uuid4()))
+    type = factory.LazyFunction(
+        lambda: random.choice(['research_project', 'article', 'dataset'])
+    )
+
+
+class InstitutionAdminFactory(factory.Factory):
+    class Meta:
+        model = dict
+
+    institution_id = factory.LazyFunction(lambda: str(uuid.uuid4()))
+
+    name = factory.Sequence(lambda n: f'Institution {n}')
+
+    acronym = factory.Sequence(lambda n: f'INST{n}')
+
+    lattes_id = factory.Sequence(lambda n: str(1234567890 + n))

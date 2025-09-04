@@ -4,7 +4,7 @@ from http import HTTPStatus
 
 import pytest
 
-ENDPOINT_URL = '/patent_production_researcher'
+ENDPOINT_URL = '/production/patent'
 
 
 @pytest.mark.asyncio
@@ -372,6 +372,84 @@ async def test_filter_by_group_id(
 
     expected_count = 1
     params = {'group_id': group['id']}
+
+    # Act
+    response = client.get(ENDPOINT_URL, params=params)
+    data = response.json()
+
+    # Assert
+    assert response.status_code == HTTPStatus.OK
+    assert len(data) == expected_count
+
+
+@pytest.mark.asyncio
+async def test_filter_by_institution_id(
+    client, create_patent, create_institution, create_researcher
+):
+    """Testa o filtro por ID da instituição do pesquisador."""
+    # Arrange
+    institution = await create_institution()
+    researcher = await create_researcher(institution_id=institution['id'])
+
+    await create_patent()
+    await create_patent(researcher_id=researcher['id'])
+
+    expected_count = 1
+    params = {'institution_id': institution['id']}
+
+    # Act
+    response = client.get(ENDPOINT_URL, params=params)
+    data = response.json()
+
+    # Assert
+    assert response.status_code == HTTPStatus.OK
+    assert len(data) == expected_count
+
+
+@pytest.mark.asyncio
+async def test_filter_by_group_name(
+    client,
+    create_patent,
+    create_research_group,
+    link_researcher_to_research_group,
+):
+    """Testa o filtro por nome do grupo de pesquisa."""
+    # Arrange
+    group = await create_research_group(name='Núcleo de Inovação Tecnológica')
+    linked = await link_researcher_to_research_group(
+        research_group_id=group['id']
+    )
+
+    await create_patent()
+    await create_patent(researcher_id=linked['researcher_id'])
+
+    expected_count = 1
+    params = {'group': 'Núcleo de Inovação Tecnológica'}
+
+    # Act
+    response = client.get(ENDPOINT_URL, params=params)
+    data = response.json()
+
+    # Assert
+    assert response.status_code == HTTPStatus.OK
+    assert len(data) == expected_count
+
+
+@pytest.mark.asyncio
+async def test_filter_by_collection_id(
+    client, create_patent, create_collection_entry
+):
+    """Testa o filtro por ID de uma coleção."""
+    # Arrange
+    await create_patent()
+    patent_in_collection = await create_patent()
+
+    collection = await create_collection_entry(
+        entry_id=patent_in_collection['id'], type='PATENT'
+    )
+
+    expected_count = 1
+    params = {'collection_id': collection['collection_id']}
 
     # Act
     response = client.get(ENDPOINT_URL, params=params)

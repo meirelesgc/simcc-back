@@ -5,10 +5,10 @@ from fastapi import APIRouter, Depends
 from simcc.core.connection import Connection
 from simcc.core.database import get_conn
 from simcc.schemas import DefaultFilters
-from simcc.schemas.Production.Article import ArticleMetric
-from simcc.schemas.Production.Guidance import GuidanceMetrics
-from simcc.schemas.Production.Patent import PatentMetric
-from simcc.schemas.Production.Software import SoftwareMetric
+from simcc.schemas.production.Article import ArticleMetric
+from simcc.schemas.production.Guidance import GuidanceMetrics
+from simcc.schemas.production.Patent import PatentMetric
+from simcc.schemas.production.Software import SoftwareMetric
 from simcc.schemas.Researcher import AcademicMetric
 from simcc.services import ProductionService
 

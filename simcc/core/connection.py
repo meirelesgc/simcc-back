@@ -1,3 +1,4 @@
+# simcc/core/connection.py
 from psycopg.rows import dict_row
 from psycopg_pool import AsyncConnectionPool
 
@@ -20,15 +21,19 @@ class Connection:
     async def exec(self, query: str, params: dict | None = None) -> int:
         try:
             async with self.pool.connection() as conn:
+                await conn.set_autocommit(True)
                 async with conn.cursor() as cur:
                     await cur.execute(query, params)
                     return cur.rowcount
         except Exception as e:
             raise RuntimeError(f'Error executing query: {query}\n{params}\n{e}')
 
-    async def execmany(self, query: str, params: dict | None = None) -> int:
+    async def execmany(
+        self, query: str, params: list[dict] | None = None
+    ) -> int:
         try:
             async with self.pool.connection() as conn:
+                await conn.set_autocommit(True)
                 async with conn.cursor() as cur:
                     await cur.executemany(query, params)
                     return cur.rowcount
@@ -40,6 +45,7 @@ class Connection:
     ):
         try:
             async with self.pool.connection() as conn:
+                await conn.set_autocommit(True)
                 async with conn.cursor() as cur:
                     await cur.execute(query, params)
                     if one:
@@ -47,3 +53,9 @@ class Connection:
                     return await cur.fetchall()
         except Exception as e:
             raise RuntimeError(f'Error executing query: {query}\n{params}\n{e}')
+
+    async def transaction(self):
+        async with self.pool.connection() as conn:
+            async with conn.transaction():
+                async with conn.cursor() as cur:
+                    yield cur

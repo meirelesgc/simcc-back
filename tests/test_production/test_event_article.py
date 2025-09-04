@@ -5,7 +5,7 @@ from http import HTTPStatus
 import pytest
 
 # Define o endpoint-alvo para todos os testes neste arquivo
-ENDPOINT_URL = '/researcher_production/events'
+ENDPOINT_URL = '/production/event/article'
 
 
 @pytest.mark.asyncio
@@ -383,3 +383,157 @@ async def test_pagination(client, create_bibliographic_production_work_in_event)
     # Assert: Verifica se a segunda página com 2 itens por página funciona.
     assert response.status_code == HTTPStatus.OK
     assert len(data) == expected_count_page_2
+
+
+import pytest
+
+# ... (cole isso no final do seu arquivo de testes)
+
+
+@pytest.mark.asyncio
+async def test_filter_by_institution_id(
+    client,
+    create_bibliographic_production_work_in_event,
+    create_institution,
+    create_researcher,
+):
+    """Testa o filtro por ID da instituição do autor."""
+    # Arrange
+    institution = await create_institution()
+    researcher = await create_researcher(institution_id=institution['id'])
+
+    # Cria um trabalho do pesquisador da instituição-alvo e outro de um pesquisador qualquer
+    await create_bibliographic_production_work_in_event(
+        researcher_id=researcher['id']
+    )
+    await create_bibliographic_production_work_in_event()
+
+    expected_count = 1
+    params = {'institution_id': institution['id']}
+
+    # Act
+    response = client.get(ENDPOINT_URL, params=params)
+    data = response.json()
+
+    # Assert
+    assert response.status_code == HTTPStatus.OK
+    assert len(data) == expected_count
+
+
+@pytest.mark.asyncio
+async def test_filter_by_collection_id(
+    client,
+    create_bibliographic_production_work_in_event,
+    create_collection_entry,
+):
+    """Testa o filtro por ID da coleção."""
+    # Arrange
+    # Cria alguns trabalhos que não devem aparecer no resultado
+    await create_bibliographic_production_work_in_event()
+    await create_bibliographic_production_work_in_event()
+
+    # Cria o trabalho que será adicionado à coleção
+    event_to_find = await create_bibliographic_production_work_in_event()
+    collection = await create_collection_entry(
+        entry_id=event_to_find['bibliographic_production']['id'],
+        type='WORK_IN_EVENT',  # Tipo especificado na sua requisição
+    )
+
+    expected_count = 1
+    params = {'collection_id': collection['collection_id']}
+
+    # Act
+    response = client.get(ENDPOINT_URL, params=params)
+    data = response.json()
+
+    # Assert
+    assert response.status_code == HTTPStatus.OK
+    assert len(data) == expected_count
+
+
+@pytest.mark.asyncio
+async def test_filter_by_lattes_id(
+    client, create_bibliographic_production_work_in_event, create_researcher
+):
+    """Testa o filtro pelo ID Lattes do pesquisador."""
+    # Arrange
+    target_lattes_id = '1234567890123456'
+    researcher = await create_researcher(lattes_id=target_lattes_id)
+
+    await create_bibliographic_production_work_in_event()
+    await create_bibliographic_production_work_in_event(
+        researcher_id=researcher['id']
+    )
+
+    expected_count = 1
+    params = {'lattes_id': target_lattes_id}
+
+    # Act
+    response = client.get(ENDPOINT_URL, params=params)
+    data = response.json()
+
+    # Assert
+    assert response.status_code == HTTPStatus.OK
+    assert len(data) == expected_count
+
+
+@pytest.mark.asyncio
+async def test_filter_by_group_name(
+    client,
+    create_bibliographic_production_work_in_event,
+    create_research_group,
+    link_researcher_to_research_group,
+):
+    """Testa o filtro por nome do grupo de pesquisa."""
+    # Arrange
+    group = await create_research_group(name='Grupo de Estudos Avançados')
+    linked = await link_researcher_to_research_group(
+        research_group_id=group['id']
+    )
+
+    await create_bibliographic_production_work_in_event()
+    await create_bibliographic_production_work_in_event(
+        researcher_id=linked['researcher_id']
+    )
+
+    expected_count = 1
+    params = {'group': 'Grupo de Estudos Avançados'}
+
+    # Act
+    response = client.get(ENDPOINT_URL, params=params)
+    data = response.json()
+
+    # Assert
+    assert response.status_code == HTTPStatus.OK
+    assert len(data) == expected_count
+
+
+@pytest.mark.asyncio
+async def test_filter_by_group_id(
+    client,
+    create_bibliographic_production_work_in_event,
+    create_research_group,
+    link_researcher_to_research_group,
+):
+    """Testa o filtro por ID do grupo de pesquisa."""
+    # Arrange
+    group = await create_research_group()
+    linked = await link_researcher_to_research_group(
+        research_group_id=group['id']
+    )
+
+    await create_bibliographic_production_work_in_event()
+    await create_bibliographic_production_work_in_event(
+        researcher_id=linked['researcher_id']
+    )
+
+    expected_count = 1
+    params = {'group_id': group['id']}
+
+    # Act
+    response = client.get(ENDPOINT_URL, params=params)
+    data = response.json()
+
+    # Assert
+    assert response.status_code == HTTPStatus.OK
+    assert len(data) == expected_count

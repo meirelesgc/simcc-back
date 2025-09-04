@@ -5,19 +5,25 @@ from testcontainers.postgres import PostgresContainer
 
 from simcc.app import app
 from simcc.core.connection import Connection
-from simcc.core.database import get_conn
+from simcc.core.database import get_admin_conn, get_conn
 from tests import factories
 
 POSTGRES_IMAGE = 'pgvector/pgvector:pg17'
-INIT_SQL_FILE = 'init.sql'
 DB_CONN_MAX_SIZE = 20
 DB_CONN_TIMEOUT = 10
 INIT_PATH = 'init.sql'
+INIT_PATH_ADMIN = 'init.admin.sql'
 
 
 @pytest.fixture(scope='session', autouse=True)
 def postgres():
-    with PostgresContainer('pgvector/pgvector:pg17') as pg:
+    with PostgresContainer(POSTGRES_IMAGE) as pg:
+        yield pg
+
+
+@pytest.fixture(scope='session', autouse=True)
+def postgres_admin():
+    with PostgresContainer(POSTGRES_IMAGE) as pg:
         yield pg
 
 
@@ -27,43 +33,69 @@ async def restore_db(conn: Connection):
         DROP SCHEMA IF EXISTS logs CASCADE;
         DROP SCHEMA IF EXISTS ufmg CASCADE;
         DROP SCHEMA IF EXISTS embeddings CASCADE;
-
         CREATE SCHEMA public;
     """
     await conn.exec(SCRIPT_SQL)
+    with open(INIT_PATH, 'r', encoding='utf-8') as f:
+        await conn.exec(f.read())
 
-    with open(INIT_PATH, 'r', encoding='utf-8') as buffer:
-        await conn.exec(buffer.read())
+
+async def restore_admin_db(conn: Connection):
+    SCRIPT_SQL = """
+        DROP SCHEMA IF EXISTS ufmg CASCADE;
+        DROP SCHEMA IF EXISTS feature CASCADE;
+        DROP SCHEMA IF EXISTS public CASCADE;
+        CREATE SCHEMA public;
+        """
+    await conn.exec(SCRIPT_SQL)
+    with open(INIT_PATH_ADMIN, 'r', encoding='utf-8') as f:
+        await conn.exec(f.read())
 
 
 @pytest_asyncio.fixture
 async def conn(postgres):
     conn = Connection(
         f'postgresql://{postgres.username}:{postgres.password}'
-        f'@{postgres.get_container_host_ip()}:{postgres.get_exposed_port(5432)}'
+        f'@{postgres.get_container_host_ip()}:'
+        f'{postgres.get_exposed_port(5432)}'
         f'/{postgres.dbname}',
         max_size=DB_CONN_MAX_SIZE,
         timeout=DB_CONN_TIMEOUT,
     )
-
     await conn.connect()
-
     await restore_db(conn)
-
     yield conn
+    await conn.disconnect()
 
+
+@pytest_asyncio.fixture
+async def conn_admin(postgres_admin):
+    conn = Connection(
+        f'postgresql://{postgres_admin.username}:{postgres_admin.password}'
+        f'@{postgres_admin.get_container_host_ip()}:'
+        f'{postgres_admin.get_exposed_port(5432)}'
+        f'/{postgres_admin.dbname}',
+        max_size=DB_CONN_MAX_SIZE,
+        timeout=DB_CONN_TIMEOUT,
+    )
+    await conn.connect()
+    await restore_admin_db(conn)
+    yield conn
     await conn.disconnect()
 
 
 @pytest.fixture
-def client(conn: Connection):
+def client(conn: Connection, conn_admin: Connection):
     async def get_conn_override():
         yield conn
 
+    async def get_conn_admin_override():
+        yield conn_admin
+
     app.dependency_overrides[get_conn] = get_conn_override
+    app.dependency_overrides[get_admin_conn] = get_conn_admin_override
 
     yield TestClient(app)
-
     app.dependency_overrides.clear()
 
 
@@ -872,3 +904,86 @@ def create_research_project(conn: Connection, create_researcher):
         return project_data
 
     return _create_research_project
+
+
+@pytest_asyncio.fixture
+def create_institution_admin(conn_admin):
+    async def _create_institution_admin(**kwargs):
+        institution_data = factories.InstitutionAdminFactory.build(**kwargs)
+
+        SCRIPT_SQL = """
+            INSERT INTO public.institution(
+                institution_id, name, acronym, lattes_id)
+            VALUES (%(institution_id)s, %(name)s, %(acronym)s, %(lattes_id)s);
+            """
+
+        await conn_admin.exec(SCRIPT_SQL, institution_data)
+
+        return institution_data
+
+    return _create_institution_admin
+
+
+@pytest_asyncio.fixture
+def create_user_admin(conn_admin: Connection, create_institution_admin):
+    async def _create_user(**kwargs):
+        if 'institution_id' not in kwargs:
+            institution = await create_institution_admin()
+            kwargs['institution_id'] = institution['institution_id']
+
+        user_data = factories.UserFactory.build(**kwargs)
+
+        SCRIPT_SQL = """
+            INSERT INTO public.users(user_id, orcid_id, username, email, password, provider,
+                verify, institution_id, photo_url, lattes_id, linkedin,
+                profile_image_url, background_image_url)
+            VALUES (%(user_id)s, %(orcid_id)s, %(username)s, %(email)s, %(password)s,
+                %(provider)s, %(verify)s, %(institution_id)s, %(photo_url)s,
+                %(lattes_id)s, %(linkedin)s, %(profile_image_url)s,
+                %(background_image_url)s);
+            """
+
+        await conn_admin.exec(SCRIPT_SQL, user_data)
+        return user_data
+
+    return _create_user
+
+
+@pytest_asyncio.fixture
+def create_collection(conn_admin: Connection, create_user_admin):
+    async def _create_collection(**kwargs):
+        if 'user_id' not in kwargs:
+            user = await create_user_admin()
+            kwargs['user_id'] = user['user_id']
+
+        collection_data = factories.CollectionFactory.build(**kwargs)
+
+        SCRIPT_SQL = """
+            INSERT INTO feature.collection(collection_id, user_id, name, description, visible)
+            VALUES (%(collection_id)s, %(user_id)s, %(name)s, %(description)s, %(visible)s);
+            """
+
+        await conn_admin.exec(SCRIPT_SQL, collection_data)
+        return collection_data
+
+    return _create_collection
+
+
+@pytest_asyncio.fixture
+def create_collection_entry(conn_admin: Connection, create_collection):
+    async def _create_collection_entry(**kwargs):
+        if 'collection_id' not in kwargs:
+            collection = await create_collection()
+            kwargs['collection_id'] = collection['collection_id']
+
+        entry_data = factories.CollectionEntryFactory.build(**kwargs)
+
+        SCRIPT_SQL = """
+            INSERT INTO feature.collection_entries(collection_id, entry_id, type)
+            VALUES (%(collection_id)s, %(entry_id)s, %(type)s);
+            """
+
+        await conn_admin.exec(SCRIPT_SQL, entry_data)
+        return entry_data
+
+    return _create_collection_entry

@@ -2,7 +2,7 @@ from http import HTTPStatus
 
 import pytest
 
-ENDPOINT_URL = '/professional_experience'
+ENDPOINT_URL = '/production/professional-experience'
 
 
 @pytest.mark.asyncio
@@ -407,6 +407,124 @@ async def test_filter_by_lattes_id(
 
     expected_count = 1
     params = {'lattes_id': target_lattes_id}
+
+    # Act
+    response = client.get(ENDPOINT_URL, params=params)
+    data = response.json()
+
+    # Assert
+    assert response.status_code == HTTPStatus.OK
+    assert len(data) == expected_count
+
+
+@pytest.mark.asyncio
+async def test_filter_by_group_id(
+    client,
+    create_researcher_professional_experience,
+    create_research_group,
+    link_researcher_to_research_group,
+):
+    """Testa o filtro por ID do grupo de pesquisa do pesquisador."""
+    # Arrange
+    group = await create_research_group()
+    linked = await link_researcher_to_research_group(
+        research_group_id=group['id']
+    )
+
+    await create_researcher_professional_experience()
+    await create_researcher_professional_experience(
+        researcher_id=linked['researcher_id']
+    )
+
+    expected_count = 1
+    params = {'group_id': group['id']}
+
+    # Act
+    response = client.get(ENDPOINT_URL, params=params)
+    data = response.json()
+
+    # Assert
+    assert response.status_code == HTTPStatus.OK
+    assert len(data) == expected_count
+
+
+@pytest.mark.asyncio
+async def test_filter_by_group_name(
+    client,
+    create_researcher_professional_experience,
+    create_research_group,
+    link_researcher_to_research_group,
+):
+    """Testa o filtro por nome do grupo de pesquisa do pesquisador."""
+    # Arrange
+    group = await create_research_group(
+        name='Laboratório de Sistemas Embarcados'
+    )
+    linked = await link_researcher_to_research_group(
+        research_group_id=group['id']
+    )
+
+    await create_researcher_professional_experience()
+    await create_researcher_professional_experience(
+        researcher_id=linked['researcher_id']
+    )
+
+    expected_count = 1
+    params = {'group': 'Laboratório de Sistemas Embarcados'}
+
+    # Act
+    response = client.get(ENDPOINT_URL, params=params)
+    data = response.json()
+
+    # Assert
+    assert response.status_code == HTTPStatus.OK
+    assert len(data) == expected_count
+
+
+@pytest.mark.asyncio
+async def test_filter_by_institution_id(
+    client,
+    create_researcher_professional_experience,
+    create_institution,
+    create_researcher,
+):
+    """Testa o filtro por ID da instituição do pesquisador."""
+    # Arrange
+    institution = await create_institution()
+    researcher = await create_researcher(institution_id=institution['id'])
+
+    await create_researcher_professional_experience()
+    await create_researcher_professional_experience(
+        researcher_id=researcher['id']
+    )
+
+    expected_count = 1
+    params = {'institution_id': institution['id']}
+
+    # Act
+    response = client.get(ENDPOINT_URL, params=params)
+    data = response.json()
+
+    # Assert
+    assert response.status_code == HTTPStatus.OK
+    assert len(data) == expected_count
+
+
+@pytest.mark.asyncio
+async def test_filter_by_collection_id(
+    client, create_researcher_professional_experience, create_collection_entry
+):
+    """Testa o filtro por ID de uma coleção."""
+    # Arrange
+    await create_researcher_professional_experience()
+    experience_in_collection = await create_researcher_professional_experience()
+
+    collection = await create_collection_entry(
+        entry_id=experience_in_collection['id'], type='PROFESSIONAL_EXPERIENCE'
+    )
+
+    expected_count = 1
+    params = {'collection_id': collection['collection_id']}
 
     # Act
     response = client.get(ENDPOINT_URL, params=params)

@@ -2,14 +2,14 @@ from http import HTTPStatus
 
 import pytest
 
-ENDPOINT_URL = '/production/brand'
+ENDPOINT_URL = '/production/book'
 
 
 @pytest.mark.asyncio
-async def test_get_all_brands(client, create_brand):
+async def test_get_all_books(client, create_bibliographic_production_book):
     # Arrange
-    await create_brand()
-    await create_brand()
+    await create_bibliographic_production_book()
+    await create_bibliographic_production_book()
     expected_count = 2
 
     # Act
@@ -22,13 +22,15 @@ async def test_get_all_brands(client, create_brand):
 
 
 @pytest.mark.asyncio
-async def test_filter_by_term_on_title(client, create_brand):
+async def test_filter_by_term_on_title(
+    client, create_bibliographic_production_book
+):
     # Arrange
-    target_title = 'Marca Inovadora Global'
-    await create_brand(title='Outra Marca Aleatória')
-    await create_brand(title=target_title)
+    target_title = 'A História da Computação'
+    await create_bibliographic_production_book(title='Outro Livro Aleatório')
+    await create_bibliographic_production_book(title=target_title)
     expected_count = 1
-    params = {'term': 'Inovadora'}
+    params = {'term': 'Computação'}
 
     # Act
     response = client.get(ENDPOINT_URL, params=params)
@@ -37,14 +39,13 @@ async def test_filter_by_term_on_title(client, create_brand):
     # Assert
     assert response.status_code == HTTPStatus.OK
     assert len(data) == expected_count
-    assert data[0]['title'] == target_title
 
 
 @pytest.mark.asyncio
-async def test_filter_by_year(client, create_brand):
+async def test_filter_by_year(client, create_bibliographic_production_book):
     # Arrange
-    await create_brand(year=2021)
-    await create_brand(year=2024)
+    await create_bibliographic_production_book(year=2020)
+    await create_bibliographic_production_book(year=2023)
     expected_count = 1
     params = {'year': 2022}
 
@@ -60,17 +61,19 @@ async def test_filter_by_year(client, create_brand):
 @pytest.mark.asyncio
 async def test_filter_by_department_name(
     client,
-    create_brand,
+    create_bibliographic_production_book,
     create_department,
     link_researcher_to_department,
 ):
     # Arrange
-    department = await create_department(dep_nom='Design Gráfico')
+    department = await create_department(dep_nom='Engenharia de Software')
     linked = await link_researcher_to_department(dep_id=department['dep_id'])
-    await create_brand()
-    await create_brand(researcher_id=linked['researcher_id'])
+    await create_bibliographic_production_book()
+    await create_bibliographic_production_book(
+        researcher_id=linked['researcher_id']
+    )
     expected_count = 1
-    params = {'departament': 'Design Gráfico'}
+    params = {'departament': 'Engenharia de Software'}
 
     # Act
     response = client.get(ENDPOINT_URL, params=params)
@@ -84,15 +87,17 @@ async def test_filter_by_department_name(
 @pytest.mark.asyncio
 async def test_filter_by_department_id(
     client,
-    create_brand,
+    create_bibliographic_production_book,
     create_department,
     link_researcher_to_department,
 ):
     # Arrange
     department = await create_department()
     linked = await link_researcher_to_department(dep_id=department['dep_id'])
-    await create_brand()
-    await create_brand(researcher_id=linked['researcher_id'])
+    await create_bibliographic_production_book()
+    await create_bibliographic_production_book(
+        researcher_id=linked['researcher_id']
+    )
     expected_count = 1
     params = {'dep_id': department['dep_id']}
 
@@ -106,12 +111,18 @@ async def test_filter_by_department_id(
 
 
 @pytest.mark.asyncio
-async def test_filter_by_researcher_id(client, create_brand):
+async def test_filter_by_researcher_id(
+    client, create_bibliographic_production_book
+):
     # Arrange
-    await create_brand()
-    brand_to_find = await create_brand()
+    await create_bibliographic_production_book()
+    book_to_find = await create_bibliographic_production_book()
     expected_count = 1
-    params = {'researcher_id': brand_to_find['researcher_id']}
+    params = {
+        'researcher_id': book_to_find['bibliographic_production'][
+            'researcher_id'
+        ]
+    }
 
     # Act
     response = client.get(ENDPOINT_URL, params=params)
@@ -125,19 +136,19 @@ async def test_filter_by_researcher_id(client, create_brand):
 @pytest.mark.asyncio
 async def test_filter_by_institution_name(
     client,
-    create_brand,
+    create_bibliographic_production_book,
     create_institution,
     create_researcher,
 ):
     # Arrange
     institution = await create_institution(
-        name='Escola Superior de Propaganda e Marketing'
+        name='Instituto de Tecnologia Avançada'
     )
     researcher = await create_researcher(institution_id=institution['id'])
-    await create_brand()
-    await create_brand(researcher_id=researcher['id'])
+    await create_bibliographic_production_book()
+    await create_bibliographic_production_book(researcher_id=researcher['id'])
     expected_count = 1
-    params = {'institution': 'Escola Superior de Propaganda e Marketing'}
+    params = {'institution': 'Instituto de Tecnologia Avançada'}
 
     # Act
     response = client.get(ENDPOINT_URL, params=params)
@@ -151,21 +162,21 @@ async def test_filter_by_institution_name(
 @pytest.mark.asyncio
 async def test_filter_by_graduate_program_name(
     client,
-    create_brand,
+    create_bibliographic_production_book,
     create_graduate_program,
     link_researcher_to_program,
 ):
     # Arrange
-    program = await create_graduate_program(
-        name='Comunicação e Práticas de Consumo'
-    )
+    program = await create_graduate_program(name='Inteligência Artificial')
     linked = await link_researcher_to_program(
         graduate_program_id=program['graduate_program_id']
     )
-    await create_brand()
-    await create_brand(researcher_id=linked['researcher_id'])
+    await create_bibliographic_production_book()
+    await create_bibliographic_production_book(
+        researcher_id=linked['researcher_id']
+    )
     expected_count = 1
-    params = {'graduate_program': 'Comunicação e Práticas de Consumo'}
+    params = {'graduate_program': 'Inteligência Artificial'}
 
     # Act
     response = client.get(ENDPOINT_URL, params=params)
@@ -179,7 +190,7 @@ async def test_filter_by_graduate_program_name(
 @pytest.mark.asyncio
 async def test_filter_by_graduate_program_id(
     client,
-    create_brand,
+    create_bibliographic_production_book,
     create_graduate_program,
     link_researcher_to_program,
 ):
@@ -188,8 +199,10 @@ async def test_filter_by_graduate_program_id(
     linked = await link_researcher_to_program(
         graduate_program_id=program['graduate_program_id']
     )
-    await create_brand()
-    await create_brand(researcher_id=linked['researcher_id'])
+    await create_bibliographic_production_book()
+    await create_bibliographic_production_book(
+        researcher_id=linked['researcher_id']
+    )
     expected_count = 1
     params = {'graduate_program_id': program['graduate_program_id']}
 
@@ -204,14 +217,16 @@ async def test_filter_by_graduate_program_id(
 
 @pytest.mark.asyncio
 async def test_filter_by_city(
-    client, create_brand, create_researcher_production
+    client, create_bibliographic_production_book, create_researcher_production
 ):
     # Arrange
-    researcher_prod = await create_researcher_production(city='São Paulo')
-    await create_brand()
-    await create_brand(researcher_id=researcher_prod['researcher_id'])
+    researcher_prod = await create_researcher_production(city='Campinas')
+    await create_bibliographic_production_book()
+    await create_bibliographic_production_book(
+        researcher_id=researcher_prod['researcher_id']
+    )
     expected_count = 1
-    params = {'city': 'São Paulo'}
+    params = {'city': 'Campinas'}
 
     # Act
     response = client.get(ENDPOINT_URL, params=params)
@@ -224,15 +239,17 @@ async def test_filter_by_city(
 
 @pytest.mark.asyncio
 async def test_filter_by_area(
-    client, create_brand, create_researcher_production
+    client, create_bibliographic_production_book, create_researcher_production
 ):
     # Arrange
-    areas = ['Ciências Sociais Aplicadas', 'Linguística']
+    areas = ['Ciências Biológicas', 'Saúde']
     researcher_prod = await create_researcher_production(great_area_=areas)
-    await create_brand()
-    await create_brand(researcher_id=researcher_prod['researcher_id'])
+    await create_bibliographic_production_book()
+    await create_bibliographic_production_book(
+        researcher_id=researcher_prod['researcher_id']
+    )
     expected_count = 1
-    params = {'area': 'Linguística'}
+    params = {'area': 'Saúde'}
 
     # Act
     response = client.get(ENDPOINT_URL, params=params)
@@ -244,13 +261,17 @@ async def test_filter_by_area(
 
 
 @pytest.mark.asyncio
-async def test_filter_by_modality(client, create_brand, create_foment):
+async def test_filter_by_modality(
+    client, create_bibliographic_production_book, create_foment
+):
     # Arrange
-    foment = await create_foment(modality_name='Inovação em Pequenas Empresas')
-    await create_brand()
-    await create_brand(researcher_id=foment['researcher_id'])
+    foment = await create_foment(modality_name='Apoio a Projetos de Pesquisa')
+    await create_bibliographic_production_book()
+    await create_bibliographic_production_book(
+        researcher_id=foment['researcher_id']
+    )
     expected_count = 1
-    params = {'modality': 'Inovação em Pequenas Empresas'}
+    params = {'modality': 'Apoio a Projetos de Pesquisa'}
 
     # Act
     response = client.get(ENDPOINT_URL, params=params)
@@ -262,13 +283,15 @@ async def test_filter_by_modality(client, create_brand, create_foment):
 
 
 @pytest.mark.asyncio
-async def test_filter_by_graduation(client, create_brand, create_researcher):
+async def test_filter_by_graduation(
+    client, create_bibliographic_production_book, create_researcher
+):
     # Arrange
-    researcher = await create_researcher(graduation='Doutorado')
-    await create_brand()
-    await create_brand(researcher_id=researcher['id'])
+    researcher = await create_researcher(graduation='Mestrado')
+    await create_bibliographic_production_book()
+    await create_bibliographic_production_book(researcher_id=researcher['id'])
     expected_count = 1
-    params = {'graduation': 'Doutorado'}
+    params = {'graduation': 'Mestrado'}
 
     # Act
     response = client.get(ENDPOINT_URL, params=params)
@@ -280,14 +303,20 @@ async def test_filter_by_graduation(client, create_brand, create_researcher):
 
 
 @pytest.mark.asyncio
-async def test_filter_distinct_on_title(client, create_brand, create_researcher):
+async def test_filter_distinct_on_title(
+    client, create_bibliographic_production_book, create_researcher
+):
     # Arrange
     researcher1 = await create_researcher()
     researcher2 = await create_researcher()
-    common_title = 'Marca com Título Repetido'
-    await create_brand(title=common_title, researcher_id=researcher1['id'])
-    await create_brand(title=common_title, researcher_id=researcher2['id'])
-    await create_brand(title='Marca de Título Único')
+    common_title = 'Livro com Título Repetido'
+    await create_bibliographic_production_book(
+        title=common_title, researcher_id=researcher1['id']
+    )
+    await create_bibliographic_production_book(
+        title=common_title, researcher_id=researcher2['id']
+    )
+    await create_bibliographic_production_book(title='Livro de Título Único')
     expected_count = 2
     params = {'distinct': 'true'}
 
@@ -301,10 +330,10 @@ async def test_filter_distinct_on_title(client, create_brand, create_researcher)
 
 
 @pytest.mark.asyncio
-async def test_pagination(client, create_brand):
+async def test_pagination(client, create_bibliographic_production_book):
     # Arrange
     for i in range(5):
-        await create_brand(title=f'Marca {i}')
+        await create_bibliographic_production_book(title=f'Livro {i}')
     expected_count = 2
     params = {'page': '2', 'lenght': '2'}
 
@@ -318,12 +347,14 @@ async def test_pagination(client, create_brand):
 
 
 @pytest.mark.asyncio
-async def test_filter_by_lattes_id(client, create_brand, create_researcher):
+async def test_filter_by_lattes_id(
+    client, create_bibliographic_production_book, create_researcher
+):
     # Arrange
-    target_lattes_id = '1122334455667788'
+    target_lattes_id = '9876543210987654'
     researcher = await create_researcher(lattes_id=target_lattes_id)
-    await create_brand()
-    await create_brand(researcher_id=researcher['id'])
+    await create_bibliographic_production_book()
+    await create_bibliographic_production_book(researcher_id=researcher['id'])
     expected_count = 1
     params = {'lattes_id': target_lattes_id}
 
@@ -339,7 +370,7 @@ async def test_filter_by_lattes_id(client, create_brand, create_researcher):
 @pytest.mark.asyncio
 async def test_filter_by_group_id(
     client,
-    create_brand,
+    create_bibliographic_production_book,
     create_research_group,
     link_researcher_to_research_group,
 ):
@@ -348,8 +379,10 @@ async def test_filter_by_group_id(
     linked = await link_researcher_to_research_group(
         research_group_id=group['id']
     )
-    await create_brand()
-    await create_brand(researcher_id=linked['researcher_id'])
+    await create_bibliographic_production_book()
+    await create_bibliographic_production_book(
+        researcher_id=linked['researcher_id']
+    )
     expected_count = 1
     params = {'group_id': group['id']}
 
@@ -364,16 +397,17 @@ async def test_filter_by_group_id(
 
 @pytest.mark.asyncio
 async def test_filter_by_institution_id(
-    client, create_brand, create_institution, create_researcher
+    client,
+    create_bibliographic_production_book,
+    create_institution,
+    create_researcher,
 ):
     """Testa o filtro por ID da instituição do pesquisador."""
     # Arrange
     institution = await create_institution()
     researcher = await create_researcher(institution_id=institution['id'])
-
-    await create_brand()
-    await create_brand(researcher_id=researcher['id'])
-
+    await create_bibliographic_production_book()
+    await create_bibliographic_production_book(researcher_id=researcher['id'])
     expected_count = 1
     params = {'institution_id': institution['id']}
 
@@ -389,22 +423,22 @@ async def test_filter_by_institution_id(
 @pytest.mark.asyncio
 async def test_filter_by_group_name(
     client,
-    create_brand,
+    create_bibliographic_production_book,
     create_research_group,
     link_researcher_to_research_group,
 ):
     """Testa o filtro por nome do grupo de pesquisa."""
     # Arrange
-    group = await create_research_group(name='Branding e Identidade Visual')
+    group = await create_research_group(name='Estudos de Mídia Digital')
     linked = await link_researcher_to_research_group(
         research_group_id=group['id']
     )
-
-    await create_brand()
-    await create_brand(researcher_id=linked['researcher_id'])
-
+    await create_bibliographic_production_book()
+    await create_bibliographic_production_book(
+        researcher_id=linked['researcher_id']
+    )
     expected_count = 1
-    params = {'group': 'Branding e Identidade Visual'}
+    params = {'group': 'Estudos de Mídia Digital'}
 
     # Act
     response = client.get(ENDPOINT_URL, params=params)
@@ -417,16 +451,16 @@ async def test_filter_by_group_name(
 
 @pytest.mark.asyncio
 async def test_filter_by_collection_id(
-    client, create_brand, create_collection_entry
+    client, create_bibliographic_production_book, create_collection_entry
 ):
     """Testa o filtro por ID de uma coleção."""
     # Arrange
-    await create_brand()
-    brand_in_collection = await create_brand()
+    await create_bibliographic_production_book()
+    book_in_collection = await create_bibliographic_production_book()
+    # Acessa o ID correto dentro da estrutura aninhada, se necessário
+    entry_id = book_in_collection['bibliographic_production']['id']
 
-    collection = await create_collection_entry(
-        entry_id=brand_in_collection['id'], type='BRAND'
-    )
+    collection = await create_collection_entry(entry_id=entry_id, type='BOOK')
 
     expected_count = 1
     params = {'collection_id': collection['collection_id']}

@@ -2,7 +2,7 @@ from http import HTTPStatus
 
 import pytest
 
-ENDPOINT_URL = '/pevent_researcher'
+ENDPOINT_URL = '/production/events/participation'
 
 
 @pytest.mark.asyncio
@@ -360,5 +360,83 @@ async def test_filter_by_nature(client, create_participation_event):
     response = client.get(ENDPOINT_URL, params=params)
     data = response.json()
 
+    assert response.status_code == HTTPStatus.OK
+    assert len(data) == expected_count
+
+
+@pytest.mark.asyncio
+async def test_filter_by_institution_id(
+    client, create_participation_event, create_institution, create_researcher
+):
+    """Testa o filtro por ID da instituição do pesquisador."""
+    # Arrange
+    institution = await create_institution()
+    researcher = await create_researcher(institution_id=institution['id'])
+
+    await create_participation_event()
+    await create_participation_event(researcher_id=researcher['id'])
+
+    expected_count = 1
+    params = {'institution_id': institution['id']}
+
+    # Act
+    response = client.get(ENDPOINT_URL, params=params)
+    data = response.json()
+
+    # Assert
+    assert response.status_code == HTTPStatus.OK
+    assert len(data) == expected_count
+
+
+@pytest.mark.asyncio
+async def test_filter_by_group_name(
+    client,
+    create_participation_event,
+    create_research_group,
+    link_researcher_to_research_group,
+):
+    """Testa o filtro por nome do grupo de pesquisa."""
+    # Arrange
+    group = await create_research_group(name='Observatório de Mídia')
+    linked = await link_researcher_to_research_group(
+        research_group_id=group['id']
+    )
+
+    await create_participation_event()
+    await create_participation_event(researcher_id=linked['researcher_id'])
+
+    expected_count = 1
+    params = {'group': 'Observatório de Mídia'}
+
+    # Act
+    response = client.get(ENDPOINT_URL, params=params)
+    data = response.json()
+
+    # Assert
+    assert response.status_code == HTTPStatus.OK
+    assert len(data) == expected_count
+
+
+@pytest.mark.asyncio
+async def test_filter_by_collection_id(
+    client, create_participation_event, create_collection_entry
+):
+    """Testa o filtro por ID de uma coleção."""
+    # Arrange
+    await create_participation_event()
+    event_in_collection = await create_participation_event()
+
+    collection = await create_collection_entry(
+        entry_id=event_in_collection['id'], type='EVENT_PARTICIPATION'
+    )
+
+    expected_count = 1
+    params = {'collection_id': collection['collection_id']}
+
+    # Act
+    response = client.get(ENDPOINT_URL, params=params)
+    data = response.json()
+
+    # Assert
     assert response.status_code == HTTPStatus.OK
     assert len(data) == expected_count

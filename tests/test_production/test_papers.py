@@ -5,7 +5,7 @@ from http import HTTPStatus
 import pytest
 import pytest_asyncio
 
-ENDPOINT_URL = '/researcher_production/papers_magazine'
+ENDPOINT_URL = '/production/paper'
 
 
 @pytest_asyncio.fixture
@@ -466,3 +466,26 @@ async def test_pagination(client, create_bibliographic_production_magazine):
     assert response.status_code == HTTPStatus.OK
     assert len(data) == expected_count
     assert data[0]['title'] == 'Matéria 3'
+
+
+@pytest.mark.asyncio
+async def test_collection_id(
+    client,
+    create_bibliographic_production_magazine,
+    create_collection_entry,
+):
+    await create_bibliographic_production_magazine()
+    await create_bibliographic_production_magazine()
+    paper = await create_bibliographic_production_magazine()
+    collection = await create_collection_entry(
+        entry_id=paper['id'], type='PAPER'
+    )
+    expected_count = 1
+    params = {'collection_id': collection['collection_id']}
+    # Act
+    response = client.get(ENDPOINT_URL, params=params)
+    data = response.json()
+
+    # Assert
+    assert response.status_code == HTTPStatus.OK
+    assert len(data) == expected_count

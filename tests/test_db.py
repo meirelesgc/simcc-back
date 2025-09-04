@@ -529,3 +529,40 @@ async def test_create_research_project(conn, create_research_project):
     result = await conn.select(SQL, None, True)
 
     assert result['total'] == EXPECTED_COUNT
+
+
+@pytest.mark.asyncio
+async def test_create_institution_admin(conn_admin, create_institution_admin):
+    EXPECTED_COUNT = 1
+
+    await create_institution_admin()
+
+    SQL = 'SELECT COUNT(*) AS total FROM public.institution'
+
+    result = await conn_admin.select(SQL, None, True)
+
+    assert result['total'] == EXPECTED_COUNT
+
+
+@pytest.mark.asyncio
+async def test_create_collection(conn_admin, create_collection):
+    EXPECTED_COUNT = 1
+
+    await create_collection()
+
+    SQL = 'SELECT COUNT(*) AS total FROM feature.collection'
+    result = await conn_admin.select(SQL, None, True)
+
+    assert result['total'] == EXPECTED_COUNT
+
+
+@pytest.mark.asyncio
+async def test_create_collection_entry(conn_admin, create_collection_entry):
+    EXPECTED_COUNT = 1
+
+    await create_collection_entry()
+
+    SQL = 'SELECT COUNT(*) AS total FROM feature.collection_entries'
+    result = await conn_admin.select(SQL, None, True)
+
+    assert result['total'] == EXPECTED_COUNT

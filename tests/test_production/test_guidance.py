@@ -1,11 +1,9 @@
-# tests/test_guidance_researcher.py
-
 from http import HTTPStatus
 
 import pytest
 
 # Define o endpoint-alvo para todos os testes neste arquivo
-ENDPOINT_URL = '/guidance_researcher'
+ENDPOINT_URL = '/production/guidance'
 
 
 @pytest.mark.asyncio
@@ -413,3 +411,57 @@ async def test_pagination(client, create_guidance):
     assert len(data) == expected_count_page_2
     assert data[0]['title'] == 'Orientação 3'
     assert data[1]['title'] == 'Orientação 4'
+
+
+@pytest.mark.asyncio
+async def test_filter_by_institution_id(
+    client, create_guidance, create_institution, create_researcher
+):
+    """Testa o filtro por ID da instituição do pesquisador."""
+    # Arrange
+    # Cria uma instituição e um pesquisador vinculado a ela
+    institution = await create_institution()
+    researcher = await create_researcher(institution_id=institution['id'])
+
+    # Cria uma orientação "ruído" com um pesquisador de outra instituição
+    await create_guidance()
+    # Cria a orientação-alvo com o pesquisador da instituição correta
+    await create_guidance(researcher_id=researcher['id'])
+
+    expected_count = 1
+    params = {'institution_id': institution['id']}
+
+    # Act
+    response = client.get(ENDPOINT_URL, params=params)
+    data = response.json()
+
+    # Assert
+    assert response.status_code == HTTPStatus.OK
+    assert len(data) == expected_count
+
+
+@pytest.mark.asyncio
+async def test_filter_by_collection_id(
+    client, create_guidance, create_collection_entry
+):
+    # Arrange
+    # Cria algumas orientações que não estarão na coleção
+    await create_guidance()
+    await create_guidance()
+
+    # Cria a orientação que será adicionada à coleção
+    guidance_in_collection = await create_guidance()
+    collection = await create_collection_entry(
+        entry_id=guidance_in_collection['id'], type='GUIDANCE'
+    )
+
+    expected_count = 1
+    params = {'collection_id': collection['collection_id']}
+
+    # Act
+    response = client.get(ENDPOINT_URL, params=params)
+    data = response.json()
+
+    # Assert
+    assert response.status_code == HTTPStatus.OK
+    assert len(data) == expected_count
