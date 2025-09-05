@@ -112,7 +112,7 @@ async def ai_summary_search(conn, model, default_filters):
             ]
             search = extract_fields(result, fields)
         case 'EVENT':
-            result = await ProductionRepository.get_pevent_researcher(
+            result = await ProductionRepository.list_participation_event(
                 conn, default_filters, None
             )
             fields = [

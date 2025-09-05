@@ -51,10 +51,10 @@ async def list_patent_production(
 
 @router.get('/production/events/participation')
 @router.get('/pevent_researcher', include_in_schema=False)
-async def get_pevent_researcher(
+async def list_participation_event(
     conn: Conn, conn_admin: AdminConn, filters: Filters, nature: str = None
 ):
-    return await ProductionService.get_pevent_researcher(
+    return await ProductionService.list_participation_event(
         conn, conn_admin, filters, nature
     )
 
@@ -119,6 +119,7 @@ async def list_bibliographic_production(
 ):
     if terms:
         filters.term = terms
+    filters.type = 'ARTICLE'
     return await ProductionService.list_bibliographic_production(
         conn, conn_admin, filters, qualis
     )

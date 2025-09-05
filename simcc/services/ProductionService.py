@@ -10,191 +10,132 @@ from simcc.schemas.production.Patent import PatentMetric
 from simcc.schemas.Researcher import AcademicMetric
 
 
-async def filter_collection_entrys(
-    conn, type, collection_id, dataframe, column='id'
-):
-    ids = await collection_repository.get_collection_entrys(
+async def filter_collection_entrys(conn, type, collection_id):
+    ids_dict = await collection_repository.get_collection_entrys(
         conn, type, collection_id
     )
-    return dataframe[dataframe[column].isin(ids['ids'])]
+    return ids_dict.get('ids') if ids_dict else None
 
 
-async def get_pevent_researcher(conn, conn_admin, filters, nature):
-    result = await ProductionRepository.get_pevent_researcher(
+async def list_participation_event(conn, conn_admin, filters, nature):
+    if filters.collection_id:
+        filters.collection_id = await filter_collection_entrys(
+            conn_admin, 'EVENT_PARTICIPATION', filters.collection_id
+        )
+    return await ProductionRepository.list_participation_event(
         conn, filters, nature
     )
-    if not result:
-        return []
-    if getattr(filters, 'collection_id', None):
-        df = pd.DataFrame(result)
-        result = filter_collection_entrys(
-            conn_admin, 'EVENT_PARTICIPATION', filters.collection_id, df
-        )
-        result = (await result).to_dict(orient='records')
-    return result
 
 
 async def list_professional_experience(conn, conn_admin, filters):
-    result = await ProductionRepository.list_professional_experience(
-        conn, filters
-    )
-    if not result:
-        return []
-    if getattr(filters, 'collection_id', None):
-        df = pd.DataFrame(result)
-        result = filter_collection_entrys(
-            conn_admin, 'PROFESSIONAL_EXPERIENCE', filters.collection_id, df
+    if filters.collection_id:
+        filters.collection_id = await filter_collection_entrys(
+            conn_admin, 'PROFESSIONAL_EXPERIENCE', filters.collection_id
         )
-        result = (await result).to_dict(orient='records')
-    return result
+    return await ProductionRepository.list_professional_experience(conn, filters)
 
 
 async def list_patent(conn, conn_admin, filters):
-    result = await ProductionRepository.list_patent(conn, filters)
-    if not result:
-        return []
-    if getattr(filters, 'collection_id', None):
-        df = pd.DataFrame(result)
-        result = filter_collection_entrys(
-            conn_admin, 'PATENT', filters.collection_id, df
+    if filters.collection_id:
+        filters.collection_id = await filter_collection_entrys(
+            conn_admin, 'PATENT', filters.collection_id
         )
-        result = (await result).to_dict(orient='records')
-    return result
+    return await ProductionRepository.list_patent(conn, filters)
 
 
 async def list_brand(conn, conn_admin, filters):
+    if filters.collection_id:
+        filters.collection_id = await filter_collection_entrys(
+            conn_admin, 'BRAND', filters.collection_id
+        )
     result = await ProductionRepository.list_brand(conn, filters)
     if not result:
         return []
-    if getattr(filters, 'collection_id', None):
-        df = pd.DataFrame(result)
-        result = filter_collection_entrys(
-            conn_admin, 'BRAND', filters.collection_id, df
-        )
-        result = (await result).to_dict(orient='records')
+    result = pd.DataFrame(result).to_dict(orient='records')
     return sorted(result, key=lambda x: x['year'], reverse=True)
 
 
 async def list_book(conn, conn_admin, filters):
-    result = await ProductionRepository.list_book(conn, filters)
-    if not result:
-        return []
-    if getattr(filters, 'collection_id', None):
-        df = pd.DataFrame(result)
-        result = filter_collection_entrys(
-            conn_admin, 'BOOK', filters.collection_id, df
+    if filters.collection_id:
+        filters.collection_id = await filter_collection_entrys(
+            conn_admin, 'BOOK', filters.collection_id
         )
-        result = (await result).to_dict(orient='records')
-    return result
+    return await ProductionRepository.list_book(conn, filters)
 
 
 async def list_bibliographic_production(
     conn, conn_admin, default_filters, qualis
 ):
+    if default_filters.collection_id:
+        default_filters.collection_id = await filter_collection_entrys(
+            conn_admin, 'ARTICLE', default_filters.collection_id
+        )
     result = await ProductionRepository.list_bibliographic_production(
         conn, default_filters, qualis
     )
     if not result:
         return []
     df = pd.DataFrame(result).fillna('')
-    if getattr(default_filters, 'collection_id', None):
-        df = await filter_collection_entrys(
-            conn_admin, 'ARTICLE', default_filters.collection_id, df
-        )
     return df.to_dict(orient='records')
 
 
 async def list_book_chapter(conn, conn_admin, filters):
-    result = await ProductionRepository.list_book_chapter(conn, filters)
-    if not result:
-        return []
-    if getattr(filters, 'collection_id', None):
-        df = pd.DataFrame(result)
-        result = filter_collection_entrys(
-            conn_admin, 'BOOK_CHAPTER', filters.collection_id, df
+    if filters.collection_id:
+        filters.collection_id = await filter_collection_entrys(
+            conn_admin, 'BOOK_CHAPTER', filters.collection_id
         )
-        result = (await result).to_dict(orient='records')
-    return result
+    return await ProductionRepository.list_book_chapter(conn, filters)
 
 
 async def list_software(conn, conn_admin, filters):
-    result = await ProductionRepository.list_software(conn, filters)
-    if not result:
-        return []
-    if getattr(filters, 'collection_id', None):
-        df = pd.DataFrame(result)
-        result = filter_collection_entrys(
-            conn_admin, 'SOFTWARE', filters.collection_id, df
+    if filters.collection_id:
+        filters.collection_id = await filter_collection_entrys(
+            conn_admin, 'SOFTWARE', filters.collection_id
         )
-        result = (await result).to_dict(orient='records')
-    return result
+    return await ProductionRepository.list_software(conn, filters)
 
 
 async def list_researcher_report(conn, conn_admin, filters):
-    result = await ProductionRepository.list_researcher_report(conn, filters)
-    if not result:
-        return []
-    if getattr(filters, 'collection_id', None):
-        df = pd.DataFrame(result)
-        result = filter_collection_entrys(
-            conn_admin, 'REPORT', filters.collection_id, df
+    if filters.collection_id:
+        filters.collection_id = await filter_collection_entrys(
+            conn_admin, 'REPORT', filters.collection_id
         )
-        result = (await result).to_dict(orient='records')
-    return result
+    return await ProductionRepository.list_researcher_report(conn, filters)
 
 
 async def list_guidance_production(conn, conn_admin, filters):
-    result = await ProductionRepository.list_guidance_production(conn, filters)
-    if not result:
-        return []
-    if getattr(filters, 'collection_id', None):
-        df = pd.DataFrame(result)
-        result = filter_collection_entrys(
-            conn_admin, 'GUIDANCE', filters.collection_id, df
+    if filters.collection_id:
+        filters.collection_id = await filter_collection_entrys(
+            conn_admin, 'GUIDANCE', filters.collection_id
         )
-        result = (await result).to_dict(orient='records')
-    return result
+    return await ProductionRepository.list_guidance_production(conn, filters)
 
 
 async def list_researcher_production_events(conn, conn_admin, filters):
+    if filters.collection_id:
+        filters.collection_id = await filter_collection_entrys(
+            conn_admin, 'WORK_IN_EVENT', filters.collection_id
+        )
     result = await ProductionRepository.list_researcher_production_events(
         conn, filters
     )
-    if not result:
-        return []
-    if getattr(filters, 'collection_id', None):
-        df = pd.DataFrame(result)
-        result = filter_collection_entrys(
-            conn_admin, 'WORK_IN_EVENT', filters.collection_id, df
-        )
-        result = (await result).to_dict(orient='records')
-    return result
-
-
-async def list_research_projects(conn, conn_admin, filters):
-    result = await ProductionRepository.list_research_projects(conn, filters)
-    if not result:
-        return []
-    if getattr(filters, 'collection_id', None):
-        df = pd.DataFrame(result)
-        result = filter_collection_entrys(
-            conn_admin, 'RESEARCH_PROJECT', filters.collection_id, df
-        )
-        result = (await result).to_dict(orient='records')
     return result
 
 
 async def list_papers_magazine(conn, conn_admin, filters):
-    result = await ProductionRepository.list_papers_magazine(conn, filters)
-    if not result:
-        return []
-    if getattr(filters, 'collection_id', None):
-        df = pd.DataFrame(result)
-        result = filter_collection_entrys(
-            conn_admin, 'PAPER', filters.collection_id, df, 'id'
+    if filters.collection_id:
+        filters.collection_id = await filter_collection_entrys(
+            conn_admin, 'PAPER', filters.collection_id
         )
-        result = (await result).to_dict(orient='records')
-    return result
+    return await ProductionRepository.list_papers_magazine(conn, filters)
+
+
+async def list_research_projects(conn, conn_admin, filters):
+    if filters.collection_id:
+        filters.collection_id = await filter_collection_entrys(
+            conn_admin, 'RESEARCH_PROJECT', filters.collection_id
+        )
+    return await ProductionRepository.list_research_projects(conn, filters)
 
 
 # ---
