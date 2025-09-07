@@ -3,7 +3,10 @@ from uuid import UUID
 import pandas as pd
 from numpy import nan
 
-from simcc.repositories.simcc import InstitutionRepository, researcher_repository
+from simcc.repositories.simcc import (
+    institution_repository,
+    researcher_repository,
+)
 from simcc.schemas.Researcher import CoAuthorship
 
 
@@ -154,7 +157,7 @@ def list_co_authorship(researcher_id: UUID) -> list[CoAuthorship]:
         return []
 
     co_authorship = pd.DataFrame(co_authorship)
-    institution = InstitutionRepository.get_institution(
+    institution = institution_repository.get_institution(
         researcher_id=researcher_id
     )
     researcher = researcher_repository.get_researcher(researcher_id)

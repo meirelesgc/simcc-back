@@ -12,6 +12,7 @@ from simcc.routers import (
     ai,
     generic,
     graduate_program,
+    institution,
     metrics,
     powerBI,
     production,
@@ -44,6 +45,7 @@ app.include_router(departament.router, prefix='/ufmg', tags=['conectee'])
 app.include_router(graduate_program.router, tags=['programas de graduação'])
 app.include_router(generic.router, tags=['Generic'], include_in_schema=False)
 app.include_router(ai.router, tags=['AI'])
+app.include_router(institution.router)
 
 
 app.add_middleware(
