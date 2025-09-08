@@ -6,21 +6,22 @@ from urllib.parse import parse_qs, urljoin, urlparse
 import pandas as pd
 import requests
 from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options as ChromeOptions
 from selenium.webdriver.common.by import By
-from unidecode import unidecode
-from webdriver_manager.chrome import ChromeDriverManager
 
-options = webdriver.ChromeOptions()
-options.headless = True
-driver = webdriver.Chrome(
-    service=Service(ChromeDriverManager().install()), options=options
-)
+CSV_FILE_GROUPS = 'storage/research_groups/research_groups.csv'
+PAGE_FILE = 'storage/research_groups/page.txt'
+
+options = ChromeOptions()
+options.add_argument('--headless=new')
+options.add_argument('--no-sandbox')
+options.add_argument('--disable-dev-shm-usage')
+
+driver = webdriver.Chrome(options=options)
 session = requests.Session()
 session.headers.update({
     'User-Agent': driver.execute_script('return navigator.userAgent;')
 })
-
 
 driver.get('http://dgp.cnpq.br/dgp/faces/consulta/consulta_parametrizada.jsf')
 
@@ -33,9 +34,6 @@ botao_pesquisar = driver.find_element(
 )
 botao_pesquisar.click()
 time.sleep(20)
-
-
-csv_file_grupos = 'storage/research_groups/research_groups.csvv'
 
 
 def extrair_dados():
@@ -151,6 +149,8 @@ def extrair_dados():
 
 def sanitize_filename(s):
     try:
+        from unidecode import unidecode
+
         s = unidecode(s)
     except ImportError:
         pass
@@ -166,7 +166,7 @@ def extrai_form_e_param(onclick_js: str):
     return form_id, param
 
 
-if not os.path.exists(csv_file_grupos):
+if not os.path.exists(CSV_FILE_GROUPS):
     df_grupos = pd.DataFrame(
         columns=[
             'Grupo de Pesquisa',
@@ -176,11 +176,11 @@ if not os.path.exists(csv_file_grupos):
             'Área',
         ]
     )
-    df_grupos.to_csv(csv_file_grupos, index=False, encoding='utf-8-sig')
+    df_grupos.to_csv(CSV_FILE_GROUPS, index=False, encoding='utf-8-sig')
 
 ultima_pagina = 1
-if os.path.exists('ultima_pagina.txt'):
-    with open('ultima_pagina.txt', 'r') as f:
+if os.path.exists(PAGE_FILE):
+    with open(PAGE_FILE, 'r') as f:
         ultima_pagina = int(f.read().strip())
 
 for _ in range(1, ultima_pagina):
@@ -205,7 +205,7 @@ while True:
             ],
         )
         df_grupos.to_csv(
-            csv_file_grupos,
+            CSV_FILE_GROUPS,
             mode='a',
             header=False,
             index=False,
@@ -222,7 +222,6 @@ while True:
             arquivo = f'storage/research_groups/researchers_{safe}.csv'
 
             if not os.path.exists(arquivo):
-                print('Entrei aqui')
                 pd.DataFrame(
                     columns=['Nome', 'Titulação', 'Data de inclusão', 'Lattes']
                 ).to_csv(arquivo, index=False, encoding='utf-8-sig')
@@ -235,7 +234,7 @@ while True:
                 encoding='utf-8-sig',
             )
 
-        with open('ultima_pagina.txt', 'w') as f:
+        with open(PAGE_FILE, 'w') as f:
             f.write(str(pagina_atual))
 
         next_button = driver.find_element(By.CLASS_NAME, 'ui-paginator-next')

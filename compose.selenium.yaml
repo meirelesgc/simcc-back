@@ -1,0 +1,8 @@
+services:
+  scraper:
+    build:
+      context: .
+      dockerfile: Dockerfile.selenium
+    volumes:
+      - ./storage/research_groups:/app/storage/research_groups
+    shm_size: '2gb'

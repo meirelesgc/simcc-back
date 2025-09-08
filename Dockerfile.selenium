@@ -1,0 +1,14 @@
+FROM selenium/standalone-chrome:latest
+
+USER root
+WORKDIR /app
+
+RUN pip install --no-cache-dir selenium pandas requests unidecode
+
+COPY routines/research_groups.py /app/research_groups.py
+COPY storage/research_groups/ /app/storage/research_groups/
+
+RUN chown -R seluser:seluser /app/storage
+
+USER seluser
+CMD ["python", "research_groups.py"]
