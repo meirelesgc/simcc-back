@@ -1,14 +1,11 @@
-FROM selenium/standalone-chrome:latest
+FROM python:3.11-slim
 
-USER root
 WORKDIR /app
 
-RUN pip install --no-cache-dir selenium pandas requests unidecode
+RUN pip install --no-cache-dir selenium pandas requests unidecode webdriver-manager
 
 COPY routines/research_groups.py /app/research_groups.py
 COPY storage/research_groups/ /app/storage/research_groups/
+RUN chown -R 1000:1000 /app/storage
 
-RUN chown -R seluser:seluser /app/storage
-
-USER seluser
 CMD ["python", "research_groups.py"]

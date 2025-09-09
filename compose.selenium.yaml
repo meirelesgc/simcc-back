@@ -1,8 +1,22 @@
 services:
+  selenium:
+    image: selenium/standalone-chrome:latest
+    shm_size: '2gb'
+    ports:
+      - "4444:4444"
+      - "5900:5900"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:4444/wd/hub/status" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   scraper:
     build:
       context: .
       dockerfile: Dockerfile.selenium
     volumes:
       - ./storage/research_groups:/app/storage/research_groups
-    shm_size: '2gb'
+    depends_on:
+      selenium:
+        condition: service_healthy
