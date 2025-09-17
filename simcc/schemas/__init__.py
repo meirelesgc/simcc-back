@@ -14,7 +14,7 @@ class DefaultFilters(BaseModel):
     researcher_id: Optional[UUID | str] = None
     dep_id: Optional[str] = None
     departament: Optional[str] = None
-    year: int = 2020
+    year: int | str = 2020
     type: Optional[str] = None
     distinct: int | str = 1
     institution: Optional[str] = None

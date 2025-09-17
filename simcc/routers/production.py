@@ -86,9 +86,13 @@ async def list_researcher_report(
 
 
 @router.get(
-    '/production/book-chapter', response_model=list[BookChapterProduction]
+    '/production/book-chapter',
+    response_model=list[BookChapterProduction],
 )
-@router.get('/book_chapter_production_researcher', include_in_schema=False)
+@router.get(
+    '/book_chapter_production_researcher',
+    include_in_schema=False,
+)
 async def list_book_chapter_production(
     conn: Conn, conn_admin: AdminConn, filters: Filters
 ):

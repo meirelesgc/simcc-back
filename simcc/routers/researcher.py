@@ -73,10 +73,10 @@ async def list_researchers(conn: Conn, filters: Filters, name: str = None):
 
 
 @router.get('/outstanding_researchers', response_model=list[Researcher])
-def list_outstanding_researchers(conn: Conn, filters: Filters):
+async def list_outstanding_researchers(conn: Conn, filters: Filters):
     filters.page = 0
     filters.lenght = 10
-    return researcher_service.list_outstanding_researchers(conn, filters, None)
+    return await researcher_service.list_outstanding_researchers(conn, filters)
 
 
 @router.get('/researcherPatent', response_model=list[Researcher])

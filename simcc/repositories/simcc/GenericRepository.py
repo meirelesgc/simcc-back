@@ -26,7 +26,7 @@ async def get_magazine(conn, issn, initials, page, lenght):
         FROM periodical_magazine m
         WHERE 1 = 1
             {filters}
-        ORDER BY name asc
+        ORDER BY jcr asc
         {filter_pagination}
         """
     return await conn.select(SCRIPT_SQL, params)
@@ -171,14 +171,12 @@ async def lattes_update(
 
             case 'NAME':
                 if filters.term:
-                    # Supondo a existência da função names_filter
                     name_filter_str, term_params = names_filter(
                         'r.name', filters.term
                     )
                     type_specific_filters += name_filter_str
                     params.update(term_params)
 
-    # --- Bloco de Montagem e Execução da Query ---
     SCRIPT_SQL = f"""
         SELECT
             COUNT(DISTINCT r.id) AS total,
