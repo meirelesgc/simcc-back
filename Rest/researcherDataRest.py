@@ -1,3 +1,4 @@
+import os
 from http import HTTPStatus
 
 import pandas as pd
@@ -22,29 +23,37 @@ def researcher_query_grant():
 @researcherDataRest.route("/ResearcherData/Image", methods=["GET"])
 def image():
     researcher_id = request.args.get("researcher_id")
+    name = request.args.get("name")
+    lattes_id = request.args.get("lattes_id")
+
     if not researcher_id:
-        name = request.args.get("name")
-        script_sql = f"""
-            SELECT
-                id
-            FROM
-                researcher
-            WHERE
-                name = '{name}'
-            LIMIT 1;"""
-        researcher_id = sgbdSQL.consultar_db(script_sql)
-        if researcher_id:
-            researcher_id = researcher_id[0][0]
+        if lattes_id:
+            QUERY = "SELECT id FROM researcher WHERE lattes_id = %s LIMIT 1;"
+            result = sgbdSQL.consultar_db(QUERY, (lattes_id,))
+        elif name:
+            QUERY = "SELECT id FROM researcher WHERE name = %s LIMIT 1;"
+            result = sgbdSQL.consultar_db(QUERY, (name,))
         else:
+            return jsonify(
+                "Parâmetro obrigatório não informado"
+            ), HTTPStatus.BAD_REQUEST
+
+        if not result:
             return jsonify("Pesquisador não encontrado"), HTTPStatus.NOT_FOUND
-    try:
-        path_image = f"Files/image_researcher/{researcher_id}.jpg"
-        return send_file(path_or_file=path_image)
-    except Exception:
-        print(f"download da foto - {researcher_id}")
-        download_image(researcher_id)
-        path_image = f"Files/image_researcher/{researcher_id}.jpg"
-        return send_file(path_or_file=path_image)
+
+        researcher_id = result[0][0]
+
+    path_image = f"Files/image_researcher/{researcher_id}.jpg"
+
+    if not os.path.exists(path_image):
+        try:
+            download_image(researcher_id)
+        except Exception as e:
+            return jsonify(
+                f"Erro ao baixar imagem: {str(e)}"
+            ), HTTPStatus.INTERNAL_SERVER_ERROR
+
+    return send_file(path_image)
 
 
 @researcherDataRest.route("/ResearcherData/ByCity", methods=["GET"])
