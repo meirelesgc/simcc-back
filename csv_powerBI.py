@@ -1,10 +1,11 @@
-import Dao.sgbdSQL as sgbdSQL
-import Dao.graduate_programSQL as graduate_programSQL
-import pandas as pd
-from datetime import datetime
 import json
+from datetime import datetime
 from io import StringIO
 
+import pandas as pd
+
+import Dao.graduate_programSQL as graduate_programSQL
+import Dao.sgbdSQL as sgbdSQL
 
 csv_dir = "Files/indicadores_simcc/"
 
@@ -650,28 +651,39 @@ def researcher_production_novo_csv_db():
 
 def ufmg_teacher():
     SCRIPQ_SQL = """ 
-        SELECT researcher_id, matric, inscufmg, nome, genero, situacao, rt, clas, cargo, classe, ref, titulacao, entradanaufmg, progressao, semester
-        FROM ufmg_teacher;
+        SELECT researcher_id, full_name, gender, status_code, work_regime, job_class, job_title, job_rank, job_reference_code, academic_degree, organization_entry_date, last_promotion_date, employment_status_description, department_name, career_category, academic_unit, unit_code, function_code, position_code, leadership_start_date, leadership_end_date, current_function_name, function_location, registration_number, ufmg_registration_number, semester_reference
+        FROM ufmg.researcher;
         """
     registry = sgbdSQL.consultar_db(SCRIPQ_SQL)
     data_frame = pd.DataFrame(
         registry,
         columns=[
             "researcher_id",
-            "matric",
-            "inscufmg",
-            "nome",
-            "genero",
-            "situacao",
-            "rt",
-            "clas",
-            "cargo",
-            "classe",
-            "ref",
-            "titulacao",
-            "entradanaufmg",
-            "progressao",
-            "semester",
+            "full_name",
+            "gender",
+            "status_code",
+            "work_regime",
+            "job_class",
+            "job_title",
+            "job_rank",
+            "job_reference_code",
+            "academic_degree",
+            "organization_entry_date",
+            "last_promotion_date",
+            "employment_status_description",
+            "department_name",
+            "career_category",
+            "academic_unit",
+            "unit_code",
+            "function_code",
+            "position_code",
+            "leadership_start_date",
+            "leadership_end_date",
+            "current_function_name",
+            "function_location",
+            "registration_number",
+            "ufmg_registration_number",
+            "semester_reference",
         ],
     )
     data_frame.to_csv(csv_dir + "ufmg_teacher.csv", index=False)
