@@ -1,15 +1,10 @@
 services:
-  simcc-postgres:
-    image: ankane/pgvector
-    container_name: simcc-postgres
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_DB: simcc
-      POSTGRES_PASSWORD: postgres
+  jade_api:
+    image: gleidsoncosta/jade-api-old:v2.0.0
+    container_name: jade_api
+    build:
+      context: .
+      dockerfile: Dockerfile
+    entrypoint: ./entrypoint.sh
     ports:
-      - "5432:5432"
-    volumes:
-      - simcc-postgres:/var/lib/postgresql/data
-
-volumes:
-  simcc-postgres:
+      - "8000:8000"
