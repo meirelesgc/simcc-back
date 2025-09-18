@@ -11,6 +11,10 @@ class Settings(BaseSettings):
 
     OPENAI_API_KEY: str = None
 
+    POSTGRES_USER: str = 'postgres'
+    POSTGRES_DB: str = 'postgres'
+    POSTGRES_PASSWORD: str = 'postgres'
+
     class Config:
         env_file = '.env'
         env_file_encoding = 'utf-8'

@@ -1,16 +1,11 @@
 services:
-  db:
+  jade_db:
     image: pgvector/pgvector:pg17
-    container_name: ${CONTAINER_DB}
-    environment:
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_DB: ${DB_NAME}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    container_name: jade_db
     ports:
-      - "${DB_PORT}:5432"
+      - "5432:5432"
     volumes:
-      - db:/var/lib/postgresql/data
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - jade_db:/var/lib/postgresql/data
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U postgres" ]
       interval: 10s
@@ -18,31 +13,30 @@ services:
       retries: 5
     restart: unless-stopped
     networks:
-      - jade-network
+      - jade_network
 
-  api:
+  jade_api:
     image: gleidsoncosta/jade-api:latest
-    container_name: ${CONTAINER_API}
+    container_name: jade_api
     build:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "${API_PORT}:8000"
+      - "8000:8000"
     depends_on:
-      - db
+      - jade_db
     volumes:
-      - ./.env:/app/.env
       - storage:/app/storage
     restart: unless-stopped
     networks:
-      - jade-network
+      - jade_network
 
 volumes:
-  db:
+  jade_db:
   storage:
 
 
 networks:
-  jade-network:
-    name: ${CONTAINER_NETWORK}
+  jade_network:
+    name: jade_network
     external: true
