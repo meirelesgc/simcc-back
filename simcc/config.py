@@ -2,6 +2,8 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
+    ROOT_PATH: str = ''
+
     DATABASE_URL: str
     ADMIN_DATABASE_URL: str
 

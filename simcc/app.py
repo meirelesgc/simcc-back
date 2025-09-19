@@ -34,6 +34,7 @@ app = FastAPI(
     lifespan=lifespan,
     docs_url='/swagger',
     openapi_url='/openapi.json',
+    root_path=Settings().ROOT_PATH,
 )
 
 
