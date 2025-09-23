@@ -20,6 +20,10 @@ async def search_in_area_specialty(conn, filters):
     join_modality = ''
     join_group = ''
 
+    if filters.star:
+        PARAMS['star'] = filters.star
+        FILTERS_SQL += ' AND r.id = ANY(%(star)s)'
+
     if filters.graduate_program:
         DISTINCT_SQL = 'DISTINCT'
         PARAMS['graduate_program'] = filters.graduate_program.split(';')
@@ -165,6 +169,10 @@ async def search_in_participation_event(conn, filters):
     join_program = ''
     join_modality = ''
     join_group = ''
+
+    if filters.star:
+        PARAMS['star'] = filters.star
+        FILTERS_SQL += ' AND r.id = ANY(%(star)s)'
 
     if filters.graduate_program:
         DISTINCT_SQL = 'DISTINCT'
@@ -338,6 +346,10 @@ async def search_in_bibliographic_production(conn, filters, type):
     join_program = ''
     join_modality = ''
     join_group = ''
+
+    if filters.star:
+        PARAMS['star'] = filters.star
+        FILTERS_SQL += ' AND r.id = ANY(%(star)s)'
 
     if filters.graduate_program:
         DISTINCT_SQL = 'DISTINCT'
@@ -741,6 +753,10 @@ async def search_in_researcher(conn, filters, name):
     join_program = ''
     join_modality = ''
     join_group = ''
+
+    if filters.star:
+        PARAMS['star'] = filters.star
+        FILTERS_SQL += ' AND r.id = ANY(%(star)s)'
 
     if name:
         name_filter, name_params = tools.websearch_filter('r.name', name)
@@ -1250,6 +1266,10 @@ async def search_in_patents(conn, filters):
     join_program = ''
     join_modality = ''
     join_group = ''
+
+    if filters.star:
+        PARAMS['star'] = filters.star
+        FILTERS_SQL += ' AND r.id = ANY(%(star)s)'
 
     if filters.graduate_program:
         DISTINCT_SQL = 'DISTINCT'

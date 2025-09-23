@@ -493,3 +493,33 @@ async def test_filter_by_collection_id(
     assert response.status_code == HTTPStatus.OK
     assert len(data) == expected_count
     assert data[0]['id'] == project['id']
+
+
+@pytest.mark.asyncio
+async def test_filter_by_star(
+    client,
+    create_research_project,
+    create_star_entry,
+    override_get_current_user,
+):
+    await create_research_project()
+    await create_research_project()
+
+    stared_article = await create_research_project()
+
+    star = await create_star_entry(
+        entry_id=stared_article['id'],
+        type='RESEARCH_PROJECT',
+    )
+
+    override_get_current_user({'user_id': star['user_id']})
+
+    expected_count = 1
+
+    params = {'star': True}
+
+    response = client.get(ENDPOINT_URL, params=params)
+    data = response.json()
+
+    assert response.status_code == HTTPStatus.OK
+    assert len(data) == expected_count

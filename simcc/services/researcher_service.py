@@ -3,11 +3,19 @@ from uuid import UUID
 import pandas as pd
 from numpy import nan
 
+from simcc.repositories.admin import collection_repository
 from simcc.repositories.simcc import (
     institution_repository,
     researcher_repository,
 )
 from simcc.schemas.Researcher import CoAuthorship
+
+
+async def filter_star_entrys(conn, type, user):
+    ids_dict = await collection_repository.filter_star_entrys(
+        conn, type, user['user_id']
+    )
+    return ids_dict.get('ids') if ids_dict else None
 
 
 async def merge_researcher_data(researchers: pd.DataFrame, conn) -> pd.DataFrame:
@@ -51,7 +59,11 @@ async def get_researcher_filter(conn):
     return await researcher_repository.get_researcher_filter(conn)
 
 
-async def search_in_area_specialty(conn, filters):
+async def search_in_area_specialty(conn, conn_admin, filters):
+    if filters.star:
+        filters.star = await filter_star_entrys(
+            conn_admin, 'RESEARCHER', filters.star
+        )
     researchers = await researcher_repository.search_in_area_specialty(
         conn, filters
     )
@@ -65,7 +77,11 @@ async def search_in_area_specialty(conn, filters):
     return researchers.to_dict(orient='records')
 
 
-async def search_in_participation_event(conn, filters):
+async def search_in_participation_event(conn, conn_admin, filters):
+    if filters.star:
+        filters.star = await filter_star_entrys(
+            conn_admin, 'RESEARCHER', filters.star
+        )
     researchers = await researcher_repository.search_in_participation_event(
         conn, filters
     )
@@ -80,7 +96,11 @@ async def search_in_participation_event(conn, filters):
     return researchers.to_dict(orient='records')
 
 
-async def search_in_bibliographic_production(conn, filters, type):
+async def search_in_bibliographic_production(conn, conn_admin, filters, type):
+    if filters.star:
+        filters.star = await filter_star_entrys(
+            conn_admin, 'RESEARCHER', filters.star
+        )
     researchers = await researcher_repository.search_in_bibliographic_production(
         conn, filters, type
     )
@@ -108,7 +128,11 @@ async def search_in_articles(conn, default_filters):
     return researchers.to_dict(orient='records')
 
 
-async def search_in_researcher(conn, filters, name):
+async def search_in_researcher(conn, conn_admin, filters, name):
+    if filters.star:
+        filters.star = await filter_star_entrys(
+            conn_admin, 'RESEARCHER', filters.star
+        )
     researchers = await researcher_repository.search_in_researcher(
         conn, filters, name
     )
@@ -187,7 +211,11 @@ def list_co_authorship(researcher_id: UUID) -> list[CoAuthorship]:
     return co_authorship.to_dict(orient='records')
 
 
-async def search_in_patents(conn, filters):
+async def search_in_patents(conn, conn_admin, filters):
+    if filters.star:
+        filters.star = await filter_star_entrys(
+            conn_admin, 'RESEARCHER', filters.star
+        )
     researchers = await researcher_repository.search_in_patents(conn, filters)
     if not researchers:
         return []

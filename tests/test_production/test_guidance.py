@@ -465,3 +465,33 @@ async def test_filter_by_collection_id(
     # Assert
     assert response.status_code == HTTPStatus.OK
     assert len(data) == expected_count
+
+
+@pytest.mark.asyncio
+async def test_filter_by_star(
+    client,
+    create_guidance,
+    create_star_entry,
+    override_get_current_user,
+):
+    await create_guidance()
+    await create_guidance()
+
+    stared_article = await create_guidance()
+
+    star = await create_star_entry(
+        entry_id=stared_article['id'],
+        type='GUIDANCE',
+    )
+
+    override_get_current_user({'user_id': star['user_id']})
+
+    expected_count = 1
+
+    params = {'star': True}
+
+    response = client.get(ENDPOINT_URL, params=params)
+    data = response.json()
+
+    assert response.status_code == HTTPStatus.OK
+    assert len(data) == expected_count

@@ -15,6 +15,9 @@ async def list_participation_event(conn, filters, nature):
     join_institution = ''
     join_group = ''
     join_departament = ''
+    if filters.star:
+        PARAMS['star'] = filters.star
+        FILTERS_SQL += ' AND p.id = ANY(%(star)s)'
 
     if filters.collection_id:
         PARAMS['collection_id'] = filters.collection_id
@@ -162,6 +165,10 @@ async def list_professional_experience(conn, filters):
     join_departament = ''
     join_group = ''
 
+    if filters.star:
+        PARAMS['star'] = filters.star
+        FILTERS_SQL += ' AND rpe.id = ANY(%(star)s)'
+
     if filters.collection_id:
         PARAMS['collection_id'] = filters.collection_id
         FILTERS_SQL += ' AND rpe.id = ANY(%(collection_id)s)'
@@ -299,6 +306,10 @@ async def list_patent(conn, filters):
     join_departament = ''
     join_group = ''
 
+    if filters.star:
+        PARAMS['star'] = filters.star
+        FILTERS_SQL += ' AND p.id = ANY(%(star)s)'
+
     if filters.collection_id:
         PARAMS['collection_id'] = filters.collection_id
         FILTERS_SQL += ' AND p.id = ANY(%(collection_id)s)'
@@ -433,6 +444,11 @@ async def list_brand(conn, filters):
     join_institution = ''
     join_departament = ''
     join_group = ''
+
+    if filters.star:
+        PARAMS['star'] = filters.star
+        FILTERS_SQL += ' AND b.id = ANY(%(star)s)'
+
     if filters.collection_id:
         PARAMS['collection_id'] = filters.collection_id
         FILTERS_SQL += ' AND b.id = ANY(%(collection_id)s)'
@@ -570,6 +586,10 @@ async def list_book(conn, filters):
     join_institution = ''
     join_departament = ''
     join_group = ''
+
+    if filters.star:
+        PARAMS['star'] = filters.star
+        FILTERS_SQL += ' AND bp.id = ANY(%(star)s)'
 
     if filters.collection_id:
         PARAMS['collection_id'] = filters.collection_id
@@ -715,6 +735,10 @@ async def list_bibliographic_production(conn, filters, qualis: str | None):
         PARAMS['collection_id'] = filters.collection_id
         FILTERS_SQL += ' AND b.id = ANY(%(collection_id)s)'
 
+    if filters.star:
+        PARAMS['star'] = filters.star
+        FILTERS_SQL += ' AND b.id = ANY(%(star)s)'
+
     if filters.term:
         FILTER_TERMS, term_params = tools.websearch_filter(
             'b.title', filters.term
@@ -858,6 +882,10 @@ async def list_book_chapter(conn, filters):
     join_departament = ''
     join_group = ''
 
+    if filters.star:
+        PARAMS['star'] = filters.star
+        FILTERS_SQL += ' AND bp.id = ANY(%(star)s)'
+
     if filters.collection_id:
         PARAMS['collection_id'] = filters.collection_id
         FILTERS_SQL += ' AND bp.id = ANY(%(collection_id)s)'
@@ -989,6 +1017,10 @@ async def list_software(conn, filters):
     join_institution = ''
     join_departament = ''
     join_group = ''
+
+    if filters.star:
+        PARAMS['star'] = filters.star
+        FILTERS_SQL += ' AND s.id = ANY(%(star)s)'
 
     if filters.collection_id:
         PARAMS['collection_id'] = filters.collection_id
@@ -1129,6 +1161,9 @@ async def list_researcher_report(conn, filters):
     join_institution = ''
     join_departament = ''
     join_group = ''
+    if filters.star:
+        PARAMS['star'] = filters.star
+        FILTERS_SQL += ' AND rr.id = ANY(%(star)s)'
 
     if filters.collection_id:
         PARAMS['collection_id'] = filters.collection_id
@@ -1259,6 +1294,10 @@ async def list_guidance_production(conn, filters):
     join_institution = ''
     join_departament = ''
     join_group = ''
+
+    if filters.star:
+        PARAMS['star'] = filters.star
+        FILTERS_SQL += ' AND g.id = ANY(%(star)s)'
 
     if filters.collection_id:
         PARAMS['collection_id'] = filters.collection_id
@@ -1393,6 +1432,9 @@ async def list_researcher_production_events(conn, filters):
     join_institution = ''
     join_departament = ''
     join_group = ''
+    if filters.star:
+        PARAMS['star'] = filters.star
+        FILTERS_SQL += ' AND bp.id = ANY(%(star)s)'
 
     if filters.collection_id:
         PARAMS['collection_id'] = filters.collection_id
@@ -1533,6 +1575,10 @@ async def list_research_projects(conn, filters):
     join_institution = ''
     join_departament = ''
     join_group = ''
+
+    if filters.star:
+        PARAMS['star'] = filters.star
+        FILTERS_SQL += ' AND rp.id = ANY(%(star)s)'
 
     if filters.collection_id:
         PARAMS['collection_id'] = filters.collection_id
@@ -1678,6 +1724,9 @@ async def list_papers_magazine(conn, filters):
     join_institution = ''
     join_departament = ''
     join_group = ''
+    if filters.star:
+        PARAMS['star'] = filters.star
+        FILTERS_SQL += ' AND bp.id = ANY(%(star)s)'
 
     if filters.collection_id:
         PARAMS['collection_id'] = filters.collection_id

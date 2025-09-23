@@ -33,6 +33,7 @@ langchain-postgres = "^0.0.15"
 webdriver-manager = "^4.0.2"
 factory-boy = "^3.3.3"
 faker = "^37.5.3"
+pytest-mock = "^3.15.1"
 
 
 [tool.poetry.group.dev.dependencies]

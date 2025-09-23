@@ -4,19 +4,24 @@ from uuid import UUID
 from fastapi import APIRouter, Depends
 
 from simcc.core.connection import Connection
-from simcc.core.database import get_conn
+from simcc.core.database import get_admin_conn, get_conn
 from simcc.schemas import DefaultFilters
 from simcc.schemas.Researcher import (
     AcademicDegree,
     CoAuthorship,
     Researcher,
 )
+from simcc.security import get_current_user
 from simcc.services import researcher_service
 
 router = APIRouter()
 
 Conn = Annotated[Connection, Depends(get_conn)]
+AdminConn = Annotated[Connection, Depends(get_admin_conn)]
+
 Filters = Annotated[DefaultFilters, Depends()]
+
+CurrentUser = Annotated[dict, Depends(get_current_user)]
 
 
 @router.get('/researcher_filter')
@@ -25,8 +30,16 @@ async def get_researcher_filter(conn: Conn):
 
 
 @router.get('/researcherParticipationEvent', response_model=list[Researcher])
-async def search_in_participation_event(conn: Conn, filters: Filters):
-    return await researcher_service.search_in_participation_event(conn, filters)
+async def search_in_participation_event(
+    current_user: CurrentUser,
+    conn: Conn,
+    conn_admin: AdminConn,
+    filters: Filters,
+):
+    filters.star = current_user if filters.star else None
+    return await researcher_service.search_in_participation_event(
+        conn, conn_admin, filters
+    )
 
 
 @router.get(
@@ -34,42 +47,78 @@ async def search_in_participation_event(conn: Conn, filters: Filters):
     response_model=list[Researcher],
 )
 async def search_in_area_specialty(
-    conn: Conn, filters: Filters, area_specialty: str = None
+    current_user: CurrentUser,
+    conn: Conn,
+    conn_admin: AdminConn,
+    filters: Filters,
+    area_specialty: str = None,
 ):
+    filters.star = current_user if filters.star else None
     if area_specialty:
         filters.term = area_specialty
-    return await researcher_service.search_in_area_specialty(conn, filters)
+    return await researcher_service.search_in_area_specialty(
+        conn, conn_admin, filters
+    )
 
 
 @router.get('/researcherBook', response_model=list[Researcher])
-async def search_in_book(conn: Conn, filters: Filters):
+async def search_in_book(
+    current_user: CurrentUser,
+    conn: Conn,
+    conn_admin: AdminConn,
+    filters: Filters,
+):
+    filters.star = current_user if filters.star else None
     return await researcher_service.search_in_bibliographic_production(
-        conn, filters, 'BOOK'
+        conn, conn_admin, filters, 'BOOK'
     )
 
 
 @router.get('/researcher', response_model=list[Researcher])
 async def search_in_abstract_or_article(
-    conn: Conn, filters: Filters, name: str = None
+    current_user: CurrentUser,
+    conn: Conn,
+    conn_admin: AdminConn,
+    filters: Filters,
+    name: str = None,
 ):
+    filters.star = current_user if filters.star else None
     if filters.type == 'ARTICLE':
         return await researcher_service.search_in_bibliographic_production(
-            conn, filters, 'ARTICLE'
+            conn, conn_admin, filters, 'ARTICLE'
         )
     elif filters.type == 'ABSTRACT':
-        return await researcher_service.search_in_researcher(conn, filters, name)
+        return await researcher_service.search_in_researcher(
+            conn, conn_admin, filters, name
+        )
 
 
 @router.get('/researcher/foment', response_model=list[Researcher])
-async def list_foment_researchers(conn: Conn, filters: Filters):
-    if not filters.modality:
-        filters.modality = '*'
-    return await researcher_service.search_in_researcher(conn, filters, None)
+async def list_foment_researchers(
+    current_user: CurrentUser,
+    conn: Conn,
+    conn_admin: AdminConn,
+    filters: Filters,
+):
+    filters.star = current_user if filters.star else None
+    filters.modality = '*' if not filters.modality else filters.modality
+    return await researcher_service.search_in_researcher(
+        conn, conn_admin, filters, None
+    )
 
 
 @router.get('/researcherName', response_model=list[Researcher])
-async def list_researchers(conn: Conn, filters: Filters, name: str = None):
-    return await researcher_service.search_in_researcher(conn, filters, name)
+async def list_researchers(
+    current_user: CurrentUser,
+    conn: Conn,
+    conn_admin: AdminConn,
+    filters: Filters,
+    name: str = None,
+):
+    filters.star = current_user if filters.star else None
+    return await researcher_service.search_in_researcher(
+        conn, conn_admin, filters, name
+    )
 
 
 @router.get('/outstanding_researchers', response_model=list[Researcher])
@@ -80,8 +129,14 @@ async def list_outstanding_researchers(conn: Conn, filters: Filters):
 
 
 @router.get('/researcherPatent', response_model=list[Researcher])
-async def list_researchers_by_patent(conn: Conn, filters: Filters):
-    return await researcher_service.search_in_patents(conn, filters)
+async def list_researchers_by_patent(
+    current_user: CurrentUser,
+    conn: Conn,
+    conn_admin: AdminConn,
+    filters: Filters,
+):
+    filters.star = current_user if filters.star else None
+    return await researcher_service.search_in_patents(conn, conn_admin, filters)
 
 
 @router.get(

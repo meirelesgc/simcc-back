@@ -2,7 +2,7 @@ from http import HTTPStatus
 
 import pytest
 
-ENDPOINT_URL = '/production/events/participation'
+ENDPOINT_URL = '/production/event/participation'
 
 
 @pytest.mark.asyncio
@@ -438,5 +438,35 @@ async def test_filter_by_collection_id(
     data = response.json()
 
     # Assert
+    assert response.status_code == HTTPStatus.OK
+    assert len(data) == expected_count
+
+
+@pytest.mark.asyncio
+async def test_filter_by_star(
+    client,
+    create_participation_event,
+    create_star_entry,
+    override_get_current_user,
+):
+    await create_participation_event()
+    await create_participation_event()
+
+    stared_article = await create_participation_event()
+
+    star = await create_star_entry(
+        entry_id=stared_article['id'],
+        type='EVENT_PARTICIPATION',
+    )
+
+    override_get_current_user({'user_id': star['user_id']})
+
+    expected_count = 1
+
+    params = {'star': True}
+
+    response = client.get(ENDPOINT_URL, params=params)
+    data = response.json()
+
     assert response.status_code == HTTPStatus.OK
     assert len(data) == expected_count

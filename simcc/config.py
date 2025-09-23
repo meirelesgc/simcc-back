@@ -13,9 +13,7 @@ class Settings(BaseSettings):
 
     OPENAI_API_KEY: str = None
 
-    POSTGRES_USER: str = 'postgres'
-    POSTGRES_DB: str = 'postgres'
-    POSTGRES_PASSWORD: str = 'postgres'
+    JADE_ADMIN_URL: str = 'http://localhost:9090'
 
     class Config:
         env_file = '.env'

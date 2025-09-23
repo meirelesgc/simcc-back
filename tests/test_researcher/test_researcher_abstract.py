@@ -393,3 +393,32 @@ async def test_research_group_id_filter_on_abstract_search(
     assert response.status_code == HTTPStatus.OK
     assert len(data) == expected_count
     assert data[0]['id'] == link_info['researcher_id']
+
+
+@pytest.mark.asyncio
+async def test_filter_by_star(
+    client,
+    create_researcher,
+    create_bibliographic_production_article,
+    create_star_entry,
+    override_get_current_user,
+):
+    await create_researcher()
+    researcher = await create_researcher()
+
+    star = await create_star_entry(
+        entry_id=researcher['id'],
+        type='RESEARCHER',
+    )
+
+    override_get_current_user({'user_id': star['user_id']})
+
+    expected_count = 1
+
+    params = {'star': True, 'type': 'ABSTRACT'}
+
+    response = client.get(ENDPOINT_URL, params=params)
+    data = response.json()
+
+    assert response.status_code == HTTPStatus.OK
+    assert len(data) == expected_count

@@ -29,6 +29,7 @@ class DefaultFilters(BaseModel):
     group_id: Optional[UUID | str] = None
     page: Optional[int] = 1
     lenght: Optional[int] = 24
+    star: Optional[bool] = False
 
     model_config = {'populate_by_name': True, 'json_encoders': {UUID: str}}
 

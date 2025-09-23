@@ -659,6 +659,17 @@ class CollectionEntryFactory(factory.Factory):
     )
 
 
+class StarEntryFactory(factory.Factory):
+    class Meta:
+        model = dict
+
+    user_id = factory.LazyFunction(lambda: str(uuid.uuid4()))
+    entry_id = factory.LazyFunction(lambda: str(uuid.uuid4()))
+    type = factory.LazyFunction(
+        lambda: random.choice(['research_project', 'article', 'dataset'])
+    )
+
+
 class InstitutionAdminFactory(factory.Factory):
     class Meta:
         model = dict

@@ -476,16 +476,11 @@ async def test_filter_by_group_name(
 async def test_filter_by_collection_id(
     client, create_bibliographic_production_article, create_collection_entry
 ):
-    """Testa o filtro por ID de uma coleção."""
-    # Arrange
-    # Cria artigos que não pertencem à coleção
     await create_bibliographic_production_article()
     await create_bibliographic_production_article()
 
-    # Cria o artigo que será adicionado à coleção
     article_in_collection = await create_bibliographic_production_article()
 
-    # Adiciona o artigo à coleção
     collection = await create_collection_entry(
         entry_id=article_in_collection['bibliographic_production']['id'],
         type='ARTICLE',
@@ -494,10 +489,38 @@ async def test_filter_by_collection_id(
     expected_count = 1
     params = {'collection_id': collection['collection_id']}
 
-    # Act
     response = client.get(ENDPOINT_URL, params=params)
     data = response.json()
 
-    # Assert
+    assert response.status_code == HTTPStatus.OK
+    assert len(data) == expected_count
+
+
+@pytest.mark.asyncio
+async def test_filter_by_star(
+    client,
+    create_bibliographic_production_article,
+    create_star_entry,
+    override_get_current_user,
+):
+    await create_bibliographic_production_article()
+    await create_bibliographic_production_article()
+
+    stared_article = await create_bibliographic_production_article()
+
+    star = await create_star_entry(
+        entry_id=stared_article['bibliographic_production']['id'],
+        type='ARTICLE',
+    )
+
+    override_get_current_user({'user_id': star['user_id']})
+
+    expected_count = 1
+
+    params = {'star': True}
+
+    response = client.get(ENDPOINT_URL, params=params)
+    data = response.json()
+
     assert response.status_code == HTTPStatus.OK
     assert len(data) == expected_count

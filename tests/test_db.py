@@ -566,3 +566,15 @@ async def test_create_collection_entry(conn_admin, create_collection_entry):
     result = await conn_admin.select(SQL, None, True)
 
     assert result['total'] == EXPECTED_COUNT
+
+
+@pytest.mark.asyncio
+async def test_create_star_entry(conn_admin, create_star_entry):
+    EXPECTED_COUNT = 1
+
+    await create_star_entry()
+
+    SQL = 'SELECT COUNT(*) AS total FROM feature.stars'
+    result = await conn_admin.select(SQL, None, True)
+
+    assert result['total'] == EXPECTED_COUNT

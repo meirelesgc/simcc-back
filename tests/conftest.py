@@ -6,6 +6,7 @@ from testcontainers.postgres import PostgresContainer
 from simcc.app import app
 from simcc.core.connection import Connection
 from simcc.core.database import get_admin_conn, get_conn
+from simcc.security import get_current_user
 from tests import factories
 
 POSTGRES_IMAGE = 'pgvector/pgvector:pg17'
@@ -987,3 +988,39 @@ def create_collection_entry(conn_admin: Connection, create_collection):
         return entry_data
 
     return _create_collection_entry
+
+
+@pytest_asyncio.fixture
+def create_star_entry(conn_admin: Connection, create_user_admin):
+    async def _create_star_entry(**kwargs):
+        if 'user_id' not in kwargs:
+            user = await create_user_admin()
+            kwargs['user_id'] = user['user_id']
+
+        entry_data = factories.StarEntryFactory.build(**kwargs)
+
+        SCRIPT_SQL = """
+            INSERT INTO feature.stars(user_id, entry_id, type)
+            VALUES (%(user_id)s, %(entry_id)s, %(type)s);
+            """
+
+        await conn_admin.exec(SCRIPT_SQL, entry_data)
+        return entry_data
+
+    return _create_star_entry
+
+
+@pytest.fixture
+def override_get_current_user():
+    state = {'mocked_user': {'user_id': 'default-test-user'}}
+
+    async def user_override():
+        return state['mocked_user']
+
+    def setup_user_override(user_to_return: dict):
+        state['mocked_user'] = user_to_return
+        app.dependency_overrides[get_current_user] = user_override
+
+    yield setup_user_override
+
+    app.dependency_overrides = {}
