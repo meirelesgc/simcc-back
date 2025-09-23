@@ -148,6 +148,7 @@ CREATE TABLE IF NOT EXISTS public.researcher (
     student boolean NOT NULL DEFAULT false,
     extra_field VARCHAR(255),
     status boolean NOT NULL DEFAULT true,
+    stars INTEGER DEFAULT 0,
     created_at timestamp without time zone NOT NULL DEFAULT now(),
     updated_at timestamp without time zone,
     deleted_at timestamp without time zone,
@@ -239,6 +240,7 @@ CREATE TABLE IF NOT EXISTS public.software (
     researcher_id uuid,
     year smallint,
     is_new boolean DEFAULT true,
+    stars INTEGER DEFAULT 0,
     CONSTRAINT software_pkey PRIMARY KEY (id),
     CONSTRAINT fk_researcher_id FOREIGN KEY (researcher_id) REFERENCES public.researcher (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE
 );
@@ -256,6 +258,7 @@ CREATE TABLE IF NOT EXISTS public.patent (
     grant_date timestamp without time zone,
     deposit_date character varying(255),
     is_new boolean DEFAULT true,
+    stars INTEGER DEFAULT 0,
     CONSTRAINT patent_pkey PRIMARY KEY (id),
     CONSTRAINT fk_researcher_id FOREIGN KEY (researcher_id) REFERENCES public.researcher (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE
 );
@@ -268,6 +271,7 @@ CREATE TABLE IF NOT EXISTS public.research_report (
     financing_institutionc character varying(255),
     year smallint,
     is_new boolean DEFAULT true,
+    stars INTEGER DEFAULT 0,
     CONSTRAINT research_report_pkey PRIMARY KEY (id),
     CONSTRAINT fk_researcher_id FOREIGN KEY (researcher_id) REFERENCES public.researcher (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE
 );
@@ -282,6 +286,7 @@ CREATE TABLE IF NOT EXISTS public.guidance (
     status character varying(100),
     year smallint,
     is_new boolean DEFAULT true,
+    stars INTEGER DEFAULT 0,
     CONSTRAINT guidance_pkey PRIMARY KEY (id),
     CONSTRAINT fk_researcher_id FOREIGN KEY (researcher_id) REFERENCES public.researcher (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE
 );
@@ -296,6 +301,7 @@ CREATE TABLE IF NOT EXISTS public.brand (
     researcher_id uuid,
     year smallint,
     is_new boolean DEFAULT true,
+    stars INTEGER DEFAULT 0,
     CONSTRAINT brand_pkey PRIMARY KEY (id),
     CONSTRAINT fk_researcher_id FOREIGN KEY (researcher_id) REFERENCES public.researcher (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE
 );
@@ -310,6 +316,7 @@ CREATE TABLE IF NOT EXISTS public.participation_events (
     researcher_id uuid,
     year smallint,
     is_new boolean DEFAULT true,
+    stars INTEGER DEFAULT 0,
     CONSTRAINT participation_events_pkey PRIMARY KEY (id),
     CONSTRAINT fk_researcher_id FOREIGN KEY (researcher_id) REFERENCES public.researcher (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE
 );
@@ -345,6 +352,7 @@ CREATE TABLE IF NOT EXISTS public.bibliographic_production_article (
     qualis character varying(8) DEFAULT 'SQ'::character varying,
     jcr character varying(100),
     jcr_link character varying(200),
+    stars INTEGER DEFAULT 0,
     CONSTRAINT "PK_3a53ca9c0bd82c629e7a14ef0f4" PRIMARY KEY (id),
     CONSTRAINT "FKPeriodicalMagazineArticle" FOREIGN KEY (periodical_magazine_id) REFERENCES public.periodical_magazine (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE,
     CONSTRAINT "FKPublicationArticle" FOREIGN KEY (bibliographic_production_id) REFERENCES public.bibliographic_production (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE
@@ -366,6 +374,7 @@ CREATE TABLE IF NOT EXISTS public.bibliographic_production_work_in_event(
     event_name_english character varying(600),
     identifier_number character varying(100),
     isbn character varying(20),
+    stars INTEGER DEFAULT 0,
     created_at timestamp without time zone NOT NULL DEFAULT now(),
     updated_at timestamp without time zone,
     deleted_at timestamp without time zone,
@@ -386,6 +395,7 @@ CREATE TABLE IF NOT EXISTS public.bibliographic_production_book (
     created_at timestamp without time zone NOT NULL DEFAULT now(),
     updated_at timestamp without time zone,
     deleted_at timestamp without time zone,
+    stars INTEGER DEFAULT 0,
     CONSTRAINT "PK_818a520edae9528a6d586485d18" PRIMARY KEY (id),
     CONSTRAINT "FKPublicationBook" FOREIGN KEY (bibliographic_production_id) REFERENCES public.bibliographic_production (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE
 );
@@ -402,6 +412,7 @@ CREATE TABLE IF NOT EXISTS public.bibliographic_production_book_chapter (
     num_series character varying(25),
     publishing_company character varying,
     publishing_company_city character varying,
+    stars INTEGER DEFAULT 0,
     created_at timestamp without time zone NOT NULL DEFAULT now(),
     updated_at timestamp without time zone,
     deleted_at timestamp without time zone,
@@ -643,7 +654,8 @@ CREATE TABLE research_project (
     number_specialists INT DEFAULT 0,
     number_academic_masters INT DEFAULT 0,
     number_phd INT DEFAULT 0,
-    description TEXT
+    description TEXT,
+    stars INTEGER DEFAULT 0
 );
 CREATE TABLE research_project_components (
     project_id uuid NOT NULL REFERENCES public.research_project(id) ON UPDATE CASCADE ON DELETE CASCADE,

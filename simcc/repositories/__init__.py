@@ -51,6 +51,13 @@ class Connection:
 
     def close(self):
         self.pool.close()
+        self.pool.wait_closed()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.close()
 
 
 conn = Connection(Settings().DATABASE_URL)
