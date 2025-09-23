@@ -16,3 +16,4 @@ class ProfessionalExperience(BaseModel):
     workload_hours_weekly: str | None
     exclusive_dedication: bool | None
     additional_info: str | None
+    stars: int = 0

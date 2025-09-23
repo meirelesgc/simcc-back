@@ -44,9 +44,9 @@ async def get_current_user(
 ):
     if not token:
         token = request.cookies.get('Authorization')
-        token = token.replace('Bearer ', '', 1)
         if not token:
             return None
+        token = token.replace('Bearer ', '', 1)
     async with httpx.AsyncClient() as client:
         response = await client.get(Settings().JADE_ADMIN_URL)
         if response.status_code == HTTPStatus.OK:

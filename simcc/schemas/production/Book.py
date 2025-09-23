@@ -14,3 +14,4 @@ class BookProduction(BaseModel):
     has_image: bool | None
     relevance: bool | None
     name: str | list[str]
+    stars: int = 0

@@ -25,3 +25,4 @@ class GuidanceProduction(BaseModel):
     status: str
     year: int
     name: str | list[str]
+    stars: int = 0

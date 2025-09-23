@@ -13,3 +13,4 @@ class PapersProduction(BaseModel):
     scientific_divulgation: bool | None
     authors: str | list | None
     year_: int
+    stars: int = 0

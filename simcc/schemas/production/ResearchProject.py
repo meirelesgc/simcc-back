@@ -22,3 +22,4 @@ class ResearchProjectProduction(BaseModel):
     production: list | None
     foment: list | None
     components: list | None
+    stars: int = 0

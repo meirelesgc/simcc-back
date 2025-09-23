@@ -17,6 +17,7 @@ class PatentProduction(BaseModel):
     grant_date: datetime | None
     year: int
     name: str | list[str]
+    stars: int = 0
 
     # Distinct 0
     id: UUID | list[UUID]

@@ -13,6 +13,7 @@ class BookChapterProduction(BaseModel):
     researcher: UUID | list[UUID]
     lattes_id: str | list[str]
     name: str | list[str]
+    stars: int = 0
 
     has_image: bool | None
     relevance: bool | None

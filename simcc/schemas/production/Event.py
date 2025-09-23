@@ -17,6 +17,7 @@ class EventProduction(BaseModel):
     year_: int
     name: str | list[str]
     id: UUID | list[UUID]
+    stars: int = 0
 
     event_classification: Optional[str]
     event_name: Optional[str]

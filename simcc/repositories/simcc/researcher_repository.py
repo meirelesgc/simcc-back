@@ -138,7 +138,7 @@ async def search_in_area_specialty(conn, filters):
             rp.software, rp.brand, opr.h_index, opr.relevance_score,
             opr.works_count, opr.cited_by_count, opr.i10_index, opr.scopus,
             opr.openalex, r.classification, r.status, r.institution_id,
-            r.abstract_ai
+            r.abstract_ai, r.stars
         FROM researcher r
             LEFT JOIN institution i ON i.id = r.institution_id
             LEFT JOIN researcher_production rp ON rp.researcher_id = r.id
@@ -308,7 +308,7 @@ async def search_in_participation_event(conn, filters):
             rp.software, rp.brand, opr.h_index, opr.relevance_score,
             opr.works_count, opr.cited_by_count, opr.i10_index, opr.scopus,
             opr.openalex, r.classification, r.status, r.institution_id,
-            r.abstract_ai
+            r.abstract_ai, r.stars
         FROM researcher r
             LEFT JOIN institution i ON i.id = r.institution_id
             LEFT JOIN researcher_production rp ON rp.researcher_id = r.id
@@ -451,7 +451,7 @@ async def search_in_bibliographic_production(conn, filters, type):
             rp.software, rp.brand, opr.h_index, opr.relevance_score,
             opr.works_count, opr.cited_by_count, opr.i10_index, opr.scopus,
             opr.openalex, r.classification, r.status, r.institution_id,
-            r.abstract_ai
+            r.abstract_ai, r.stars
         FROM researcher r
             LEFT JOIN institution i ON i.id = r.institution_id
             LEFT JOIN researcher_production rp ON rp.researcher_id = r.id
@@ -717,7 +717,7 @@ async def search_in_articles(conn: Connection, default_filters: DefaultFilters):
             rp.software, rp.brand, opr.h_index, opr.relevance_score,
             opr.works_count, opr.cited_by_count, opr.i10_index, opr.scopus,
             opr.openalex, r.classification, r.status, r.institution_id,
-            r.abstract_ai
+            r.abstract_ai, r.stars
         FROM researcher r
             LEFT JOIN institution i ON i.id = r.institution_id
             LEFT JOIN researcher_production rp ON rp.researcher_id = r.id
@@ -861,7 +861,7 @@ async def search_in_researcher(conn, filters, name):
             rp.software, rp.brand, opr.h_index, opr.relevance_score,
             opr.works_count, opr.cited_by_count, opr.i10_index, opr.scopus,
             opr.openalex, r.classification, r.status, r.institution_id,
-            r.abstract_ai, 0 AS among
+            r.abstract_ai, 0 AS among, r.stars
         FROM researcher r
             LEFT JOIN institution i ON i.id = r.institution_id
             LEFT JOIN researcher_production rp ON rp.researcher_id = r.id
@@ -997,7 +997,7 @@ async def search_in_name(
             r.classification,
             r.status,
             r.institution_id,
-            r.abstract_ai
+            r.abstract_ai, r.stars
         FROM researcher r
             LEFT JOIN institution i ON i.id = r.institution_id
             LEFT JOIN researcher_production rp ON rp.researcher_id = r.id
@@ -1369,7 +1369,7 @@ async def search_in_patents(conn, filters):
             rp.software, rp.brand, opr.h_index, opr.relevance_score,
             opr.works_count, opr.cited_by_count, opr.i10_index, opr.scopus,
             opr.openalex, r.classification, r.status, r.institution_id,
-            r.abstract_ai
+            r.abstract_ai, r.stars
         FROM researcher r
             LEFT JOIN institution i ON i.id = r.institution_id
             LEFT JOIN researcher_production rp ON rp.researcher_id = r.id

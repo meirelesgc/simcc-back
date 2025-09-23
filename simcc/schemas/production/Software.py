@@ -15,3 +15,4 @@ class SoftwareProduction(BaseModel):
     relevance: bool | None = False
     name: str | list[str]
     id: UUID | list[UUID]
+    stars: int = 0

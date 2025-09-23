@@ -79,6 +79,7 @@ class ArticleProduction(BaseModel):
     jcr_link: str | None
     researcher_id: UUID | list[UUID]
     lattes_id: str | list[str]
+    stars: int = 0
 
     abstract: str | None
     article_institution: str | None

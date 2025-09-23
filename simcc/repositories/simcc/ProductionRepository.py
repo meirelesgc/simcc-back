@@ -413,7 +413,7 @@ async def list_patent(conn, filters):
         SELECT {DISTINCT_SQL}
             p.id, p.title, p.category, p.relevance, p.has_image,
             p.development_year AS year, p.details, p.grant_date, p.deposit_date,
-            r.id AS researcher, r.lattes_id, r.name AS name, p.code
+            r.id AS researcher, r.lattes_id, r.name AS name, p.code, p.stars
         FROM public.patent p
             INNER JOIN public.researcher r ON r.id = p.researcher_id
             {join_researcher_production}
@@ -554,7 +554,7 @@ async def list_brand(conn, filters):
     SCRIPT_SQL = f"""
         SELECT {DISTINCT_SQL}
             b.id, b.title, b.year, b.has_image, b.relevance,
-            b.goal, b.nature,
+            b.goal, b.nature, b.stars,
             r.id AS researcher_id, r.lattes_id, r.name
         FROM public.brand b
             INNER JOIN researcher r ON r.id = b.researcher_id
@@ -696,7 +696,7 @@ async def list_book(conn, filters):
             bpb.publishing_company AS publishing_company,
             bp.researcher_id AS researcher,
             r.lattes_id AS lattes_id, bp.relevance,
-            bp.has_image, bp.id, r.name
+            bp.has_image, bp.id, r.name, bpb.stars
         FROM public.bibliographic_production bp
             INNER JOIN public.bibliographic_production_book bpb ON bp.id = bpb.bibliographic_production_id
             INNER JOIN public.researcher r ON r.id = bp.researcher_id
@@ -845,7 +845,7 @@ async def list_bibliographic_production(conn, filters, qualis: str | None):
             opa.article_institution, opa.authors, opa.authors_institution,
             COALESCE (opa.citations_count, 0) AS citations_count, bpa.issn,
             opa.keywords, opa.landing_page_url, opa.language, opa.pdf,
-            b.has_image, b.relevance, bpa.created_at AS created_at
+            b.has_image, b.relevance, bpa.created_at AS created_at, bpa.stars
         FROM bibliographic_production b
             LEFT JOIN bibliographic_production_article bpa ON b.id = bpa.bibliographic_production_id
             LEFT JOIN researcher r ON r.id = b.researcher_id
@@ -1128,7 +1128,7 @@ async def list_software(conn, filters):
         SELECT {DISTINCT_SQL}
             s.id, s.title, s.year AS year, s.has_image, s.relevance,
             s.platform, s.goal, s.environment, s.availability, s.financing_institutionc,
-            r.name, r.id AS researcher_id, r.lattes_id
+            r.name, r.id AS researcher_id, r.lattes_id, s.stars
         FROM public.software s
             LEFT JOIN public.researcher r ON s.researcher_id = r.id
             {join_researcher_production}
@@ -1261,7 +1261,7 @@ async def list_researcher_report(conn, filters):
     SCRIPT_SQL = f"""
         SELECT {DISTINCT_SQL}
             rr.id, r.name, rr.title, rr.year, rr.project_name,
-            rr.financing_institutionc AS financing
+            rr.financing_institutionc AS financing, rr.stars
         FROM public.research_report rr
             INNER JOIN public.researcher r ON r.id = rr.researcher_id
             {join_researcher_production}
@@ -1399,7 +1399,7 @@ async def list_guidance_production(conn, filters):
     SCRIPT_SQL = f"""
         SELECT {DISTINCT_SQL}
             g.id, g.title, g.nature, g.oriented, g.type, g.status,
-            g.year, r.name, r.id AS researcher_id, r.lattes_id
+            g.year, r.name, r.id AS researcher_id, r.lattes_id, g.stars
         FROM public.guidance g
             INNER JOIN public.researcher r ON g.researcher_id = r.id
             {join_researcher_production}
@@ -1541,7 +1541,7 @@ async def list_researcher_production_events(conn, filters):
             bpew.event_city, bpew.event_year,
             bpew.proceedings_title, bpew.volume, bpew.issue, bpew.series,
             bpew.start_page, bpew.end_page, bpew.publisher_name, bpew.publisher_city,
-            bpew.event_name_english, bpew.identifier_number, bpew.isbn
+            bpew.event_name_english, bpew.identifier_number, bpew.isbn, bpew.stars
         FROM public.bibliographic_production bp
             INNER JOIN public.bibliographic_production_work_in_event bpew ON bpew.bibliographic_production_id = bp.id
             LEFT JOIN public.researcher r ON r.id = bp.researcher_id
@@ -1685,7 +1685,7 @@ async def list_research_projects(conn, filters):
             rp.agency_code, rp.agency_name, rp.project_name, rp.status,
             rp.nature, rp.number_undergraduates, rp.number_specialists,
             rp.number_academic_masters, rp.number_phd, rp.description,
-            rpp.production, rpf.foment, rpc.components
+            rpp.production, rpf.foment, rpc.components, rp.stars
         FROM public.research_project rp
             LEFT JOIN researcher r ON r.id = rp.researcher_id
             LEFT JOIN (SELECT project_id, JSONB_AGG(JSONB_BUILD_OBJECT('title', title, 'type', type)) AS production
@@ -3603,7 +3603,8 @@ async def get_speaker_metrics(
             SELECT {filter_distinct}
                 pe.title,
                 pe.year,
-                pe.nature
+                pe.nature,
+                pe.stars
             FROM
                 public.participation_events pe
                 {join_researcher}

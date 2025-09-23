@@ -11,3 +11,4 @@ class BrandProduction(BaseModel):
     lattes_id: str | list[str]
     name: str | list[str]
     id: UUID | list[UUID]
+    stars: int = 0

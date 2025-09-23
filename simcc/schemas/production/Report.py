@@ -10,3 +10,4 @@ class ReportProduction(BaseModel):
     year: int
     project_name: str | None
     financing: str | None
+    stars: int = 0
