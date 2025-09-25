@@ -14,9 +14,9 @@ class DefaultFilters(BaseModel):
     researcher_id: Optional[UUID | str] = None
     dep_id: Optional[str] = None
     departament: Optional[str] = None
-    year: int | str = 2020
+    year: Optional[int | str] = None
     type: Optional[str] = None
-    distinct: int | str = 1
+    distinct: Optional[int | str] = 1
     institution: Optional[str] = None
     institution_id: Optional[UUID | str] = None
     collection_id: Optional[UUID | str] = None
@@ -27,11 +27,9 @@ class DefaultFilters(BaseModel):
     lattes_id: Optional[str] = None
     group: Optional[str] = None
     group_id: Optional[UUID | str] = None
-    page: Optional[int] = 1
-    lenght: Optional[int] = 24
+    page: Optional[int] = None
+    lenght: Optional[int] = None
     star: Optional[bool] = False
-
-    model_config = {'populate_by_name': True, 'json_encoders': {UUID: str}}
 
 
 class ResearcherOptions(str, Enum):

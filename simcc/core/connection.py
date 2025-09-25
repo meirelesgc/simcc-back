@@ -17,36 +17,33 @@ class Connection:
     async def disconnect(self):
         await self.pool.close()
 
-    async def exec(
-        self,
-        query: str,
-        params: dict | None = None,
-    ):
-        async with self.pool.connection() as conn:
-            await conn.set_autocommit(True)
-            async with conn.cursor() as cur:
-                await cur.execute(query, params)
+    async def exec(self, query: str, params: dict | None = None) -> int:
+        try:
+            async with self.pool.connection() as conn:
+                async with conn.cursor() as cur:
+                    await cur.execute(query, params)
+                    return cur.rowcount
+        except Exception as e:
+            raise RuntimeError(f'Error executing query: {query}\n{params}\n{e}')
 
-    async def execmany(
-        self,
-        query: str,
-        params: list[dict] | None = None,
-    ):
-        async with self.pool.connection() as conn:
-            await conn.set_autocommit(True)
-            async with conn.cursor() as cur:
-                await cur.executemany(query, params)
+    async def execmany(self, query: str, params: dict | None = None) -> int:
+        try:
+            async with self.pool.connection() as conn:
+                async with conn.cursor() as cur:
+                    await cur.executemany(query, params)
+                    return cur.rowcount
+        except Exception as e:
+            raise RuntimeError(f'Error executing query: {query}\n{params}\n{e}')
 
     async def select(
-        self,
-        query: str,
-        params: dict | None = None,
-        one: bool = False,
+        self, query: str, params: dict | None = None, one: bool = False
     ):
-        async with self.pool.connection() as conn:
-            await conn.set_autocommit(True)
-            async with conn.cursor() as cur:
-                await cur.execute(query, params)
-                if one:
-                    return await cur.fetchone()
-                return await cur.fetchall()
+        try:
+            async with self.pool.connection() as conn:
+                async with conn.cursor() as cur:
+                    await cur.execute(query, params)
+                    if one:
+                        return await cur.fetchone()
+                    return await cur.fetchall()
+        except Exception as e:
+            raise RuntimeError(f'Error executing query: {query}\n{params}\n{e}')
