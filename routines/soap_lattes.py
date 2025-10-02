@@ -6,13 +6,14 @@ import httpx
 from zeep import Client
 
 from routines.logger import logger_researcher_routine, logger_routine
-from simcc.config import settings
+from simcc.config import Settings
 from simcc.repositories import conn, conn_admin
 
 LOG_PATH = 'logs'
-CURRENT_XML_PATH = 'current'
-ZIP_XML_PATH = 'zip'
-PROXY = settings.ALTERNATIVE_CNPQ_SERVICE
+XML_PATH = Settings().XML_PATH
+CURRENT_XML_PATH = Settings().CURRENT_XML_PATH
+ZIP_XML_PATH = Settings().ZIP_XML_PATH
+PROXY = Settings().ALTERNATIVE_CNPQ_SERVICE
 
 if not PROXY:
     client = Client('http://servicosweb.cnpq.br/srvcurriculo/WSCurriculo?wsdl')
@@ -77,7 +78,7 @@ def download_xml(lattes_id, researcher_id):
             XML.write(response)
 
         with zipfile.ZipFile(zip_path, 'r') as ZIP:
-            ZIP.extractall(PATH)
+            ZIP.extractall(XML_PATH)
             ZIP.extractall(os.path.join(CURRENT_XML_PATH))
         os.remove(zip_path)
         logger_researcher_routine(researcher_id, 'SOAP_LATTES', False)
@@ -88,16 +89,12 @@ def download_xml(lattes_id, researcher_id):
 
 
 if __name__ == '__main__':
-    PATH = 'storage/xml'
-    CURRENT_XML_PATH = 'storage/xml/current'
-    ZIP_XML_PATH = 'storage/xml/zip'
-
     for directory in [LOG_PATH, CURRENT_XML_PATH, ZIP_XML_PATH]:
         if not os.path.exists(directory):
             os.makedirs(directory)
 
-    for file in os.listdir(PATH):
-        file_path = os.path.join(PATH, file)
+    for file in os.listdir(XML_PATH):
+        file_path = os.path.join(XML_PATH, file)
         if os.path.isfile(file_path) and file_path.endswith('.xml'):
             os.remove(file_path)
 
