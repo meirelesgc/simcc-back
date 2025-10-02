@@ -222,7 +222,7 @@ def cimatec_graduate_program_student():
 
 def graduate_program_student_year_unnest():
     SCRIPT_SQL = """
-        SELECT graduate_program_id, researcher_id, unnest(year) AS year
+        SELECT graduate_program_id, researcher_id, year
         FROM graduate_program_student;
         """
     result = conn.select(SCRIPT_SQL)
@@ -244,7 +244,7 @@ def dim_graduate_program_acronym():
 
 def graduate_program_researcher_year_unnest():
     SCRIPT_SQL = """
-        SELECT graduate_program_id, researcher_id, unnest(year) AS year
+        SELECT graduate_program_id, researcher_id, year
         FROM graduate_program_researcher;
         """
     result = conn.select(SCRIPT_SQL)
@@ -736,7 +736,7 @@ def article_distinct_novo_csv_db():
         WHERE gpr.graduate_program_id = gp.graduate_program_id
             AND gpr.researcher_id = r.id
             AND r.id = b.researcher_id
-            AND b.year::INT = ANY(gpr.year)
+            AND b.year::INT = gpr.year
             AND b.type = 'ARTICLE'
             --- AND gpr.type_ = 'PERMANENTE'
         ORDER BY qualis desc
@@ -760,7 +760,7 @@ def production_distinct_novo_csv_db():
         WHERE gpr.graduate_program_id = gp.graduate_program_id
             AND gpr.researcher_id = r.id
             AND r.id = b.researcher_id
-            AND b.year::INT = ANY(gpr.year)
+            AND b.year::INT = gpr.year
         order by qualis desc
         """
     result = conn.select(SCRIPT_SQL)
@@ -1240,7 +1240,7 @@ def _guidance():
             ON r_co.researcher_id = gt.co_supervisor_researcher_id
         LEFT JOIN graduate_program gp
             ON gp.graduate_program_id = gt.graduate_program_id
-        WHERE gp.deleted_at IS NULL
+        WHERE gt.deleted_at IS NULL
     """
     guidance = conn_admin.select(SCRIPT_SQL)
     guidance = pd.DataFrame(
