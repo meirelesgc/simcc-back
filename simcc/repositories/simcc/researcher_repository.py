@@ -759,7 +759,7 @@ async def search_in_researcher(conn, filters, name):
         FILTERS_SQL += ' AND r.id = ANY(%(star)s)'
 
     if name:
-        name_filter, name_params = tools.websearch_filter('r.name', name)
+        name_filter, name_params = tools.names_filter('r.name', name)
         FILTERS_SQL += name_filter
         PARAMS.update(name_params)
 
