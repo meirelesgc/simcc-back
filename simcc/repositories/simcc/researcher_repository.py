@@ -801,6 +801,10 @@ async def search_in_researcher(conn, filters, name):
         PARAMS['institution'] = filters.institution.split(';')
         FILTERS_SQL += ' AND i.name = ANY(%(institution)s)'
 
+    if filters.institution_id:
+        PARAMS['institution_id'] = filters.institution_id.split(';')
+        FILTERS_SQL += ' AND i.id = ANY(%(institution_id)s)'
+
     if filters.graduation:
         PARAMS['graduation'] = filters.graduation.split(';')
         FILTERS_SQL += ' AND r.graduation = ANY(%(graduation)s)'
