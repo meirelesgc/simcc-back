@@ -82,6 +82,7 @@ async def search_in_abstract_or_article(
     filters: Filters,
     name: str = None,
 ):
+    filters.term = filters.terms if filters.terms else None
     filters.star = current_user if filters.star else None
     if filters.type == 'ARTICLE':
         return await researcher_service.search_in_bibliographic_production(

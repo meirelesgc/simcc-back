@@ -475,6 +475,7 @@ async def search_in_bibliographic_production(conn, filters, type):
         ORDER BY bp.among DESC
         {FILTER_PAGINATION};
     """
+    print(SCRIPT_SQL, PARAMS)
     return await conn.select(SCRIPT_SQL, PARAMS)
 
 
