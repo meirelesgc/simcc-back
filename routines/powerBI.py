@@ -736,7 +736,7 @@ def article_distinct_novo_csv_db():
         WHERE gpr.graduate_program_id = gp.graduate_program_id
             AND gpr.researcher_id = r.id
             AND r.id = b.researcher_id
-            AND b.year::INT = gpr.year
+            AND b.year::INT = ANY(gpr.year)
             AND b.type = 'ARTICLE'
             --- AND gpr.type_ = 'PERMANENTE'
         ORDER BY qualis desc
@@ -760,7 +760,7 @@ def production_distinct_novo_csv_db():
         WHERE gpr.graduate_program_id = gp.graduate_program_id
             AND gpr.researcher_id = r.id
             AND r.id = b.researcher_id
-            AND b.year::INT = gpr.year
+            AND b.year::INT = ANY(gpr.year)
         order by qualis desc
         """
     result = conn.select(SCRIPT_SQL)
