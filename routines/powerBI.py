@@ -76,14 +76,32 @@ def fat_openalex_researcher():
 
 def researcher_area_leader():
     SCRIPT_SQL = """
-        SELECT id AS researcher_id, unnest(string_to_array(area, ';')) AS area_leader,
-            focal_point
+        SELECT id AS researcher_id, area
         FROM researcher;
-        """
+    """
     result = conn.select(SCRIPT_SQL)
-    csv = pd.DataFrame(result)
+    df = pd.DataFrame(result)
+
+    rows = []
+    for _, row in df.iterrows():
+        researcher_id = row['researcher_id']
+        areas = str(row['area']).split(';')
+        for a in areas:
+            if not a.strip():
+                continue
+            parts = a.strip().split('|')
+            area_name = parts[0].strip()
+            focal_part = parts[1] if len(parts) > 1 else ''
+            focal_value = 'true' if 'true' in focal_part.lower() else 'false'
+            rows.append({
+                'researcher_id': researcher_id,
+                'area_leader': area_name,
+                'focal_point': focal_value,
+            })
+
+    csv = pd.DataFrame(rows)
     csv_path = os.path.join(PATH, 'researcher_area_leader.csv')
-    csv.to_csv(csv_path)
+    csv.to_csv(csv_path, index=False)
 
 
 def fat_openalex_article():
