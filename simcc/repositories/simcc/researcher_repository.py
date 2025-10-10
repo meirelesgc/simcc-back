@@ -876,7 +876,7 @@ async def search_in_researcher(conn, filters, name):
             {join_dep}
         WHERE 1 = 1
             {FILTERS_SQL}
-        ORDER BY last_update
+        ORDER BY name
         {FILTER_PAGINATION};
     """
     return await conn.select(SCRIPT_SQL, PARAMS)
