@@ -1,7 +1,6 @@
 services:
   jade_db:
     image: pgvector/pgvector:pg17
-    container_name: jade_db
     ports:
       - "5432:5432"
     volumes:
@@ -16,15 +15,9 @@ services:
       timeout: 5s
       retries: 5
     restart: unless-stopped
-    networks:
-      - jade_network
 
   jade_api:
     image: gleidsoncosta/jade-api:latest
-    container_name: jade_api
-    build:
-      context: .
-      dockerfile: Dockerfile
     ports:
       - "8000:8000"
     depends_on:
@@ -32,15 +25,9 @@ services:
     volumes:
       - storage:/app/storage
     restart: unless-stopped
-    networks:
-      - jade_network
 
 volumes:
   jade_db:
   storage:
 
 
-networks:
-  jade_network:
-    name: jade_network
-    external: true
