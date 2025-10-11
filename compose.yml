@@ -1,10 +1,5 @@
 services:
-  jade_api:
-    image: gleidsoncosta/jade-api-old:v2.0.0
-    container_name: jade_api
-    build:
-      context: .
-      dockerfile: Dockerfile
-    entrypoint: ./entrypoint.sh
-    ports:
-      - "8000:8000"
+  jade_api_old:
+    image: gleidsoncosta/jade-api-old:latest
+    env_file: ./.env
+    restart: unless-stopped
