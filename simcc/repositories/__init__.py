@@ -1,63 +1,79 @@
 import psycopg
 import psycopg.rows
-from psycopg_pool import ConnectionPool
 
 from simcc.config import Settings
 
 
 class Connection:
-    def __init__(self, conninfo, **kwargs):
-        self.pool = ConnectionPool(conninfo=conninfo, open=True, **kwargs)
+    def __init__(self, conninfo):
+        self.conninfo = conninfo
 
     def exec(self, query, params=None):
+        conn = None
+        cur = None
         try:
-            with self.pool.connection() as conn:
-                with conn.cursor(row_factory=psycopg.rows.dict_row) as cur:
-                    cur.execute(query, params)
-                    conn.commit()
-                    return cur.rowcount
+            conn = psycopg.connect(self.conninfo)
+            cur = conn.cursor(row_factory=psycopg.rows.dict_row)
+            cur.execute(query, params)
+            conn.commit()
+            return cur.rowcount
         except Exception as e:
-            print(f'Error executing query: {query}')
-            print(f'With parameters: {params}')
-            print(f'Error: {e}')
+            if conn:
+                conn.rollback()
+            print(f'\n[ERROR] Executando query: {query}')
+            print(f'Parâmetros: {params}')
+            print(f'Erro: {e}\n')
             raise
+        finally:
+            if cur:
+                cur.close()
+            if conn:
+                conn.close()
 
     def execmany(self, query, params=None):
+        conn = None
+        cur = None
         try:
-            with self.pool.connection() as conn:
-                with conn.cursor(row_factory=psycopg.rows.dict_row) as cur:
-                    cur.executemany(query, params)
-                    conn.commit()
-                    return cur.rowcount
+            conn = psycopg.connect(self.conninfo)
+            cur = conn.cursor(row_factory=psycopg.rows.dict_row)
+            cur.executemany(query, params)
+            conn.commit()
+            return cur.rowcount
         except Exception as e:
-            print(f'Error executing query: {query}')
-            print(f'With parameters: {params}')
-            print(f'Error: {e}')
+            if conn:
+                conn.rollback()
+            print(f'\n[ERROR] Executando query: {query}')
+            print(f'Parâmetros: {params}')
+            print(f'Erro: {e}\n')
             raise
+        finally:
+            if cur:
+                cur.close()
+            if conn:
+                conn.close()
 
-    def select(self, query, params=None, one=False) -> list:
+    def select(self, query, params=None, one=False):
+        conn = None
+        cur = None
         try:
-            with self.pool.connection() as conn:
-                with conn.cursor(row_factory=psycopg.rows.dict_row) as cur:
-                    cur.execute(query, params)
-                    if one:
-                        return cur.fetchone()
-                    return cur.fetchall()
+            conn = psycopg.connect(self.conninfo)
+            cur = conn.cursor(row_factory=psycopg.rows.dict_row)
+            cur.execute(query, params)
+            result = cur.fetchone() if one else cur.fetchall()
+            return result
         except Exception as e:
-            print(f'Error executing query: {query}')
-            print(f'With parameters: {params}')
-            print(f'Error: {e}')
+            print(f'\n[ERROR] Executando query: {query}')
+            print(f'Parâmetros: {params}')
+            print(f'Erro: {e}\n')
             raise
+        finally:
+            if cur:
+                cur.close()
+            if conn:
+                conn.close()
 
     def close(self):
-        self.pool.close()
-        self.pool.wait_closed()
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        self.close()
+        pass
 
 
 conn = Connection(Settings().DATABASE_URL)

@@ -13,7 +13,7 @@ class Settings(BaseSettings):
 
     XML_PATH: str = 'storage/xml'
     CURRENT_XML_PATH: str = 'storage/xml/current'
-    ZIP_XML_PATH: str = 'storage/xml/zip'
+    ZIP_XML_PATH: str = 'storage/xml/current'
 
     OPENAI_API_KEY: str = None
 
