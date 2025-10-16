@@ -14,7 +14,7 @@ CREATE TYPE public.bibliographic_production_type_enum AS ENUM ('BOOK', 'BOOK_CHA
 CREATE SCHEMA IF NOT EXISTS embeddings;
 CREATE SCHEMA IF NOT EXISTS ufmg;
 CREATE SCHEMA IF NOT EXISTS logs;
-
+ 
 CREATE TABLE IF NOT EXISTS public.country (
     id uuid NOT NULL DEFAULT uuid_generate_v4(),
     name character varying NOT NULL,
@@ -225,6 +225,144 @@ CREATE TABLE IF NOT EXISTS public.bibliographic_production (
     CONSTRAINT "PK_9c61219aee0513e9a1cf707a41a" PRIMARY KEY (id),
     CONSTRAINT "FKCountryResearcher" FOREIGN KEY (country_id) REFERENCES public.country (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE,
     CONSTRAINT fk_researcher_id FOREIGN KEY (researcher_id) REFERENCES public.researcher (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE
+);
+CREATE TABLE IF NOT EXISTS public.mockup (
+    id uuid NOT NULL DEFAULT uuid_generate_v4(),
+    researcher_id uuid,
+    production_sequence integer, 
+    title character varying(500) NOT NULL,
+    title_en character varying(500),
+    year character(4),
+    country character varying(100),
+    language character varying(50),
+    dissemination_medium character varying(50), 
+    homepage character varying(500),
+    doi character varying(100),
+    created_at timestamp without time zone NOT NULL DEFAULT now(),
+    updated_at timestamp without time zone,
+    deleted_at timestamp without time zone,
+    CONSTRAINT "PK_mockup_basic_data_id" PRIMARY KEY (id),
+    CONSTRAINT "FK_mockup_researcher" FOREIGN KEY (researcher_id) REFERENCES public.researcher (id) ON UPDATE CASCADE ON DELETE SET NULL
+);
+CREATE TABLE IF NOT EXISTS public.publishing (
+    id uuid NOT NULL DEFAULT uuid_generate_v4(),
+    researcher_id uuid,
+    production_sequence integer, 
+    title character varying(500) NOT NULL,
+    title_en character varying(500),
+    year character(4),
+    country character varying(100),
+    language character varying(50),
+    dissemination_medium character varying(50), 
+    homepage character varying(500),
+    doi character varying(100),
+    created_at timestamp without time zone NOT NULL DEFAULT now(),
+    updated_at timestamp without time zone,
+    deleted_at timestamp without time zone,
+    CONSTRAINT "PK_publishing_id" PRIMARY KEY (id),
+    CONSTRAINT "FK_publishing_researcher" FOREIGN KEY (researcher_id) REFERENCES public.researcher (id) ON UPDATE CASCADE ON DELETE SET NULL
+);
+CREATE TABLE IF NOT EXISTS public.letter_map_or_similar (
+    id uuid NOT NULL DEFAULT uuid_generate_v4(),
+    researcher_id uuid,
+    production_sequence integer, 
+    title character varying(500) NOT NULL,
+    title_en character varying(500),
+    year character(4),
+    country character varying(100),
+    language character varying(50),
+    dissemination_medium character varying(50), 
+    homepage character varying(500),
+    doi character varying(100),
+    created_at timestamp without time zone NOT NULL DEFAULT now(),
+    updated_at timestamp without time zone,
+    deleted_at timestamp without time zone,
+    CONSTRAINT "PK_letter_map_or_similar_id" PRIMARY KEY (id),
+    CONSTRAINT "FK_letter_map_or_similar_researcher" FOREIGN KEY (researcher_id) REFERENCES public.researcher (id) ON UPDATE CASCADE ON DELETE SET NULL
+);
+CREATE TABLE IF NOT EXISTS public.short_course (
+    id uuid NOT NULL DEFAULT uuid_generate_v4(),
+    researcher_id uuid,
+    production_sequence integer, 
+    title character varying(500) NOT NULL,
+    title_en character varying(500),
+    year character(4),
+    country character varying(100),
+    language character varying(50),
+    dissemination_medium character varying(50), 
+    homepage character varying(500),
+    doi character varying(100),
+    created_at timestamp without time zone NOT NULL DEFAULT now(),
+    updated_at timestamp without time zone,
+    deleted_at timestamp without time zone,
+    CONSTRAINT "PK_short_course_id" PRIMARY KEY (id),
+    CONSTRAINT "FK_short_course_researcher" FOREIGN KEY (researcher_id) REFERENCES public.researcher (id) ON UPDATE CASCADE ON DELETE SET NULL
+);
+CREATE TABLE IF NOT EXISTS public.social_media_website_blog (
+    id uuid NOT NULL DEFAULT uuid_generate_v4(),
+    researcher_id uuid,
+    production_sequence integer, 
+    title character varying(500) NOT NULL,
+    title_en character varying(500),
+    year character(4),
+    country character varying(100),
+    language character varying(50),
+    dissemination_medium character varying(50), 
+    homepage character varying(500),
+    doi character varying(100),
+    created_at timestamp without time zone NOT NULL DEFAULT now(),
+    updated_at timestamp without time zone,
+    deleted_at timestamp without time zone,
+    CONSTRAINT "PK_social_media_website_blog_id" PRIMARY KEY (id),
+    CONSTRAINT "FK_social_media_website_blog_researcher" FOREIGN KEY (researcher_id) REFERENCES public.researcher (id) ON UPDATE CASCADE ON DELETE SET NULL
+);
+CREATE TABLE IF NOT EXISTS public.other_technical_production (
+    id uuid NOT NULL DEFAULT uuid_generate_v4(),
+    researcher_id uuid,
+    production_sequence integer, 
+    title character varying(500) NOT NULL,
+    title_en character varying(500),
+    year character(4),
+    country character varying(100),
+    language character varying(50),
+    dissemination_medium character varying(50), 
+    homepage character varying(500),
+    doi character varying(100),
+    created_at timestamp without time zone NOT NULL DEFAULT now(),
+    updated_at timestamp without time zone,
+    deleted_at timestamp without time zone,
+    CONSTRAINT "PK_other_technical_production_id" PRIMARY KEY (id),
+    CONSTRAINT "FK_other_technical_production_researcher" FOREIGN KEY (researcher_id) REFERENCES public.researcher (id) ON UPDATE CASCADE ON DELETE SET NULL
+);
+CREATE TABLE IF NOT EXISTS public.advisory_activity (
+    id uuid NOT NULL DEFAULT uuid_generate_v4(),
+    researcher_id uuid NOT NULL,
+    
+    -- Dados extraídos do XML
+    sequence_id integer,
+    organ_code character varying(50),
+    organ_name character varying(500) NOT NULL,
+    unit_code character varying(50),
+    unit_name character varying(255),
+    specification text,
+    
+    -- Período da atividade
+    is_current VARCHAR,
+    start_month character(2),
+    start_year character(4) NOT NULL,
+    end_month character(2),
+    end_year character(4),
+    
+    -- Timestamps para auditoria (padrão do modelo)
+    created_at timestamp without time zone NOT NULL DEFAULT now(),
+    updated_at timestamp without time zone,
+    deleted_at timestamp without time zone,
+    
+    -- Constraints
+    CONSTRAINT "PK_advisory_activity" PRIMARY KEY (id),
+    CONSTRAINT "FK_advisory_activity_researcher" FOREIGN KEY (researcher_id) 
+        REFERENCES public.researcher (id) MATCH SIMPLE 
+        ON UPDATE CASCADE ON DELETE CASCADE
 );
 CREATE TABLE IF NOT EXISTS public.software (
     id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -502,6 +640,7 @@ CREATE TABLE IF NOT EXISTS public.JCR (
     jif2019 double precision,
     url_revista character varying
 );
+
 CREATE TABLE IF NOT EXISTS public.researcher_production (
     researcher_production_id uuid NOT NULL DEFAULT uuid_generate_v4(),
     researcher_id uuid NOT NULL,
@@ -719,6 +858,83 @@ CREATE TABLE IF NOT EXISTS public.technological_product (
     year INT,
     CONSTRAINT fk_researcher
         FOREIGN KEY (researcher_id) REFERENCES public.researcher(id) ON UPDATE CASCADE ON DELETE CASCADE
+);
+CREATE TABLE IF NOT EXISTS public.process_or_technique (
+    id uuid NOT NULL DEFAULT uuid_generate_v4(),
+    researcher_id uuid NOT NULL,
+
+    -- Dados Básicos
+    sequence_id integer,
+    nature varchar(255),
+    title text NOT NULL,
+    title_en text,
+    "year" character(4),
+    country varchar(100),
+    language varchar(50),
+    dissemination_medium varchar(255),
+    home_page text,
+    doi varchar(255),
+    is_relevant boolean DEFAULT false,
+    has_innovation_potential VARCHAR,
+
+    -- Detalhamento
+    purpose text,
+    purpose_en text,
+    availability varchar(100),
+    funding_institution varchar(500),
+    city varchar(255),
+    
+    -- Controle
+    created_at timestamp without time zone NOT NULL DEFAULT now(),
+    updated_at timestamp without time zone,
+    deleted_at timestamp without time zone,
+    
+    CONSTRAINT "PK_process_or_technique" PRIMARY KEY (id),
+    CONSTRAINT "FK_process_or_technique_researcher" FOREIGN KEY (researcher_id)
+        REFERENCES public.researcher (id) MATCH SIMPLE
+        ON UPDATE CASCADE ON DELETE CASCADE
+);
+CREATE TABLE IF NOT EXISTS public.process_author (
+    id uuid NOT NULL DEFAULT uuid_generate_v4(),
+    process_id uuid NOT NULL,
+    
+    full_name varchar(500) NOT NULL,
+    citation_name varchar(255),
+    author_order integer,
+    cnpq_id varchar(16),
+
+    CONSTRAINT "PK_process_author" PRIMARY KEY (id),
+    CONSTRAINT "FK_process_author_process" FOREIGN KEY (process_id)
+        REFERENCES public.process_or_technique (id) MATCH SIMPLE
+        ON UPDATE CASCADE ON DELETE CASCADE
+);
+CREATE TABLE IF NOT EXISTS public.process_keyword (
+    id uuid NOT NULL DEFAULT uuid_generate_v4(),
+    process_id uuid NOT NULL,
+    
+    keyword text NOT NULL,
+    "order" smallint, -- Para manter a ordem original (PALAVRA-CHAVE-1, 2, etc.)
+
+    CONSTRAINT "PK_process_keyword" PRIMARY KEY (id),
+    CONSTRAINT "UQ_process_keyword_order" UNIQUE (process_id, keyword),
+    CONSTRAINT "FK_process_keyword_process" FOREIGN KEY (process_id)
+        REFERENCES public.process_or_technique (id) MATCH SIMPLE
+        ON UPDATE CASCADE ON DELETE CASCADE
+);
+CREATE TABLE IF NOT EXISTS public.process_knowledge_area (
+    id uuid NOT NULL DEFAULT uuid_generate_v4(),
+    process_id uuid NOT NULL,
+    
+    major_area varchar(255),
+    area_name varchar(255),
+    sub_area_name varchar(255),
+    specialty_name varchar(255),
+    "order" smallint, -- Para manter a ordem original (AREA-DO-CONHECIMENTO-1, 2, etc.)
+
+    CONSTRAINT "PK_process_knowledge_area" PRIMARY KEY (id),
+    CONSTRAINT "FK_process_knowledge_area_process" FOREIGN KEY (process_id)
+        REFERENCES public.process_or_technique (id) MATCH SIMPLE
+        ON UPDATE CASCADE ON DELETE CASCADE
 );
 CREATE TABLE IF NOT EXISTS public.didactic_material (
     id uuid NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,

@@ -21,6 +21,7 @@ def calculate_master_degree_score(researchers: pd.DataFrame):
         SELECT researcher_id, COUNT(*) AS count
         FROM education
         WHERE degree IN ('MASTERS-DEGREE', 'PROFESSIONAL-MASTERS-DEGREE')
+            AND education.education_end IS NOT NULL
         GROUP BY researcher_id;
         """
     education_data = conn.select(SCRIPT_SQL)
@@ -53,7 +54,9 @@ def calculate_specialization_score(researchers: pd.DataFrame):
         SELECT researcher_id, COUNT(*) AS count
         FROM education
         WHERE degree = 'SPECIALIZATION'
-        GROUP BY researcher_id;
+            AND education.education_end IS NOT NULL
+        GROUP BY researcher_id
+        ORDER BY count DESC;
     """
     specialization_data = conn.select(SCRIPT_SQL)
     columns = ['researcher_id', 'count']
@@ -85,7 +88,6 @@ def calculate_research_project_participation_score(researchers: pd.DataFrame):
     SCRIPT_SQL = """
         SELECT researcher_id, COUNT(*) AS count
         FROM research_project
-        WHERE research_project.start_year >= EXTRACT(YEAR FROM CURRENT_DATE) - 4
         GROUP BY researcher_id
         ORDER BY COUNT(*) DESC;
         """
@@ -284,36 +286,162 @@ def calculate_published_book_chapters_score(researchers: pd.DataFrame):
     return researchers.drop(columns=['count'])
 
 
-def calculate_technical_production_score():
+def calculate_technical_production_score(researchers: pd.DataFrame):
     """
     Calculates the score for technical productions.
     Rule: 0.25 each, maximum of 4 productions (1.0 point).
+    Includes data from multiple technical production tables.
     """
-    pass
+    TABLES = [
+        ('advisory_activity', 'start_year'),
+        ('process_or_technique', 'year'),
+        ('mockup', 'year'),
+        ('publishing', 'year'),
+        ('letter_map_or_similar', 'year'),
+        ('short_course', 'year'),
+        ('research_report', 'year'),
+        ('technical_work_program', 'year'),
+        ('social_media_website_blog', 'year'),
+        ('other_technical_production', 'year'),
+        ('technological_product', 'year'),
+    ]
+
+    all_data = []
+
+    for table, year_field in TABLES:
+        SCRIPT_SQL = f"""
+            SELECT researcher_id, COUNT(*) AS count
+            FROM {table}
+            WHERE {table}.{year_field}::INT >= EXTRACT(YEAR FROM CURRENT_DATE) - 4
+            GROUP BY researcher_id;
+        """
+        data = conn.select(SCRIPT_SQL)
+        all_data.extend(data)
+
+    if not all_data:
+        researchers['technical_production_score'] = 0.0
+        return researchers
+
+    technical_df = pd.DataFrame(all_data, columns=['researcher_id', 'count'])
+
+    technical_df = technical_df.groupby('researcher_id', as_index=False)[
+        'count'
+    ].sum()
+
+    researchers = pd.merge(
+        researchers,
+        technical_df,
+        on='researcher_id',
+        how='left',
+    )
+
+    researchers['count'] = researchers['count'].fillna(0)
+    researchers['technical_production_score'] = (
+        researchers['count'] * 0.25
+    ).clip(upper=1.0)
+
+    return researchers.drop(columns=['count'])
 
 
-def calculate_artistic_production_score():
+def calculate_artistic_production_score(researchers: pd.DataFrame):
     """
     Calculates the score for artistic productions.
     Rule: 0.25 each, maximum of 4 productions (1.0 point).
     """
-    pass
+    SCRIPT_SQL = """
+        SELECT researcher_id, COUNT(*) AS count
+        FROM artistic_production
+        WHERE artistic_production.year >= EXTRACT(YEAR FROM CURRENT_DATE) - 4
+        GROUP BY researcher_id
+        ORDER BY COUNT(*) DESC;
+        """
+    artistic_data = conn.select(SCRIPT_SQL)
+    columns = ['researcher_id', 'count']
+    artistic_df = pd.DataFrame(artistic_data, columns=columns)
+
+    if artistic_df.empty:
+        researchers['artistic_production_score'] = 0.0
+        return researchers
+
+    researchers = pd.merge(
+        researchers,
+        artistic_df,
+        on='researcher_id',
+        how='left',
+    )
+
+    researchers['count'] = researchers['count'].fillna(0)
+    researchers['artistic_production_score'] = (
+        researchers['count'] * 0.25
+    ).clip(upper=1.0)
+
+    return researchers.drop(columns=['count'])
 
 
-def calculate_event_organization_score():
+def calculate_event_organization_score(researchers: pd.DataFrame):
     """
     Calculates the score for organizing events.
     Rule: 0.10 each, maximum of 5 events (0.5 points).
     """
-    pass
+    SCRIPT_SQL = """
+        SELECT researcher_id, COUNT(*) AS count
+        FROM event_organization
+        GROUP BY researcher_id
+        ORDER BY COUNT(*) DESC;
+        """
+    event_data = conn.select(SCRIPT_SQL)
+    columns = ['researcher_id', 'count']
+    event_df = pd.DataFrame(event_data, columns=columns)
+
+    if event_df.empty:
+        researchers['event_organization_score'] = 0.0
+        return researchers
+
+    researchers = pd.merge(
+        researchers,
+        event_df,
+        on='researcher_id',
+        how='left',
+    )
+
+    researchers['count'] = researchers['count'].fillna(0)
+    researchers['event_organization_score'] = (researchers['count'] * 0.10).clip(
+        upper=0.5
+    )
+
+    return researchers.drop(columns=['count'])
 
 
-def calculate_academic_advising_score():
+def calculate_guidance_score(researchers: pd.DataFrame):
     """
-    Calculates the score for academic advising/orientations.
+    Calculates the score for guidance.
     Rule: 0.10 each, maximum of 5 orientations (0.5 points).
     """
-    pass
+    SCRIPT_SQL = """
+        SELECT researcher_id, COUNT(*) AS count
+        FROM guidance
+        GROUP BY researcher_id
+        ORDER BY COUNT(*) DESC;
+        """
+    guidance_data = conn.select(SCRIPT_SQL)
+    columns = ['researcher_id', 'count']
+    guidance_df = pd.DataFrame(guidance_data, columns=columns)
+
+    if guidance_df.empty:
+        researchers['guidance_score'] = 0.0
+        return researchers
+
+    researchers = pd.merge(
+        researchers,
+        guidance_df,
+        on='researcher_id',
+        how='left',
+    )
+
+    researchers['count'] = researchers['count'].fillna(0)
+    researchers['guidance_score'] = (researchers['count'] * 0.10).clip(upper=0.5)
+
+    return researchers.drop(columns=['count'])
 
 
 def main():
@@ -328,19 +456,30 @@ def main():
 
     researchers = calculate_research_project_participation_score(researchers)
 
+    # Ultimos 5 anos
     researchers = calculate_indexed_journal_articles_score(researchers)
 
+    # Ultimos 5 anos
     researchers = calculate_non_indexed_journal_articles_score(researchers)
 
+    # Ultimos 5 anos
     researchers = calculate_published_books_score(researchers)
 
+    # Ultimos 5 anos
     researchers = calculate_published_book_chapters_score(researchers)
 
-    # researchers = calculate_technical_production_score(researchers)
+    # Ultimos 5 anos
+    researchers = calculate_technical_production_score(researchers)
 
+    # Ultimos 5 anos
     researchers = calculate_artistic_production_score(researchers)
 
+    researchers = calculate_event_organization_score(researchers)
+
+    researchers = calculate_guidance_score(researchers)
+
     print(researchers)
+    researchers.to_csv('barema.csv')
 
 
 if __name__ == '__main__':
