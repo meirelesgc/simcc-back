@@ -123,7 +123,9 @@ def calculate_indexed_journal_articles_score(researchers: pd.DataFrame):
         INNER JOIN bibliographic_production_article
             ON bibliographic_production_article.bibliographic_production_id = bibliographic_production.id
         WHERE bibliographic_production.year::INT >= EXTRACT(YEAR FROM CURRENT_DATE) - 4
-            AND bibliographic_production.doi IS NOT NULL
+            AND bibliographic_production_article.qualis IS NOT NULL
+            AND bibliographic_production_article.qualis <> 'SQ'
+            AND type = 'ARTICLE'
         GROUP BY researcher_id
         ORDER BY COUNT(*) DESC;
         """
@@ -164,8 +166,11 @@ def calculate_non_indexed_journal_articles_score(researchers: pd.DataFrame):
         INNER JOIN bibliographic_production_article
             ON bibliographic_production_article.bibliographic_production_id = bibliographic_production.id
         WHERE bibliographic_production.year::INT >= EXTRACT(YEAR FROM CURRENT_DATE) - 4
-          AND bibliographic_production.doi IS NOT NULL
-        GROUP BY researcher_id;
+            AND bibliographic_production_article.qualis IS NOT NULL
+            AND bibliographic_production_article.qualis <> 'SQ'
+            AND type = 'ARTICLE'
+        GROUP BY researcher_id
+        ORDER BY COUNT(*) DESC;
         """
     indexed_articles_data = conn.select(SCRIPT_SQL_INDEXED)
     indexed_articles_df = pd.DataFrame(indexed_articles_data, columns=columns)
@@ -181,8 +186,10 @@ def calculate_non_indexed_journal_articles_score(researchers: pd.DataFrame):
         INNER JOIN bibliographic_production_article
             ON bibliographic_production_article.bibliographic_production_id = bibliographic_production.id
         WHERE bibliographic_production.year::INT >= EXTRACT(YEAR FROM CURRENT_DATE) - 4
-          AND bibliographic_production.doi IS NULL
-        GROUP BY researcher_id;
+            AND bibliographic_production_article.qualis = 'SQ'
+            AND type = 'ARTICLE'
+        GROUP BY researcher_id
+        ORDER BY COUNT(*) DESC;
         """
     non_indexed_articles_data = conn.select(SCRIPT_SQL_NON_INDEXED)
     non_indexed_articles_df = pd.DataFrame(
@@ -304,6 +311,10 @@ def calculate_technical_production_score(researchers: pd.DataFrame):
         ('social_media_website_blog', 'year'),
         ('other_technical_production', 'year'),
         ('technological_product', 'year'),
+        ('patent', 'development_year'),
+        ('technical_work', 'year'),
+        ('technical_work_presentation', 'year'),
+        ('brand', 'year'),
     ]
 
     all_data = []

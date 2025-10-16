@@ -262,6 +262,42 @@ CREATE TABLE IF NOT EXISTS public.publishing (
     CONSTRAINT "PK_publishing_id" PRIMARY KEY (id),
     CONSTRAINT "FK_publishing_researcher" FOREIGN KEY (researcher_id) REFERENCES public.researcher (id) ON UPDATE CASCADE ON DELETE SET NULL
 );
+CREATE TABLE IF NOT EXISTS public.industrial_design (
+    id uuid NOT NULL DEFAULT uuid_generate_v4(),
+    researcher_id uuid,
+    production_sequence integer, 
+    title character varying(500) NOT NULL,
+    title_en character varying(500),
+    year character(4),
+    country character varying(100),
+    language character varying(50),
+    dissemination_medium character varying(50), 
+    homepage character varying(500),
+    doi character varying(100),
+    created_at timestamp without time zone NOT NULL DEFAULT now(),
+    updated_at timestamp without time zone,
+    deleted_at timestamp without time zone,
+    CONSTRAINT "PK_industrial_design_id" PRIMARY KEY (id),
+    CONSTRAINT "FK_industrial_design_researcher" FOREIGN KEY (researcher_id) REFERENCES public.researcher (id) ON UPDATE CASCADE ON DELETE SET NULL
+);
+CREATE TABLE IF NOT EXISTS public.maintenance_artistic_work (
+    id uuid NOT NULL DEFAULT uuid_generate_v4(),
+    researcher_id uuid,
+    production_sequence integer, 
+    title character varying(500) NOT NULL,
+    title_en character varying(500),
+    year character(4),
+    country character varying(100),
+    language character varying(50),
+    dissemination_medium character varying(50), 
+    homepage character varying(500),
+    doi character varying(100),
+    created_at timestamp without time zone NOT NULL DEFAULT now(),
+    updated_at timestamp without time zone,
+    deleted_at timestamp without time zone,
+    CONSTRAINT "PK_maintenance_artistic_work_id" PRIMARY KEY (id),
+    CONSTRAINT "FK_maintenance_artistic_work_researcher" FOREIGN KEY (researcher_id) REFERENCES public.researcher (id) ON UPDATE CASCADE ON DELETE SET NULL
+);
 CREATE TABLE IF NOT EXISTS public.letter_map_or_similar (
     id uuid NOT NULL DEFAULT uuid_generate_v4(),
     researcher_id uuid,
