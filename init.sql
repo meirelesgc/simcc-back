@@ -1035,14 +1035,7 @@ CREATE TABLE public.labs (
     FOREIGN KEY (institution_id) REFERENCES institution (id) ON UPDATE CASCADE ON DELETE CASCADE
 );
 CREATE TABLE IF NOT EXISTS logs.routine (
-    type routine_type NOT NULL,
-    error BOOLEAN DEFAULT FALSE,
-    detail TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
-);
-CREATE TABLE IF NOT EXISTS logs.researcher_routine (
-    researcher_id uuid NOT NULL,
-    type routine_type NOT NULL,
+    type VARCHAR NOT NULL,
     error BOOLEAN DEFAULT FALSE,
     detail TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL

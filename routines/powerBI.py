@@ -108,7 +108,7 @@ def researcher_area_leader():
 
     csv = pd.DataFrame(rows)
     csv_path = os.path.join(PATH, 'researcher_area_leader.csv')
-    csv.to_csv(csv_path, index=False)
+    csv.to_csv(csv_path)
 
 
 def fat_openalex_article():
