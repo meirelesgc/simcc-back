@@ -11,7 +11,7 @@ fi
 ENV_FILE="$1"
 
 if [ ! -f "$ENV_FILE" ]; then
-    echo "Erro: O arquivo .env especificado ('$ENV_FILE') não existe ou não é um arquivo." | tee -a "./routine.log" # Loga mesmo antes de carregar o log_file
+    echo "Erro: O arquivo .env especificado ('$ENV_FILE') não existe ou não é um arquivo." | tee -a "./routine.log" 
     exit 1
 fi
 

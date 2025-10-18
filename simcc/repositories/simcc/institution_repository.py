@@ -56,12 +56,22 @@ async def get_institution_(conn, institution_id):
         ),
         technician_count AS (
             SELECT COUNT(*) AS count_t FROM ufmg.technician
+        ),
+        researchers AS (
+            WITH ranked AS (
+            SELECT lattes_id, institution_id, ROW_NUMBER() OVER (PARTITION BY institution_id ORDER BY random()) AS rn
+            FROM researcher
+            )
+            SELECT institution_id, ARRAY_AGG(lattes_id) AS researchers_list
+            FROM ranked
+            WHERE rn <= 20
+            GROUP BY institution_id
         )
         SELECT i.name, i.id, COALESCE(r.count_r, 0) AS count_r,
             COALESCE(gp.count_gp, 0) AS count_gp, COALESCE(gpr.count_gpr, 0)
             AS count_gpr, COALESCE(gps.count_gps, 0) AS count_gps,
             COALESCE(d.count_d, 0) AS count_d, COALESCE(t.count_t, 0)
-            AS count_t, i.acronym
+            AS count_t, i.acronym, COALESCE(rl.researchers_list, ARRAY[]::TEXT[]) AS researchers_list
         FROM institution i
             LEFT JOIN researcher_count r
                 ON r.institution_id = i.id
@@ -73,9 +83,11 @@ async def get_institution_(conn, institution_id):
                 ON gps.institution_id = i.id
             LEFT JOIN ufmg_researcher_count d
                 ON d.institution_id = i.id
+            LEFT JOIN researchers rl
+                ON rl.institution_id = i.id
             CROSS JOIN technician_count t
         WHERE 1 = 1
-            AND i.acronym IS NOT NULL 
+            AND i.acronym IS NOT NULL
             {filters}
             AND deleted_at IS NULL;
     """
