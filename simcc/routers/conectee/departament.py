@@ -24,7 +24,8 @@ def article_production(dep_id: str, year: int = 2020):
     return GraduateProgramService.list_article_production(None, dep_id, year)
 
 
-@router.get('/departamentos')
+@router.get('/departamentos', include_in_schema=False, deprecated=True)
+@router.get('/departament')
 def departament(dep_id: str = None):
     researcher = ConecteeService.get_departament(dep_id)
     return researcher

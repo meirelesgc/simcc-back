@@ -165,7 +165,7 @@ def get_departament(dep_id):
 
     SCRIPT_SQL = f"""
         WITH researchers AS (
-            SELECT dep_id, ARRAY_AGG(r.name) AS researchers
+            SELECT dep_id, ARRAY_AGG(r.lattes_id) AS researchers
             FROM ufmg.departament_researcher dp
                 LEFT JOIN researcher r ON dp.researcher_id = r.id
             GROUP BY dep_id

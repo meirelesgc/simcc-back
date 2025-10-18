@@ -106,7 +106,7 @@ async def list_graduate_programs(
             GROUP BY graduate_program_id
         ),
         researchers AS (
-            SELECT graduate_program_id, ARRAY_AGG(r.name) AS researchers
+            SELECT graduate_program_id, ARRAY_AGG(r.lattes_id) AS researchers
             FROM graduate_program_researcher gpr
                 LEFT JOIN researcher r ON gpr.researcher_id = r.id
             GROUP BY graduate_program_id

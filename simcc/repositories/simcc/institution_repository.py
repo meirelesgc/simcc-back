@@ -71,7 +71,7 @@ async def get_institution_(conn, institution_id):
             COALESCE(gp.count_gp, 0) AS count_gp, COALESCE(gpr.count_gpr, 0)
             AS count_gpr, COALESCE(gps.count_gps, 0) AS count_gps,
             COALESCE(d.count_d, 0) AS count_d, COALESCE(t.count_t, 0)
-            AS count_t, i.acronym, COALESCE(rl.researchers_list, ARRAY[]::TEXT[]) AS researchers_list
+            AS count_t, i.acronym, COALESCE(rl.researchers_list, ARRAY[]::TEXT[]) AS researchers
         FROM institution i
             LEFT JOIN researcher_count r
                 ON r.institution_id = i.id
