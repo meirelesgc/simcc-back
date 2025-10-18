@@ -1,3 +1,4 @@
+import json
 import os
 from csv import QUOTE_ALL
 from datetime import datetime
@@ -85,19 +86,25 @@ def researcher_area_leader():
     rows = []
     for _, row in df.iterrows():
         researcher_id = row['researcher_id']
-        areas = str(row['area']).split(';')
-        for a in areas:
-            if not a.strip():
-                continue
-            parts = a.strip().split('|')
-            area_name = parts[0].strip()
-            focal_part = parts[1] if len(parts) > 1 else ''
-            focal_value = 'true' if 'true' in focal_part.lower() else 'false'
-            rows.append({
-                'researcher_id': researcher_id,
-                'area_leader': area_name,
-                'focal_point': focal_value,
-            })
+        area_str = str(row['area'])
+        if not area_str or area_str.lower() == 'none':
+            continue
+
+        try:
+            fixed_json = area_str.replace("'", '"')
+            parsed_areas = json.loads(fixed_json)
+
+            for a in parsed_areas:
+                rows.append({
+                    'researcher_id': researcher_id,
+                    'area_leader': a.get('area_leader', ''),
+                    'focal_point': a.get('focal_point', 'false'),
+                })
+        except json.JSONDecodeError:
+            print(
+                f'Erro ao parsear áreas do pesquisador {researcher_id}: {area_str}'
+            )
+            continue
 
     csv = pd.DataFrame(rows)
     csv_path = os.path.join(PATH, 'researcher_area_leader.csv')
