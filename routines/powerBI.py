@@ -1,4 +1,3 @@
-import json
 import os
 from csv import QUOTE_ALL
 from datetime import datetime
@@ -77,36 +76,27 @@ def fat_openalex_researcher():
 
 def researcher_area_leader():
     SCRIPT_SQL = """
-        SELECT id AS researcher_id, area
-        FROM researcher;
+        SELECT researcher.lattes_id, areas.name AS area_leader, researcher_area.focal_point
+        FROM researcher_area
+        LEFT JOIN areas ON areas.id = researcher_area.area_id
+        LEFT JOIN researcher ON researcher.researcher_id = researcher_area.researcher_id
     """
-    result = conn.select(SCRIPT_SQL)
-    df = pd.DataFrame(result)
+    result = conn_admin.select(SCRIPT_SQL)
+    columns = ['lattes_id', 'area_leader', 'focal_point']
+    rows = pd.DataFrame(result, columns=columns)
 
-    rows = []
-    for _, row in df.iterrows():
-        researcher_id = row['researcher_id']
-        area_str = str(row['area'])
-        if not area_str or area_str.lower() == 'none':
-            continue
+    SCRIPT_SQL = """
+        SELECT researcher_id, lattes_id
+        FROM researcher
+    """
+    researchers = conn_admin.select(SCRIPT_SQL)
+    researchers = pd.DataFrame(
+        researchers, columns=['researcher_id', 'lattes_id']
+    )
 
-        try:
-            fixed_json = area_str.replace("'", '"')
-            parsed_areas = json.loads(fixed_json)
+    csv = rows.merge(researchers, on='lattes_id', how='left')
+    csv = csv[['researcher_id', 'area_leader', 'focal_point']]
 
-            for a in parsed_areas:
-                rows.append({
-                    'researcher_id': researcher_id,
-                    'area_leader': a.get('area_leader', ''),
-                    'focal_point': a.get('focal_point', 'false'),
-                })
-        except json.JSONDecodeError:
-            print(
-                f'Erro ao parsear áreas do pesquisador {researcher_id}: {area_str}'
-            )
-            continue
-
-    csv = pd.DataFrame(rows)
     csv_path = os.path.join(PATH, 'researcher_area_leader.csv')
     csv.to_csv(csv_path)
 
@@ -1239,11 +1229,18 @@ def fat_co_authorship():
 
 def _guidance():
     SCRIPT_SQL = """
+        WITH co_supervisors AS (
+            SELECT DISTINCT ON (guidance_co_supervisors.guidance_tracking_id)
+                guidance_co_supervisors.guidance_tracking_id,
+                guidance_co_supervisors.co_supervisor_researcher_id
+            FROM guidance_co_supervisors
+            ORDER BY guidance_co_supervisors.guidance_tracking_id
+        )
         SELECT
             gt.id,
             r_student.lattes_id AS student_lattes_id,
             r_supervisor.lattes_id AS supervisor_lattes_id,
-            r_co.lattes_id AS co_supervisor_lattes_id,
+            r_co.lattes_id AS co_supervisor_lattes_id, 
             gt.graduate_program_id,
             gt.start_date,
             gt.planned_date_project,
@@ -1261,10 +1258,12 @@ def _guidance():
             ON r_student.researcher_id = gt.student_researcher_id
         LEFT JOIN researcher r_supervisor
             ON r_supervisor.researcher_id = gt.supervisor_researcher_id
-        LEFT JOIN researcher r_co
-            ON r_co.researcher_id = gt.co_supervisor_researcher_id
         LEFT JOIN graduate_program gp
             ON gp.graduate_program_id = gt.graduate_program_id
+        LEFT JOIN co_supervisors cos
+            ON cos.guidance_tracking_id = gt.id
+        LEFT JOIN researcher r_co
+            ON r_co.researcher_id = cos.co_supervisor_researcher_id
         WHERE gt.deleted_at IS NULL
     """
     guidance = conn_admin.select(SCRIPT_SQL)
