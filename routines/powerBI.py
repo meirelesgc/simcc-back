@@ -1705,6 +1705,27 @@ def in_progress_per_year():
     result.to_csv(csv_path, index=False, encoding='utf-8-sig')
 
 
+def dim_tags_csv():
+    SCRIPT_SQL = """
+        SELECT id, name, color_code FROM tags
+        """
+    dim_tags_csv = conn_admin.select(SCRIPT_SQL)
+    csv = pd.DataFrame(dim_tags_csv, columns=['id', 'name', 'color_code'])
+    csv_path = os.path.join(PATH, 'dim_tags.csv')
+    csv.to_csv(csv_path, index=True, quoting=QUOTE_ALL, encoding='utf-8-sig')
+
+
+def fat_tags_csv():
+    SCRIPT_SQL = """
+        SELECT guidance_tracking_id, tag_id
+        FROM public.guidance_tags;
+        """
+    dim_tags_csv = conn_admin.select(SCRIPT_SQL)
+    csv = pd.DataFrame(dim_tags_csv, columns=['guidance_tracking_id', 'tag_id'])
+    csv_path = os.path.join(PATH, 'fat_tags.csv')
+    csv.to_csv(csv_path, index=True, quoting=QUOTE_ALL, encoding='utf-8-sig')
+
+
 if __name__ == '__main__':
     for directory in [PATH]:
         if not os.path.exists(directory):

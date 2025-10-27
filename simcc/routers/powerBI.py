@@ -529,3 +529,19 @@ def in_progress_per_year_csv():
     file_name = 'in_progress_per_year.csv'
     file_path = os.path.join(STORAGE_PATH, file_name)
     return FileResponse(file_path, filename=file_name)
+
+
+@router.get('/dim_tags.csv')
+def dim_tags_csv():
+    powerBI.dim_tags_csv()
+    file_name = 'dim_tags.csv'
+    file_path = os.path.join(STORAGE_PATH, file_name)
+    return FileResponse(file_path, filename=file_name)
+
+
+@router.get('/fat_tags.csv')
+def fat_tags_csv():
+    powerBI.fat_tags_csv()
+    file_name = 'fat_tags.csv'
+    file_path = os.path.join(STORAGE_PATH, file_name)
+    return FileResponse(file_path, filename=file_name)
