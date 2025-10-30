@@ -1021,39 +1021,40 @@ async def search_in_name(
 
 async def list_graduate_programs(conn):
     SCRIPT_SQL = """
-        SELECT gpr.researcher_id AS id,
-            JSONB_AGG(JSONB_BUILD_OBJECT(
-                        'graduate_program_id', gp.graduate_program_id,
-                        'code', gp.code,
-                        'name', gp.name,
-                        'name_en', gp.name_en,
-                        'basic_area', gp.basic_area,
-                        'cooperation_project', gp.cooperation_project,
-                        'area', gp.area,
-                        'modality', gp.modality,
-                        'type', gp.type,
-                        'rating', gp.rating,
-                        'institution_id', gp.institution_id,
-                        'state', gp.state,
-                        'city', gp.city,
-                        'region', gp.region,
-                        'url_image', gp.url_image,
-                        'acronym', gp.acronym,
-                        'description', gp.description,
-                        'visible', gp.visible,
-                        'site', gp.site,
-                        'coordinator', gp.coordinator,
-                        'email', gp.email,
-                        'start', gp.start,
-                        'phone', gp.phone,
-                        'periodicity', gp.periodicity,
-                        'created_at', gp.created_at,
-                        'updated_at', gp.updated_at
-                    )) AS graduate_programs
+        SELECT
+            gpr.researcher_id AS id,
+            JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT(
+                'graduate_program_id', gp.graduate_program_id,
+                'code', gp.code,
+                'name', gp.name,
+                'name_en', gp.name_en,
+                'basic_area', gp.basic_area,
+                'cooperation_project', gp.cooperation_project,
+                'area', gp.area,
+                'modality', gp.modality,
+                'type', gp.type,
+                'rating', gp.rating,
+                'institution_id', gp.institution_id,
+                'state', gp.state,
+                'city', gp.city,
+                'region', gp.region,
+                'url_image', gp.url_image,
+                'acronym', gp.acronym,
+                'description', gp.description,
+                'visible', gp.visible,
+                'site', gp.site,
+                'coordinator', gp.coordinator,
+                'email', gp.email,
+                'start', gp.start,
+                'phone', gp.phone,
+                'periodicity', gp.periodicity,
+                'created_at', gp.created_at,
+                'updated_at', gp.updated_at
+            )) AS graduate_programs
         FROM graduate_program_researcher gpr
-        LEFT JOIN graduate_program gp
-        ON gpr.graduate_program_id = gp.graduate_program_id
-        GROUP BY gpr.researcher_id
+        LEFT JOIN graduate_program gp 
+            ON gpr.graduate_program_id = gp.graduate_program_id
+        GROUP BY gpr.researcher_id;
         """
     return await conn.select(SCRIPT_SQL)
 
