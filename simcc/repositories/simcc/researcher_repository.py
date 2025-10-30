@@ -776,6 +776,7 @@ async def search_in_researcher(conn, filters, name):
         """
 
     if filters.graduate_program_id and filters.graduate_program_id != '0':
+        DISTINCT_SQL = 'DISTINCT'
         PARAMS['graduate_program_id'] = filters.graduate_program_id
         join_program = 'INNER JOIN graduate_program_researcher gpr ON gpr.researcher_id = r.id'
         FILTERS_SQL += ' AND gpr.graduate_program_id = %(graduate_program_id)s'
@@ -879,6 +880,7 @@ async def search_in_researcher(conn, filters, name):
         ORDER BY name
         {FILTER_PAGINATION};
     """
+    print(SCRIPT_SQL, PARAMS)
     return await conn.select(SCRIPT_SQL, PARAMS)
 
 

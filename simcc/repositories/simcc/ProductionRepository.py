@@ -78,6 +78,7 @@ async def list_participation_event(conn, filters, nature):
             PARAMS['institution_id'] = filters.institution_id
             FILTERS_SQL += ' AND i.id = %(institution_id)s'
     if filters.graduate_program_id:
+        filters.distinct = '1'
         join_program = """
             INNER JOIN graduate_program_researcher gpr ON gpr.researcher_id = r.id
             INNER JOIN graduate_program gp ON gpr.graduate_program_id = gp.graduate_program_id
@@ -86,6 +87,7 @@ async def list_participation_event(conn, filters, nature):
         FILTERS_SQL += ' AND gpr.graduate_program_id = %(graduate_program_id)s'
 
     if filters.graduate_program:
+        filters.distinct = '1'
         join_program = """
             INNER JOIN graduate_program_researcher gpr ON gpr.researcher_id = r.id
             INNER JOIN graduate_program gp ON gpr.graduate_program_id = gp.graduate_program_id

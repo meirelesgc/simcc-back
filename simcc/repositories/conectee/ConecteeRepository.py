@@ -1,3 +1,5 @@
+from sqlalchemy import true
+
 from simcc.repositories import conn
 from simcc.repositories.tools import names_filter, websearch_filter
 from simcc.schemas.Conectee import ResearcherData
@@ -93,6 +95,7 @@ async def get_docentes(conn, filters):
             where_extra += ' AND dp.dep_nom = ANY(%(departament)s)'
 
     if filters.graduate_program_id or filters.graduate_program:
+        filters.distinct = true
         join_program = """
             INNER JOIN graduate_program_researcher gpr ON gpr.researcher_id = ur.researcher_id
             INNER JOIN graduate_program gp ON gpr.graduate_program_id = gp.graduate_program_id

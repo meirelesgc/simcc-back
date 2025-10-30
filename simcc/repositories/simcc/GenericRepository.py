@@ -70,16 +70,17 @@ async def lattes_update(
         general_filters += ' AND i.name = ANY(%(institution)s)'
 
     if filters.graduate_program_id or filters.graduate_program:
-        join_program = """
-            INNER JOIN public.graduate_program_researcher gpr ON gpr.researcher_id = r.id
-            INNER JOIN public.graduate_program gp ON gpr.graduate_program_id = gp.graduate_program_id
-        """
         if filters.graduate_program_id:
             params['graduate_program_id'] = str(filters.graduate_program_id)
-            general_filters += (
-                ' AND gpr.graduate_program_id = %(graduate_program_id)s'
-            )
+            general_filters += """
+                AND EXISTS (
+                    SELECT 1 FROM public.graduate_program_researcher gpr
+                    WHERE gpr.researcher_id = r.id
+                    AND gpr.graduate_program_id = %(graduate_program_id)s
+                )
+            """
         if filters.graduate_program:
+            join_program = 'INNER JOIN public.graduate_program gp ON gp.graduate_program_id IN (SELECT graduate_program_id FROM public.graduate_program_researcher gpr WHERE gpr.researcher_id = r.id)'
             params['graduate_program'] = filters.graduate_program.split(';')
             general_filters += ' AND gp.name = ANY(%(graduate_program)s)'
 
