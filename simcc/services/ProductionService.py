@@ -103,7 +103,7 @@ async def list_bibliographic_production(conn, conn_admin, filters, qualis):
     if not result:
         return []
     df = pd.DataFrame(result).fillna('')
-    return df.to_dict(orient='records')
+    return df.sort_values(by='year', ascending=False).to_dict(orient='records')
 
 
 async def list_book_chapter(conn, conn_admin, filters):
