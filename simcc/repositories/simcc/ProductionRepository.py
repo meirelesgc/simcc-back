@@ -285,7 +285,7 @@ async def list_professional_experience(conn, filters):
         WHERE 1 = 1
             {FILTERS_SQL}
             {FILTER_TERMS}
-        ORDER BY rpe.researcher_id, rpe.enterprise, rpe.start_year DESC
+        ORDER BY {'rpe.researcher_id, rpe.enterprise, rpe.start_year DESC' if DISTINCT_SQL else 'rpe.start_year DESC'}
         {FILTER_PAGINATION}
         """
     return await conn.select(SCRIPT_SQL, PARAMS)
@@ -426,7 +426,7 @@ async def list_patent(conn, filters):
             {FILTERS_SQL}
             {FILTER_TERMS}
             {FILTER_YEAR}
-        ORDER BY p.title DESC, p.development_year DESC
+        ORDER BY {'p.title DESC, p.development_year DESC' if DISTINCT_SQL else 'p.development_year DESC'}
         {FILTER_PAGINATION};
     """
     return await conn.select(SCRIPT_SQL, PARAMS)
@@ -566,7 +566,7 @@ async def list_brand(conn, filters):
             {join_group}
         WHERE 1 = 1
             {FILTERS_SQL}
-        ORDER BY b.title DESC, b.year DESC
+        ORDER BY {'b.title, b.year DESC' if DISTINCT_SQL else 'b.year DESC'}
         {FILTER_PAGINATION}
         """
     return await conn.select(SCRIPT_SQL, PARAMS)
@@ -710,7 +710,7 @@ async def list_book(conn, filters):
             {FILTERS_SQL}
             {FILTER_TERMS}
             {FILTER_YEAR}
-        ORDER BY bp.title DESC, bp.year DESC
+        ORDER BY {'bp.title, bp.year DESC' if DISTINCT_SQL else 'bp.year DESC, bp.title ASC'}
         {FILTER_PAGINATION};
     """
     return await conn.select(SCRIPT_SQL, PARAMS)
@@ -860,8 +860,7 @@ async def list_bibliographic_production(conn, filters, qualis: str | None):
             {FILTERS_SQL}
             {FILTER_TERMS}
             {FILTER_YEAR}
-        ORDER BY
-            b.title DESC, b.year DESC
+        ORDER BY {'b.title, b.year DESC' if DISTINCT_SQL else 'b.year DESC'}
         {FILTER_PAGINATION};
     """
     return await conn.select(SCRIPT_SQL, PARAMS)
@@ -997,7 +996,7 @@ async def list_book_chapter(conn, filters):
             {FILTERS_SQL}
             {FILTER_TERMS}
             {FILTER_YEAR}
-        ORDER BY bp.title DESC, bp.year DESC
+        ORDER BY {'bp.title, bp.year DESC' if DISTINCT_SQL else 'bp.year DESC'}
         {FILTER_PAGINATION};
     """
     return await conn.select(SCRIPT_SQL, PARAMS)
@@ -1141,7 +1140,7 @@ async def list_software(conn, filters):
             {FILTERS_SQL}
             {FILTER_TERMS}
             {FILTER_YEAR}
-        ORDER BY s.title DESC, s.year DESC
+        ORDER BY {'s.title, s.year DESC' if DISTINCT_SQL else 's.year DESC'}
         {FILTER_PAGINATION};
     """
     return await conn.select(SCRIPT_SQL, PARAMS)
@@ -1274,7 +1273,7 @@ async def list_researcher_report(conn, filters):
             {FILTERS_SQL}
             {FILTER_TERMS}
             {FILTER_YEAR}
-        ORDER BY rr.title DESC, rr.year DESC
+        ORDER BY {'rr.title, rr.year DESC' if DISTINCT_SQL else 'rr.year DESC'}
         {FILTER_PAGINATION};
     """
     return await conn.select(SCRIPT_SQL, PARAMS)
@@ -1412,7 +1411,7 @@ async def list_guidance_production(conn, filters):
             {FILTERS_SQL}
             {FILTER_TERMS}
             {FILTER_YEAR}
-        ORDER BY g.title ASC, g.year DESC
+        ORDER BY {'g.title, g.year DESC' if DISTINCT_SQL else 'g.year DESC'}
         {FILTER_PAGINATION};
     """
     return await conn.select(SCRIPT_SQL, PARAMS)
@@ -1555,7 +1554,7 @@ async def list_researcher_production_events(conn, filters):
             {FILTERS_SQL}
             {FILTER_TERMS}
             {FILTER_YEAR}
-        ORDER BY bp.title ASC, bp.year_ DESC
+        ORDER BY {'bp.title, bp.year_ DESC' if DISTINCT_SQL else 'bp.year_ DESC'}
         {FILTER_PAGINATION};
     """
     return await conn.select(SCRIPT_SQL, PARAMS)
@@ -1703,7 +1702,7 @@ async def list_research_projects(conn, filters):
             {FILTERS_SQL}
             {FILTER_TERMS}
             {FILTER_YEAR}
-        ORDER BY rp.project_name ASC, rp.start_year DESC
+        ORDER BY {'rp.project_name, rp.start_year DESC' if DISTINCT_SQL else 'rp.start_year DESC'}
         {FILTER_PAGINATION};
     """
     return await conn.select(SCRIPT_SQL, PARAMS)
@@ -1835,7 +1834,7 @@ async def list_papers_magazine(conn, filters):
             {FILTERS_SQL}
             {FILTER_TERMS}
             {FILTER_YEAR}
-        ORDER BY bp.title ASC, bp.year_ DESC
+        ORDER BY {'bp.title, bp.year_ DESC' if DISTINCT_SQL else 'bp.year_ DESC'}
         {FILTER_PAGINATION};
     """
     return await conn.select(SCRIPT_SQL, PARAMS)

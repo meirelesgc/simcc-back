@@ -74,8 +74,7 @@ async def list_brand(conn, conn_admin, filters):
     result = await ProductionRepository.list_brand(conn, filters)
     if not result:
         return []
-    result = pd.DataFrame(result).to_dict(orient='records')
-    return sorted(result, key=lambda x: x['year'], reverse=True)
+    return pd.DataFrame(result).to_dict(orient='records')
 
 
 async def list_book(conn, conn_admin, filters):
@@ -103,7 +102,7 @@ async def list_bibliographic_production(conn, conn_admin, filters, qualis):
     if not result:
         return []
     df = pd.DataFrame(result).fillna('')
-    return df.sort_values(by='year', ascending=False).to_dict(orient='records')
+    return df.to_dict(orient='records')
 
 
 async def list_book_chapter(conn, conn_admin, filters):
