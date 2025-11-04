@@ -709,6 +709,7 @@ def graduate_program_ind_prod():
     result = conn.select(SCRIPT_SQL)
     csv = pd.DataFrame(result)
     csv_path = os.path.join(PATH, 'graduate_program_ind_prod.csv')
+    print(csv)
     csv.to_csv(
         csv_path,
         decimal=',',

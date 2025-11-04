@@ -180,7 +180,7 @@ def guidance_indprod():
 
 def list_researchers():
     SCRIPT_SQL = """
-        SELECT graduate_program_id, researcher_id
+        SELECT DISTINCT graduate_program_id, researcher_id
         FROM graduate_program_researcher;
         """
     result = conn.select(SCRIPT_SQL)
