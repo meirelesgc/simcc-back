@@ -545,3 +545,10 @@ def fat_tags_csv():
     file_name = 'fat_tags.csv'
     file_path = os.path.join(STORAGE_PATH, file_name)
     return FileResponse(file_path, filename=file_name)
+
+
+@router.get('/EtapaOrientacao.xlsx')
+def EtapaOrientacao():
+    file_name = 'EtapaOrientacao.xlsx'
+    file_path = os.path.join(STORAGE_PATH, file_name)
+    return FileResponse(file_path, filename=file_name)
