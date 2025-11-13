@@ -148,6 +148,7 @@ async def search_in_area_specialty(conn, filters):
             {join_group}
             {join_dep}
         WHERE 1 = 1
+            AND r.status IS True
             {FILTER_TERMS}
             {FILTERS_SQL}
         ORDER BY among DESC
@@ -471,6 +472,7 @@ async def search_in_bibliographic_production(conn, filters, type):
                 GROUP BY bp.researcher_id
             ) bp ON bp.researcher_id = r.id
         WHERE 1 = 1
+            AND r.status IS True
             {FILTERS_SQL}
         ORDER BY bp.among DESC
         {FILTER_PAGINATION};
@@ -876,6 +878,7 @@ async def search_in_researcher(conn, filters, name):
             {join_group}
             {join_dep}
         WHERE 1 = 1
+            AND r.status IS True
             {FILTERS_SQL}
         ORDER BY name
         {FILTER_PAGINATION};
@@ -1393,6 +1396,7 @@ async def search_in_patents(conn, filters):
             {join_group}
             {join_dep}
         WHERE 1 = 1
+            AND r.status IS True
             {FILTERS_SQL}
         ORDER BY among DESC
         {FILTER_PAGINATION};
