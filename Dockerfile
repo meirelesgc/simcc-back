@@ -12,7 +12,6 @@ COPY poetry.lock pyproject.toml ./
 
 RUN poetry config installer.max-workers 10 \
     && poetry install --no-interaction --no-ansi --without dev --no-root \
-    && poetry add polars-lts-cpu \
     && poetry run python -m nltk.downloader stopwords
 
 FROM python:3.13-slim
