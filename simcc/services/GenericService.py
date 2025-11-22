@@ -116,3 +116,14 @@ def list_words(term: str):
 
 async def get_researchers_by_city(conn, city):
     return await GenericRepository.get_researchers_by_city(conn, city)
+
+
+async def generic_data(
+    conn,
+    year: int | None = None,
+    graduate_program_id: UUID | None = None,
+    dep_id: UUID | None = None,
+):
+    return await GenericRepository.generic_data(
+        conn, year, graduate_program_id, dep_id
+    )

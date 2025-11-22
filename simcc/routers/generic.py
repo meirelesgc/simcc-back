@@ -1,7 +1,7 @@
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
+from typing import Annotated, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -19,6 +19,7 @@ from simcc.services import ConecteeService, GenericService
 STORAGE_PATH = Path('storage/dictionary')
 STORAGE_PATH.mkdir(parents=True, exist_ok=True)
 
+Conn = Annotated[Connection, Depends(get_conn)]
 router = APIRouter()
 
 
@@ -161,3 +162,17 @@ async def get_magazine(
     conn: Connection = Depends(get_conn),
 ):
     return await GenericService.get_magazine(conn, issn, initials, page, lenght)
+
+
+@router.get('/ResearcherData/DadosGerais')
+async def all_data(
+    conn: Conn,
+    year: int = None,
+    graduate_program_id: UUID | None = None,
+    dep_id: UUID | None = None,
+):
+    result = await GenericService.generic_data(
+        conn, year, graduate_program_id, dep_id
+    )
+    print(result)
+    return result

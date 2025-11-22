@@ -1,6 +1,8 @@
+from datetime import datetime
 from uuid import UUID
 
 import nltk
+import pandas as pd
 
 from simcc.core.connection import Connection
 from simcc.repositories import conn
@@ -309,3 +311,171 @@ async def get_researchers_by_city(conn, city):
     """
     result = await conn.select(SQL, {'city': city + '%'}, True)
     return result.get('city', None)
+
+
+async def generic_data(
+    conn,
+    year: int | None = None,
+    graduate_program_id: UUID | None = None,
+    dep_id: UUID | None = None,
+):
+    params = {}
+    FILTERS = ''
+    params['year'] = year
+
+    years = list(range(int(year), datetime.now().year + 1))
+    data_frame = pd.DataFrame(years, columns=['year'])
+
+    if graduate_program_id:
+        FILTERS += """
+            AND researcher_id IN (
+                SELECT researcher_id
+                FROM graduate_program_researcher
+                WHERE graduate_program_id = %(graduate_program_id)s
+            )
+        """
+        params['graduate_program_id'] = graduate_program_id
+
+    if dep_id:
+        FILTERS += """
+            AND researcher_id IN (
+                SELECT researcher_id
+                FROM ufmg.departament_researcher
+                WHERE dep_id = %(dep_id)s
+            )
+        """
+        params['dep_id'] = dep_id
+
+    SQL = f"""
+        SELECT g.year, COUNT(*) as count_guidance,
+            COUNT(CASE WHEN g.status = 'Concluída' THEN 1 ELSE NULL END) as count_guidance_complete,
+            COUNT(CASE WHEN g.status = 'Em andamento' THEN 1 ELSE NULL END) as count_guidance_in_progress
+        FROM guidance g
+        WHERE g.year >= %(year)s
+            {FILTERS}
+        GROUP BY g.year
+        ORDER BY g.year;
+    """
+    result = await conn.select(SQL, params)
+    df = pd.DataFrame(
+        result,
+        columns=[
+            'year',
+            'count_guidance',
+            'count_guidance_complete',
+            'count_guidance_in_progress',
+        ],
+    )
+    data_frame = pd.merge(data_frame, df, on='year', how='left')
+
+    SQL = f"""
+        SELECT bp.year::smallint, COUNT(DISTINCT title) AS count_book
+        FROM public.bibliographic_production bp
+        WHERE type = 'BOOK'
+            AND bp.year::smallint >= %(year)s
+            {FILTERS}
+        GROUP BY bp.year
+        ORDER BY bp.year;
+    """
+    result = await conn.select(SQL, params)
+    df = pd.DataFrame(result, columns=['year', 'count_book'])
+    data_frame = pd.merge(data_frame, df, on='year', how='left')
+
+    SQL = f"""
+        SELECT bp.year::smallint, COUNT(DISTINCT title) AS count_book_chapter
+        FROM public.bibliographic_production bp
+        WHERE type = 'BOOK_CHAPTER'
+            AND bp.year::smallint >= %(year)s
+            {FILTERS}
+        GROUP BY bp.year
+        ORDER BY bp.year;
+    """
+    result = await conn.select(SQL, params)
+    df = pd.DataFrame(result, columns=['year', 'count_book_chapter'])
+    data_frame = pd.merge(data_frame, df, on='year', how='left')
+
+    SQL = f"""
+        SELECT p.development_year::smallint AS year,
+            COUNT(CASE WHEN p.grant_date IS NULL THEN 1 ELSE NULL END) count_not_granted_patent,
+            COUNT(CASE WHEN p.grant_date IS NOT NULL THEN 1 ELSE NULL END) as count_granted_patent,
+            COUNT(*) as count_total
+        FROM patent p
+        WHERE p.development_year::smallint >= %(year)s
+            {FILTERS}
+        GROUP BY p.development_year
+        ORDER BY p.development_year;
+    """
+    result = await conn.select(SQL, params)
+    df = pd.DataFrame(
+        result,
+        columns=[
+            'year',
+            'count_not_granted_patent',
+            'count_granted_patent',
+            'count_total',
+        ],
+    )
+    data_frame = pd.merge(data_frame, df, on='year', how='left')
+
+    SQL = f"""
+        SELECT sw.year::smallint, COUNT(DISTINCT title) AS count_software
+        FROM public.software sw
+        WHERE sw.year::smallint >= %(year)s
+            {FILTERS}
+        GROUP BY sw.year
+        ORDER BY sw.year;
+    """
+    result = await conn.select(SQL, params)
+    df = pd.DataFrame(result, columns=['year', 'count_software'])
+    data_frame = pd.merge(data_frame, df, on='year', how='left')
+
+    SQL = f"""
+        SELECT rr.year::smallint, COUNT(DISTINCT title) AS count_report
+        FROM research_report rr
+        WHERE rr.year::smallint >= %(year)s
+            {FILTERS}
+        GROUP BY rr.year
+        ORDER BY rr.year;
+    """
+    result = await conn.select(SQL, params)
+    df = pd.DataFrame(result, columns=['year', 'count_report'])
+    data_frame = pd.merge(data_frame, df, on='year', how='left')
+
+    SQL = f"""
+        SELECT bpa.qualis, bp.year::smallint AS year,
+            COUNT(DISTINCT title) AS count_article
+        FROM public.bibliographic_production bp
+        RIGHT JOIN bibliographic_production_article bpa
+            ON bpa.bibliographic_production_id = bp.id
+        WHERE type = 'ARTICLE'
+            AND bp.year::smallint >= %(year)s
+            {FILTERS}
+        GROUP BY bpa.qualis, bp.year
+        ORDER BY bpa.qualis, bp.year;
+    """
+    result = await conn.select(SQL, params)
+    df = pd.DataFrame(result, columns=['qualis', 'year', 'count_article'])
+    if not df.empty:
+        df = df.pivot_table(
+            index='year', columns='qualis', values='count_article', fill_value=0
+        )
+        df['count_article'] = df.sum(axis=1)
+        df.reset_index(inplace=True)
+        for q in ['A1', 'A2', 'A3', 'A4', 'B1', 'B2', 'B3', 'B4', 'C', 'SQ']:
+            if q not in df.columns:
+                df[q] = 0
+        data_frame = pd.merge(data_frame, df, on='year', how='left')
+
+    SQL = f"""
+        SELECT br.year::smallint, COUNT(DISTINCT br.title) AS count_brand
+        FROM brand br
+        WHERE br.year::smallint >= %(year)s
+            {FILTERS}
+        GROUP BY br.year
+        ORDER BY br.year;
+    """
+    result = await conn.select(SQL, params)
+    df = pd.DataFrame(result, columns=['year', 'count_brand'])
+    data_frame = pd.merge(data_frame, df, on='year', how='left')
+
+    return data_frame.to_dict(orient='records')
