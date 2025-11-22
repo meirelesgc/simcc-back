@@ -294,3 +294,18 @@ def list_words(term: str):
         """
     result = conn.select(SCRIPT_SQL, params)
     return result
+
+
+async def get_researchers_by_city(conn, city):
+    SQL = """
+        SELECT city
+        FROM researcher_production
+        WHERE city ILIKE %(city)s
+        OR similarity(city, %(city)s) > 0.3
+        ORDER BY
+            (city ILIKE %(city)s) DESC,
+            similarity(city, %(city)s) DESC
+        LIMIT 1;
+    """
+    result = await conn.select(SQL, {'city': city + '%'}, True)
+    return result.get('city', None)

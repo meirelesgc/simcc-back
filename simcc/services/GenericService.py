@@ -112,3 +112,7 @@ def get_logs():
 
 def list_words(term: str):
     return GenericRepository.list_words(term)
+
+
+async def get_researchers_by_city(conn, city):
+    return await GenericRepository.get_researchers_by_city(conn, city)

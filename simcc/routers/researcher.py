@@ -12,7 +12,7 @@ from simcc.schemas.Researcher import (
     Researcher,
 )
 from simcc.security import get_current_user
-from simcc.services import researcher_service
+from simcc.services import GenericService, researcher_service
 
 router = APIRouter()
 
@@ -171,3 +171,14 @@ async def get_labs(
     conn: Conn, lattes_id: str = None, researcher_id: UUID | str = None
 ):
     return await researcher_service.get_labs(conn, lattes_id, researcher_id)
+
+
+@router.get('/ResearcherData/ByCity')
+async def get_researchers_by_city(
+    conn: Conn, conn_admin: AdminConn, city: str = None
+):
+    city = await GenericService.get_researchers_by_city(conn, city)
+    filters = Filters(city=city)
+    return await researcher_service.search_in_researcher(
+        conn, conn_admin, filters, None
+    )
