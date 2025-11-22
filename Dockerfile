@@ -1,32 +1,17 @@
-FROM python:3.13-slim AS builder
+FROM python:3.12.10-alpine3.20
 
-ENV POETRY_VIRTUALENVS_CREATE=false \
-    PIP_NO_CACHE_DIR=on \
-    PIP_DISABLE_PIP_VERSION_CHECK=on
+ENV POETRY_VIRTUALENVS_CREATE=false
 
-WORKDIR /app
-
-RUN pip install --no-cache-dir poetry
-
-COPY poetry.lock pyproject.toml ./
-
-RUN poetry config installer.max-workers 10 \
-    && poetry install --no-interaction --no-ansi --without dev --no-root \
-    && poetry run python -m nltk.downloader stopwords
-
-FROM python:3.13-slim
-
-ENV POETRY_VIRTUALENVS_CREATE=false \
-    PYTHONUNBUFFERED=1
+RUN apk update && apk upgrade && apk add --no-cache postgresql-dev gcc python3-dev musl-dev linux-headers
 
 WORKDIR /app
-
-COPY --from=builder /usr/local/lib/python3.13/site-packages /usr/local/lib/python3.13/site-packages
-COPY --from=builder /usr/local/bin /usr/local/bin
-
 COPY . .
 
-EXPOSE 8000
+RUN pip install poetry
+RUN poetry config installer.max-workers 10
+RUN poetry install --no-interaction --no-ansi
+RUN poetry run python -m nltk.downloader stopwords
 
+EXPOSE 8000
 
 CMD ["poetry", "run", "uvicorn", "--host", "0.0.0.0", "simcc.app:app"]
