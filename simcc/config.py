@@ -1,8 +1,12 @@
+from typing import Optional
+
 from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
     ROOT_PATH: str = ''
+
+    URL: Optional[str] = None
 
     DATABASE_URL: str
     ADMIN_DATABASE_URL: str

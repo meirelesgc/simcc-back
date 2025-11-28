@@ -5,9 +5,11 @@ from fastapi import APIRouter, Request
 from fastapi.responses import FileResponse
 
 from routines import powerBI
+from simcc.config import Settings
 
 router = APIRouter()
 
+SETTINGS = Settings()
 STORAGE_PATH = Path('storage/powerBI')
 STORAGE_PATH.mkdir(parents=True, exist_ok=True)
 
@@ -244,7 +246,7 @@ def researcher_city_csv():
 
 @router.get('/dim_researcher.csv')
 def dim_researcher_csv(request: Request):
-    origin = request.base_url
+    origin = SETTINGS.URL if SETTINGS.URL else request.base_url
     powerBI.dim_researcher(origin)
     file_name = 'dim_researcher.csv'
     file_path = os.path.join(STORAGE_PATH, file_name)

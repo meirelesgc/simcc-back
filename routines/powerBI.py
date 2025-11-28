@@ -86,10 +86,10 @@ def researcher_area_leader():
     rows = pd.DataFrame(result, columns=columns)
 
     SCRIPT_SQL = """
-        SELECT researcher_id, lattes_id
+        SELECT id AS researcher_id, lattes_id
         FROM researcher
     """
-    researchers = conn_admin.select(SCRIPT_SQL)
+    researchers = conn.select(SCRIPT_SQL)
     researchers = pd.DataFrame(
         researchers, columns=['researcher_id', 'lattes_id']
     )
