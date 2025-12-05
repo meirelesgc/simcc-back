@@ -174,5 +174,4 @@ async def all_data(
     result = await GenericService.generic_data(
         conn, year, graduate_program_id, dep_id
     )
-    print(result)
     return result

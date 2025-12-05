@@ -478,4 +478,6 @@ async def generic_data(
     df = pd.DataFrame(result, columns=['year', 'count_brand'])
     data_frame = pd.merge(data_frame, df, on='year', how='left')
 
+    data_frame = data_frame.fillna(0)
+
     return data_frame.to_dict(orient='records')
