@@ -89,24 +89,24 @@ async def list_graduate_programs(
 
     SCRIPT_SQL = f"""
         WITH permanent AS (
-            SELECT graduate_program_id, COUNT(*) AS qtd_permanente
+            SELECT graduate_program_id, COUNT(DISTINCT researcher_id) AS qtd_permanente
             FROM graduate_program_researcher
             WHERE type_ = 'PERMANENTE'
             GROUP BY graduate_program_id
         ),
         collaborators AS (
-            SELECT graduate_program_id, COUNT(*) AS qtd_colaborador
+            SELECT graduate_program_id, COUNT(DISTINCT researcher_id) AS qtd_colaborador
             FROM graduate_program_researcher
             WHERE type_ = 'COLABORADOR'
             GROUP BY graduate_program_id
         ),
         students AS (
-            SELECT graduate_program_id, COUNT(*) AS qtd_estudantes
+            SELECT graduate_program_id, COUNT(DISTINCT researcher_id) AS qtd_estudantes
             FROM graduate_program_student
             GROUP BY graduate_program_id
         ),
         researchers AS (
-            SELECT graduate_program_id, ARRAY_AGG(r.lattes_id) AS researchers
+            SELECT graduate_program_id, ARRAY_AGG(DISTINCT r.lattes_id) AS researchers
             FROM graduate_program_researcher gpr
                 LEFT JOIN researcher r ON gpr.researcher_id = r.id
             GROUP BY graduate_program_id
