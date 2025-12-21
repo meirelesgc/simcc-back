@@ -48,6 +48,6 @@ async def get_current_user(
             return None
         token = token.replace('Bearer ', '', 1)
     async with httpx.AsyncClient() as client:
-        response = await client.get(Settings().JADE_ADMIN_URL)
+        response = await client.get(Settings().ADMIN_URL)
         if response.status_code == HTTPStatus.OK:
             return response.json()

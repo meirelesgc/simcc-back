@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter
 from fastapi.responses import FileResponse
 
 from routines import powerBI
@@ -245,8 +245,8 @@ def researcher_city_csv():
 
 
 @router.get('/dim_researcher.csv')
-def dim_researcher_csv(request: Request):
-    origin = SETTINGS.URL if SETTINGS.URL else request.base_url
+def dim_researcher_csv():
+    origin = SETTINGS.URL
     powerBI.dim_researcher(origin)
     file_name = 'dim_researcher.csv'
     file_path = os.path.join(STORAGE_PATH, file_name)

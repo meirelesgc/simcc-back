@@ -6,7 +6,8 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     ROOT_PATH: str = ''
 
-    URL: Optional[str] = None
+    URL: Optional[str] = 'http://localhost:8000'
+    ADMIN_URL: str = 'http://localhost:9090'
 
     DATABASE_URL: str
     ADMIN_DATABASE_URL: str
@@ -20,8 +21,6 @@ class Settings(BaseSettings):
     ZIP_XML_PATH: str = 'storage/xml/current'
 
     OPENAI_API_KEY: str = None
-
-    JADE_ADMIN_URL: str = 'http://localhost:9090'
 
     class Config:
         env_file = '.env'

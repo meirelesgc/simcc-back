@@ -657,12 +657,17 @@ def production_year():
 
 def production_coauthors_csv_db():
     SCRIPT_SQL = """
+        WITH gp_cte AS (
+            SELECT researcher_id, graduate_program_id, MAX(year) AS year
+            FROM graduate_program_researcher
+            GROUP BY researcher_id, graduate_program_id
+        )
         SELECT COUNT(*) + 1 AS qtd, a.doi, a.title, ba.qualis, a.year,
             gp.graduate_program_id, gp.year AS year_pos, a.type
         FROM bibliographic_production a
             LEFT JOIN bibliographic_production_article ba
                 ON a.id = ba.bibliographic_production_id,
-            bibliographic_production b, graduate_program_researcher gp
+            bibliographic_production b, gp_cte gp
         WHERE 1 = 1
             AND (a.doi = b.doi OR a.title = b.title)
             AND a.researcher_id = gp.researcher_id
@@ -788,9 +793,12 @@ def production_distinct_novo_csv_db():
 
 def cimatec_graduate_program_researcher():
     SCRIPT_SQL = """
-    SELECT researcher_id, graduate_program_id,
-        EXTRACT(YEAR FROM CURRENT_DATE) AS year, type_
-    FROM graduate_program_researcher;
+        SELECT researcher_id,
+            graduate_program_id,
+            year AS year,
+            type_
+        FROM graduate_program_researcher
+        WHERE year = EXTRACT(YEAR FROM CURRENT_DATE);
     """
     result = conn.select(SCRIPT_SQL)
     csv = pd.DataFrame(result)
