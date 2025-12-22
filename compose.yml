@@ -1,5 +1,45 @@
 services:
-  jade_api_old:
-    image: gleidsoncosta/jade-api-old:latest
-    env_file: ./.env
+  simcc-db:
+    image: pgvector/pgvector:pg17
+    volumes:
+      - simcc-db:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "${SIMCC_DB_PORT:-}"
     restart: unless-stopped
+
+  simcc-back:
+    image: gleidsoncosta/simcc-back:${SIMCC_BACK_TAG}
+    environment:
+      PROXY_URL: http://simcc-back-old:8080
+      DATABASE_URL: postgresql://postgres:postgres@simcc-db:5432/postgres
+      ADMIN_DATABASE_URL: postgresql://postgres:postgres@simcc-db:5432/postgres
+    env_file: ./.env
+    depends_on:
+      simcc-db:
+        condition: service_healthy
+    ports:
+      - "${SIMCC_BACK_PORT:-}"
+    restart: unless-stopped
+
+  simcc-back-old:
+    image: gleidsoncosta/simcc-back:${SIMCC_BACK_OLD_TAG}
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@simcc-db:5432/postgres
+      ADMIN_DATABASE_URL: postgresql://postgres:postgres@simcc-db:5432/postgres
+    env_file: ./.env
+    depends_on:
+      simcc-db:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  simcc-db:

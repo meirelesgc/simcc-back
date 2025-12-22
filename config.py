@@ -4,12 +4,7 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    DATABASE_NAME: str
-    DATABASE_USER: str = "postgres"
-    DATABASE_PASSWORD: str = "postgres"
-    DATABASE_HOST: str = "localhost"
-    ADM_DATABASE: str
-    PORT: int = 5432
+    DATABASE_URL: str
 
     OPENAI_API_KEY: Optional[str] = None
     ALTERNATIVE_CNPQ_SERVICE: bool = False
