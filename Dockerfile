@@ -11,6 +11,6 @@ RUN pip install poetry && \
     poetry install --no-interaction --no-ansi && \
     poetry run python -m nltk.downloader stopwords
 
-EXPOSE 8080
+EXPOSE 8000
 
 CMD ["poetry", "run", "gunicorn", "-b", "0.0.0.0:8000", "server:app", "--reload"]
