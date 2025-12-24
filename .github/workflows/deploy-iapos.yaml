@@ -15,16 +15,17 @@ jobs:
       - name: Install OpenConnect
         run: sudo apt-get update && sudo apt-get install -y openconnect
 
-      - name: Connect to VPN
+    - name: Connect to VPN
         run: |
           echo "${{ secrets.VPN_PASSWORD }}" | \
           sudo openconnect --protocol=gp \
             -u "${{ secrets.VPN_USERNAME }}" \
             --passwd-on-stdin \
+            --servercert pin-sha256:5wTsqs2TZFmn/zxeysY+/Ow9h9Ar0QfGjAVfdelYU9U= \
+            --non-inter \
             "${{ secrets.VPN_ENDPOINT }}" &
-          
-          sleep 10
-          
+
+          sleep 15
           ip addr show tun0
 
       - name: Execute Deploy via SSH
