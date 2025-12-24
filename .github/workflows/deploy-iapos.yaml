@@ -12,21 +12,29 @@ jobs:
     environment: deploy-iapos
 
     steps:
-      - name: Install OpenConnect
-        run: sudo apt-get update && sudo apt-get install -y openconnect
-
-    - name: Connect to VPN
+      - name: Install OpenConnect and vpn-slice
         run: |
+          sudo apt-get update
+          sudo apt-get install -y openconnect python3-pip
+          sudo pip3 install vpn-slice
+
+      - name: Connect to VPN
+        run: |
+          # O vpn-slice garante que APENAS o tráfego para o seu HOST_DNS passe pela VPN
+          # Isso evita que o GitHub Runner perca a conexão com a internet
           echo "${{ secrets.VPN_PASSWORD }}" | \
           sudo openconnect --protocol=gp \
             -u "${{ secrets.VPN_USERNAME }}" \
             --passwd-on-stdin \
             --servercert pin-sha256:5wTsqs2TZFmn/zxeysY+/Ow9h9Ar0QfGjAVfdelYU9U= \
             --non-inter \
+            --script "vpn-slice ${{ secrets.HOST_DNS }}" \
             "${{ secrets.VPN_ENDPOINT }}" &
-
+          
+          # Aguarda a interface tun0 estabilizar
+          echo "Aguardando conexão VPN..."
           sleep 15
-          ip addr show tun0
+          ip addr show tun0 || echo "Aviso: tun0 não listada, mas tentando prosseguir..."
 
       - name: Execute Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
@@ -34,6 +42,8 @@ jobs:
           host: ${{ secrets.HOST_DNS }}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
+          
+          command_timeout: 10m
           script: |
             cd ${{ secrets.DEPLOY_PATH }}
             export SIMCC_BACK_TAG=${{ github.event.workflow_run.head_sha }}
@@ -43,5 +53,5 @@ jobs:
 
       - name: Disconnect VPN
         if: always()
-        run: sudo pkill -SIGINT openconnect
-        
+        run: |
+          sudo pkill -SIGINT openconnect || true
