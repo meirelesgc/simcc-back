@@ -1,57 +1,57 @@
-name: deploy-iapos
+# name: deploy-iapos
 
-on:
-  workflow_run:
-    workflows: [ "build" ]
-    types: [ completed ]
+# on:
+#   workflow_run:
+#     workflows: [ "build" ]
+#     types: [ completed ]
 
-jobs:
-  deploy:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
-    runs-on: ubuntu-latest
-    environment: deploy-iapos
+# jobs:
+#   deploy:
+#     if: ${{ github.event.workflow_run.conclusion == 'success' }}
+#     runs-on: ubuntu-latest
+#     environment: deploy-iapos
 
-    steps:
-      - name: Install OpenConnect and vpn-slice
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y openconnect python3-pip
-          sudo pip3 install vpn-slice
+#     steps:
+#       - name: Install OpenConnect and vpn-slice
+#         run: |
+#           sudo apt-get update
+#           sudo apt-get install -y openconnect python3-pip
+#           sudo pip3 install vpn-slice
 
-      - name: Connect to VPN
-        run: |
-          # O vpn-slice garante que APENAS o tráfego para o seu HOST_DNS passe pela VPN
-          # Isso evita que o GitHub Runner perca a conexão com a internet
-          echo "${{ secrets.VPN_PASSWORD }}" | \
-          sudo openconnect --protocol=gp \
-            -u "${{ secrets.VPN_USERNAME }}" \
-            --passwd-on-stdin \
-            --servercert pin-sha256:5wTsqs2TZFmn/zxeysY+/Ow9h9Ar0QfGjAVfdelYU9U= \
-            --non-inter \
-            --script "vpn-slice ${{ secrets.HOST_DNS }}" \
-            "${{ secrets.VPN_ENDPOINT }}" &
+#       - name: Connect to VPN
+#         run: |
+#           # O vpn-slice garante que APENAS o tráfego para o seu HOST_DNS passe pela VPN
+#           # Isso evita que o GitHub Runner perca a conexão com a internet
+#           echo "${{ secrets.VPN_PASSWORD }}" | \
+#           sudo openconnect --protocol=gp \
+#             -u "${{ secrets.VPN_USERNAME }}" \
+#             --passwd-on-stdin \
+#             --servercert pin-sha256:5wTsqs2TZFmn/zxeysY+/Ow9h9Ar0QfGjAVfdelYU9U= \
+#             --non-inter \
+#             --script "vpn-slice ${{ secrets.HOST_DNS }}" \
+#             "${{ secrets.VPN_ENDPOINT }}" &
           
-          # Aguarda a interface tun0 estabilizar
-          echo "Aguardando conexão VPN..."
-          sleep 15
-          ip addr show tun0 || echo "Aviso: tun0 não listada, mas tentando prosseguir..."
+#           # Aguarda a interface tun0 estabilizar
+#           echo "Aguardando conexão VPN..."
+#           sleep 15
+#           ip addr show tun0 || echo "Aviso: tun0 não listada, mas tentando prosseguir..."
 
-      - name: Execute Deploy via SSH
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.HOST_DNS }}
-          username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.EC2_SSH_KEY }}
+#       - name: Execute Deploy via SSH
+#         uses: appleboy/ssh-action@v1.0.3
+#         with:
+#           host: ${{ secrets.HOST_DNS }}
+#           username: ${{ secrets.USERNAME }}
+#           key: ${{ secrets.EC2_SSH_KEY }}
           
-          command_timeout: 10m
-          script: |
-            cd ${{ secrets.DEPLOY_PATH }}
-            export SIMCC_BACK_TAG=${{ github.event.workflow_run.head_sha }}
-            docker compose pull simcc-back
-            docker compose up -d simcc-back --force-recreate
-            docker image prune -f
+#           command_timeout: 10m
+#           script: |
+#             cd ${{ secrets.DEPLOY_PATH }}
+#             export SIMCC_BACK_TAG=${{ github.event.workflow_run.head_sha }}
+#             docker compose pull simcc-back
+#             docker compose up -d simcc-back --force-recreate
+#             docker image prune -f
 
-      - name: Disconnect VPN
-        if: always()
-        run: |
-          sudo pkill -SIGINT openconnect || true
+#       - name: Disconnect VPN
+#         if: always()
+#         run: |
+#           sudo pkill -SIGINT openconnect || true
