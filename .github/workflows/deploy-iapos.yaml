@@ -1,0 +1,45 @@
+name: deploy-iapos
+
+on:
+  workflow_run:
+    workflows: [ "build" ]
+    types: [ completed ]
+
+jobs:
+  deploy:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    environment: deploy-iapos
+
+    steps:
+      - name: Install OpenConnect
+        run: sudo apt-get update && sudo apt-get install -y openconnect
+
+      - name: Connect to VPN
+        run: |
+          echo "${{ secrets.VPN_PASSWORD }}" | \
+          sudo openconnect --protocol=gp \
+            -u "${{ secrets.VPN_USERNAME }}" \
+            --passwd-on-stdin \
+            "${{ secrets.VPN_ENDPOINT }}" &
+          
+          sleep 10
+          
+          ip addr show tun0
+
+      - name: Execute Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HOST_DNS }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd ${{ secrets.DEPLOY_PATH }}
+            export SIMCC_BACK_TAG=${{ github.event.workflow_run.head_sha }}
+            docker compose pull simcc-back
+            docker compose up -d simcc-back --force-recreate
+            docker image prune -f
+
+      - name: Disconnect VPN
+        if: always()
+        run: sudo pkill -SIGINT openconnect
