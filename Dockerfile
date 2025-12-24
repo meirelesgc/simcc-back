@@ -1,16 +1,48 @@
-FROM python:3.12.10-alpine3.20
+FROM python:3.12.10-alpine3.20 AS builder
 
-ENV POETRY_VIRTUALENVS_CREATE=false
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    POETRY_NO_INTERACTION=1 \
+    POETRY_VIRTUALENVS_CREATE=false \
+    POETRY_HOME="/opt/poetry"
+
+ENV PATH="$POETRY_HOME/bin:$PATH"
+
+RUN apk add --no-cache gcc musl-dev postgresql-dev libffi-dev
 
 WORKDIR /app
 
-COPY . .
+RUN pip install --no-cache-dir poetry
 
-RUN pip install poetry && \
-    poetry config installer.max-workers 10 && \
-    poetry install --no-interaction --no-ansi && \
-    poetry run python -m nltk.downloader stopwords
+COPY pyproject.toml poetry.lock ./
+
+RUN poetry install --no-root --only main --no-ansi
+
+FROM python:3.12.10-alpine3.20 AS runtime
+
+LABEL maintainer="geu_costa@outlook.com"
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PATH="/home/python/.local/bin:$PATH" \
+    NLTK_DATA="/app/nltk_data"
+
+RUN apk add --no-cache libpq
+
+RUN addgroup -S python && adduser -S python -G python
+
+WORKDIR /app
+
+COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
+
+COPY --chown=python:python . .
+
+RUN python -m nltk.downloader -d /app/nltk_data stopwords
+
+USER python
 
 EXPOSE 8000
 
-CMD ["poetry", "run", "gunicorn", "-b", "0.0.0.0:8000", "server:app", "--reload"]
+# CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "4", "--threads", "2", "--access-logfile", "-", "server:app"]
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--access-logfile", "-", "server:app"]
