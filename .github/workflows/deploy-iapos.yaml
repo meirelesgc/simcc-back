@@ -43,3 +43,4 @@ jobs:
       - name: Disconnect VPN
         if: always()
         run: sudo pkill -SIGINT openconnect
+        
