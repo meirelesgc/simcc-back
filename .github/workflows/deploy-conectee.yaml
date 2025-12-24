@@ -41,7 +41,7 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             cd ${{ secrets.DEPLOY_PATH }}
-            export SIMCC_BACK_TAG=${{ github.sha }}
+            export SIMCC_BACK_OLD_TAG=${{ github.sha }}
             docker compose pull simcc-back-old
             docker compose up -d simcc-back-old --force-recreate
             docker image prune -f
