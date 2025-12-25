@@ -1,4 +1,5 @@
 from datetime import datetime
+from uuid import uuid4
 
 import pandas as pd
 from unidecode import unidecode
@@ -41,7 +42,11 @@ def article_indprod():
         GROUP BY year_, qualis, researcher_id;
         """
     result = conn.select(SCRIPT_SQL)
-    articles = pd.DataFrame(result)
+    if not result:
+        return [{'year': 0000, 'researcher_id': uuid4(), 'article_prod': 0}]
+
+    columns = ['year', 'qualis', 'count_article', 'researcher_id']
+    articles = pd.DataFrame(result, columns=columns)
 
     articles['article_prod'] = (
         articles['qualis'].map(barema) * articles['count_article']
@@ -107,7 +112,8 @@ def patent_indprod():
         GROUP BY development_year, researcher_id
         """
     result = conn.select(SCRIPT_SQL)
-    patent = pd.DataFrame(result)
+    columns = ['year', 'granted', 'researcher_id', 'count_patent']
+    patent = pd.DataFrame(result, columns=columns)
 
     patent['patent_prod'] = (
         patent['granted'].map(barema) * patent['count_patent']
@@ -126,7 +132,8 @@ def software_indprod():
         GROUP BY year, researcher_id;
         """
     result = conn.select(SCRIPT_SQL)
-    software = pd.DataFrame(result)
+    columns = ['year', 'software_count', 'researcher_id']
+    software = pd.DataFrame(result, columns=columns)
     software['software_prod'] = software['software_count'] * barema.get(
         'SOFTWARE', 0
     )
@@ -143,10 +150,11 @@ def report_indprod():
         GROUP BY year, researcher_id;
         """
 
-    columns = ['year', 'report_count', 'researcher_id']
     result = conn.select(SCRIPT_SQL)
-    report = pd.DataFrame(result, columns=columns)
+    if not result:
+        return [{'year': 0000, 'researcher_id': uuid4(), 'report_prod': 0}]
 
+    report = pd.DataFrame(result)
     report['report_prod'] = report['report_count'] * barema.get('REPORT', 0)
     columns = ['year', 'researcher_id', 'report_prod']
     report = report[columns]
@@ -180,8 +188,17 @@ def guidance_indprod():
 
 def list_researchers():
     SCRIPT_SQL = """
-        SELECT DISTINCT graduate_program_id, researcher_id
-        FROM graduate_program_researcher;
+        SELECT id AS researcher_id
+        FROM public.researcher;
+        """
+    result = conn.select(SCRIPT_SQL)
+    return result
+
+
+def list_programs():
+    SCRIPT_SQL = """
+        SELECT graduate_program_id, researcher_id, year
+        FROM graduate_program_researcher
         """
     result = conn.select(SCRIPT_SQL)
     return result
@@ -191,52 +208,69 @@ def main():
     YEAR = range(2008, datetime.now().year + 1)
     history = pd.DataFrame(YEAR, columns=['year'])
 
-    programs = list_researchers()
+    researchers = list_researchers()
+    if not researchers:
+        print('No researchers found')
+        raise ValueError('No researchers found')
+    researchers = pd.DataFrame(researchers)
 
-    if not programs:
-        print('No graduate program researchers found.')
-        return
-
-    programs = pd.DataFrame(programs)
-
-    programs = programs.merge(history, how='cross')
+    researchers = researchers.merge(history, how='cross')
 
     on = ['researcher_id', 'year']
 
     articles = article_indprod()
     columns = ['researcher_id', 'year', 'article_prod']
     articles = pd.DataFrame(articles, columns=columns)
-    programs = programs.merge(articles, on=on, how='left')
+    researchers = researchers.merge(articles, on=on, how='left')
 
     books = book_indprod()
     columns = ['researcher_id', 'year', 'book_prod']
     books = pd.DataFrame(books, columns=columns)
-    programs = programs.merge(books, on=on, how='left')
+    researchers = researchers.merge(books, on=on, how='left')
 
     book_chapter = book_chapter_indprod()
     columns = ['researcher_id', 'year', 'book_chapter_prod']
     book_chapter = pd.DataFrame(book_chapter, columns=columns)
-    programs = programs.merge(book_chapter, on=on, how='left')
+    researchers = researchers.merge(book_chapter, on=on, how='left')
 
     software = software_indprod()
     columns = ['researcher_id', 'year', 'software_prod']
     software = pd.DataFrame(software, columns=columns)
-    programs = programs.merge(software, on=on, how='left')
+    researchers = researchers.merge(software, on=on, how='left')
 
     patent = patent_indprod()
     columns = ['researcher_id', 'year', 'patent_prod']
     patent = pd.DataFrame(patent, columns=columns)
-    programs = programs.merge(patent, on=on, how='left')
+    researchers = researchers.merge(patent, on=on, how='left')
 
     report = report_indprod()
     columns = ['researcher_id', 'year', 'report_prod']
     report = pd.DataFrame(report, columns=columns)
-    programs = programs.merge(report, on=on, how='left')
+    researchers = researchers.merge(report, on=on, how='left')
 
     guidance = guidance_indprod()
     columns = ['researcher_id', 'year', 'guidance_prod']
     guidance = pd.DataFrame(guidance)
-    programs = programs.merge(guidance, on=on, how='left')
+    researchers = researchers.merge(guidance, on=on, how='left')
+
+    programs = list_programs()
+    if not programs:
+        raise ValueError('No programs found')
+    programs = pd.DataFrame(programs)
+
+    history_program = (
+        programs[['graduate_program_id']]
+        .drop_duplicates()
+        .merge(history, how='cross')
+    )
+
+    programs = history_program.merge(
+        programs, on=['graduate_program_id', 'year'], how='left'
+    )
+
+    programs = programs.merge(
+        researchers, on=['researcher_id', 'year'], how='left'
+    )
 
     programs = programs.drop(columns=['researcher_id'])
 
@@ -262,6 +296,7 @@ def main():
             %(patent_prod)s, %(patent_prod)s,
             %(report_prod)s, %(guidance_prod)s);
         """
+
     for _, program in programs.iterrows():
         print(f'Inserting row for group: {_}')
         conn.exec(SCRIPT_SQL, program.fillna(0).to_dict())
