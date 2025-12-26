@@ -1736,9 +1736,6 @@ def fat_tags_csv():
 
 
 if __name__ == '__main__':
-    for directory in [PATH]:
-        if not os.path.exists(directory):
-            os.makedirs(directory)
     dim_titulacao()
     fat_area_specialty()
     fat_great_area()
@@ -1771,7 +1768,6 @@ if __name__ == '__main__':
     fat_production_tecnical_year_novo_csv_db()
     dim_institution()
     researcher_city()
-    dim_researcher('xpto')
     fat_simcc_bibliographic_production()
     production_tecnical_year()
     researcher()
@@ -1801,6 +1797,11 @@ if __name__ == '__main__':
     dim_article_keyword()
     fat_article_co_authorship()
     fat_keywords_cooccurrences()
-    guidance()
-    supervisor()
-    guidance_per_year()
+    fat_co_authorship()
+    dim_tags_csv()
+    fat_tags_csv()
+    # _guidance()
+    # supervisor()
+    # guidance()
+    # guidance_per_year()
+    # in_progress_per_year()

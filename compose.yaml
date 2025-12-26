@@ -12,6 +12,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    ports: [ "${SIMCC_DB_PORT:-5432}" ]
     restart: unless-stopped
 
   simcc-back:
@@ -24,8 +25,7 @@ services:
     depends_on:
       simcc-db:
         condition: service_healthy
-    ports:
-      - "${SIMCC_BACK_PORT:-}"
+    ports: [ "${SIMCC_BACK_PORT:-8000}:8000" ]
     restart: unless-stopped
 
   simcc-back-old:

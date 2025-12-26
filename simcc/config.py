@@ -3,7 +3,7 @@ from typing import Optional
 from pydantic_settings import BaseSettings
 
 
-class Settings(BaseSettings):
+class Settings(BaseSettings, extra='ignore'):
     ROOT_PATH: str = ''
 
     URL: Optional[str] = 'http://localhost:8000'
