@@ -43,7 +43,7 @@ services:
     restart: unless-stopped
 
   hop:
-    image: jade-extrator-image
+    image: gleidsoncosta/simcc-extrator:${SIMCC_EXTRATOR_TAG:-latest}
     profiles: ["extração"] 
     environment:
       DATABASE_URL: postgresql://postgres:postgres@simcc-db:5432/postgres
