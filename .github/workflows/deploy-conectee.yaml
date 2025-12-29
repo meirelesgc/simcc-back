@@ -27,7 +27,7 @@ jobs:
           push: true
           tags: |
             ${{ env.IMAGE_NAME }}:${{ github.sha }}
-            ${{ env.IMAGE_NAME }}:v2-latest
+            ${{ env.IMAGE_NAME }}:latest
   
   deploy:
     needs: build
