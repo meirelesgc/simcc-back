@@ -39,5 +39,17 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  hop:
+    image: jade-extrator-image
+    profiles: ["extração"] 
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@simcc-db:5432/postgres
+      ADMIN_DATABASE_URL: postgresql://postgres:postgres@simcc-db:5434/postgres
+    volumes:
+      - ./storage/xml:/opt/hop/projects/jade-extrator/metadata/dataset/xml
+    depends_on:
+      simcc-db:
+        condition: service_healthy
+
 volumes:
   simcc-db:
