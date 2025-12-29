@@ -12,6 +12,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    ports: [ "${SIMCC_DB_PORT:-5432}" ]
     restart: unless-stopped
 
   simcc-back:
@@ -19,25 +20,39 @@ services:
     environment:
       PROXY_URL: http://simcc-back-old:8000
       DATABASE_URL: postgresql://postgres:postgres@simcc-db:5432/postgres
-      ADMIN_DATABASE_URL: postgresql://postgres:postgres@simcc-db:5432/postgres
+      ADMIN_DATABASE_URL: postgresql://postgres:postgres@simcc-admin-db:5432/postgres
     env_file: ./.env
     depends_on:
       simcc-db:
         condition: service_healthy
-    ports:
-      - "${SIMCC_BACK_PORT:-}"
+    ports: [ "${SIMCC_BACK_PORT:-8000}:8000" ]
+    volumes:
+      - ./storage:/app/storage
     restart: unless-stopped
+
 
   simcc-back-old:
     image: gleidsoncosta/simcc-back-old:${SIMCC_BACK_OLD_TAG:-latest}
     environment:
       DATABASE_URL: postgresql://postgres:postgres@simcc-db:5432/postgres
-      ADMIN_DATABASE_URL: postgresql://postgres:postgres@simcc-db:5432/postgres
+      ADMIN_DATABASE_URL: postgresql://postgres:postgres@simcc-admin-db:5432/postgres
     env_file: ./.env
     depends_on:
       simcc-db:
         condition: service_healthy
     restart: unless-stopped
+
+  hop:
+    image: jade-extrator-image
+    profiles: ["extração"] 
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@simcc-db:5432/postgres
+      ADMIN_DATABASE_URL: postgresql://postgres:postgres@simcc-admin-db:5432/postgres
+    volumes:
+      - ./storage/xml:/opt/hop/projects/jade-extrator/metadata/dataset/xml
+    depends_on:
+      simcc-db:
+        condition: service_healthy
 
 volumes:
   simcc-db:
