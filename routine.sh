@@ -12,7 +12,7 @@ exec_api() {
 
 echo "--- Início da Rotina ---"
 
-# exec_api soap_lattes.py
+exec_api soap_lattes.py
 
 docker compose --profile extração up --abort-on-container-exit hop
 
