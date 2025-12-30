@@ -14,7 +14,7 @@ echo "--- Início da Rotina ---"
 
 exec_api soap_lattes.py
 
-docker compose --profile extração up --abort-on-container-exit hop
+docker compose --profile extração run --rm hop
 
 ROTINES=(
   population.py
