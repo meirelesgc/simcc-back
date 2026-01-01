@@ -2090,10 +2090,6 @@ async def get_researcher_metrics(
     conn: Connection,
     filters: DefaultFilters,
 ):
-    """
-    [JÁ NORMALIZADA]
-    Calcula métricas gerais sobre pesquisadores.
-    """
     PARAMS = {}
     JOINS = ['LEFT JOIN openalex_researcher opr ON opr.researcher_id = r.id']
     FILTERS_SQL = []
@@ -2240,10 +2236,9 @@ async def get_researcher_metrics(
             COUNT(DISTINCT r.orcid) AS orcid_count,
             COUNT(DISTINCT opr.scopus) AS scopus_count,
             {count_among}
-        FROM 
-            researcher r
+        FROM researcher r
             {join_clauses}
-        WHERE 
+        WHERE 1 = 1
             {where_clauses};
     """
     return await conn.select(SCRIPT_SQL, PARAMS)
