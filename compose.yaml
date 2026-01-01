@@ -19,8 +19,8 @@ services:
     image: gleidsoncosta/simcc-back:${SIMCC_BACK_TAG:-latest}
     environment:
       PROXY_URL: http://simcc-back-old:8000
-      DATABASE_URL: postgresql://postgres:postgres@simcc-db:5432/postgres
-      ADMIN_DATABASE_URL: postgresql://postgres:postgres@simcc-admin-db:5432/postgres
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@simcc-db:5432/postgres}
+      ADMIN_DATABASE_URL: ${ADMIN_DATABASE_URL:-postgresql://postgres:postgres@simcc-admin-db:5432/postgres}
     env_file: ./.env
     depends_on:
       simcc-db:
@@ -30,12 +30,11 @@ services:
       - ./storage:/app/storage
     restart: unless-stopped
 
-
   simcc-back-old:
     image: gleidsoncosta/simcc-back-old:${SIMCC_BACK_OLD_TAG:-latest}
     environment:
-      DATABASE_URL: postgresql://postgres:postgres@simcc-db:5432/postgres
-      ADMIN_DATABASE_URL: postgresql://postgres:postgres@simcc-admin-db:5432/postgres
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@simcc-db:5432/postgres}
+      ADMIN_DATABASE_URL: ${ADMIN_DATABASE_URL:-postgresql://postgres:postgres@simcc-admin-db:5432/postgres}
     env_file: ./.env
     depends_on:
       simcc-db:
@@ -44,10 +43,10 @@ services:
 
   hop:
     image: gleidsoncosta/simcc-extrator:${SIMCC_EXTRATOR_TAG:-latest}
-    profiles: ["extração"] 
+    profiles: ["extração"]
     environment:
-      DATABASE_URL: postgresql://postgres:postgres@simcc-db:5432/postgres
-      ADMIN_DATABASE_URL: postgresql://postgres:postgres@simcc-admin-db:5432/postgres
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@simcc-db:5432/postgres}
+      ADMIN_DATABASE_URL: ${ADMIN_DATABASE_URL:-postgresql://postgres:postgres@simcc-admin-db:5432/postgres}
     volumes:
       - ./storage/xml:/opt/hop/projects/jade-extrator/metadata/dataset/xml
     depends_on:
