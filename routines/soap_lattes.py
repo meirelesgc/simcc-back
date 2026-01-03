@@ -4,6 +4,7 @@ from datetime import datetime
 
 import httpx
 from zeep import Client
+from zeep.exceptions import Fault, TransportError
 
 from routines.logger import logger_researcher_routine, logger_routine
 from simcc.config import Settings
@@ -15,6 +16,9 @@ CURRENT_XML_PATH = Settings().CURRENT_XML_PATH
 ZIP_XML_PATH = Settings().ZIP_XML_PATH
 PROXY = Settings().ALTERNATIVE_CNPQ_SERVICE
 
+HTTP_TIMEOUT = httpx.Timeout(connect=10.0, read=60.0, write=10.0, pool=10.0)
+
+client = None
 if not PROXY:
     client = Client('http://servicosweb.cnpq.br/srvcurriculo/WSCurriculo?wsdl')
 
@@ -29,16 +33,21 @@ def list_admin_researchers():
 
 def cnpq_att(lattes_id) -> datetime:
     try:
+        print(f'Consultando data de atualização no CNPq [{lattes_id}]')
         if PROXY:
             PROXY_URL = f'https://simcc.uesc.br/v3/api/getDataAtualizacaoCV?lattes_id={lattes_id}'
-            response = httpx.get(PROXY_URL, verify=False, timeout=None).json()
-            if response:
-                return datetime.strptime(response, '%d/%m/%Y %H:%M:%S')
+            response = httpx.get(PROXY_URL, verify=False, timeout=HTTP_TIMEOUT)
+            response.raise_for_status()
+            data = response.json()
+        else:
+            data = client.service.getDataAtualizacaoCV(lattes_id)
+
+        if not data:
             return datetime.min
-        response = client.service.getDataAtualizacaoCV(lattes_id)
-        return datetime.strptime(response, '%d/%m/%Y %H:%M:%S')
-    except (httpx.TimeoutException, TypeError, ValueError) as e:
-        print(f'Erro ao obter data de atualização do Lattes: {e}')
+
+        return datetime.strptime(data, '%d/%m/%Y %H:%M:%S')
+    except Exception as e:
+        print(f'Erro ao obter data de atualização [{lattes_id}]: {e}')
         return datetime.min
 
 
@@ -56,36 +65,52 @@ def database_att(lattes_id) -> datetime:
 
 
 def download_xml(lattes_id, researcher_id):
-    if cnpq_att(lattes_id) <= database_att(lattes_id):
+    cnpq_date = cnpq_att(lattes_id)
+    db_date = database_att(lattes_id)
+
+    if cnpq_date <= db_date:
         print('Curriculo atualizado!')
         return
 
     print('Baixando curriculo...')
     try:
         if PROXY:
-            print('Baixando curriculo via proxy')
+            print('Download via proxy')
             PROXY_URL = f'https://simcc.uesc.br/v3/api/getCurriculoCompactado?lattes_id={lattes_id}'
-            response = httpx.get(PROXY_URL, verify=False, timeout=None).content
+            response = httpx.get(PROXY_URL, verify=False, timeout=HTTP_TIMEOUT)
+            response.raise_for_status()
+            content = response.content
         else:
-            response = client.service.getCurriculoCompactado(lattes_id)
-    except httpx.Timeout as E:
-        logger_researcher_routine(researcher_id, 'SOAP_LATTES', True, str(E))
+            content = client.service.getCurriculoCompactado(lattes_id)
+    except (
+        httpx.RequestError,
+        httpx.HTTPStatusError,
+        Fault,
+        TransportError,
+        Exception,
+    ) as e:
+        print(f'Erro no download do curriculo [{lattes_id}]: {e}')
+        logger_researcher_routine(researcher_id, 'SOAP_LATTES', True, str(e))
         return
 
     try:
         zip_path = os.path.join(ZIP_XML_PATH, lattes_id + '.zip')
-        with open(zip_path, 'wb') as XML:
-            XML.write(response)
+        with open(zip_path, 'wb') as f:
+            f.write(content)
 
-        with zipfile.ZipFile(zip_path, 'r') as ZIP:
-            ZIP.extractall(XML_PATH)
-            ZIP.extractall(os.path.join(CURRENT_XML_PATH))
+        with zipfile.ZipFile(zip_path, 'r') as z:
+            z.extractall(XML_PATH)
+            z.extractall(CURRENT_XML_PATH)
+
         os.remove(zip_path)
         logger_researcher_routine(researcher_id, 'SOAP_LATTES', False)
-    except zipfile.BadZipFile as E:
-        print(f'Erro de arquivo zip: {E}')
-        logger_researcher_routine(researcher_id, 'SOAP_LATTES', True, str(E))
-        return
+        print('Download concluído')
+    except zipfile.BadZipFile as e:
+        print(f'Erro ao extrair zip [{lattes_id}]: {e}')
+        logger_researcher_routine(researcher_id, 'SOAP_LATTES', True, str(e))
+    except Exception as e:
+        print(f'Erro ao salvar curriculo [{lattes_id}]: {e}')
+        logger_researcher_routine(researcher_id, 'SOAP_LATTES', True, str(e))
 
 
 if __name__ == '__main__':
@@ -99,8 +124,8 @@ if __name__ == '__main__':
             os.remove(file_path)
 
     researchers = list_admin_researchers()
-    for _, researcher in enumerate(researchers):
-        print(f'Curriculo número: [{_}]')
+    for i, researcher in enumerate(researchers):
+        print(f'Curriculo número: [{i}]')
         print(f'Pesquisador: [{researcher.get("name")}]')
         print(f'Lattes: [{researcher.get("lattes_id")}]')
 
