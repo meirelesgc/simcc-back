@@ -1,4 +1,6 @@
+import argparse
 import os
+import sys
 import zipfile
 from datetime import datetime
 
@@ -18,70 +20,95 @@ PROXY = Settings().ALTERNATIVE_CNPQ_SERVICE
 
 HTTP_TIMEOUT = httpx.Timeout(connect=10.0, read=60.0, write=10.0, pool=10.0)
 
+print('Inicializando cliente SOAP')
 client = None
 if not PROXY:
     client = Client('http://servicosweb.cnpq.br/srvcurriculo/WSCurriculo?wsdl')
+    print('Cliente SOAP configurado sem proxy')
+else:
+    print('Usando proxy alternativo CNPQ')
 
 
-def list_admin_researchers():
+def list_admin_researchers(limit, offset):
+    print(f'Buscando pesquisadores limit={limit} offset={offset}')
     SCRIPT_SQL = """
         SELECT researcher_id, name, lattes_id
-        FROM public.researcher;
+        FROM public.researcher
+        ORDER BY researcher_id
+        LIMIT %(limit)s OFFSET %(offset)s;
     """
-    return conn_admin.select(SCRIPT_SQL)
+    result = conn_admin.select(SCRIPT_SQL, {'limit': limit, 'offset': offset})
+    print(f'{len(result) if result else 0} pesquisadores encontrados')
+    return result
 
 
 def cnpq_att(lattes_id) -> datetime:
+    print(f'Consultando data de atualização no CNPQ: {lattes_id}')
     try:
-        print(f'Consultando data de atualização no CNPq [{lattes_id}]')
         if PROXY:
-            PROXY_URL = f'https://simcc.uesc.br/v3/api/getDataAtualizacaoCV?lattes_id={lattes_id}'
-            response = httpx.get(PROXY_URL, verify=False, timeout=HTTP_TIMEOUT)
+            response = httpx.get(
+                f'https://simcc.uesc.br/v3/api/getDataAtualizacaoCV?lattes_id={lattes_id}',
+                verify=False,
+                timeout=HTTP_TIMEOUT,
+            )
             response.raise_for_status()
             data = response.json()
         else:
             data = client.service.getDataAtualizacaoCV(lattes_id)
 
         if not data:
+            print('Data não retornada pelo CNPQ')
             return datetime.min
 
-        return datetime.strptime(data, '%d/%m/%Y %H:%M:%S')
+        parsed = datetime.strptime(data, '%d/%m/%Y %H:%M:%S')
+        print(f'Data CNPQ: {parsed}')
+        return parsed
     except Exception as e:
-        print(f'Erro ao obter data de atualização [{lattes_id}]: {e}')
+        print(f'Erro ao consultar CNPQ: {e}')
         return datetime.min
 
 
 def database_att(lattes_id) -> datetime:
-    params = {'lattes_id': lattes_id}
-    SCRIPT_SQL = """
+    print(f'Consultando data no banco: {lattes_id}')
+    result = conn.select(
+        """
         SELECT last_update
         FROM researcher
         WHERE lattes_id = %(lattes_id)s;
-    """
-    result = conn.select(SCRIPT_SQL, params)
+        """,
+        {'lattes_id': lattes_id},
+    )
     if result:
+        print(f'Data banco: {result[0].get("last_update")}')
         return result[0].get('last_update')
+    print('Registro não encontrado no banco')
     return datetime.min
 
 
 def download_xml(lattes_id, researcher_id):
+    print(
+        f'Iniciando download XML: researcher_id={researcher_id} lattes_id={lattes_id}'
+    )
     cnpq_date = cnpq_att(lattes_id)
     db_date = database_att(lattes_id)
 
     if cnpq_date <= db_date:
-        print('Curriculo atualizado!')
+        print('XML já está atualizado, pulando download')
         return
 
-    print('Baixando curriculo...')
     try:
+        print('Baixando currículo compactado')
         if PROXY:
-            print('Download via proxy')
-            PROXY_URL = f'https://simcc.uesc.br/v3/api/getCurriculoCompactado?lattes_id={lattes_id}'
-            response = httpx.get(PROXY_URL, verify=False, timeout=HTTP_TIMEOUT)
+            response = httpx.get(
+                f'https://simcc.uesc.br/v3/api/getCurriculoCompactado?lattes_id={lattes_id}',
+                verify=False,
+                timeout=HTTP_TIMEOUT,
+            )
             response.raise_for_status()
             content = response.content
         else:
             content = client.service.getCurriculoCompactado(lattes_id)
+        print('Download concluído')
     except (
         httpx.RequestError,
         httpx.HTTPStatusError,
@@ -89,49 +116,58 @@ def download_xml(lattes_id, researcher_id):
         TransportError,
         Exception,
     ) as e:
-        print(f'Erro no download do curriculo [{lattes_id}]: {e}')
+        print(f'Erro no download: {e}')
         logger_researcher_routine(researcher_id, 'SOAP_LATTES', True, str(e))
         return
 
     try:
         zip_path = os.path.join(ZIP_XML_PATH, lattes_id + '.zip')
+        print(f'Salvando ZIP em {zip_path}')
         with open(zip_path, 'wb') as f:
             f.write(content)
 
+        print('Extraindo arquivos XML')
         with zipfile.ZipFile(zip_path, 'r') as z:
             z.extractall(XML_PATH)
             z.extractall(CURRENT_XML_PATH)
 
         os.remove(zip_path)
+        print('Processo finalizado com sucesso')
         logger_researcher_routine(researcher_id, 'SOAP_LATTES', False)
-        print('Download concluído')
-    except zipfile.BadZipFile as e:
-        print(f'Erro ao extrair zip [{lattes_id}]: {e}')
-        logger_researcher_routine(researcher_id, 'SOAP_LATTES', True, str(e))
     except Exception as e:
-        print(f'Erro ao salvar curriculo [{lattes_id}]: {e}')
+        print(f'Erro ao processar ZIP/XML: {e}')
         logger_researcher_routine(researcher_id, 'SOAP_LATTES', True, str(e))
 
 
 if __name__ == '__main__':
+    print('Iniciando rotina SOAP_LATTES')
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--limit', type=int, default=100)
+    parser.add_argument('--offset', type=int, default=0)
+    parser.add_argument('--clean-xml', action='store_true')
+    args = parser.parse_args()
+
     for directory in [LOG_PATH, CURRENT_XML_PATH, ZIP_XML_PATH]:
-        if not os.path.exists(directory):
-            os.makedirs(directory)
+        os.makedirs(directory, exist_ok=True)
+        print(f'Diretório garantido: {directory}')
 
-    for file in os.listdir(XML_PATH):
-        file_path = os.path.join(XML_PATH, file)
-        if os.path.isfile(file_path) and file_path.endswith('.xml'):
-            os.remove(file_path)
+    if args.clean_xml:
+        print('Limpando XMLs antigos')
+        for file in os.listdir(XML_PATH):
+            path = os.path.join(XML_PATH, file)
+            if os.path.isfile(path) and file.endswith('.xml'):
+                os.remove(path)
 
-    researchers = list_admin_researchers()
-    for i, researcher in enumerate(researchers):
-        print(f'Curriculo número: [{i}]')
-        print(f'Pesquisador: [{researcher.get("name")}]')
-        print(f'Lattes: [{researcher.get("lattes_id")}]')
+    researchers = list_admin_researchers(args.limit, args.offset)
 
-        lattes_id = researcher.get('lattes_id').zfill(16)
-        researcher_id = researcher['researcher_id']
-        download_xml(lattes_id, researcher_id)
+    if not researchers:
+        print('Nenhum registro retornado')
+        sys.exit(0)
 
+    for i, researcher in enumerate(researchers, start=args.offset):
+        print(f'Processando índice {i}')
+        lattes_id = researcher['lattes_id'].zfill(16)
+        download_xml(lattes_id, researcher['researcher_id'])
+
+    print('Finalizando rotina SOAP_LATTES')
     logger_routine('SOAP_LATTES', False)
-    print('FIM!')
