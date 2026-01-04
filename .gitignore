@@ -1,6 +1,6 @@
 .env.container
 .tool-versions
-
+*.zip
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
