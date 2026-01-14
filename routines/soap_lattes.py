@@ -1,4 +1,3 @@
-import argparse
 import csv
 import os
 import sys
@@ -39,17 +38,14 @@ else:
     print('Usando proxy alternativo')
 
 
-def list_admin_researchers(limit, offset):
-    result = conn_admin.select(
+def list_admin_researchers():
+    return conn_admin.select(
         """
         SELECT researcher_id, name, lattes_id
         FROM public.researcher
-        ORDER BY researcher_id
-        LIMIT %(limit)s OFFSET %(offset)s;
-        """,
-        {'limit': limit, 'offset': offset},
+        ORDER BY researcher_id;
+        """
     )
-    return result
 
 
 def cnpq_att_call(lattes_id):
@@ -138,29 +134,22 @@ def download_xml(lattes_id, researcher_id, index):
 if __name__ == '__main__':
     print('==== INÍCIO ROTINA ====')
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--limit', type=int, default=500)
-    parser.add_argument('--offset', type=int, default=0)
-    parser.add_argument('--clean-xml', action='store_true')
-    args = parser.parse_args()
-
     for directory in [LOG_PATH, CURRENT_XML_PATH, ZIP_XML_PATH]:
         os.makedirs(directory, exist_ok=True)
 
-    if args.clean_xml:
-        for file in os.listdir(XML_PATH):
-            path = os.path.join(XML_PATH, file)
-            if os.path.isfile(path) and file.endswith('.xml'):
-                os.remove(path)
+    for file in os.listdir(XML_PATH):
+        path = os.path.join(XML_PATH, file)
+        if os.path.isfile(path) and file.endswith('.xml'):
+            os.remove(path)
 
-    researchers = list_admin_researchers(args.limit, args.offset)
+    researchers = list_admin_researchers()
 
     if not researchers:
         sys.exit(0)
 
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         futures = []
-        for idx, researcher in enumerate(researchers, start=args.offset + 1):
+        for idx, researcher in enumerate(researchers, start=1):
             lattes_id = researcher['lattes_id'].zfill(16)
             futures.append(
                 executor.submit(
