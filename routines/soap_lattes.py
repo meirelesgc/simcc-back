@@ -6,7 +6,7 @@ import zipfile
 from datetime import datetime
 
 import httpx
-from requests import Session
+from lxml import etree
 from zeep import Client
 from zeep.transports import Transport
 
@@ -14,17 +14,12 @@ from routines.logger import logger_researcher_routine, logger_routine
 from simcc.config import Settings
 from simcc.repositories import conn, conn_admin
 
-session = Session()
-session.timeout = 30
-
-transport = Transport(session=session)
-
 LOG_PATH = 'logs'
 XML_PATH = Settings().XML_PATH
 CURRENT_XML_PATH = Settings().CURRENT_XML_PATH
 ZIP_XML_PATH = Settings().ZIP_XML_PATH
 PROXY = Settings().ALTERNATIVE_CNPQ_SERVICE
-
+transport = Transport(timeout=10)
 HTTP_TIMEOUT = httpx.Timeout(connect=10.0, read=60.0, write=10.0, pool=10.0)
 
 MAX_RETRIES = 3
@@ -34,11 +29,32 @@ errors = []
 print('==== INICIALIZAÇÃO ====')
 print(f'Proxy habilitado: {bool(PROXY)}')
 
+
+class DebugTransport(Transport):
+    def post_xml(self, address, envelope, headers):
+        print('\n DEBUG TRANSPORT: Iniciando POST XML ')
+        print(f' Destino: {address} ')
+
+        message = etree.tostring(envelope, pretty_print=True).decode()
+        print(f' Payload (Início): {message[:200]}...')
+
+        try:
+            msg = 'DEBUG TRANSPORT: Enviando requisição HTTP...'
+            print(msg)
+            response = super().post_xml(address, envelope, headers)
+            msg = f'DEBUG TRANSPORT: Resposta recebida! Status: {response.status_code}'
+            print(msg)
+            return response
+        except Exception as e:
+            print(f'DEBUG TRANSPORT: ERRO NA CONEXÃO: {e}')
+            raise e
+
+
 client = None
 if not PROXY:
     client = Client(
         'http://servicosweb.cnpq.br/srvcurriculo/WSCurriculo?wsdl',
-        transport=transport,
+        transport=DebugTransport(timeout=30, operation_timeout=30),
     )
     print('Cliente SOAP criado')
 else:
