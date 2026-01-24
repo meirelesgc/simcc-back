@@ -85,13 +85,21 @@ class ProductiveSpider(scrapy.Spider):
 
             id_lattes = get_query_param(email_url, 'nroIdCNPq')
 
-            modalidade_txt = researcher.xpath(
+            modalidade_txt: str = researcher.xpath(
                 './/div[contains(@class,"info-perfil")]//li[label[contains(normalize-space(.),"Modalidade")]]/text()[normalize-space()]'
             ).get()
 
             instituicao = researcher.xpath(
                 './/div[contains(@class,"info-perfil")]//li[label[contains(normalize-space(.),"Instituição")]]/text()[normalize-space()]'
             ).get()
+
+            nivel = None
+            if modalidade_txt:
+                partes = [
+                    p.strip() for p in modalidade_txt.split('-') if p.strip()
+                ]
+                if partes:
+                    nivel = partes[-1]
 
             yield {
                 '#': str(self.row_n),
@@ -112,7 +120,7 @@ class ProductiveSpider(scrapy.Spider):
                 else None,
                 '# Nome Modalidade': norm(sigla) if sigla else None,
                 '# Título Chamada': None,
-                '# Cod Categoria Nível': None,
+                '# Cod Categoria Nível': nivel,
                 '# Nome Programa Fomento': None,
                 '# Nome Instituto': norm(instituicao),
                 'QUANTAUXILIO': '0,00',

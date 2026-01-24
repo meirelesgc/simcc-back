@@ -1467,7 +1467,11 @@ def guidance():
         ),
         axis=1,
     )
-    csv['days_offset'] = csv['days_offset'].dt.days
+    csv['days_offset'] = (
+        csv['days_offset']
+        .apply(lambda x: x.days if x is not None else None)
+        .astype('Int64')
+    )
     csv_path = os.path.join(PATH, 'guidance.csv')
     csv.to_csv(csv_path, index=True, quoting=QUOTE_ALL, encoding='utf-8-sig')
 
