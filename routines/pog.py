@@ -78,15 +78,6 @@ if __name__ == '__main__':
     logger.info('Year updated for publications')
 
     SCRIPT_SQL = """
-        UPDATE bibliographic_production_article
-        SET qualis='B2'
-        WHERE issn='26748568' OR issn='2764622'
-        """
-
-    conn.exec(SCRIPT_SQL)
-    logger.info('Qualis updated for articles')
-
-    SCRIPT_SQL = """
         UPDATE bibliographic_production
         SET title = translate(title, '''', ' ')
         """

@@ -19,7 +19,6 @@ def norm(value):
 class ProductiveSpider(scrapy.Spider):
     name = 'researchers'
     start_urls = ['http://memoria2.cnpq.br/web/guest/bolsistas-vigentes']
-    allowed_modalities = {'PQ', 'DT'}
 
     custom_settings = {
         'RETRY_TIMES': 10,
@@ -41,34 +40,23 @@ class ProductiveSpider(scrapy.Spider):
 
     def start_requests(self):
         yield scrapy.Request(
-            self.start_urls[0], callback=self.parse_modalities, dont_filter=True
+            self.start_urls[0], callback=self.parse_all, dont_filter=True
         )
 
-    def parse_modalities(self, response):
+    def parse_all(self, response):
         form = response.css('form#formBolsistas, form[name="formBolsistas"]')
-        if not form:
-            for sigla in sorted(self.allowed_modalities):
-                yield scrapy.Request(
-                    response.url,
-                    callback=self.parse,
-                    meta={'sigla_modalidade': sigla},
-                    dont_filter=True,
-                )
-            return
-
-        for sigla in sorted(self.allowed_modalities):
+        if form:
             yield scrapy.FormRequest.from_response(
                 response,
                 formid='formBolsistas',
-                formdata={'codigoModalidade': sigla},
+                formdata={'codigoModalidade': '-'},
                 callback=self.parse,
-                meta={'sigla_modalidade': sigla},
                 dont_filter=True,
             )
+        else:
+            yield from self.parse(response)
 
     def parse(self, response):
-        sigla = response.meta.get('sigla_modalidade')
-
         for researcher in response.css('div.dados-perfil'):
             self.row_n += 1
 
@@ -85,7 +73,7 @@ class ProductiveSpider(scrapy.Spider):
 
             id_lattes = get_query_param(email_url, 'nroIdCNPq')
 
-            modalidade_txt: str = researcher.xpath(
+            modalidade_txt = researcher.xpath(
                 './/div[contains(@class,"info-perfil")]//li[label[contains(normalize-space(.),"Modalidade")]]/text()[normalize-space()]'
             ).get()
 
@@ -94,12 +82,21 @@ class ProductiveSpider(scrapy.Spider):
             ).get()
 
             nivel = None
+            cod_modalidade = None
+            nome_modalidade = None
+
             if modalidade_txt:
                 partes = [
                     p.strip() for p in modalidade_txt.split('-') if p.strip()
                 ]
                 if partes:
                     nivel = partes[-1]
+                cod_modalidade = (
+                    modalidade_txt.strip().split()[0]
+                    if modalidade_txt.strip()
+                    else None
+                )
+                nome_modalidade = modalidade_txt.strip()
 
             yield {
                 '#': str(self.row_n),
@@ -113,14 +110,10 @@ class ProductiveSpider(scrapy.Spider):
                 '# Nome Grande Área': norm(area),
                 '# Nome Área': norm(subarea),
                 '# Nome Sub-Área': None,
-                '# Cod Modalidade': norm(sigla)
-                if sigla
-                else norm(modalidade_txt.strip().split()[0])
-                if modalidade_txt
-                else None,
-                '# Nome Modalidade': norm(sigla) if sigla else None,
+                '# Cod Modalidade': norm(cod_modalidade),
+                '# Nome Modalidade': norm(nome_modalidade),
                 '# Título Chamada': None,
-                '# Cod Categoria Nível': nivel,
+                '# Cod Categoria Nível': norm(nivel),
                 '# Nome Programa Fomento': None,
                 '# Nome Instituto': norm(instituicao),
                 'QUANTAUXILIO': '0,00',
@@ -133,10 +126,8 @@ class ProductiveSpider(scrapy.Spider):
             'ul.pager li a:contains("Próximo")::attr(href)'
         ).get()
         if next_page and not next_page.startswith('javascript'):
-            yield response.follow(
-                next_page, self.parse, meta={'sigla_modalidade': sigla}
-            )
+            yield response.follow(next_page, self.parse)
 
 
 # Comando de execução
-# scrapy runspider scripts/scrap_productive_researchers.py -o tmp.csv -s FEED_EXPORT_DELIMITER=';' -s FEED_EXPORT_ENCODING='utf-8-sig'
+# # scrapy runspider scripts/scrap_productive_researchers.py -o tmp.csv -s FEED_EXPORT_DELIMITER=';' -s FEED_EXPORT_ENCODING='utf-8-sig'
