@@ -436,6 +436,7 @@ def dim_researcher(origin: str):
             '{origin}ResearcherData/Image?researcher_id=' || r.id AS image,
             r.orcid
         FROM researcher r
+        WHERE r.status = True
         """
     result = conn.select(SCRIPT_SQL)
     csv = pd.DataFrame(result)
