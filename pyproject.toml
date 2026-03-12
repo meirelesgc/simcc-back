@@ -28,6 +28,7 @@ spacy = "^3.8.7"
 langchain-openai = "^0.3.21"
 langchain-postgres = "^0.0.15"
 scrapy = "^2.14.1"
+tqdm = "^4.67.3"
 
 
 [tool.poetry.group.dev.dependencies]

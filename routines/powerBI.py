@@ -659,22 +659,60 @@ def production_year():
 def production_coauthors_csv_db():
     SCRIPT_SQL = """
         WITH gp_cte AS (
-            SELECT researcher_id, graduate_program_id, MAX(year) AS year
+            SELECT
+                researcher_id,
+                graduate_program_id,
+                MAX(year) AS year
             FROM graduate_program_researcher
-            GROUP BY researcher_id, graduate_program_id
-        )
-        SELECT COUNT(*) + 1 AS qtd, a.doi, a.title, ba.qualis, a.year,
-            gp.graduate_program_id, gp.year AS year_pos, a.type
-        FROM bibliographic_production a
+            GROUP BY
+                researcher_id,
+                graduate_program_id
+        ),
+
+        base AS (
+            SELECT
+                a.id,
+                a.researcher_id,
+                a.doi,
+                a.title,
+                a.year,
+                a.type,
+                ba.qualis
+            FROM bibliographic_production a
             LEFT JOIN bibliographic_production_article ba
-                ON a.id = ba.bibliographic_production_id,
-            bibliographic_production b, gp_cte gp
-        WHERE 1 = 1
-            AND (a.doi = b.doi OR a.title = b.title)
-            AND a.researcher_id = gp.researcher_id
-            AND b.researcher_id = gp.researcher_id
-        GROUP BY a.doi, a.title, ba.qualis, a.year, gp.graduate_program_id,
-            gp.year,a."type"
+                ON ba.bibliographic_production_id = a.id
+        )
+
+        SELECT
+            COUNT(*) + 1 AS qtd,
+            base.doi,
+            base.title,
+            base.qualis,
+            base.year,
+            gp.graduate_program_id,
+            gp.year AS year_pos,
+            base.type
+        FROM base
+        JOIN gp_cte gp
+            ON gp.researcher_id = base.researcher_id
+        WHERE EXISTS (
+            SELECT 1
+            FROM base b
+            WHERE b.researcher_id = base.researcher_id
+            AND (
+                    (b.doi IS NOT NULL AND b.doi = base.doi)
+                OR (b.title = base.title)
+            )
+            AND b.id <> base.id
+        )
+        GROUP BY
+            base.doi,
+            base.title,
+            base.qualis,
+            base.year,
+            gp.graduate_program_id,
+            gp.year,
+            base.type
         HAVING COUNT(*) > 1
         """
     result = conn.select(SCRIPT_SQL)
