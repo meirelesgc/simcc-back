@@ -43,12 +43,17 @@ services:
 
   hop:
     image: gleidsoncosta/simcc-extrator:${SIMCC_EXTRATOR_TAG:-latest}
-    profiles: ["extração"]
-    environment:
-      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@simcc-db:5432/postgres}
-      ADMIN_DATABASE_URL: ${ADMIN_DATABASE_URL:-postgresql://postgres:postgres@simcc-admin-db:5432/postgres}
+    profiles: [ "extração" ]
     volumes:
-      - ./storage/xml:/opt/hop/projects/jade-extrator/metadata/dataset/xml
+      - ./storage/xml:/files/jade-extrator/datasets/lattes_xml
+    environment:
+      - HOP_LOG_LEVEL=Basic
+      - HOP_PROJECT_NAME=Jade-Extrator
+      - HOP_PROJECT_FOLDER=/files/jade-extrator
+      - HOP_RUN_CONFIG=local
+      - HOP_FILE_PATH=$${PROJECT_HOME}/workflows/Index.hwf
+      - HOP_RUN_PARAMETERS=DATABASE_URL=jdbc:postgresql://simcc-db:5432/postgres?user=postgres&password=postgres
+
     depends_on:
       simcc-db:
         condition: service_healthy
