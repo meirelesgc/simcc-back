@@ -130,4 +130,17 @@ if __name__ == '__main__':
         """
     conn.exec(SCRIPT_SQL)
 
+    SCRIPT_SQL = """
+        UPDATE research_group rg
+        SET second_leader_id = r.id
+        FROM researcher r
+        WHERE rg.second_leader = r.name;
+
+        UPDATE research_group rg
+        SET first_leader = r.id
+        FROM researcher r
+        WHERE rg.first_leader = r.name;
+        """
+    conn.exec(SCRIPT_SQL)
+
     logger_routine('POG', False)
