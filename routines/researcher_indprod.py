@@ -2,9 +2,10 @@ from datetime import datetime
 from uuid import uuid4
 
 import pandas as pd
+from tqdm import tqdm
 from unidecode import unidecode
 
-from routines.logger import logger_researcher_routine, logger_routine
+from routines.logger import logger_routine
 from simcc.repositories import conn
 
 barema = {
@@ -201,7 +202,6 @@ def main():
 
     researchers = list_researchers()
     if not researchers:
-        print('No researchers found')
         raise ValueError('No researchers found')
     researchers = pd.DataFrame(researchers)
 
@@ -209,64 +209,77 @@ def main():
 
     on = ['researcher_id', 'year']
 
-    articles = article_indprod()
-    columns = ['researcher_id', 'year', 'article_prod']
-    articles = pd.DataFrame(articles, columns=columns)
+    articles = pd.DataFrame(
+        article_indprod(), columns=['researcher_id', 'year', 'article_prod']
+    )
     researchers = researchers.merge(articles, on=on, how='left')
 
-    books = book_indprod()
-    columns = ['researcher_id', 'year', 'book_prod']
-    books = pd.DataFrame(books, columns=columns)
+    books = pd.DataFrame(
+        book_indprod(), columns=['researcher_id', 'year', 'book_prod']
+    )
     researchers = researchers.merge(books, on=on, how='left')
 
-    book_chapter = book_chapter_indprod()
-    columns = ['researcher_id', 'year', 'book_chapter_prod']
-    book_chapter = pd.DataFrame(book_chapter, columns=columns)
+    book_chapter = pd.DataFrame(
+        book_chapter_indprod(),
+        columns=['researcher_id', 'year', 'book_chapter_prod'],
+    )
     researchers = researchers.merge(book_chapter, on=on, how='left')
 
-    software = software_indprod()
-    columns = ['researcher_id', 'year', 'software_prod']
-    software = pd.DataFrame(software, columns=columns)
+    software = pd.DataFrame(
+        software_indprod(), columns=['researcher_id', 'year', 'software_prod']
+    )
     researchers = researchers.merge(software, on=on, how='left')
 
-    patent = patent_indprod()
-    columns = ['researcher_id', 'year', 'patent_prod']
-    patent = pd.DataFrame(patent, columns=columns)
+    patent = pd.DataFrame(
+        patent_indprod(), columns=['researcher_id', 'year', 'patent_prod']
+    )
     researchers = researchers.merge(patent, on=on, how='left')
 
-    report = report_indprod()
-    columns = ['researcher_id', 'year', 'report_prod']
-    report = pd.DataFrame(report, columns=columns)
+    report = pd.DataFrame(
+        report_indprod(), columns=['researcher_id', 'year', 'report_prod']
+    )
     researchers = researchers.merge(report, on=on, how='left')
 
-    guidance = guidance_indprod()
-    columns = ['researcher_id', 'year', 'guidance_prod']
-    guidance = pd.DataFrame(guidance)
+    guidance = pd.DataFrame(guidance_indprod())
     researchers = researchers.merge(guidance, on=on, how='left')
 
-    SCRIPT_SQL = """
-        DELETE FROM researcher_ind_prod;
-        """
-    conn.exec(SCRIPT_SQL)
-    for _, researcher in researchers.iterrows():
-        params = researcher.fillna(0).to_dict()
-        SCRIPT_SQL = """
-            INSERT INTO researcher_ind_prod (researcher_id, year,
-                ind_prod_article, ind_prod_book, ind_prod_book_chapter,
-                ind_prod_software, ind_prod_granted_patent,
-                ind_prod_not_granted_patent, ind_prod_report, ind_prod_guidance)
-            VALUES (%(researcher_id)s, %(year)s, %(article_prod)s,
-                %(book_prod)s, %(book_chapter_prod)s, %(software_prod)s,
-                %(patent_prod)s, %(patent_prod)s,
-                %(report_prod)s, %(guidance_prod)s);
-            """
-        print(f'Inserting row for researcher: {_}')
-        conn.exec(SCRIPT_SQL, params)
-        logger_researcher_routine(
-            researcher.researcher_id,
-            'IND_PROD',
-            False,
+    researchers = researchers.fillna(0)
+
+    conn.exec('DELETE FROM researcher_ind_prod;')
+
+    def esc(v):
+        return str(v).replace("'", "''")
+
+    values = []
+    for _, row in researchers.iterrows():
+        values.append(
+            f"('{esc(row['researcher_id'])}', {int(row['year'])}, "
+            f'{float(row["article_prod"])}, {float(row["book_prod"])}, '
+            f'{float(row["book_chapter_prod"])}, {float(row["software_prod"])}, '
+            f'{float(row["patent_prod"])}, {float(row["patent_prod"])}, '
+            f'{float(row["report_prod"])}, {float(row["guidance_prod"])})'
         )
+
+    BATCH_SIZE = 5000
+    total_batches = (len(values) + BATCH_SIZE - 1) // BATCH_SIZE
+
+    for i in tqdm(
+        range(0, len(values), BATCH_SIZE),
+        total=total_batches,
+        desc='Inserindo batches',
+    ):
+        batch = values[i : i + BATCH_SIZE]
+
+        sql = f"""
+        INSERT INTO researcher_ind_prod (
+            researcher_id, year,
+            ind_prod_article, ind_prod_book, ind_prod_book_chapter,
+            ind_prod_software, ind_prod_granted_patent,
+            ind_prod_not_granted_patent, ind_prod_report, ind_prod_guidance
+        ) VALUES {','.join(batch)};
+        """
+
+        conn.exec(sql)
 
 
 if __name__ == '__main__':

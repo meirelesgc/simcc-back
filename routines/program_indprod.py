@@ -206,11 +206,11 @@ def list_programs():
 
 def main():
     YEAR = range(2008, datetime.now().year + 1)
+
     history = pd.DataFrame(YEAR, columns=['year'])
 
     researchers = list_researchers()
     if not researchers:
-        print('No researchers found')
         raise ValueError('No researchers found')
     researchers = pd.DataFrame(researchers)
 
@@ -218,39 +218,38 @@ def main():
 
     on = ['researcher_id', 'year']
 
-    articles = article_indprod()
-    columns = ['researcher_id', 'year', 'article_prod']
-    articles = pd.DataFrame(articles, columns=columns)
+    articles = pd.DataFrame(
+        article_indprod(), columns=['researcher_id', 'year', 'article_prod']
+    )
     researchers = researchers.merge(articles, on=on, how='left')
 
-    books = book_indprod()
-    columns = ['researcher_id', 'year', 'book_prod']
-    books = pd.DataFrame(books, columns=columns)
+    books = pd.DataFrame(
+        book_indprod(), columns=['researcher_id', 'year', 'book_prod']
+    )
     researchers = researchers.merge(books, on=on, how='left')
 
-    book_chapter = book_chapter_indprod()
-    columns = ['researcher_id', 'year', 'book_chapter_prod']
-    book_chapter = pd.DataFrame(book_chapter, columns=columns)
+    book_chapter = pd.DataFrame(
+        book_chapter_indprod(),
+        columns=['researcher_id', 'year', 'book_chapter_prod'],
+    )
     researchers = researchers.merge(book_chapter, on=on, how='left')
 
-    software = software_indprod()
-    columns = ['researcher_id', 'year', 'software_prod']
-    software = pd.DataFrame(software, columns=columns)
+    software = pd.DataFrame(
+        software_indprod(), columns=['researcher_id', 'year', 'software_prod']
+    )
     researchers = researchers.merge(software, on=on, how='left')
 
-    patent = patent_indprod()
-    columns = ['researcher_id', 'year', 'patent_prod']
-    patent = pd.DataFrame(patent, columns=columns)
+    patent = pd.DataFrame(
+        patent_indprod(), columns=['researcher_id', 'year', 'patent_prod']
+    )
     researchers = researchers.merge(patent, on=on, how='left')
 
-    report = report_indprod()
-    columns = ['researcher_id', 'year', 'report_prod']
-    report = pd.DataFrame(report, columns=columns)
+    report = pd.DataFrame(
+        report_indprod(), columns=['researcher_id', 'year', 'report_prod']
+    )
     researchers = researchers.merge(report, on=on, how='left')
 
-    guidance = guidance_indprod()
-    columns = ['researcher_id', 'year', 'guidance_prod']
-    guidance = pd.DataFrame(guidance)
+    guidance = pd.DataFrame(guidance_indprod())
     researchers = researchers.merge(guidance, on=on, how='left')
 
     programs = list_programs()
@@ -281,25 +280,38 @@ def main():
         .sort_values(by=['graduate_program_id', 'year'])
     )
 
-    SCRIPT_SQL = """
-        DELETE FROM graduate_program_ind_prod;
-        """
-    conn.exec(SCRIPT_SQL)
+    programs = programs.fillna(0)
 
-    SCRIPT_SQL = """
-        INSERT INTO graduate_program_ind_prod (graduate_program_id, year,
+    conn.exec('DELETE FROM graduate_program_ind_prod;')
+
+    def esc(v):
+        return str(v).replace("'", "''")
+
+    values = []
+    for _, row in programs.iterrows():
+        values.append(
+            f"('{esc(row['graduate_program_id'])}', {int(row['year'])}, "
+            f'{float(row["article_prod"])}, {float(row["book_prod"])}, '
+            f'{float(row["book_chapter_prod"])}, {float(row["software_prod"])}, '
+            f'{float(row["patent_prod"])}, {float(row["patent_prod"])}, '
+            f'{float(row["report_prod"])}, {float(row["guidance_prod"])})'
+        )
+
+    BATCH_SIZE = 5000
+
+    for i in range(0, len(values), BATCH_SIZE):
+        batch = values[i : i + BATCH_SIZE]
+
+        sql = f"""
+        INSERT INTO graduate_program_ind_prod (
+            graduate_program_id, year,
             ind_prod_article, ind_prod_book, ind_prod_book_chapter,
             ind_prod_software, ind_prod_granted_patent,
-            ind_prod_not_granted_patent, ind_prod_report, ind_prod_guidance)
-        VALUES (%(graduate_program_id)s, %(year)s, %(article_prod)s,
-            %(book_prod)s, %(book_chapter_prod)s, %(software_prod)s,
-            %(patent_prod)s, %(patent_prod)s,
-            %(report_prod)s, %(guidance_prod)s);
+            ind_prod_not_granted_patent, ind_prod_report, ind_prod_guidance
+        ) VALUES {','.join(batch)};
         """
 
-    for _, program in programs.iterrows():
-        print(f'Inserting row for group: {_}')
-        conn.exec(SCRIPT_SQL, program.fillna(0).to_dict())
+        conn.exec(sql)
 
 
 if __name__ == '__main__':

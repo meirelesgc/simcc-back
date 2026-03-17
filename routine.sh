@@ -26,7 +26,6 @@ ROTINES=(
   program_indprod.py
   powerBI.py
   abstract_ai.py
-  embedding_database.py
   openAlex.py
   search_terms.py
 )
