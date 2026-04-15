@@ -554,3 +554,25 @@ def EtapaOrientacao():
     file_name = 'EtapaOrientacao.xlsx'
     file_path = os.path.join(STORAGE_PATH, file_name)
     return FileResponse(file_path, filename=file_name)
+
+@router.get('/ind_guidance_ori.csv')
+def ind_guidance_ori_csv():
+    powerBI.ind_guidance_ori()
+    file_name = 'ind_guidance_ori.csv'
+    file_path = os.path.join(STORAGE_PATH, file_name)
+    return FileResponse(file_path, filename=file_name)
+
+@router.get('/ind_guidance_distori.csv')
+def ind_guidance_distori_csv():
+    powerBI.ind_guidance_distori()
+    file_name = 'ind_guidance_distori.csv'
+    file_path = os.path.join(STORAGE_PATH, file_name)
+    return FileResponse(file_path, filename=file_name)
+
+
+@router.get('/ind_guidance_coaut.csv')
+def ind_guidance_coaut_csv():
+    powerBI.ind_guidance_coaut()
+    file_name = 'ind_guidance_coaut.csv'
+    file_path = os.path.join(STORAGE_PATH, file_name)
+    return FileResponse(file_path, filename=file_name)

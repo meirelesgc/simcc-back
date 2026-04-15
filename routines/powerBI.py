@@ -1275,6 +1275,18 @@ def fat_co_authorship():
     csv_path = os.path.join(PATH, 'fat_co_authorship.csv')
     csv.to_csv(csv_path)
 
+def _replace_lattes(df, lattes_col, output_col, researchers_df):
+    df = (
+        df.merge(
+            researchers_df,
+            left_on=lattes_col,
+            right_on='lattes_id',
+            how='left',
+        )
+        .rename(columns={'researcher_id': output_col})
+        .drop(columns=[lattes_col, 'lattes_id'])
+    )
+    return df
 
 def _guidance():
     SCRIPT_SQL = """
@@ -1338,57 +1350,20 @@ def _guidance():
         ],
     )
 
-    SCRIPT_SQL = """
+    SCRIPT_SQL_RESEARCHERS = """
         SELECT id AS researcher_id, lattes_id
         FROM researcher
     """
-    researchers = conn.select(SCRIPT_SQL)
+    researchers = conn.select(SCRIPT_SQL_RESEARCHERS)
     researchers = pd.DataFrame(
         researchers, columns=['researcher_id', 'lattes_id']
     )
 
-    guidance = (
-        guidance.merge(
-            researchers,
-            left_on='student_lattes_id',
-            right_on='lattes_id',
-            how='left',
-        )
-        .rename(columns={'researcher_id': 'student_researcher_id'})
-        .drop(columns=['lattes_id'])
-    )
+    guidance = _replace_lattes(guidance, 'student_lattes_id', 'student_researcher_id', researchers)
+    guidance = _replace_lattes(guidance, 'supervisor_lattes_id', 'supervisor_researcher_id', researchers)
+    guidance = _replace_lattes(guidance, 'co_supervisor_lattes_id', 'co_supervisor_researcher_id', researchers)
 
-    guidance = (
-        guidance.merge(
-            researchers,
-            left_on='supervisor_lattes_id',
-            right_on='lattes_id',
-            how='left',
-        )
-        .rename(columns={'researcher_id': 'supervisor_researcher_id'})
-        .drop(columns=['lattes_id'])
-    )
-
-    guidance = (
-        guidance.merge(
-            researchers,
-            left_on='co_supervisor_lattes_id',
-            right_on='lattes_id',
-            how='left',
-        )
-        .rename(columns={'researcher_id': 'co_supervisor_researcher_id'})
-        .drop(columns=['lattes_id'])
-    )
-
-    csv = guidance.drop(
-        columns=[
-            'student_lattes_id',
-            'supervisor_lattes_id',
-            'co_supervisor_lattes_id',
-        ]
-    )
-    return csv
-
+    return guidance
 
 def supervisor():
     df_original = _guidance()
@@ -1751,8 +1726,6 @@ def in_progress_per_year():
         'graduate_program_id',
         'in_progress',
     ])
-
-    print(result.head(20))
     csv_path = os.path.join(PATH, 'in_progress_per_year.csv')
     result.to_csv(csv_path, index=False, encoding='utf-8-sig')
 
@@ -1777,6 +1750,181 @@ def fat_tags_csv():
     csv_path = os.path.join(PATH, 'fat_tags.csv')
     csv.to_csv(csv_path, index=True, quoting=QUOTE_ALL, encoding='utf-8-sig')
 
+
+def ind_guidance_ori():
+    SCRIPT_SQL = """
+    WITH Masters AS (
+        SELECT 
+            gt.graduate_program_id,
+            EXTRACT(YEAR FROM gt.done_date_conclusion) AS year_val,
+            COUNT(*) AS qty
+        FROM guidance_tracking gt
+        JOIN graduate_program gp ON gt.graduate_program_id = gp.graduate_program_id
+        WHERE gp.type = 'MESTRADO' 
+        AND gt.done_date_conclusion IS NOT NULL
+        GROUP BY gt.graduate_program_id, EXTRACT(YEAR FROM gt.done_date_conclusion)
+    ),
+    Doctorate AS (
+        SELECT 
+            gt.graduate_program_id,
+            EXTRACT(YEAR FROM gt.done_date_conclusion) AS year_val,
+            COUNT(*) AS qty
+        FROM guidance_tracking gt
+        JOIN graduate_program gp ON gt.graduate_program_id = gp.graduate_program_id
+        WHERE gp.type = 'DOUTORADO' 
+        AND gt.done_date_conclusion IS NOT NULL
+        GROUP BY gt.graduate_program_id, EXTRACT(YEAR FROM gt.done_date_conclusion)
+    ),
+    Permanent AS (
+        SELECT 
+            graduate_program_id,
+            year AS year_val,
+            COUNT(*) AS qty
+        FROM graduate_program_researcher
+        WHERE type_ = 'PERMANENTE'
+        GROUP BY graduate_program_id, year
+    )
+    SELECT 
+        p.graduate_program_id,
+        p.year_val AS year,
+        COALESCE(m.qty, 0) AS masters_defenses,
+        COALESCE(d.qty, 0) AS doctorate_defenses,
+        p.qty AS permanent_researchers,
+        (COALESCE(m.qty, 0) + (2.0 * COALESCE(d.qty, 0))) / NULLIF(p.qty, 0) AS ind_ori
+    FROM Permanent p
+    LEFT JOIN Masters m ON p.graduate_program_id = m.graduate_program_id AND p.year_val = m.year_val
+    LEFT JOIN Doctorate d ON p.graduate_program_id = d.graduate_program_id AND p.year_val = d.year_val
+    ORDER BY p.graduate_program_id, p.year_val;
+    """
+    ind_guidance_ori_csv = conn_admin.select(SCRIPT_SQL)
+    csv = pd.DataFrame(ind_guidance_ori_csv, columns=['graduate_program_id', 'year', 'masters_defenses', 'doctorate_defenses', 'permanent_researchers', 'ind_ori'])
+
+    csv = csv.dropna(subset=['year'])
+    csv['year'] = csv['year'].astype(int)
+    csv_path = os.path.join(PATH, 'ind_guidance_ori.csv')
+
+    csv.to_csv(csv_path, index=True, quoting=QUOTE_ALL, encoding='utf-8-sig')
+
+def ind_guidance_coaut():
+    SCRIPT_SQL = """
+    SELECT 
+        gpr.graduate_program_id,
+        r.researcher_id
+    FROM researcher r
+    INNER JOIN graduate_program_researcher gpr
+        ON gpr.researcher_id = r.researcher_id
+    """
+
+    df_prog = pd.DataFrame(conn_admin.select(SCRIPT_SQL))
+
+    SCRIPT_SQL_PROD = """
+    SELECT researcher_id, doi AS identifier, year, 'ARTICLE' AS type
+    FROM bibliographic_production
+    WHERE type = 'ARTICLE'
+
+    UNION ALL
+
+    SELECT bp.researcher_id, bpb.isbn AS identifier, bp.year, 'BOOK' AS type
+    FROM bibliographic_production bp
+    LEFT JOIN bibliographic_production_book bpb
+        ON bpb.bibliographic_production_id = bp.id
+    WHERE bp.type = 'BOOK'
+
+    UNION ALL
+
+    SELECT bp.researcher_id, bpc.isbn AS identifier, bp.year, 'BOOK_CHAPTER' AS type
+    FROM bibliographic_production bp
+    LEFT JOIN bibliographic_production_book_chapter bpc
+        ON bpc.bibliographic_production_id = bp.id
+    WHERE bp.type = 'BOOK_CHAPTER'
+    """
+
+    df = pd.DataFrame(conn.select(SCRIPT_SQL_PROD))
+
+    df = df.dropna(subset=['identifier', 'year'])
+    df['year'] = df['year'].astype(int)
+
+    df = df.merge(df_prog, on='researcher_id')
+
+    coaut = (
+        df.groupby(['identifier', 'type'])
+        .agg(qtd_autores=('researcher_id', 'nunique'))
+        .reset_index()
+    )
+
+    coaut = coaut[coaut['qtd_autores'] > 1]
+
+    df = df.merge(coaut[['identifier', 'type']], on=['identifier', 'type'])
+
+    df_unique = df.drop_duplicates(subset=['graduate_program_id', 'identifier', 'type'])
+
+    result = (
+        df_unique.groupby(['graduate_program_id', 'type', 'year'])
+        .size()
+        .reset_index(name='qtd')
+    )
+
+    pivot = result.pivot_table(
+        index=['graduate_program_id', 'year'],
+        columns='type',
+        values='qtd',
+        fill_value=0
+    ).reset_index()
+
+    pivot.columns.name = None
+
+    pivot = pivot.rename(columns={
+        'ARTICLE': 'IndProdArtCoAut',
+        'BOOK': 'IndProdLivCoAut',
+        'BOOK_CHAPTER': 'IndProdCapCoAut'
+    })
+
+    csv_path = os.path.join(PATH, 'ind_guidance_coaut.csv')
+    pivot.to_csv(csv_path, index=False, quoting=QUOTE_ALL, encoding='utf-8-sig')
+
+def ind_guidance_distori():
+    SCRIPT_SQL = """
+        WITH ConcludingResearchers AS (
+            SELECT 
+                gt.graduate_program_id,
+                EXTRACT(YEAR FROM gt.done_date_conclusion) AS year_val,
+                COUNT(DISTINCT gt.supervisor_researcher_id) AS concluding_qty
+            FROM guidance_tracking gt
+            JOIN graduate_program_researcher gpr 
+                ON gt.supervisor_researcher_id = gpr.researcher_id
+                AND gt.graduate_program_id = gpr.graduate_program_id
+                AND EXTRACT(YEAR FROM gt.done_date_conclusion) = gpr.year
+            WHERE gt.done_date_conclusion IS NOT NULL
+            AND gpr.type_ = 'PERMANENTE'
+            GROUP BY gt.graduate_program_id, EXTRACT(YEAR FROM gt.done_date_conclusion)
+        ),
+        Permanent AS (
+            SELECT 
+                graduate_program_id,
+                year AS year_val,
+                COUNT(DISTINCT researcher_id) AS total_qty
+            FROM graduate_program_researcher
+            WHERE type_ = 'PERMANENTE'
+            GROUP BY graduate_program_id, year
+        )
+        SELECT 
+            p.graduate_program_id,
+            p.year_val AS year,
+            COALESCE(c.concluding_qty, 0) AS concluding_researchers,
+            p.total_qty AS permanent_researchers,
+            (COALESCE(c.concluding_qty, 0) * 1.0) / NULLIF(p.total_qty, 0) AS ind_dist_ori
+        FROM Permanent p
+        LEFT JOIN ConcludingResearchers c ON p.graduate_program_id = c.graduate_program_id AND p.year_val = c.year_val
+        ORDER BY p.graduate_program_id, p.year_val;
+    """
+    ind_guidance_distori_csv = conn_admin.select(SCRIPT_SQL)
+    csv = pd.DataFrame(ind_guidance_distori_csv, columns=['graduate_program_id', 'year', 'concluding_researchers', 'permanent_researchers', 'ind_dist_ori'])
+
+    csv = csv.dropna(subset=['year'])
+    csv['year'] = csv['year'].astype(int)
+
+    csv_path = os.path.join(PATH, 'ind_guidance_distori.csv')
+    csv.to_csv(csv_path, index=True, quoting=QUOTE_ALL, encoding='utf-8-sig')
 
 if __name__ == '__main__':
     dim_titulacao()
@@ -1912,3 +2060,5 @@ if __name__ == '__main__':
     # guidance()
     # guidance_per_year()
     # in_progress_per_year()
+
+
