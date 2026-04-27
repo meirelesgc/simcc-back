@@ -1275,6 +1275,7 @@ def fat_co_authorship():
     csv_path = os.path.join(PATH, 'fat_co_authorship.csv')
     csv.to_csv(csv_path)
 
+
 def _replace_lattes(df, lattes_col, output_col, researchers_df):
     df = (
         df.merge(
@@ -1287,6 +1288,7 @@ def _replace_lattes(df, lattes_col, output_col, researchers_df):
         .drop(columns=[lattes_col, 'lattes_id'])
     )
     return df
+
 
 def _guidance():
     SCRIPT_SQL = """
@@ -1359,11 +1361,21 @@ def _guidance():
         researchers, columns=['researcher_id', 'lattes_id']
     )
 
-    guidance = _replace_lattes(guidance, 'student_lattes_id', 'student_researcher_id', researchers)
-    guidance = _replace_lattes(guidance, 'supervisor_lattes_id', 'supervisor_researcher_id', researchers)
-    guidance = _replace_lattes(guidance, 'co_supervisor_lattes_id', 'co_supervisor_researcher_id', researchers)
+    guidance = _replace_lattes(
+        guidance, 'student_lattes_id', 'student_researcher_id', researchers
+    )
+    guidance = _replace_lattes(
+        guidance, 'supervisor_lattes_id', 'supervisor_researcher_id', researchers
+    )
+    guidance = _replace_lattes(
+        guidance,
+        'co_supervisor_lattes_id',
+        'co_supervisor_researcher_id',
+        researchers,
+    )
 
     return guidance
+
 
 def supervisor():
     df_original = _guidance()
@@ -1751,6 +1763,51 @@ def fat_tags_csv():
     csv.to_csv(csv_path, index=True, quoting=QUOTE_ALL, encoding='utf-8-sig')
 
 
+def fat_sdg_alignment():
+    SCRIPT_SQL = """
+        WITH sdg_counts AS (
+            SELECT 
+                bp.researcher_id, 
+                sa.sdg, 
+                COUNT(*) AS total_articles
+            FROM bibliographic_production bp
+            JOIN sdg_alignment sa ON bp.id = sa.reference_id
+            GROUP BY bp.researcher_id, sa.sdg
+        ),
+        ranking AS (
+            SELECT 
+                researcher_id, 
+                sdg, 
+                total_articles,
+                SUM(total_articles) OVER(PARTITION BY researcher_id) AS researcher_total,
+                RANK() OVER(PARTITION BY researcher_id ORDER BY total_articles DESC) as rank
+            FROM sdg_counts
+        )
+        SELECT 
+            researcher_id, 
+            sdg AS primary_sdg, 
+            total_articles,
+            ROUND((total_articles * 100.0) / researcher_total, 2) AS percentage
+        FROM ranking
+        WHERE rank = 1;
+        """
+    fat_sdg_alignment = conn.select(SCRIPT_SQL)
+    csv = pd.DataFrame(
+        fat_sdg_alignment,
+        columns=['researcher_id', 'primary_sdg', 'total_articles', 'percentage'],
+    )
+    csv['percentage'] = pd.to_numeric(csv['percentage'], errors='coerce')
+    csv_path = os.path.join(PATH, 'fat_sdg_alignment.csv')
+    csv.to_csv(
+        csv_path,
+        index=True,
+        quoting=QUOTE_ALL,
+        encoding='utf-8-sig',
+        decimal=',',
+        sep=';',
+    )
+
+
 def ind_guidance_ori():
     SCRIPT_SQL = """
     WITH Masters AS (
@@ -1797,13 +1854,24 @@ def ind_guidance_ori():
     ORDER BY p.graduate_program_id, p.year_val;
     """
     ind_guidance_ori_csv = conn_admin.select(SCRIPT_SQL)
-    csv = pd.DataFrame(ind_guidance_ori_csv, columns=['graduate_program_id', 'year', 'masters_defenses', 'doctorate_defenses', 'permanent_researchers', 'ind_ori'])
+    csv = pd.DataFrame(
+        ind_guidance_ori_csv,
+        columns=[
+            'graduate_program_id',
+            'year',
+            'masters_defenses',
+            'doctorate_defenses',
+            'permanent_researchers',
+            'ind_ori',
+        ],
+    )
 
     csv = csv.dropna(subset=['year'])
     csv['year'] = csv['year'].astype(int)
     csv_path = os.path.join(PATH, 'ind_guidance_ori.csv')
 
     csv.to_csv(csv_path, index=True, quoting=QUOTE_ALL, encoding='utf-8-sig')
+
 
 def ind_guidance_coaut():
     SCRIPT_SQL = """
@@ -1856,7 +1924,9 @@ def ind_guidance_coaut():
 
     df = df.merge(coaut[['identifier', 'type']], on=['identifier', 'type'])
 
-    df_unique = df.drop_duplicates(subset=['graduate_program_id', 'identifier', 'type'])
+    df_unique = df.drop_duplicates(
+        subset=['graduate_program_id', 'identifier', 'type']
+    )
 
     result = (
         df_unique.groupby(['graduate_program_id', 'type', 'year'])
@@ -1868,19 +1938,22 @@ def ind_guidance_coaut():
         index=['graduate_program_id', 'year'],
         columns='type',
         values='qtd',
-        fill_value=0
+        fill_value=0,
     ).reset_index()
 
     pivot.columns.name = None
 
-    pivot = pivot.rename(columns={
-        'ARTICLE': 'IndProdArtCoAut',
-        'BOOK': 'IndProdLivCoAut',
-        'BOOK_CHAPTER': 'IndProdCapCoAut'
-    })
+    pivot = pivot.rename(
+        columns={
+            'ARTICLE': 'IndProdArtCoAut',
+            'BOOK': 'IndProdLivCoAut',
+            'BOOK_CHAPTER': 'IndProdCapCoAut',
+        }
+    )
 
     csv_path = os.path.join(PATH, 'ind_guidance_coaut.csv')
     pivot.to_csv(csv_path, index=False, quoting=QUOTE_ALL, encoding='utf-8-sig')
+
 
 def ind_guidance_distori():
     SCRIPT_SQL = """
@@ -1918,13 +1991,23 @@ def ind_guidance_distori():
         ORDER BY p.graduate_program_id, p.year_val;
     """
     ind_guidance_distori_csv = conn_admin.select(SCRIPT_SQL)
-    csv = pd.DataFrame(ind_guidance_distori_csv, columns=['graduate_program_id', 'year', 'concluding_researchers', 'permanent_researchers', 'ind_dist_ori'])
+    csv = pd.DataFrame(
+        ind_guidance_distori_csv,
+        columns=[
+            'graduate_program_id',
+            'year',
+            'concluding_researchers',
+            'permanent_researchers',
+            'ind_dist_ori',
+        ],
+    )
 
     csv = csv.dropna(subset=['year'])
     csv['year'] = csv['year'].astype(int)
 
     csv_path = os.path.join(PATH, 'ind_guidance_distori.csv')
     csv.to_csv(csv_path, index=True, quoting=QUOTE_ALL, encoding='utf-8-sig')
+
 
 if __name__ == '__main__':
     dim_titulacao()
@@ -2060,5 +2143,3 @@ if __name__ == '__main__':
     # guidance()
     # guidance_per_year()
     # in_progress_per_year()
-
-

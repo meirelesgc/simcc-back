@@ -555,12 +555,14 @@ def EtapaOrientacao():
     file_path = os.path.join(STORAGE_PATH, file_name)
     return FileResponse(file_path, filename=file_name)
 
+
 @router.get('/ind_guidance_ori.csv')
 def ind_guidance_ori_csv():
     powerBI.ind_guidance_ori()
     file_name = 'ind_guidance_ori.csv'
     file_path = os.path.join(STORAGE_PATH, file_name)
     return FileResponse(file_path, filename=file_name)
+
 
 @router.get('/ind_guidance_distori.csv')
 def ind_guidance_distori_csv():
@@ -574,5 +576,13 @@ def ind_guidance_distori_csv():
 def ind_guidance_coaut_csv():
     powerBI.ind_guidance_coaut()
     file_name = 'ind_guidance_coaut.csv'
+    file_path = os.path.join(STORAGE_PATH, file_name)
+    return FileResponse(file_path, filename=file_name)
+
+
+@router.get('/fat_sdg_alignment.csv')
+def fat_sdg_alignment_csv():
+    powerBI.fat_sdg_alignment()
+    file_name = 'fat_sdg_alignment.csv'
     file_path = os.path.join(STORAGE_PATH, file_name)
     return FileResponse(file_path, filename=file_name)
