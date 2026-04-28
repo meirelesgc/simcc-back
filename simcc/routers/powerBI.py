@@ -580,9 +580,25 @@ def ind_guidance_coaut_csv():
     return FileResponse(file_path, filename=file_name)
 
 
-@router.get('/fat_sdg_alignment.csv')
-def fat_sdg_alignment_csv():
-    powerBI.fat_sdg_alignment()
-    file_name = 'fat_sdg_alignment.csv'
+@router.get('/dim_sdg.csv')
+def dim_sdg_csv():
+    powerBI.dim_sdg()
+    file_name = 'dim_sdg.csv'
+    file_path = os.path.join(STORAGE_PATH, file_name)
+    return FileResponse(file_path, filename=file_name)
+
+
+
+@router.get('/fat_sdg_articles.csv')
+def fat_sdg_articles_csv():
+    powerBI.fat_sdg_articles()
+    file_name = 'fat_sdg_articles.csv'
+    file_path = os.path.join(STORAGE_PATH, file_name)
+    return FileResponse(file_path, filename=file_name)
+
+@router.get('/fat_sdg_alignment_researcher.csv')
+def fat_sdg_alignment_researcher_csv():
+    powerBI.fat_sdg_alignment_researcher()
+    file_name = 'fat_sdg_alignment_researcher.csv'
     file_path = os.path.join(STORAGE_PATH, file_name)
     return FileResponse(file_path, filename=file_name)

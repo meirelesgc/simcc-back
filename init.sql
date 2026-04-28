@@ -1519,9 +1519,38 @@ COMMIT;
 
 ROLLBACK;
 
-CREATE TABLE article_ods (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    reference_id UUID NOT NULL,
-    type VARCHAR(50) NOT NULL,
-    ods VARCHAR(100) NOT NULL
+CREATE TABLE IF NOT EXISTS public.sdg
+(
+    id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+    number integer NOT NULL,
+    name character varying NOT NULL
+);
+
+INSERT INTO public.sdg (number, name) VALUES
+(1, 'Erradicação da pobreza'),
+(2, 'Fome zero e agricultura sustentável'),
+(3, 'Saúde e bem-estar'),
+(4, 'Educação de qualidade'),
+(5, 'Igualdade de gênero'),
+(6, 'Água potável e saneamento'),
+(7, 'Energia limpa e acessível'),
+(8, 'Trabalho decente e crescimento econômico'),
+(9, 'Indústria, inovação e infraestrutura'),
+(10, 'Redução das desigualdades'),
+(11, 'Cidades e comunidades sustentáveis'),
+(12, 'Consumo e produção responsáveis'),
+(13, 'Ação contra a mudança global do clima'),
+(14, 'Vida na água'),
+(15, 'Vida terrestre'),
+(16, 'Paz, justiça e instituições eficazes'),
+(17, 'Parcerias e meios de implementação');
+
+CREATE TABLE IF NOT EXISTS public.sdg_alignment
+(
+    id uuid NOT NULL DEFAULT gen_random_uuid(),
+    reference_id uuid NOT NULL,
+    type character varying NOT NULL,
+    sdg_id uuid NOT NULL,
+    CONSTRAINT article_ods_pkey PRIMARY KEY (id),
+    CONSTRAINT fk_sdg FOREIGN KEY (sdg_id) REFERENCES public.sdg (id)
 );

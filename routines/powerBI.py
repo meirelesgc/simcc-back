@@ -1762,22 +1762,60 @@ def fat_tags_csv():
     csv_path = os.path.join(PATH, 'fat_tags.csv')
     csv.to_csv(csv_path, index=True, quoting=QUOTE_ALL, encoding='utf-8-sig')
 
+def dim_sdg():
+    SCRIPT_SQL = "SELECT id, number, name FROM sdg;"
+    result = conn.select(SCRIPT_SQL)
+    csv = pd.DataFrame(result, columns=['id', 'number', 'name'])
+    csv_path = os.path.join(PATH, 'dim_sdg.csv')
+    csv.to_csv(
+        csv_path,
+        index=False,
+        quoting=QUOTE_ALL,
+        encoding='utf-8-sig',
+        decimal=',',
+        sep=';',
+    )
 
-def fat_sdg_alignment():
+def fat_sdg_articles():
+    SCRIPT_SQL = """
+        SELECT 
+            bp.id AS article_id,
+            bp.researcher_id,
+            sa.sdg_id
+        FROM bibliographic_production bp
+        JOIN sdg_alignment sa ON bp.id = sa.reference_id
+        WHERE sa.type = 'ARTICLE';
+    """
+    result = conn.select(SCRIPT_SQL)
+    csv = pd.DataFrame(result, columns=['article_id', 'researcher_id', 'sdg_id'])
+    csv_path = os.path.join(PATH, 'fat_sdg_articles.csv')
+    csv.to_csv(
+        csv_path,
+        index=False,
+        quoting=QUOTE_ALL,
+        encoding='utf-8-sig',
+        decimal=',',
+        sep=';',
+    )
+
+def fat_sdg_alignment_researcher():
     SCRIPT_SQL = """
         WITH sdg_counts AS (
             SELECT 
                 bp.researcher_id, 
-                sa.sdg, 
+                s.number AS sdg_number,
+                s.name AS sdg_name,
                 COUNT(*) AS total_articles
             FROM bibliographic_production bp
             JOIN sdg_alignment sa ON bp.id = sa.reference_id
-            GROUP BY bp.researcher_id, sa.sdg
+            JOIN sdg s ON sa.sdg_id = s.id
+            GROUP BY bp.researcher_id, s.number, s.name
         ),
         ranking AS (
             SELECT 
                 researcher_id, 
-                sdg, 
+                sdg_number,
+                sdg_name,
                 total_articles,
                 SUM(total_articles) OVER(PARTITION BY researcher_id) AS researcher_total,
                 RANK() OVER(PARTITION BY researcher_id ORDER BY total_articles DESC) as rank
@@ -1785,22 +1823,23 @@ def fat_sdg_alignment():
         )
         SELECT 
             researcher_id, 
-            sdg AS primary_sdg, 
+            sdg_number,
+            sdg_name AS primary_sdg_name, 
             total_articles,
             ROUND((total_articles * 100.0) / researcher_total, 2) AS percentage
         FROM ranking
         WHERE rank = 1;
-        """
+    """
     fat_sdg_alignment = conn.select(SCRIPT_SQL)
     csv = pd.DataFrame(
         fat_sdg_alignment,
-        columns=['researcher_id', 'primary_sdg', 'total_articles', 'percentage'],
+        columns=['researcher_id', 'sdg_number', 'primary_sdg_name', 'total_articles', 'percentage'],
     )
     csv['percentage'] = pd.to_numeric(csv['percentage'], errors='coerce')
-    csv_path = os.path.join(PATH, 'fat_sdg_alignment.csv')
+    csv_path = os.path.join(PATH, 'fat_sdg_alignment_researcher.csv')
     csv.to_csv(
         csv_path,
-        index=True,
+        index=False,
         quoting=QUOTE_ALL,
         encoding='utf-8-sig',
         decimal=',',
