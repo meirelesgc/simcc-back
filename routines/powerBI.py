@@ -1762,8 +1762,9 @@ def fat_tags_csv():
     csv_path = os.path.join(PATH, 'fat_tags.csv')
     csv.to_csv(csv_path, index=True, quoting=QUOTE_ALL, encoding='utf-8-sig')
 
+
 def dim_sdg():
-    SCRIPT_SQL = "SELECT id, number, name FROM sdg;"
+    SCRIPT_SQL = 'SELECT id, number, name FROM sdg;'
     result = conn.select(SCRIPT_SQL)
     csv = pd.DataFrame(result, columns=['id', 'number', 'name'])
     csv_path = os.path.join(PATH, 'dim_sdg.csv')
@@ -1776,10 +1777,11 @@ def dim_sdg():
         sep=';',
     )
 
+
 def fat_sdg_articles():
     SCRIPT_SQL = """
-        SELECT 
-            bp.id AS article_id,
+        SELECT
+            bp.title,
             bp.researcher_id,
             sa.sdg_id
         FROM bibliographic_production bp
@@ -1787,7 +1789,7 @@ def fat_sdg_articles():
         WHERE sa.type = 'ARTICLE';
     """
     result = conn.select(SCRIPT_SQL)
-    csv = pd.DataFrame(result, columns=['article_id', 'researcher_id', 'sdg_id'])
+    csv = pd.DataFrame(result, columns=['title', 'researcher_id', 'sdg_id'])
     csv_path = os.path.join(PATH, 'fat_sdg_articles.csv')
     csv.to_csv(
         csv_path,
@@ -1797,6 +1799,7 @@ def fat_sdg_articles():
         decimal=',',
         sep=';',
     )
+
 
 def fat_sdg_alignment_researcher():
     SCRIPT_SQL = """
@@ -1833,7 +1836,13 @@ def fat_sdg_alignment_researcher():
     fat_sdg_alignment = conn.select(SCRIPT_SQL)
     csv = pd.DataFrame(
         fat_sdg_alignment,
-        columns=['researcher_id', 'sdg_number', 'primary_sdg_name', 'total_articles', 'percentage'],
+        columns=[
+            'researcher_id',
+            'sdg_number',
+            'primary_sdg_name',
+            'total_articles',
+            'percentage',
+        ],
     )
     csv['percentage'] = pd.to_numeric(csv['percentage'], errors='coerce')
     csv_path = os.path.join(PATH, 'fat_sdg_alignment_researcher.csv')
