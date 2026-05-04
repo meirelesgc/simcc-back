@@ -602,3 +602,11 @@ def fat_sdg_alignment_researcher_csv():
     file_name = 'fat_sdg_alignment_researcher.csv'
     file_path = os.path.join(STORAGE_PATH, file_name)
     return FileResponse(file_path, filename=file_name)
+
+
+@router.get('/fat_guidance_history.csv')
+def fat_guidance_history_csv():
+    powerBI.fat_guidance_history()
+    file_name = 'fat_guidance_history.csv'
+    file_path = os.path.join(STORAGE_PATH, file_name)
+    return FileResponse(file_path, filename=file_name)

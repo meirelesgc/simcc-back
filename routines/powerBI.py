@@ -2057,6 +2057,87 @@ def ind_guidance_distori():
     csv.to_csv(csv_path, index=True, quoting=QUOTE_ALL, encoding='utf-8-sig')
 
 
+def fat_guidance_history():
+    SCRIPT_SQL = """
+        SELECT lattes_id, start_date, planned_date_project, done_date_project,
+            planned_date_qualification, done_date_qualification,
+            planned_date_conclusion, done_date_conclusion
+        FROM researcher
+        INNER JOIN guidance_tracking
+            ON guidance_tracking.student_researcher_id = researcher.researcher_id
+        WHERE guidance_tracking.deleted_at IS NULL
+        """
+    result = conn_admin.select(SCRIPT_SQL)
+    history = pd.DataFrame(
+        result,
+        columns=[
+            'lattes_id',
+            'start_date',
+            'planned_date_project',
+            'done_date_project',
+            'planned_date_qualification',
+            'done_date_qualification',
+            'planned_date_conclusion',
+            'done_date_conclusion',
+        ],
+    )
+
+    SCRIPT_SQL = """
+        SELECT id AS researcher_id, lattes_id
+        FROM researcher
+        """
+    result = conn.select(SCRIPT_SQL)
+    researcher = pd.DataFrame(result, columns=['researcher_id', 'lattes_id'])
+
+    history = history.merge(researcher, on='lattes_id', how='inner')
+
+    history['start_date'] = pd.to_datetime(
+        history['start_date'], errors='coerce'
+    )
+    history['done_date_conclusion'] = pd.to_datetime(
+        history['done_date_conclusion'], errors='coerce'
+    )
+    history['planned_date_conclusion'] = pd.to_datetime(
+        history['planned_date_conclusion'], errors='coerce'
+    )
+
+    history['end_date'] = history['done_date_conclusion'].fillna(
+        history['planned_date_conclusion']
+    )
+
+    history = history.dropna(subset=['start_date', 'end_date']).copy()
+
+    history['start_year'] = history['start_date'].dt.year.astype(int)
+    history['end_year'] = history['end_date'].dt.year.astype(int)
+    history['done_year'] = history['done_date_conclusion'].dt.year
+
+    history['year'] = history.apply(
+        lambda row: list(range(row['start_year'], row['end_year'] + 1)), axis=1
+    )
+
+    csv = (
+        history[['researcher_id', 'year', 'done_year']]
+        .explode('year')
+        .reset_index(drop=True)
+    )
+    csv['year'] = csv['year'].astype(int)
+
+    current_year = pd.Timestamp.now().year
+
+    def get_type(row):
+        if pd.notna(row['done_year']) and row['year'] == row['done_year']:
+            return 'CONCLUÍDO'
+        if row['year'] >= current_year:
+            return 'EXPECTATIVA'
+        return 'EM ANDAMENTO'
+
+    csv['type'] = csv.apply(get_type, axis=1)
+    csv = csv.drop(columns=['done_year'])
+
+    csv_path = os.path.join(PATH, 'fat_guidance_history.csv')
+    csv.to_csv(csv_path, index=True, quoting=QUOTE_ALL, encoding='utf-8-sig')
+
+
 if __name__ == '__main__':
     dim_titulacao()
     print('dim_titulacao finalizado')
