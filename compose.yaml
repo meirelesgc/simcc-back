@@ -16,11 +16,11 @@ services:
     restart: unless-stopped
 
   simcc-back:
-    image: gleidsoncosta/simcc-back:${SIMCC_BACK_TAG:-latest}
+    image: gleidsoncosta/simcc-back:latest
     environment:
       PROXY_URL: http://simcc-back-old:8000
-      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@simcc-db:5432/postgres}
-      ADMIN_DATABASE_URL: ${ADMIN_DATABASE_URL:-postgresql://postgres:postgres@simcc-admin-db:5432/postgres}
+      DATABASE_URL: postgresql://postgres:postgres@simcc-db:5432/postgres
+      ADMIN_DATABASE_URL: postgresql://postgres:postgres@simcc-admin-db:5432/postgres
     env_file: ./.env
     depends_on:
       simcc-db:
@@ -31,10 +31,10 @@ services:
     restart: unless-stopped
 
   simcc-back-old:
-    image: gleidsoncosta/simcc-back-old:${SIMCC_BACK_OLD_TAG:-latest}
+    image: gleidsoncosta/simcc-back-old:latest
     environment:
-      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@simcc-db:5432/postgres}
-      ADMIN_DATABASE_URL: ${ADMIN_DATABASE_URL:-postgresql://postgres:postgres@simcc-admin-db:5432/postgres}
+      DATABASE_URL: postgresql://postgres:postgres@simcc-db:5432/postgres
+      ADMIN_DATABASE_URL: postgresql://postgres:postgres@simcc-admin-db:5432/postgres
     env_file: ./.env
     depends_on:
       simcc-db:
@@ -42,7 +42,7 @@ services:
     restart: unless-stopped
 
   hop:
-    image: gleidsoncosta/simcc-extrator:${SIMCC_EXTRATOR_TAG:-latest}
+    image: gleidsoncosta/simcc-extrator:latest
     profiles: [ "extração" ]
     volumes:
       - ./storage/xml:/files/jade-extrator/datasets/lattes_xml
