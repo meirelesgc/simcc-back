@@ -1788,13 +1788,29 @@ def fat_sdg_articles():
         SELECT
             bp.title,
             bp.researcher_id,
-            sa.sdg_id
+            sa.sdg_id,
+            bp.year,
+            bpa.qualis,
+            bpa.periodical_magazine_id,
+            bpa.periodical_magazine_name
         FROM bibliographic_production bp
         JOIN sdg_alignment sa ON bp.id = sa.reference_id
+        LEFT JOIN bibliographic_production_article bpa ON bpa.bibliographic_production_id = bp.id
         WHERE sa.type = 'ARTICLE';
     """
     result = conn.select(SCRIPT_SQL)
-    csv = pd.DataFrame(result, columns=['title', 'researcher_id', 'sdg_id'])
+    csv = pd.DataFrame(
+        result,
+        columns=[
+            'title',
+            'researcher_id',
+            'sdg_id',
+            'year',
+            'qualis',
+            'periodical_magazine_id',
+            'periodical_magazine_name',
+        ],
+    )
     csv_path = os.path.join(PATH, 'fat_sdg_articles.csv')
     csv.to_csv(
         csv_path,
