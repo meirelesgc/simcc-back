@@ -1278,7 +1278,8 @@ def fat_co_authorship():
 
 def _replace_lattes(df, lattes_col, output_col, researchers_df):
     df = (
-        df.merge(
+        df
+        .merge(
             researchers_df,
             left_on=lattes_col,
             right_on='lattes_id',
@@ -1396,7 +1397,8 @@ def supervisor():
     )
 
     end_counts = (
-        df_original.groupby(['supervisor_researcher_id', 'year'])
+        df_original
+        .groupby(['supervisor_researcher_id', 'year'])
         .size()
         .reset_index(name='ended_in_year')
     )
@@ -1412,7 +1414,8 @@ def supervisor():
         by=['supervisor_researcher_id', 'year'], ascending=[True, False]
     )
     csv['count'] = (
-        csv.groupby('supervisor_researcher_id')['ended_in_year']
+        csv
+        .groupby('supervisor_researcher_id')['ended_in_year']
         .cumsum()
         .astype(int)
     )
@@ -1700,14 +1703,16 @@ def in_progress_per_year():
 
     # produto cartesiano: supervisores × anos × status × programas
     full = (
-        supervisors.merge(years, how='cross')
+        supervisors
+        .merge(years, how='cross')
         .merge(statuses, how='cross')
         .merge(programs, how='cross')
     )
 
     # contagem real
     counts = (
-        df.groupby([
+        df
+        .groupby([
             'supervisor_name',
             'supervisor_researcher_id',
             'year',
@@ -1963,7 +1968,8 @@ def ind_guidance_coaut():
     df = df.merge(df_prog, on='researcher_id')
 
     coaut = (
-        df.groupby(['identifier', 'type'])
+        df
+        .groupby(['identifier', 'type'])
         .agg(qtd_autores=('researcher_id', 'nunique'))
         .reset_index()
     )
@@ -1977,7 +1983,8 @@ def ind_guidance_coaut():
     )
 
     result = (
-        df_unique.groupby(['graduate_program_id', 'type', 'year'])
+        df_unique
+        .groupby(['graduate_program_id', 'type', 'year'])
         .size()
         .reset_index(name='qtd')
     )
@@ -2057,21 +2064,43 @@ def ind_guidance_distori():
     csv.to_csv(csv_path, index=True, quoting=QUOTE_ALL, encoding='utf-8-sig')
 
 
+def map_lattes_to_id(conn):
+    SCRIPT_SQL = """
+        SELECT id, lattes_id
+        FROM researcher
+    """
+    result = conn.select(SCRIPT_SQL)
+    return pd.DataFrame(result, columns=['id', 'lattes_id'])
+
+
 def fat_guidance_history():
     SCRIPT_SQL = """
-        SELECT lattes_id, start_date, planned_date_project, done_date_project,
-            planned_date_qualification, done_date_qualification,
-            planned_date_conclusion, done_date_conclusion
-        FROM researcher
-        INNER JOIN guidance_tracking
-            ON guidance_tracking.student_researcher_id = researcher.researcher_id
-        WHERE guidance_tracking.deleted_at IS NULL
-        """
+        SELECT 
+            r_student.name AS student_name,
+            r_student.lattes_id AS student_lattes_id,
+            r_supervisor.lattes_id AS supervisor_lattes_id,
+            gt.start_date,
+            gt.planned_date_project,
+            gt.done_date_project,
+            gt.planned_date_qualification,
+            gt.done_date_qualification,
+            gt.planned_date_conclusion,
+            gt.done_date_conclusion
+        FROM guidance_tracking gt
+        INNER JOIN researcher r_student
+            ON gt.student_researcher_id = r_student.researcher_id
+        LEFT JOIN researcher r_supervisor
+            ON gt.supervisor_researcher_id = r_supervisor.researcher_id
+        WHERE gt.deleted_at IS NULL
+    """
     result = conn_admin.select(SCRIPT_SQL)
+
     history = pd.DataFrame(
         result,
         columns=[
-            'lattes_id',
+            'student_name',
+            'student_lattes_id',
+            'supervisor_lattes_id',
             'start_date',
             'planned_date_project',
             'done_date_project',
@@ -2082,14 +2111,39 @@ def fat_guidance_history():
         ],
     )
 
-    SCRIPT_SQL = """
-        SELECT id AS researcher_id, lattes_id
-        FROM researcher
-        """
-    result = conn.select(SCRIPT_SQL)
-    researcher = pd.DataFrame(result, columns=['researcher_id', 'lattes_id'])
+    researcher_map = map_lattes_to_id(conn)
 
-    history = history.merge(researcher, on='lattes_id', how='inner')
+    student_map = (
+        history[['student_lattes_id']]
+        .drop_duplicates()
+        .merge(
+            researcher_map,
+            left_on='student_lattes_id',
+            right_on='lattes_id',
+            how='inner',
+        )
+        .rename(columns={'id': 'student_id'})
+        .drop(columns=['lattes_id'])
+    )
+
+    history = history.merge(student_map, on='student_lattes_id', how='inner')
+
+    supervisor_map = (
+        history[['supervisor_lattes_id']]
+        .drop_duplicates()
+        .merge(
+            researcher_map,
+            left_on='supervisor_lattes_id',
+            right_on='lattes_id',
+            how='left',
+        )
+        .rename(columns={'id': 'supervisor_id'})
+        .drop(columns=['lattes_id'])
+    )
+
+    history = history.merge(
+        supervisor_map, on='supervisor_lattes_id', how='left'
+    )
 
     history['start_date'] = pd.to_datetime(
         history['start_date'], errors='coerce'
@@ -2116,10 +2170,13 @@ def fat_guidance_history():
     )
 
     csv = (
-        history[['researcher_id', 'year', 'done_year']]
+        history[
+            ['student_name', 'student_id', 'supervisor_id', 'year', 'done_year']
+        ]
         .explode('year')
         .reset_index(drop=True)
     )
+
     csv['year'] = csv['year'].astype(int)
 
     current_year = pd.Timestamp.now().year
