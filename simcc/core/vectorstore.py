@@ -1,7 +1,7 @@
 from langchain_openai import OpenAIEmbeddings
 from langchain_postgres import PGVector
 
-from simcc.config import Settings
+from simcc.core.config import Settings
 
 vectorstore = PGVector(
     embeddings=OpenAIEmbeddings(

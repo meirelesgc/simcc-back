@@ -2,7 +2,8 @@ import pandas as pd
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
-from simcc.config import Settings
+
+from simcc.core.config import Settings
 from simcc.repositories import conn
 
 SETTINGS = Settings()

@@ -1,7 +1,7 @@
 import psycopg
 import psycopg.rows
 
-from simcc.config import Settings
+from simcc.core.config import Settings
 
 
 class Connection:

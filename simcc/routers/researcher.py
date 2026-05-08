@@ -11,8 +11,8 @@ from simcc.schemas.Researcher import (
     CoAuthorship,
     Researcher,
 )
-from simcc.security import get_current_user
 from simcc.services import GenericService, researcher_service
+from simcc.services.security import get_current_user
 
 router = APIRouter()
 

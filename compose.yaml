@@ -33,9 +33,11 @@ services:
   simcc-back-old:
     image: gleidsoncosta/simcc-back-old:latest
     environment:
-      DATABASE_URL: postgresql://postgres:postgres@simcc-db:5432/postgres
-      ADMIN_DATABASE_URL: postgresql://postgres:postgres@simcc-admin-db:5432/postgres
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@simcc-db:5432/postgres}
+      ADMIN_DATABASE_URL: ${ADMIN_DATABASE_URL:-postgresql://postgres:postgres@simcc-admin-db:5432/postgres}
     env_file: ./.env
+    ports:
+      - "${SIMCC_BACK_OLD_PORT:-8000}:8000"
     depends_on:
       simcc-db:
         condition: service_healthy

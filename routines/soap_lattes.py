@@ -11,7 +11,7 @@ from zeep import Client
 from zeep.transports import Transport
 
 from routines.logger import logger_researcher_routine, logger_routine
-from simcc.config import Settings
+from simcc.core.config import Settings
 from simcc.repositories import conn, conn_admin
 
 LOG_PATH = 'logs'

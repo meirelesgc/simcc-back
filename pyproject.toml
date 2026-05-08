@@ -30,6 +30,7 @@ scrapy = "^2.14.1"
 tqdm = "^4.67.3"
 langchain = "^1.2.15"
 numpy = "2.1.1"
+sqlalchemy = "^2.0.49"
 
 
 [tool.poetry.group.dev.dependencies]

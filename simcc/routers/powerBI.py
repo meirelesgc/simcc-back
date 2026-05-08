@@ -5,7 +5,7 @@ from fastapi import APIRouter
 from fastapi.responses import FileResponse
 
 from routines import powerBI
-from simcc.config import Settings
+from simcc.core.config import Settings
 
 router = APIRouter()
 

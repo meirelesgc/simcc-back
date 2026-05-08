@@ -6,7 +6,7 @@ from testcontainers.postgres import PostgresContainer
 from simcc.app import app
 from simcc.core.connection import Connection
 from simcc.core.database import get_admin_conn, get_conn
-from simcc.security import get_current_user
+from simcc.services.security import get_current_user
 from tests import factories
 
 POSTGRES_IMAGE = 'pgvector/pgvector:pg17'

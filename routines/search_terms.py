@@ -3,7 +3,7 @@ import pandas as pd
 from firebase_admin import credentials, firestore
 
 from routines.logger import logger_routine
-from simcc.config import settings
+from simcc.core.config import settings
 from simcc.repositories import conn
 
 

@@ -19,8 +19,8 @@ from simcc.schemas.production.ProfessionalExperience import (
 from simcc.schemas.production.Report import ReportProduction
 from simcc.schemas.production.ResearchProject import ResearchProjectProduction
 from simcc.schemas.production.Software import SoftwareProduction
-from simcc.security import get_current_user
 from simcc.services import ProductionService
+from simcc.services.security import get_current_user
 
 router = APIRouter(tags=['Production'])
 

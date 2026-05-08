@@ -1,6 +1,6 @@
 from langchain_openai import OpenAIEmbeddings
 
-from simcc.config import Settings
+from simcc.core.config import Settings
 from simcc.repositories import conn
 
 

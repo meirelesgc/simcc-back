@@ -6,7 +6,7 @@ from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
-from simcc.config import Settings
+from simcc.core.config import Settings
 from simcc.core.database import admin_conn, conn
 from simcc.routers import (
     ai,
