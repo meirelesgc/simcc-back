@@ -13,7 +13,7 @@ echo "-1/-2 Running sync_gp_researchers.py..."
 poetry run python scripts/routines/sync_admin/sync_gp_researchers.py
 
 echo "1/12 Running soap_lattes.py..."
-# poetry run python scripts/routines/soap_lattes.py
+poetry run python scripts/routines/soap_lattes.py
 
 echo "2/12 Running simcc_hop (Docker)..."
 docker compose --profile routines run --rm simcc_hop
@@ -37,13 +37,13 @@ echo "8/12 Running graduate_program_indprod.py..."
 poetry run python scripts/routines/graduate_program_indprod.py
 
 echo "9/12 Running abstract_ai.py..."
-# poetry run python scripts/routines/abstract_ai.py
+poetry run python scripts/routines/abstract_ai.py
 
 echo "10/12 Running get_openAlex.py..."
-# poetry run python scripts/routines/get_openAlex.py
+poetry run python scripts/routines/get_openAlex.py
 
 echo "11/12 Running search_terms.py..."
-# poetry run python scripts/routines/search_terms.py
+poetry run python scripts/routines/search_terms.py
 
 echo "12/12 Running researcher_classification.py..."
 poetry run python scripts/routines/researcher_classification.py
