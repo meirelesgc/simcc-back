@@ -1,3 +1,5 @@
+logs
+
 .env.container
 .tool-versions
 *.zip
@@ -179,3 +181,5 @@ cython_debug/
 .pypirc
 
 .vscode/
+
+storage/image_researcher

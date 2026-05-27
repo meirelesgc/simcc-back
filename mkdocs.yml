@@ -1,0 +1,9 @@
+site_name: Simcc Documentation
+nav:
+  - Home: index.md
+  - Arquitetura: architecture.md
+  - Como Adicionar Filtros: adding_filters.md
+  - Testes e Boas Práticas: testing.md
+  - Como trabalhar com IA: ai_architecture.md
+theme:
+  name: material
