@@ -847,7 +847,7 @@ async def list_bibliographic_production(conn, filters, qualis: str | None):
             opa.article_institution, opa.authors, opa.authors_institution,
             COALESCE (opa.citations_count, 0) AS citations_count, bpa.issn,
             opa.keywords, opa.landing_page_url, opa.language, opa.pdf,
-            b.has_image, b.relevance, bpa.created_at AS created_at, bpa.stars
+            b.has_image, b.relevance, bpa.stars
         FROM bibliographic_production b
             LEFT JOIN bibliographic_production_article bpa ON b.id = bpa.bibliographic_production_id
             LEFT JOIN researcher r ON r.id = b.researcher_id

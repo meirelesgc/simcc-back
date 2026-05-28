@@ -1050,9 +1050,7 @@ async def list_graduate_programs(conn):
                 'email', gp.email,
                 'start', gp.start,
                 'phone', gp.phone,
-                'periodicity', gp.periodicity,
-                'created_at', gp.created_at,
-                'updated_at', gp.updated_at
+                'periodicity', gp.periodicity
             )) AS graduate_programs
         FROM graduate_program_researcher gpr
         LEFT JOIN graduate_program gp 
@@ -1142,9 +1140,7 @@ async def list_user_data(conn):
                 'photo_url', u.photo_url,
                 'shib_code', u.shib_code,
                 'birth_date', u.birth_date,
-                'created_at', u.created_at,
                 'first_name', u.first_name,
-                'updated_at', u.updated_at,
                 'course_level', u.course_level,
                 'display_name', u.display_name,
                 'email_status', u.email_status,

@@ -139,7 +139,7 @@ for i, researcher_data in enumerate(researchers_to_process):
     last_productions = conn.select(f"""
         SELECT bp.title, bp.type, bp.year FROM bibliographic_production bp
         WHERE bp.researcher_id = '{researcher_id}'
-        ORDER BY bp.year DESC, bp.created_at DESC LIMIT 3
+        ORDER BY bp.year DESC LIMIT 3
     """)
 
     professional_experiences = conn.select(f"""

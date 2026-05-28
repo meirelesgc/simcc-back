@@ -478,6 +478,18 @@ async def generic_data(
     df = pd.DataFrame(result, columns=['year', 'count_brand'])
     data_frame = pd.merge(data_frame, df, on='year', how='left')
 
+    SQL = f"""
+        SELECT development_year::smallint AS year, COUNT(DISTINCT br.title) AS count_patent
+        FROM patent br
+        WHERE br.development_year::smallint >= %(year)s
+            {FILTERS}
+        GROUP BY br.development_year::smallint
+        ORDER BY br.development_year::smallint;
+    """
+    result = await conn.select(SQL, params)
+    df = pd.DataFrame(result, columns=['year', 'count_patent'])
+    data_frame = pd.merge(data_frame, df, on='year', how='left')
+
     data_frame = data_frame.fillna(0)
 
     return data_frame.to_dict(orient='records')
