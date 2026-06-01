@@ -23,7 +23,10 @@ dependencies = [
     "mkdocs (>=1.6.1,<2.0.0)",
     "mkdocs-material (>=9.7.6,<10.0.0)",
     "langchain-openai (>=1.2.1,<2.0.0)",
-    "structlog (>=25.5.0,<26.0.0)"
+    "structlog (>=25.5.0,<26.0.0)",
+    "alembic (>=1.18.4,<2.0.0)",
+    "nltk (>=3.9.4,<4.0.0)",
+    "firebase-admin (>=7.4.0,<8.0.0)"
 ]
 
 [tool.poetry]

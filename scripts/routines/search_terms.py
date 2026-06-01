@@ -165,7 +165,10 @@ def main():
             deleted_total += deleted
 
         terms_df = terms_dataframe(session)
+        for data, _ in terms_df.iterrows():
+            print(data)
         records = dataframe_to_records(terms_df)
+        return
         inserted_total = insert_data_batch(
             db,
             collection_ref,

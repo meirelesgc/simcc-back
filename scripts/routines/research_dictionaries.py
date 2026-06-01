@@ -32,6 +32,7 @@ def get_query_article():
         WHERE 1 = 1
             AND CHAR_LENGTH(word) > 3
             AND TRIM(word) <> ALL(:stopwords)
+            AND CHAR_LENGTH(word) < 255
         ORDER BY frequency;
     """
 
@@ -73,6 +74,7 @@ def get_query_generic(table, column, doc_type, extra_where=''):
             CHAR_LENGTH(bf.word) > 3
             AND bf.frequency > 4
             AND TRIM(bf.word) <> ALL(:stopwords)
+            AND CHAR_LENGTH(bf.word) < 255
         ORDER BY frequency, word;
     """
 
