@@ -1,3 +1,4 @@
+import argparse
 import time
 from datetime import datetime
 from uuid import uuid4
@@ -37,15 +38,29 @@ barema = {
 }
 
 
-def article_indprod(session):
-    SCRIPT_SQL = text("""
-        SELECT year_ AS year, qualis, COUNT(*) AS count_article, researcher_id
-        FROM bibliographic_production bp
-        RIGHT JOIN bibliographic_production_article bpa
-            ON bp.id = bpa.bibliographic_production_id
-        GROUP BY year_, qualis, researcher_id;
-    """)
-    result = session.execute(SCRIPT_SQL).mappings().all()
+def article_indprod(session, researcher_id=None):
+    if researcher_id:
+        SCRIPT_SQL = text("""
+            SELECT year_ AS year, qualis, COUNT(*) AS count_article, researcher_id
+            FROM bibliographic_production bp
+            RIGHT JOIN bibliographic_production_article bpa
+                ON bp.id = bpa.bibliographic_production_id
+            WHERE bp.researcher_id = CAST(:researcher_id AS UUID)
+            GROUP BY year_, qualis, researcher_id;
+        """)
+        result = session.execute(
+            SCRIPT_SQL, {'researcher_id': researcher_id}
+        ).mappings().all()
+    else:
+        SCRIPT_SQL = text("""
+            SELECT year_ AS year, qualis, COUNT(*) AS count_article, researcher_id
+            FROM bibliographic_production bp
+            RIGHT JOIN bibliographic_production_article bpa
+                ON bp.id = bpa.bibliographic_production_id
+            GROUP BY year_, qualis, researcher_id;
+        """)
+        result = session.execute(SCRIPT_SQL).mappings().all()
+
     if not result:
         return [{'year': 0000, 'researcher_id': uuid4(), 'article_prod': 0}]
 
@@ -68,14 +83,27 @@ def article_indprod(session):
     return articles.to_dict(orient='records')
 
 
-def book_indprod(session):
-    SCRIPT_SQL = text("""
-        SELECT year, COUNT(*) AS count_book, researcher_id
-        FROM bibliographic_production bp
-        WHERE type = 'BOOK'
-        GROUP BY year, researcher_id;
-    """)
-    result = session.execute(SCRIPT_SQL).mappings().all()
+def book_indprod(session, researcher_id=None):
+    if researcher_id:
+        SCRIPT_SQL = text("""
+            SELECT year, COUNT(*) AS count_book, researcher_id
+            FROM bibliographic_production bp
+            WHERE type = 'BOOK'
+            AND researcher_id = CAST(:researcher_id AS UUID)
+            GROUP BY year, researcher_id;
+        """)
+        result = session.execute(
+            SCRIPT_SQL, {'researcher_id': researcher_id}
+        ).mappings().all()
+    else:
+        SCRIPT_SQL = text("""
+            SELECT year, COUNT(*) AS count_book, researcher_id
+            FROM bibliographic_production bp
+            WHERE type = 'BOOK'
+            GROUP BY year, researcher_id;
+        """)
+        result = session.execute(SCRIPT_SQL).mappings().all()
+
     if not result:
         return []
     books = pd.DataFrame(result)
@@ -88,14 +116,27 @@ def book_indprod(session):
     return books.to_dict(orient='records')
 
 
-def book_chapter_indprod(session):
-    SCRIPT_SQL = text("""
-        SELECT year, COUNT(*) AS count_book_chapter, researcher_id
-        FROM bibliographic_production bp
-        WHERE type = 'BOOK_CHAPTER'
-        GROUP BY year, researcher_id;
-    """)
-    result = session.execute(SCRIPT_SQL).mappings().all()
+def book_chapter_indprod(session, researcher_id=None):
+    if researcher_id:
+        SCRIPT_SQL = text("""
+            SELECT year, COUNT(*) AS count_book_chapter, researcher_id
+            FROM bibliographic_production bp
+            WHERE type = 'BOOK_CHAPTER'
+            AND researcher_id = CAST(:researcher_id AS UUID)
+            GROUP BY year, researcher_id;
+        """)
+        result = session.execute(
+            SCRIPT_SQL, {'researcher_id': researcher_id}
+        ).mappings().all()
+    else:
+        SCRIPT_SQL = text("""
+            SELECT year, COUNT(*) AS count_book_chapter, researcher_id
+            FROM bibliographic_production bp
+            WHERE type = 'BOOK_CHAPTER'
+            GROUP BY year, researcher_id;
+        """)
+        result = session.execute(SCRIPT_SQL).mappings().all()
+
     if not result:
         return []
     book_chapter = pd.DataFrame(result)
@@ -110,23 +151,46 @@ def book_chapter_indprod(session):
     ].to_dict(orient='records')
 
 
-def patent_indprod(session):
-    SCRIPT_SQL = text("""
-        SELECT development_year AS year, 'PATENT_GRANTED' AS granted,
-            researcher_id, COUNT(*) as count_patent
-        FROM patent p
-        WHERE grant_date IS NOT NULL
-        GROUP BY development_year, researcher_id
+def patent_indprod(session, researcher_id=None):
+    if researcher_id:
+        SCRIPT_SQL = text("""
+            SELECT development_year AS year, 'PATENT_GRANTED' AS granted,
+                researcher_id, COUNT(*) as count_patent
+            FROM patent p
+            WHERE grant_date IS NOT NULL
+            AND researcher_id = CAST(:researcher_id AS UUID)
+            GROUP BY development_year, researcher_id
 
-        UNION
+            UNION
 
-        SELECT development_year AS year, 'PATENT_NOT_GRANTED' AS granted,
-            researcher_id, COUNT(*) as count_patent
-        FROM patent p
-        WHERE grant_date IS NULL
-        GROUP BY development_year, researcher_id
-    """)
-    result = session.execute(SCRIPT_SQL).mappings().all()
+            SELECT development_year AS year, 'PATENT_NOT_GRANTED' AS granted,
+                researcher_id, COUNT(*) as count_patent
+            FROM patent p
+            WHERE grant_date IS NULL
+            AND researcher_id = CAST(:researcher_id AS UUID)
+            GROUP BY development_year, researcher_id
+        """)
+        result = session.execute(
+            SCRIPT_SQL, {'researcher_id': researcher_id}
+        ).mappings().all()
+    else:
+        SCRIPT_SQL = text("""
+            SELECT development_year AS year, 'PATENT_GRANTED' AS granted,
+                researcher_id, COUNT(*) as count_patent
+            FROM patent p
+            WHERE grant_date IS NOT NULL
+            GROUP BY development_year, researcher_id
+
+            UNION
+
+            SELECT development_year AS year, 'PATENT_NOT_GRANTED' AS granted,
+                researcher_id, COUNT(*) as count_patent
+            FROM patent p
+            WHERE grant_date IS NULL
+            GROUP BY development_year, researcher_id
+        """)
+        result = session.execute(SCRIPT_SQL).mappings().all()
+
     if not result:
         return []
     columns = ['year', 'granted', 'researcher_id', 'count_patent']
@@ -147,13 +211,25 @@ def patent_indprod(session):
     return patent.to_dict(orient='records')
 
 
-def software_indprod(session):
-    SCRIPT_SQL = text("""
-        SELECT year, COUNT(*) AS software_count, researcher_id
-        FROM software
-        GROUP BY year, researcher_id;
-    """)
-    result = session.execute(SCRIPT_SQL).mappings().all()
+def software_indprod(session, researcher_id=None):
+    if researcher_id:
+        SCRIPT_SQL = text("""
+            SELECT year, COUNT(*) AS software_count, researcher_id
+            FROM software
+            WHERE researcher_id = CAST(:researcher_id AS UUID)
+            GROUP BY year, researcher_id;
+        """)
+        result = session.execute(
+            SCRIPT_SQL, {'researcher_id': researcher_id}
+        ).mappings().all()
+    else:
+        SCRIPT_SQL = text("""
+            SELECT year, COUNT(*) AS software_count, researcher_id
+            FROM software
+            GROUP BY year, researcher_id;
+        """)
+        result = session.execute(SCRIPT_SQL).mappings().all()
+
     if not result:
         return []
     columns = ['year', 'software_count', 'researcher_id']
@@ -167,14 +243,25 @@ def software_indprod(session):
     return software.to_dict(orient='records')
 
 
-def report_indprod(session):
-    SCRIPT_SQL = text("""
-        SELECT year, COUNT(*) AS report_count, researcher_id
-        FROM research_report
-        GROUP BY year, researcher_id;
-    """)
+def report_indprod(session, researcher_id=None):
+    if researcher_id:
+        SCRIPT_SQL = text("""
+            SELECT year, COUNT(*) AS report_count, researcher_id
+            FROM research_report
+            WHERE researcher_id = CAST(:researcher_id AS UUID)
+            GROUP BY year, researcher_id;
+        """)
+        result = session.execute(
+            SCRIPT_SQL, {'researcher_id': researcher_id}
+        ).mappings().all()
+    else:
+        SCRIPT_SQL = text("""
+            SELECT year, COUNT(*) AS report_count, researcher_id
+            FROM research_report
+            GROUP BY year, researcher_id;
+        """)
+        result = session.execute(SCRIPT_SQL).mappings().all()
 
-    result = session.execute(SCRIPT_SQL).mappings().all()
     if not result:
         return [{'year': 0000, 'researcher_id': uuid4(), 'report_prod': 0}]
 
@@ -186,14 +273,27 @@ def report_indprod(session):
     return report.to_dict(orient='records')
 
 
-def guidance_indprod(session):
-    SCRIPT_SQL = text("""
-        SELECT year, nature || ' ' || status AS nature_status,
-            COUNT(*) AS guidance_count, researcher_id
-        FROM guidance
-        GROUP BY year, nature_status, researcher_id;
-    """)
-    result = session.execute(SCRIPT_SQL).mappings().all()
+def guidance_indprod(session, researcher_id=None):
+    if researcher_id:
+        SCRIPT_SQL = text("""
+            SELECT year, nature || ' ' || status AS nature_status,
+                COUNT(*) AS guidance_count, researcher_id
+            FROM guidance
+            WHERE researcher_id = CAST(:researcher_id AS UUID)
+            GROUP BY year, nature_status, researcher_id;
+        """)
+        result = session.execute(
+            SCRIPT_SQL, {'researcher_id': researcher_id}
+        ).mappings().all()
+    else:
+        SCRIPT_SQL = text("""
+            SELECT year, nature || ' ' || status AS nature_status,
+                COUNT(*) AS guidance_count, researcher_id
+            FROM guidance
+            GROUP BY year, nature_status, researcher_id;
+        """)
+        result = session.execute(SCRIPT_SQL).mappings().all()
+
     if not result:
         return []
     guidance = pd.DataFrame(result)
@@ -217,16 +317,26 @@ def guidance_indprod(session):
     return guidance.to_dict(orient='records')
 
 
-def list_researchers(session):
-    SCRIPT_SQL = text("""
-        SELECT id AS researcher_id
-        FROM public.researcher;
-    """)
-    result = session.execute(SCRIPT_SQL).mappings().all()
+def list_researchers(session, researcher_id=None):
+    if researcher_id:
+        SCRIPT_SQL = text("""
+            SELECT id AS researcher_id
+            FROM public.researcher
+            WHERE id = CAST(:researcher_id AS UUID);
+        """)
+        result = session.execute(
+            SCRIPT_SQL, {'researcher_id': researcher_id}
+        ).mappings().all()
+    else:
+        SCRIPT_SQL = text("""
+            SELECT id AS researcher_id
+            FROM public.researcher;
+        """)
+        result = session.execute(SCRIPT_SQL).mappings().all()
     return result
 
 
-def main():
+def main(researcher_id: str | None = None):
     session = next(get_sync_session())
     start_time = time.perf_counter()
     logger.info('researcher_indprod_routine_started')
@@ -236,7 +346,7 @@ def main():
         YEAR = range(2008, current_year + 1)
         history = pd.DataFrame(YEAR, columns=['year'])
 
-        researchers = list_researchers(session)
+        researchers = list_researchers(session, researcher_id)
         if not researchers:
             raise ValueError('No researchers found')
         researchers = pd.DataFrame(researchers)
@@ -246,42 +356,42 @@ def main():
         on = ['researcher_id', 'year']
 
         articles = pd.DataFrame(
-            article_indprod(session),
+            article_indprod(session, researcher_id),
             columns=['researcher_id', 'year', 'article_prod'],
         )
         researchers = researchers.merge(articles, on=on, how='left')
 
         books = pd.DataFrame(
-            book_indprod(session),
+            book_indprod(session, researcher_id),
             columns=['researcher_id', 'year', 'book_prod'],
         )
         researchers = researchers.merge(books, on=on, how='left')
 
         book_chapter = pd.DataFrame(
-            book_chapter_indprod(session),
+            book_chapter_indprod(session, researcher_id),
             columns=['researcher_id', 'year', 'book_chapter_prod'],
         )
         researchers = researchers.merge(book_chapter, on=on, how='left')
 
         software = pd.DataFrame(
-            software_indprod(session),
+            software_indprod(session, researcher_id),
             columns=['researcher_id', 'year', 'software_prod'],
         )
         researchers = researchers.merge(software, on=on, how='left')
 
         patent = pd.DataFrame(
-            patent_indprod(session),
+            patent_indprod(session, researcher_id),
             columns=['researcher_id', 'year', 'patent_prod'],
         )
         researchers = researchers.merge(patent, on=on, how='left')
 
         report = pd.DataFrame(
-            report_indprod(session),
+            report_indprod(session, researcher_id),
             columns=['researcher_id', 'year', 'report_prod'],
         )
         researchers = researchers.merge(report, on=on, how='left')
 
-        guidance = pd.DataFrame(guidance_indprod(session))
+        guidance = pd.DataFrame(guidance_indprod(session, researcher_id))
         if not guidance.empty:
             researchers = researchers.merge(guidance, on=on, how='left')
         else:
@@ -289,7 +399,13 @@ def main():
 
         researchers = researchers.fillna(0)
 
-        session.execute(text('DELETE FROM researcher_ind_prod;'))
+        if researcher_id:
+            session.execute(
+                text('DELETE FROM researcher_ind_prod WHERE researcher_id = CAST(:researcher_id AS UUID);'),
+                {'researcher_id': researcher_id},
+            )
+        else:
+            session.execute(text('DELETE FROM researcher_ind_prod;'))
 
         query_insert = text("""
             INSERT INTO researcher_ind_prod (
@@ -342,4 +458,7 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--researcher-id', type=str, default=None)
+    args = parser.parse_args()
+    main(researcher_id=args.researcher_id)

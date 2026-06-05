@@ -1,3 +1,4 @@
+import argparse
 import time
 
 from sqlalchemy import text
@@ -8,27 +9,48 @@ from simcc.core.logging import get_logger
 logger = get_logger('routines')
 
 
-def main():
+def main(researcher_id: str | None = None):
     session = next(get_sync_session())
     start_time = time.perf_counter()
     logger.info('pog_routine_started')
 
+    rid = {'researcher_id': researcher_id}
+
     try:
-        session.execute(
-            text(
-                r"UPDATE bibliographic_production SET year = NULL WHERE YEAR !~ '^\d+$';"
+        if researcher_id:
+            session.execute(
+                text(
+                    r"UPDATE bibliographic_production SET year = NULL WHERE YEAR !~ '^\d+$' AND researcher_id = CAST(:researcher_id AS UUID);"
+                ),
+                rid,
             )
-        )
+        else:
+            session.execute(
+                text(
+                    r"UPDATE bibliographic_production SET year = NULL WHERE YEAR !~ '^\d+$';"
+                )
+            )
+
         session.execute(
             text(
                 "UPDATE bibliographic_production_article ba SET qualis = 'A4' WHERE ba.issn = '17412242';"
             )
         )
-        session.execute(
-            text(
-                'UPDATE researcher SET docente = true WHERE id IN (SELECT researcher_id FROM graduate_program_researcher);'
+
+        if researcher_id:
+            session.execute(
+                text(
+                    'UPDATE researcher SET docente = true WHERE id = CAST(:researcher_id AS UUID) AND id IN (SELECT researcher_id FROM graduate_program_researcher);'
+                ),
+                rid,
             )
-        )
+        else:
+            session.execute(
+                text(
+                    'UPDATE researcher SET docente = true WHERE id IN (SELECT researcher_id FROM graduate_program_researcher);'
+                )
+            )
+
         session.execute(
             text("""
             UPDATE bibliographic_production_article p
@@ -45,14 +67,30 @@ def main():
             WHERE translate(subquery.issn,'-','') = p.issn;
         """)
         )
-        session.execute(
-            text('UPDATE bibliographic_production SET YEAR_ = YEAR::INTEGER')
-        )
-        session.execute(
-            text(
-                "UPDATE bibliographic_production SET title = translate(title, '''', ' ')"
+
+        if researcher_id:
+            session.execute(
+                text(
+                    'UPDATE bibliographic_production SET YEAR_ = YEAR::INTEGER WHERE researcher_id = CAST(:researcher_id AS UUID)'
+                ),
+                rid,
             )
-        )
+            session.execute(
+                text(
+                    "UPDATE bibliographic_production SET title = translate(title, '''', ' ') WHERE researcher_id = CAST(:researcher_id AS UUID)"
+                ),
+                rid,
+            )
+        else:
+            session.execute(
+                text('UPDATE bibliographic_production SET YEAR_ = YEAR::INTEGER')
+            )
+            session.execute(
+                text(
+                    "UPDATE bibliographic_production SET title = translate(title, '''', ' ')"
+                )
+            )
+
         session.execute(
             text("""
             UPDATE periodical_magazine pm
@@ -62,25 +100,52 @@ def main():
             AND pm.issn IS NOT NULL;
         """)
         )
-        session.execute(
-            text(
-                "UPDATE researcher_production SET great_area_ = STRING_TO_ARRAY(great_area, ';');"
+
+        if researcher_id:
+            session.execute(
+                text(
+                    "UPDATE researcher_production SET great_area_ = STRING_TO_ARRAY(great_area, ';') WHERE researcher_id = CAST(:researcher_id AS UUID);"
+                ),
+                rid,
             )
-        )
-        session.execute(
-            text("""
-            WITH ranked AS (
-                SELECT id, ROW_NUMBER() OVER (PARTITION BY researcher_id, enterprise, start_year, end_year ORDER BY id) AS rn
-                FROM public.researcher_professional_experience
+            session.execute(
+                text("""
+                WITH ranked AS (
+                    SELECT id, ROW_NUMBER() OVER (PARTITION BY researcher_id, enterprise, start_year, end_year ORDER BY id) AS rn
+                    FROM public.researcher_professional_experience
+                    WHERE researcher_id = CAST(:researcher_id AS UUID)
+                )
+                DELETE FROM public.researcher_professional_experience WHERE id IN (SELECT id FROM ranked WHERE rn > 1);
+            """),
+                rid,
             )
-            DELETE FROM public.researcher_professional_experience WHERE id IN (SELECT id FROM ranked WHERE rn > 1);
-        """)
-        )
-        session.execute(
-            text(
-                "UPDATE guidance SET title = regexp_replace(title, '<a[^>]*>|</a>', '', 'gi');"
+            session.execute(
+                text(
+                    "UPDATE guidance SET title = regexp_replace(title, '<a[^>]*>|</a>', '', 'gi') WHERE researcher_id = CAST(:researcher_id AS UUID);"
+                ),
+                rid,
             )
-        )
+        else:
+            session.execute(
+                text(
+                    "UPDATE researcher_production SET great_area_ = STRING_TO_ARRAY(great_area, ';');"
+                )
+            )
+            session.execute(
+                text("""
+                WITH ranked AS (
+                    SELECT id, ROW_NUMBER() OVER (PARTITION BY researcher_id, enterprise, start_year, end_year ORDER BY id) AS rn
+                    FROM public.researcher_professional_experience
+                )
+                DELETE FROM public.researcher_professional_experience WHERE id IN (SELECT id FROM ranked WHERE rn > 1);
+            """)
+            )
+            session.execute(
+                text(
+                    "UPDATE guidance SET title = regexp_replace(title, '<a[^>]*>|</a>', '', 'gi');"
+                )
+            )
+
         session.execute(
             text("""
             UPDATE research_group rg SET second_leader_id = r.id FROM researcher r WHERE rg.second_leader = r.name;
@@ -102,4 +167,7 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--researcher-id', type=str, default=None)
+    args = parser.parse_args()
+    main(researcher_id=args.researcher_id)

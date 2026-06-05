@@ -1,3 +1,4 @@
+import argparse
 import time
 
 import numpy as np
@@ -10,26 +11,50 @@ from simcc.core.logging import get_logger
 logger = get_logger('routines')
 
 
-def list_researchers(session):
-    query = """
-        SELECT id AS researcher_id, name, lattes_id
-        FROM public.researcher
-    """
-    return session.execute(text(query)).fetchall()
+def list_researchers(session, researcher_id=None):
+    if researcher_id:
+        query = """
+            SELECT id AS researcher_id, name, lattes_id
+            FROM public.researcher
+            WHERE id = CAST(:researcher_id AS UUID)
+        """
+        return session.execute(
+            text(query), {'researcher_id': researcher_id}
+        ).fetchall()
+    else:
+        return session.execute(
+            text('SELECT id AS researcher_id, name, lattes_id FROM public.researcher')
+        ).fetchall()
 
 
-def delete_researcher_production(session):
-    query = 'DELETE FROM researcher_production'
-    session.execute(text(query))
+def delete_researcher_production(session, researcher_id=None):
+    if researcher_id:
+        session.execute(
+            text('DELETE FROM researcher_production WHERE researcher_id = CAST(:researcher_id AS UUID)'),
+            {'researcher_id': researcher_id},
+        )
+    else:
+        session.execute(text('DELETE FROM researcher_production'))
 
 
-def bibliographic_production_count(session):
-    query = """
-        SELECT researcher_id, type, COUNT(*)
-        FROM bibliographic_production
-        GROUP BY researcher_id, type;
-    """
-    result = session.execute(text(query)).fetchall()
+def bibliographic_production_count(session, researcher_id=None):
+    if researcher_id:
+        query = """
+            SELECT researcher_id, type, COUNT(*)
+            FROM bibliographic_production
+            WHERE researcher_id = CAST(:researcher_id AS UUID)
+            GROUP BY researcher_id, type;
+        """
+        result = session.execute(
+            text(query), {'researcher_id': researcher_id}
+        ).fetchall()
+    else:
+        query = """
+            SELECT researcher_id, type, COUNT(*)
+            FROM bibliographic_production
+            GROUP BY researcher_id, type;
+        """
+        result = session.execute(text(query)).fetchall()
 
     columns = ['researcher_id', 'type', 'count']
     bibliographic_production = pd.DataFrame(result, columns=columns)
@@ -63,79 +88,138 @@ def bibliographic_production_count(session):
     return bibliographic_production.to_dict(orient='records')
 
 
-def list_great_area(session):
-    query = """
-        SELECT researcher_id, STRING_AGG(DISTINCT gae.name, ';') as area
-        FROM great_area_expertise gae
-        LEFT JOIN researcher_area_expertise r
-                ON gae.id = r.great_area_expertise_id
-        GROUP BY researcher_id
-    """
-    return session.execute(text(query)).fetchall()
+def list_great_area(session, researcher_id=None):
+    if researcher_id:
+        query = """
+            SELECT r.researcher_id, STRING_AGG(DISTINCT gae.name, ';') as area
+            FROM great_area_expertise gae
+            LEFT JOIN researcher_area_expertise r
+                    ON gae.id = r.great_area_expertise_id
+            WHERE r.researcher_id = CAST(:researcher_id AS UUID)
+            GROUP BY r.researcher_id
+        """
+        return session.execute(
+            text(query), {'researcher_id': researcher_id}
+        ).fetchall()
+    else:
+        query = """
+            SELECT researcher_id, STRING_AGG(DISTINCT gae.name, ';') as area
+            FROM great_area_expertise gae
+            LEFT JOIN researcher_area_expertise r
+                    ON gae.id = r.great_area_expertise_id
+            GROUP BY researcher_id
+        """
+        return session.execute(text(query)).fetchall()
 
 
-def list_speciality(session):
-    query = """
-        SELECT r.researcher_id,
-            STRING_AGG(asp.name || ' | ' || ae.name, '; ') AS area_specialty
-        FROM researcher_area_expertise r
-        RIGHT JOIN area_specialty asp ON asp.id = r.area_specialty_id
-        LEFT JOIN area_expertise ae ON r.area_expertise_id = ae.id
-        GROUP BY researcher_id;
-    """
-    return session.execute(text(query)).fetchall()
+def list_speciality(session, researcher_id=None):
+    if researcher_id:
+        query = """
+            SELECT r.researcher_id,
+                STRING_AGG(asp.name || ' | ' || ae.name, '; ') AS area_specialty
+            FROM researcher_area_expertise r
+            RIGHT JOIN area_specialty asp ON asp.id = r.area_specialty_id
+            LEFT JOIN area_expertise ae ON r.area_expertise_id = ae.id
+            WHERE r.researcher_id = CAST(:researcher_id AS UUID)
+            GROUP BY r.researcher_id;
+        """
+        return session.execute(
+            text(query), {'researcher_id': researcher_id}
+        ).fetchall()
+    else:
+        query = """
+            SELECT r.researcher_id,
+                STRING_AGG(asp.name || ' | ' || ae.name, '; ') AS area_specialty
+            FROM researcher_area_expertise r
+            RIGHT JOIN area_specialty asp ON asp.id = r.area_specialty_id
+            LEFT JOIN area_expertise ae ON r.area_expertise_id = ae.id
+            GROUP BY r.researcher_id;
+        """
+        return session.execute(text(query)).fetchall()
 
 
-def list_software(session):
-    query = """
-        SELECT researcher_id, COUNT(*) AS software
-        FROM software
-        GROUP BY researcher_id;
-    """
-    return session.execute(text(query)).fetchall()
+def list_software(session, researcher_id=None):
+    if researcher_id:
+        query = """
+            SELECT researcher_id, COUNT(*) AS software
+            FROM software
+            WHERE researcher_id = CAST(:researcher_id AS UUID)
+            GROUP BY researcher_id;
+        """
+        return session.execute(
+            text(query), {'researcher_id': researcher_id}
+        ).fetchall()
+    else:
+        return session.execute(
+            text('SELECT researcher_id, COUNT(*) AS software FROM software GROUP BY researcher_id;')
+        ).fetchall()
 
 
-def list_brand(session):
-    query = """
-        SELECT researcher_id, COUNT(*) AS brand
-        FROM brand
-        GROUP BY researcher_id;
-    """
-    return session.execute(text(query)).fetchall()
+def list_brand(session, researcher_id=None):
+    if researcher_id:
+        query = """
+            SELECT researcher_id, COUNT(*) AS brand
+            FROM brand
+            WHERE researcher_id = CAST(:researcher_id AS UUID)
+            GROUP BY researcher_id;
+        """
+        return session.execute(
+            text(query), {'researcher_id': researcher_id}
+        ).fetchall()
+    else:
+        return session.execute(
+            text('SELECT researcher_id, COUNT(*) AS brand FROM brand GROUP BY researcher_id;')
+        ).fetchall()
 
 
-def list_patent(session):
-    query = """
-        SELECT researcher_id, COUNT(*) AS patent
-        FROM patent
-        GROUP BY researcher_id;
-    """
-    return session.execute(text(query)).fetchall()
+def list_patent(session, researcher_id=None):
+    if researcher_id:
+        query = """
+            SELECT researcher_id, COUNT(*) AS patent
+            FROM patent
+            WHERE researcher_id = CAST(:researcher_id AS UUID)
+            GROUP BY researcher_id;
+        """
+        return session.execute(
+            text(query), {'researcher_id': researcher_id}
+        ).fetchall()
+    else:
+        return session.execute(
+            text('SELECT researcher_id, COUNT(*) AS patent FROM patent GROUP BY researcher_id;')
+        ).fetchall()
 
 
-def list_address(session):
-    query = """
-        SELECT researcher_id, city, organ
-        FROM researcher_address
-        ORDER BY researcher_id;
-    """
-    return session.execute(text(query)).fetchall()
+def list_address(session, researcher_id=None):
+    if researcher_id:
+        query = """
+            SELECT researcher_id, city, organ
+            FROM researcher_address
+            WHERE researcher_id = CAST(:researcher_id AS UUID)
+            ORDER BY researcher_id;
+        """
+        return session.execute(
+            text(query), {'researcher_id': researcher_id}
+        ).fetchall()
+    else:
+        return session.execute(
+            text('SELECT researcher_id, city, organ FROM researcher_address ORDER BY researcher_id;')
+        ).fetchall()
 
 
-def main():
+def main(researcher_id: str | None = None):
     session = next(get_sync_session())
     start_time = time.perf_counter()
     logger.info('researcher_production_routine_started')
 
     try:
-        delete_researcher_production(session)
+        delete_researcher_production(session, researcher_id)
 
         researchers = pd.DataFrame(
-            list_researchers(session),
+            list_researchers(session, researcher_id),
             columns=['researcher_id', 'name', 'lattes_id'],
         )
 
-        b_production = bibliographic_production_count(session)
+        b_production = bibliographic_production_count(session, researcher_id)
         columns = [
             'researcher_id',
             'book',
@@ -147,23 +231,23 @@ def main():
         b_production = pd.DataFrame(b_production, columns=columns)
 
         a_speciality = pd.DataFrame(
-            list_speciality(session),
+            list_speciality(session, researcher_id),
             columns=['researcher_id', 'area_specialty'],
         )
         great_area = pd.DataFrame(
-            list_great_area(session), columns=['researcher_id', 'area']
+            list_great_area(session, researcher_id), columns=['researcher_id', 'area']
         )
         software = pd.DataFrame(
-            list_software(session), columns=['researcher_id', 'software']
+            list_software(session, researcher_id), columns=['researcher_id', 'software']
         )
         brand = pd.DataFrame(
-            list_brand(session), columns=['researcher_id', 'brand']
+            list_brand(session, researcher_id), columns=['researcher_id', 'brand']
         )
         patent = pd.DataFrame(
-            list_patent(session), columns=['researcher_id', 'patent']
+            list_patent(session, researcher_id), columns=['researcher_id', 'patent']
         )
         address = pd.DataFrame(
-            list_address(session), columns=['researcher_id', 'city', 'organ']
+            list_address(session, researcher_id), columns=['researcher_id', 'city', 'organ']
         )
 
         researchers = researchers.merge(
@@ -237,4 +321,7 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--researcher-id', type=str, default=None)
+    args = parser.parse_args()
+    main(researcher_id=args.researcher_id)

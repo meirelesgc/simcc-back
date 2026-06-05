@@ -1,3 +1,4 @@
+import argparse
 import csv
 import os
 import time
@@ -43,14 +44,22 @@ if not PROXY:
     )
 
 
-def list_admin_researchers(session):
-    SCRIPT_SQL = text("""
-        SELECT researcher_id, name, lattes_id
-        FROM public.researcher
-        WHERE institution_id = '153f05ef-01a1-4198-9f1b-88d3e9442386';
-    """)
-
-    return session.execute(SCRIPT_SQL).mappings().all()
+def list_admin_researchers(session, researcher_id=None):
+    if researcher_id:
+        SCRIPT_SQL = text("""
+            SELECT researcher_id, name, lattes_id
+            FROM public.researcher
+            WHERE researcher_id = CAST(:researcher_id AS UUID);
+        """)
+        return session.execute(
+            SCRIPT_SQL, {'researcher_id': researcher_id}
+        ).mappings().all()
+    else:
+        SCRIPT_SQL = text("""
+            SELECT researcher_id, name, lattes_id
+            FROM public.researcher
+        """)
+        return session.execute(SCRIPT_SQL).mappings().all()
 
 
 def cnpq_att_call(lattes_id):
@@ -186,7 +195,7 @@ def download_xml(lattes_id, researcher_id):
         session.close()
 
 
-def main():
+def main(researcher_id: str | None = None):
     admin_session = next(get_admin_sync_session())
 
     start_time = time.perf_counter()
@@ -207,7 +216,7 @@ def main():
             if os.path.isfile(path) and file.endswith('.xml'):
                 os.remove(path)
 
-        researchers = list_admin_researchers(admin_session)
+        researchers = list_admin_researchers(admin_session, researcher_id)
 
         if not researchers:
             duration = time.perf_counter() - start_time
@@ -331,4 +340,7 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--researcher-id', type=str, default=None)
+    args = parser.parse_args()
+    main(researcher_id=args.researcher_id)

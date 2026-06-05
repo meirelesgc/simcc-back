@@ -1,3 +1,4 @@
+import argparse
 import datetime
 import time
 
@@ -10,17 +11,31 @@ from simcc.core.logging import get_logger
 logger = get_logger('routines')
 
 
-def article_metrics(session, year):
-    SCRIPT_SQL = text("""
-        SELECT qualis, COUNT(*) AS count_article, researcher_id
-        FROM public.bibliographic_production bp
-            JOIN public.bibliographic_production_article bpa ON
-                bp.id = bpa.bibliographic_production_id
-        WHERE type = 'ARTICLE' AND year_ >= :year
-        GROUP BY qualis, researcher_id;
-    """)
+def article_metrics(session, year, researcher_id=None):
+    if researcher_id:
+        SCRIPT_SQL = text("""
+            SELECT qualis, COUNT(*) AS count_article, researcher_id
+            FROM public.bibliographic_production bp
+                JOIN public.bibliographic_production_article bpa ON
+                    bp.id = bpa.bibliographic_production_id
+            WHERE type = 'ARTICLE' AND year_ >= :year
+            AND bp.researcher_id = CAST(:researcher_id AS UUID)
+            GROUP BY qualis, researcher_id;
+        """)
+        result = session.execute(
+            SCRIPT_SQL, {'year': year, 'researcher_id': researcher_id}
+        ).mappings().all()
+    else:
+        SCRIPT_SQL = text("""
+            SELECT qualis, COUNT(*) AS count_article, researcher_id
+            FROM public.bibliographic_production bp
+                JOIN public.bibliographic_production_article bpa ON
+                    bp.id = bpa.bibliographic_production_id
+            WHERE type = 'ARTICLE' AND year_ >= :year
+            GROUP BY qualis, researcher_id;
+        """)
+        result = session.execute(SCRIPT_SQL, {'year': year}).mappings().all()
 
-    result = session.execute(SCRIPT_SQL, {'year': year}).mappings().all()
     articles = pd.DataFrame(result)
 
     columns = [
@@ -52,16 +67,31 @@ def article_metrics(session, year):
     return articles
 
 
-def patent_metrics(session, year):
-    SCRIPT_SQL = text("""
-        SELECT researcher_id,
-            COUNT(*) FILTER (WHERE p.grant_date IS NULL) AS patent_not_granted,
-            COUNT(*) FILTER (WHERE p.grant_date IS NOT NULL) AS patent_granted
-        FROM patent p
-        WHERE development_year::INT >= :year
-        GROUP BY researcher_id;
-    """)
-    result = session.execute(SCRIPT_SQL, {'year': year}).mappings().all()
+def patent_metrics(session, year, researcher_id=None):
+    if researcher_id:
+        SCRIPT_SQL = text("""
+            SELECT researcher_id,
+                COUNT(*) FILTER (WHERE p.grant_date IS NULL) AS patent_not_granted,
+                COUNT(*) FILTER (WHERE p.grant_date IS NOT NULL) AS patent_granted
+            FROM patent p
+            WHERE development_year::INT >= :year
+            AND researcher_id = CAST(:researcher_id AS UUID)
+            GROUP BY researcher_id;
+        """)
+        result = session.execute(
+            SCRIPT_SQL, {'year': year, 'researcher_id': researcher_id}
+        ).mappings().all()
+    else:
+        SCRIPT_SQL = text("""
+            SELECT researcher_id,
+                COUNT(*) FILTER (WHERE p.grant_date IS NULL) AS patent_not_granted,
+                COUNT(*) FILTER (WHERE p.grant_date IS NOT NULL) AS patent_granted
+            FROM patent p
+            WHERE development_year::INT >= :year
+            GROUP BY researcher_id;
+        """)
+        result = session.execute(SCRIPT_SQL, {'year': year}).mappings().all()
+
     df = pd.DataFrame(result)
     if df.empty:
         return pd.DataFrame(
@@ -70,16 +100,31 @@ def patent_metrics(session, year):
     return df
 
 
-def guidance_metrics(session, year):
-    SCRIPT_SQL = text("""
-        SELECT researcher_id,
-            unaccent(lower((g.nature || ' ' || g.status))) AS nature,
-            COUNT(*) as count_nature
-        FROM guidance g
-        WHERE g.year >= :year
-        GROUP BY nature, g.status, g.researcher_id;
-    """)
-    result = session.execute(SCRIPT_SQL, {'year': year}).mappings().all()
+def guidance_metrics(session, year, researcher_id=None):
+    if researcher_id:
+        SCRIPT_SQL = text("""
+            SELECT researcher_id,
+                unaccent(lower((g.nature || ' ' || g.status))) AS nature,
+                COUNT(*) as count_nature
+            FROM guidance g
+            WHERE g.year >= :year
+            AND g.researcher_id = CAST(:researcher_id AS UUID)
+            GROUP BY nature, g.status, g.researcher_id;
+        """)
+        result = session.execute(
+            SCRIPT_SQL, {'year': year, 'researcher_id': researcher_id}
+        ).mappings().all()
+    else:
+        SCRIPT_SQL = text("""
+            SELECT researcher_id,
+                unaccent(lower((g.nature || ' ' || g.status))) AS nature,
+                COUNT(*) as count_nature
+            FROM guidance g
+            WHERE g.year >= :year
+            GROUP BY nature, g.status, g.researcher_id;
+        """)
+        result = session.execute(SCRIPT_SQL, {'year': year}).mappings().all()
+
     guidance = pd.DataFrame(result)
 
     rename_dict = {
@@ -119,14 +164,27 @@ def guidance_metrics(session, year):
     return guidance
 
 
-def academic_degree_metrics(session):
-    SCRIPT_SQL = text("""
-        SELECT researcher_id, MAX(education_end) AS first_doc
-        FROM education
-        WHERE degree = 'DOCTORATE'
-        GROUP BY researcher_id
-    """)
-    result = session.execute(SCRIPT_SQL).mappings().all()
+def academic_degree_metrics(session, researcher_id=None):
+    if researcher_id:
+        SCRIPT_SQL = text("""
+            SELECT researcher_id, MAX(education_end) AS first_doc
+            FROM education
+            WHERE degree = 'DOCTORATE'
+            AND researcher_id = CAST(:researcher_id AS UUID)
+            GROUP BY researcher_id
+        """)
+        result = session.execute(
+            SCRIPT_SQL, {'researcher_id': researcher_id}
+        ).mappings().all()
+    else:
+        SCRIPT_SQL = text("""
+            SELECT researcher_id, MAX(education_end) AS first_doc
+            FROM education
+            WHERE degree = 'DOCTORATE'
+            GROUP BY researcher_id
+        """)
+        result = session.execute(SCRIPT_SQL).mappings().all()
+
     df = pd.DataFrame(result)
     if df.empty:
         return pd.DataFrame(columns=['researcher_id', 'first_doc'])
@@ -141,12 +199,22 @@ def simple_count_metrics(session, sql, params, column_name):
     return df
 
 
-def list_researchers(session):
-    SCRIPT_SQL = text("""
-        SELECT id AS researcher_id, name, lattes_id
-        FROM public.researcher
-    """)
-    result = session.execute(SCRIPT_SQL).mappings().all()
+def list_researchers(session, researcher_id=None):
+    if researcher_id:
+        SCRIPT_SQL = text("""
+            SELECT id AS researcher_id, name, lattes_id
+            FROM public.researcher
+            WHERE id = CAST(:researcher_id AS UUID)
+        """)
+        result = session.execute(
+            SCRIPT_SQL, {'researcher_id': researcher_id}
+        ).mappings().all()
+    else:
+        SCRIPT_SQL = text("""
+            SELECT id AS researcher_id, name, lattes_id
+            FROM public.researcher
+        """)
+        result = session.execute(SCRIPT_SQL).mappings().all()
     return pd.DataFrame(result)
 
 
@@ -239,14 +307,14 @@ def researcher_classification(researcher: pd.Series) -> str:
     return 'E'
 
 
-def main():
+def main(researcher_id: str | None = None):
     YEAR_FILTER = 2019
     session = next(get_sync_session())
     start_time = time.perf_counter()
     logger.info('researcher_classification_routine_started')
 
     try:
-        dataframe = list_researchers(session)
+        dataframe = list_researchers(session, researcher_id)
 
         if dataframe.empty:
             duration = time.perf_counter() - start_time
@@ -256,61 +324,59 @@ def main():
             )
             return
 
-        # Merging metrics
+        rid_filter = {'year': YEAR_FILTER, 'researcher_id': researcher_id} if researcher_id else {'year': YEAR_FILTER}
+
+        def rid_sql(base_sql):
+            if researcher_id:
+                return base_sql + ' AND researcher_id = CAST(:researcher_id AS UUID)'
+            return base_sql
+
         metrics_calls = [
-            (article_metrics, [YEAR_FILTER]),
-            (patent_metrics, [YEAR_FILTER]),
-            (guidance_metrics, [YEAR_FILTER]),
-            (academic_degree_metrics, []),
+            (article_metrics, [YEAR_FILTER, researcher_id]),
+            (patent_metrics, [YEAR_FILTER, researcher_id]),
+            (guidance_metrics, [YEAR_FILTER, researcher_id]),
+            (academic_degree_metrics, [researcher_id]),
             (
                 simple_count_metrics,
                 [
-                    """
+                    rid_sql("""
                 SELECT researcher_id, COUNT(*) AS software
                 FROM public.software s
-                WHERE s.year >= :year
-                GROUP BY researcher_id;
-                """,
-                    {'year': YEAR_FILTER},
+                WHERE s.year >= :year""") + ' GROUP BY researcher_id;',
+                    rid_filter,
                     'software',
                 ],
             ),
             (
                 simple_count_metrics,
                 [
-                    """
+                    rid_sql("""
                 SELECT researcher_id, COUNT(*) AS book
                 FROM bibliographic_production
-                WHERE type = 'BOOK' AND year_ >= :year
-                GROUP BY researcher_id
-                """,
-                    {'year': YEAR_FILTER},
+                WHERE type = 'BOOK' AND year_ >= :year""") + ' GROUP BY researcher_id',
+                    rid_filter,
                     'book',
                 ],
             ),
             (
                 simple_count_metrics,
                 [
-                    """
+                    rid_sql("""
                 SELECT researcher_id, COUNT(*) AS book_chapter
                 FROM bibliographic_production
-                WHERE type = 'BOOK_CHAPTER' AND year_ >= :year
-                GROUP BY researcher_id
-                """,
-                    {'year': YEAR_FILTER},
+                WHERE type = 'BOOK_CHAPTER' AND year_ >= :year""") + ' GROUP BY researcher_id',
+                    rid_filter,
                     'book_chapter',
                 ],
             ),
             (
                 simple_count_metrics,
                 [
-                    """
+                    rid_sql("""
                 SELECT researcher_id, COUNT(*) AS brand
                 FROM public.brand b
-                WHERE b.year >= :year
-                GROUP BY researcher_id;
-                """,
-                    {'year': YEAR_FILTER},
+                WHERE b.year >= :year""") + ' GROUP BY researcher_id;',
+                    rid_filter,
                     'brand',
                 ],
             ),
@@ -356,4 +422,7 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--researcher-id', type=str, default=None)
+    args = parser.parse_args()
+    main(researcher_id=args.researcher_id)
