@@ -18,6 +18,7 @@ from simcc.routers import (
     metrics,
     research_group,
     researcher,
+    routines,
 )
 from simcc.routers.production import (
     bibliographic,
@@ -55,6 +56,7 @@ app.include_router(institution.router)
 app.include_router(graduate_program.router)
 app.include_router(research_group.router)
 app.include_router(maria.router)
+app.include_router(routines.router)
 
 
 @app.get('/', status_code=HTTPStatus.OK)
