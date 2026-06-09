@@ -1,0 +1,295 @@
+from pathlib import Path
+
+import pandas as pd
+import structlog
+
+from simcc.core.dependencies import get_settings
+from simcc.core.utils import download_researcher_image
+from simcc.repositories import researcher_repo
+from simcc.schemas.common import PaginationParams
+
+logger = structlog.get_logger(__name__)
+settings = get_settings()
+log_config = settings.LOG_LEVEL_MIDDLEWARE
+
+
+async def search_researchers(
+    session,
+    filters,
+    search_type=None,
+    name=None,
+    pagination: PaginationParams = None,
+):
+    if log_config == 'all':
+        logger.info(
+            'searching_researchers',
+            search_type=search_type,
+            name=name,
+            filters=filters.model_dump()
+            if hasattr(filters, 'model_dump')
+            else str(filters),
+        )
+
+    if search_type == 'FOMENT' and not filters.modality:
+        filters.modality = '*'
+
+    researchers = await researcher_repo.search_researchers(
+        session, filters, search_type, name, pagination
+    )
+
+    if researchers:
+        await enrich_researchers(session, researchers)
+
+    return researchers
+
+
+async def enrich_researchers(session, researchers: list):
+    if not researchers:
+        return researchers
+
+    processed_researchers = []
+    for r in researchers:
+        if hasattr(r, 'model_dump'):  # Pydantic
+            processed_researchers.append(r.model_dump())
+        elif hasattr(r, '_asdict'):  # NamedTuple or similar
+            processed_researchers.append(r._asdict())
+        elif not isinstance(r, dict) and hasattr(r, 'get'):  # RowMapping
+            processed_researchers.append(dict(r))
+        else:
+            processed_researchers.append(r)
+    researcher_ids = []
+    lattes_ids = []
+
+    for r in processed_researchers:
+        rid = r.get('id')
+        lid = r.get('lattes_id')
+        if rid:
+            researcher_ids.append(rid)
+        if lid:
+            lattes_ids.append(lid)
+
+    if not researcher_ids:
+        return processed_researchers
+
+    gp_data = await researcher_repo.list_graduate_programs_by_ids(
+        session, researcher_ids
+    )
+    rg_data = await researcher_repo.list_research_groups_by_ids(
+        session, researcher_ids
+    )
+    subsidy_data = await researcher_repo.list_subsidy_by_ids(
+        session, researcher_ids
+    )
+    dep_data = await researcher_repo.list_departments_by_ids(
+        session, researcher_ids
+    )
+    ufmg_data = await researcher_repo.list_ufmg_data_by_ids(
+        session, researcher_ids
+    )
+    user_data = await researcher_repo.list_user_data_by_lattes_ids(
+        session, lattes_ids
+    )
+
+    # Create mapping dictionaries
+    gp_map = {row['id']: row['graduate_programs'] for row in gp_data}
+    rg_map = {row['id']: row['research_groups'] for row in rg_data}
+    subsidy_map = {row['id']: row['subsidy'] for row in subsidy_data}
+    dep_map = {row['id']: row['departments'] for row in dep_data}
+    ufmg_map = {row['id']: dict(row) for row in ufmg_data}
+    user_map = {row['lattes_id']: row['user'] for row in user_data}
+
+    # Apply data to researchers
+    for r in processed_researchers:
+        rid = r.get('id')
+        lid = r.get('lattes_id')
+
+        r['graduate_programs'] = gp_map.get(rid, [])
+        r['research_groups'] = rg_map.get(rid, [])
+        r['subsidy'] = subsidy_map.get(rid, [])
+        r['departments'] = dep_map.get(rid, [])
+        r['ufmg'] = ufmg_map.get(rid)
+        r['user'] = user_map.get(lid)
+
+    # Replace original list content if possible, or return new list
+    if len(researchers) == len(processed_researchers):
+        for i in range(len(researchers)):
+            researchers[i] = processed_researchers[i]
+
+    return processed_researchers
+
+
+async def get_metrics_academic_degree(session, filters):
+    return await researcher_repo.get_metrics_academic_degree(session, filters)
+
+
+async def get_metrics_great_area(session, filters):
+    return await researcher_repo.get_metrics_great_area(session, filters)
+
+
+async def get_metrics_yearly_production(session, filters, production_type):
+    return await researcher_repo.get_metrics_yearly_production(
+        session, filters, production_type
+    )
+
+
+async def get_metrics_researcher(session, filters):
+    return await researcher_repo.get_metrics_researcher(session, filters)
+
+
+async def get_metrics_patents(session, filters):
+    return await researcher_repo.get_metrics_patents(session, filters)
+
+
+async def get_metrics_guidance(session, filters):
+    return await researcher_repo.get_metrics_guidance(session, filters)
+
+
+async def get_metrics_speaker(session, filters):
+    return await researcher_repo.get_metrics_speaker(session, filters)
+
+
+async def get_metrics_education(session, filters):
+    return await researcher_repo.get_metrics_education(session, filters)
+
+
+async def get_metrics_software(session, filters):
+    return await researcher_repo.get_metrics_software(session, filters)
+
+
+async def get_metrics_research_report(session, filters):
+    return await researcher_repo.get_metrics_research_report(session, filters)
+
+
+async def get_metrics_brand(session, filters, nature=None):
+    return await researcher_repo.get_metrics_brand(
+        session, filters, nature=nature
+    )
+
+
+async def get_metrics_research_project(session, filters):
+    return await researcher_repo.get_metrics_research_project(session, filters)
+
+
+async def get_metrics_lattes_update(session, filters):
+    return await researcher_repo.get_metrics_lattes_update(session, filters)
+
+
+async def get_metrics_scholarship(session, filters):
+    return await researcher_repo.get_metrics_scholarship(session, filters)
+
+
+async def get_metrics_magazine(session, issn=None, initials=None):
+    return await researcher_repo.get_metrics_magazine(
+        session, issn=issn, initials=initials
+    )
+
+
+async def list_labs(session, lattes_id=None, researcher_id=None):
+    return await researcher_repo.list_labs(session, lattes_id, researcher_id)
+
+
+async def list_institutions(session):
+    return await researcher_repo.list_institutions(session)
+
+
+async def get_institution(session, institution_id):
+    return await researcher_repo.get_institution(session, institution_id)
+
+
+async def list_researcher_terms(session, filters):
+    return await researcher_repo.list_researcher_terms(session, filters)
+
+
+async def list_original_words(session, initials, type_):
+    data = await researcher_repo.list_original_words(session, initials, type_)
+
+    return [
+        {
+            'term': str(row['term']).capitalize(),
+            'frequency': str(row['frequency']),
+            'type': str(row['type']),
+            'checkbox': 0,
+        }
+        for row in data
+    ]
+
+
+async def list_institution_frequency(session, terms, institution, type_):
+    data = await researcher_repo.list_institution_frequency(
+        session, terms, institution, type_
+    )
+
+    return [
+        {
+            'id': str(row['id']),
+            'institution': str(row['institution']),
+            'among': str(row['qtd']),
+            'image': str(row['image']) if row['image'] else None,
+        }
+        for row in data
+    ]
+
+
+async def list_co_authorship(session, researcher_id):
+    co_authors_data = await researcher_repo.list_co_authorship(
+        session, researcher_id
+    )
+
+    if not co_authors_data:
+        return []
+
+    researcher = await researcher_repo.get_researcher(session, researcher_id)
+    if not researcher:
+        return []
+
+    researcher_institution_name = researcher.get('university')
+    researcher_name = researcher.get('name')
+
+    df = pd.DataFrame(co_authors_data)
+
+    def co_authorship_type(co_authorship_institution):
+        if co_authorship_institution == researcher_institution_name:
+            return 'internal'
+        return 'external'
+
+    df['type'] = df['institution'].apply(co_authorship_type)
+
+    df['initials'] = df['name'].apply(
+        lambda name: (
+            ''.join(w[0] for w in str(name).replace('.', '').split() if w)
+            if pd.notnull(name)
+            else ''
+        )
+    )
+
+    agg_config = {
+        'among': 'sum',
+        'type': lambda x: 'internal' if 'internal' in x.values else 'external',
+    }
+    columns = ['name', 'initials']
+    df = df.groupby(columns).agg(agg_config).reset_index()
+
+    df = df[df['name'] != researcher_name]
+
+    return df.to_dict(orient='records')
+
+
+async def get_departament_rt(session):
+    return await researcher_repo.get_departament_rt(session)
+
+
+async def get_researcher_id_by_params(session, lattes_id=None, name=None):
+    return await researcher_repo.get_researcher_id(session, lattes_id, name)
+
+
+async def get_researcher_image_path(session, researcher_id):
+    path_image = Path(f'storage/image_researcher/{researcher_id}.jpg')
+
+    if not path_image.exists():
+        await download_researcher_image(researcher_id, session=session)
+
+    return str(path_image)
+
+
+async def get_researcher_filter(session):
+    return await researcher_repo.get_researcher_filter(session)

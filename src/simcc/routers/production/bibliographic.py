@@ -1,7 +1,6 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
 from simcc.core.dependencies import (
-    AdminAsyncSession,
     AsyncSession,
     CurrentUser,
     Filters,
@@ -11,7 +10,10 @@ from simcc.schemas.production import (
     ArticleProduction,
     BookChapterProduction,
     BookProduction,
+    Magazine,
+    MagazineFilters,
     PapersProduction,
+    RecentlyUpdatedArticle,
 )
 from simcc.services import production_service
 
@@ -22,7 +24,6 @@ router = APIRouter(tags=['Production - Bibliographic'])
 @router.get('/book_production_researcher', include_in_schema=False)
 async def list_book_production(
     session: AsyncSession,
-    admin_session: AdminAsyncSession,
     current_user: CurrentUser,
     filters: Filters,
     terms: str | None = None,
@@ -30,7 +31,7 @@ async def list_book_production(
     filters.term = terms if terms else filters.term
     filters.star = current_user if filters.star else None
 
-    return await production_service.list_book(session, admin_session, filters)
+    return await production_service.list_book(session, filters)
 
 
 @router.get(
@@ -43,7 +44,6 @@ async def list_book_production(
 )
 async def list_book_chapter_production(
     session: AsyncSession,
-    admin_session: AdminAsyncSession,
     current_user: CurrentUser,
     filters: Filters,
     terms: str | None = None,
@@ -51,9 +51,7 @@ async def list_book_chapter_production(
     filters.term = terms if terms else filters.term
     filters.star = current_user if filters.star else None
 
-    return await production_service.list_book_chapter(
-        session, admin_session, filters
-    )
+    return await production_service.list_book_chapter(session, filters)
 
 
 @router.get('/outstanding_articles', include_in_schema=False)
@@ -75,7 +73,6 @@ async def list_outstanding_articles(
 @router.get('/bibliographic_production_researcher', include_in_schema=False)
 async def list_bibliographic_production(
     session: AsyncSession,
-    admin_session: AdminAsyncSession,
     current_user: CurrentUser,
     filters: Filters,
     terms: str | None = None,
@@ -86,7 +83,7 @@ async def list_bibliographic_production(
     filters.star = current_user if filters.star else None
 
     return await production_service.list_bibliographic_production(
-        session, admin_session, filters, qualis
+        session, filters, qualis
     )
 
 
@@ -94,7 +91,6 @@ async def list_bibliographic_production(
 @router.get('/researcher_production/papers_magazine', include_in_schema=False)
 async def list_papers_magazine(
     session: AsyncSession,
-    admin_session: AdminAsyncSession,
     current_user: CurrentUser,
     filters: Filters,
     terms: str | None = None,
@@ -102,6 +98,23 @@ async def list_papers_magazine(
     filters.term = terms if terms else filters.term
     filters.star = current_user if filters.star else None
 
-    return await production_service.list_papers_magazine(
-        session, admin_session, filters
-    )
+    return await production_service.list_papers_magazine(session, filters)
+
+
+@router.get('/magazine', response_model=list[Magazine])
+async def list_magazine(
+    session: AsyncSession,
+    filters: MagazineFilters = Depends(),
+):
+    return await production_service.list_magazine(session, filters)
+
+
+@router.get('/recently_updated', response_model=list[RecentlyUpdatedArticle])
+async def list_recently_updated(
+    session: AsyncSession,
+    filters: Filters,
+    university: str | None = None,
+):
+    filters.institution = university if university else None
+
+    return await production_service.list_recently_updated(session, filters)

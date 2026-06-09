@@ -5,6 +5,8 @@ from uuid import UUID
 from fastapi import Query
 from pydantic import BaseModel
 
+from simcc.schemas.common import PaginationParams
+
 
 class QualisOptions(str, Enum):
     A1: str = 'A1'
@@ -19,11 +21,14 @@ class QualisOptions(str, Enum):
     SQ: str = 'SQ'
 
 
-class DefaultFilters(BaseModel):
+class DefaultFilters(PaginationParams, BaseModel):
+    model_config = {'populate_by_name': True}
+
     # Identificadores e Relacionamentos
     institution_id: Optional[Union[UUID, str]] = None
     graduate_program_id: Optional[Union[UUID, str]] = None
     researcher_id: Optional[Union[UUID, str]] = None
+    researcher_ids: Optional[list[Union[UUID, str]]] = None
     dep_id: Optional[str] = None
     group_id: Optional[Union[UUID, str]] = None
     collection_id: Optional[Union[UUID, str]] = None
@@ -34,7 +39,8 @@ class DefaultFilters(BaseModel):
     terms: Optional[str] = Query(None, alias='terms')
 
     # Atributos e Localização
-    institution: Optional[str] = None
+    institution: Optional[str] = Query(None, alias='university')
+    university: Optional[str] = Query(None, include_in_schema=False)
     graduate_program: Optional[str] = None
     departament: Optional[str] = None
     group: Optional[str] = None
@@ -47,8 +53,6 @@ class DefaultFilters(BaseModel):
     year: Optional[Union[int, str]] = None
     type: Optional[str] = None
     distinct: Optional[Union[int, str]] = 1
-    page: Optional[int] = None
-    lenght: Optional[int] = None
 
     # Métricas e Flags
     star: Optional[bool] = False

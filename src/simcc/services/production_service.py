@@ -1,53 +1,81 @@
-from simcc.repositories import collection_repo, production_repo
+from simcc.repositories import production_repo
 
 
-async def _filter_collection_entries(admin_session, type, collection_id):
-    ids_dict = await collection_repo.get_collection_entries(
-        admin_session, type, collection_id
-    )
-    return ids_dict.get('ids') if ids_dict else None
-
-
-async def _filter_star_entries(admin_session, type, user):
-    ids_dict = await collection_repo.filter_star_entries(
-        admin_session, type, user['user_id']
-    )
-    return ids_dict.get('ids') if ids_dict else None
-
-
-async def _apply_admin_filters(admin_session, filters, prod_type: str):
-    if not admin_session:
-        return
-
-    if filters.collection_id:
-        filters.collection_id = await _filter_collection_entries(
-            admin_session, prod_type, filters.collection_id
-        )
-    if filters.star:
-        filters.star = await _filter_star_entries(
-            admin_session, prod_type, filters.star
-        )
-
-
-async def list_papers_magazine(session, admin_session, filters):
-    await _apply_admin_filters(admin_session, filters, 'PAPER')
+async def list_papers_magazine(session, filters):
     return await production_repo.list_papers_magazine(session, filters)
 
 
-async def list_bibliographic_production(
-    session, admin_session, filters, qualis=None
-):
-    await _apply_admin_filters(admin_session, filters, 'ARTICLE')
+async def list_magazine(session, filters):
+    return await production_repo.list_magazine(session, filters)
+
+
+async def list_recently_updated(session, filters):
+    return await production_repo.list_recently_updated(session, filters)
+
+
+async def list_bibliographic_production(session, filters, qualis=None):
     return await production_repo.list_bibliographic_production(
         session, filters, qualis
     )
 
 
-async def list_book_chapter(session, admin_session, filters):
-    await _apply_admin_filters(admin_session, filters, 'BOOK_CHAPTER')
+async def list_book_chapter(session, filters):
     return await production_repo.list_book_chapter(session, filters)
 
 
-async def list_book(session, admin_session, filters):
-    await _apply_admin_filters(admin_session, filters, 'BOOK')
+async def list_book(session, filters):
     return await production_repo.list_book(session, filters)
+
+
+async def list_professional_experience(session, filters):
+    return await production_repo.list_professional_experience(session, filters)
+
+
+async def list_patent(session, filters):
+    return await production_repo.list_patent(session, filters)
+
+
+async def list_participation_event(session, filters):
+    return await production_repo.list_participation_event(session, filters)
+
+
+async def list_brand(session, filters):
+    return await production_repo.list_brand(session, filters)
+
+
+async def list_researcher_report(session, filters):
+    return await production_repo.list_researcher_report(session, filters)
+
+
+async def list_software(session, filters):
+    return await production_repo.list_software(session, filters)
+
+
+async def list_guidance_production(session, filters):
+    return await production_repo.list_guidance_production(session, filters)
+
+
+async def list_research_projects(session, filters):
+    return await production_repo.list_research_projects(session, filters)
+
+
+async def list_researcher_production_events(session, filters):
+    return await production_repo.list_researcher_production_events(
+        session, filters
+    )
+
+
+async def list_researcher_scholarships(session, filters):
+    return await production_repo.list_researcher_scholarships(session, filters)
+
+
+async def get_graduate_program_production(session, filters):
+    return await production_repo.get_graduate_program_production(
+        session, filters
+    )
+
+
+async def list_general_production_metrics(session, filters):
+    return await production_repo.list_general_production_metrics(
+        session, filters
+    )
