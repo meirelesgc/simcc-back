@@ -1,0 +1,45 @@
+services:
+  simcc_db:
+    image: pgvector/pgvector:pg17
+    volumes:
+      - simcc_db:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: simcc
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+      - '5432:5432'
+    restart: unless-stopped
+  simcc_hop:
+    image: gleidsoncosta/simcc-extrator:latest
+    profiles: [ "routines" ]
+    volumes:
+      - ./storage/xml:/files/jade-extrator/datasets/lattes_xml
+    environment:
+      HOP_LOG_LEVEL: Basic
+      HOP_PROJECT_NAME: Jade-Extrator
+      HOP_PROJECT_FOLDER: /files/jade-extrator
+      HOP_RUN_CONFIG: local
+      HOP_FILE_PATH: $${PROJECT_HOME}/workflows/Index.hwf
+      HOP_RUN_PARAMETERS: 'DATABASE_URL=jdbc:postgresql://simcc_db:5432/conectee?user=postgres&password=postgres,ADMIN_DATABASE_URL=jdbc:postgresql://simcc_db:5432/conectee_admin?user=postgres&password=postgres'
+  simcc_api:
+    image: gleidsoncosta/simcc-back:latest
+    entrypoint: ./entrypoint.sh
+    build: .
+    ports:
+      - "8000:8000"
+    depends_on:
+      - simcc_db
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@simcc_db:5432/conectee
+      ADMIN_DATABASE_URL: postgresql+asyncpg://postgres:postgres@simcc-admin-db:5432/conectee_admin
+    volumes:
+      - ./logs:/app/logs
+      - ./storage:/app/storage
+volumes:
+  simcc_db:

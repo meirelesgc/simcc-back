@@ -14,7 +14,14 @@ dependencies = [
     "httpx (>=0.28.1,<0.29.0)",
     "asyncpg (>=0.31.0,<0.32.0)",
     "psycopg[binary] (>=3.3.4,<4.0.0)",
-    "pandas (>=3.0.2,<4.0.0)"
+    "pandas (>=3.0.2,<4.0.0)",
+    "unidecode (>=1.4.0,<2.0.0)",
+    "zeep (>=4.3.1,<5.0.0)",
+    "langchain-openai (>=1.2.1,<2.0.0)",
+    "structlog (>=25.5.0,<26.0.0)",
+    "alembic (>=1.18.4,<2.0.0)",
+    "nltk (>=3.9.4,<4.0.0)",
+    "firebase-admin (>=7.4.0,<8.0.0)",
 ]
 
 [tool.poetry]
@@ -41,13 +48,21 @@ pythonpath = ['.']
 addopts = ['-p', 'no:warnings']
 
 [tool.taskipy.tasks]
-run = 'fastapi dev src/simcc'
-test = 'pytest -s -x --cov=fast_zero -vv'
+run = 'LOG_LEVEL_MIDDLEWARE=error fastapi dev src/simcc --reload-dir "src/simcc"'
+test = 'LOG_LEVEL_MIDDLEWARE=error pytest -s -x --cov=src/simcc -vv'
 cov = 'coverage html'
+
 [dependency-groups]
 dev = [
-    "pytest (>=9.0.3,<10.0.0)",
     "pytest-cov (>=7.1.0,<8.0.0)",
     "taskipy (>=1.14.1,<2.0.0)",
-    "ruff (>=0.15.12,<0.16.0)"
+    "ruff (>=0.15.12,<0.16.0)",
+    "factory-boy (>=3.3.3,<4.0.0)",
+    "pytest-repeat (>=0.9.4,<0.10.0)",
+    "pytest (>=9.0.3,<10.0.0)",
+    "pytest-asyncio (>=1.4.0,<2.0.0)",
+    "testcontainers[postgres] (>=4.14.2,<5.0.0)",
+    "mkdocs (>=1.6.1,<2.0.0)",
+    "mkdocs-material (>=9.7.6,<10.0.0)",
+    "respx (>=0.23.1,<0.24.0)"
 ]
