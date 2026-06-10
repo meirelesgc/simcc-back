@@ -22,6 +22,7 @@ dependencies = [
     "alembic (>=1.18.4,<2.0.0)",
     "nltk (>=3.9.4,<4.0.0)",
     "firebase-admin (>=7.4.0,<8.0.0)",
+    "numpy (>=2.3,<2.4)",
 ]
 
 [tool.poetry]
