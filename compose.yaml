@@ -1,52 +1,44 @@
 services:
-  simcc_db:
-    image: pgvector/pgvector:pg17
+  db:
+    extends:
+      file: docker/compose/base.compose.yaml
+      service: base_db
+    container_name: db
     ports:
       - "5432:5432"
     volumes:
-      - simcc_db:/var/lib/postgresql/data
+      - db:/var/lib/postgresql/data
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: simcc
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      POSTGRES_DB: postgres
 
-  simcc_hop:
-    image: gleidsoncosta/simcc-extrator:latest
-    profiles:
-      - routines
+  hop:
+    extends:
+      file: docker/compose/base.compose.yaml
+      service: base_hop
+    container_name: hop
     environment:
-      HOP_LOG_LEVEL: Basic
       HOP_PROJECT_NAME: Jade-Extrator
       HOP_PROJECT_FOLDER: /files/jade-extrator
-      HOP_RUN_CONFIG: local
-      HOP_FILE_PATH: $${PROJECT_HOME}/workflows/Index.hwf
-      HOP_RUN_PARAMETERS: "DATABASE_URL=jdbc:postgresql://simcc_db:5432/conectee?user=postgres&password=postgres,ADMIN_DATABASE_URL=jdbc:postgresql://simcc_db:5432/conectee_admin?user=postgres&password=postgres"
+      HOP_RUN_PARAMETERS: "DATABASE_URL=jdbc:postgresql://db:5432/postgres?user=postgres&password=postgres,ADMIN_DATABASE_URL=jdbc:postgresql://db:5432/postgres?user=postgres&password=postgres"
     volumes:
       - ./storage/xml:/files/jade-extrator/datasets/lattes_xml
     depends_on:
-      simcc_db:
+      db:
         condition: service_healthy
 
-  simcc_api:
-    image: gleidsoncosta/simcc-back:latest
-    build: .
-    entrypoint: ./entrypoint.sh
+  api:
+    extends:
+      file: docker/compose/base.compose.yaml
+      service: base_api
+    container_name: api
     ports:
       - "8000:8000"
     environment:
-      DATABASE_URL: postgresql+asyncpg://postgres:postgres@simcc_db:5432/simcc
-      ADMIN_DATABASE_URL: postgresql+asyncpg://postgres:postgres@simcc_db:5432/simcc_admin
-    volumes:
-      - ./logs:/app/logs
-      - ./storage:/app/storage
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/postgres
+      ADMIN_DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/postgres
     depends_on:
-      simcc_db:
+      db:
         condition: service_healthy
 
 volumes:
-  simcc_db:
+  db:

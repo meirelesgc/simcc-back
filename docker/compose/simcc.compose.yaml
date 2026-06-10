@@ -1,0 +1,42 @@
+services:
+  simcc_db:
+    extends:
+      file: base.compose.yaml
+      service: base_db
+    container_name: prod_simcc_db
+    volumes:
+      - simcc_db:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: simcc
+
+  simcc_hop:
+    extends:
+      file: base.compose.yaml
+      service: base_hop
+    container_name: prod_simcc_hop
+    environment:
+      HOP_PROJECT_NAME: Jade-Extrator
+      HOP_PROJECT_FOLDER: /files/jade-extrator
+      HOP_RUN_PARAMETERS: "DATABASE_URL=jdbc:postgresql://simcc_db:5432/simcc?user=postgres&password=postgres,ADMIN_DATABASE_URL=jdbc:postgresql://simcc_db:5432/simcc_admin?user=postgres&password=postgres"
+    volumes:
+      - ./storage/xml:/files/jade-extrator/datasets/lattes_xml
+    depends_on:
+      simcc_db:
+        condition: service_healthy
+
+  simcc_api:
+    extends:
+      file: base.compose.yaml
+      service: base_api
+    container_name: prod_simcc_api
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@simcc_db:5432/simcc
+      ADMIN_DATABASE_URL: postgresql+asyncpg://postgres:postgres@simcc_db:5432/simcc_admin
+    depends_on:
+      simcc_db:
+        condition: service_healthy
+
+volumes:
+  simcc_db:
