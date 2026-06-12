@@ -21,7 +21,7 @@ def get_db():
     try:
         firebase_admin.get_app()
     except ValueError:
-        cred = credentials.Certificate('cert.json')
+        cred = credentials.Certificate(SETTINGS.FIREBASE_CERT_PATH)
         firebase_admin.initialize_app(cred)
     return firestore.client()
 
@@ -147,12 +147,12 @@ def terms_dataframe(session) -> pd.DataFrame:
 
 
 def main():
-    db = get_db()
     session = next(get_sync_session())
     start_time = time.perf_counter()
     logger.info('search_term_routine_started')
 
     try:
+        db = get_db()
         collection_ref = db.collection(SETTINGS.FIREBASE_COLLECTION)
 
         deleted_total = 0

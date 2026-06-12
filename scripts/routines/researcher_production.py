@@ -1,3 +1,4 @@
+import argparse
 import time
 
 import numpy as np
@@ -10,7 +11,14 @@ from simcc.core.logging import get_logger
 logger = get_logger('routines')
 
 
-def list_researchers(session):
+def list_researchers(session, researcher_id=None):
+    if researcher_id:
+        query = """
+            SELECT id AS researcher_id, name, lattes_id
+            FROM public.researcher
+            WHERE id = :researcher_id
+        """
+        return session.execute(text(query), {'researcher_id': researcher_id}).fetchall()
     query = """
         SELECT id AS researcher_id, name, lattes_id
         FROM public.researcher
@@ -18,9 +26,14 @@ def list_researchers(session):
     return session.execute(text(query)).fetchall()
 
 
-def delete_researcher_production(session):
-    query = 'DELETE FROM researcher_production'
-    session.execute(text(query))
+def delete_researcher_production(session, researcher_id=None):
+    if researcher_id:
+        session.execute(
+            text('DELETE FROM researcher_production WHERE researcher_id = :researcher_id'),
+            {'researcher_id': researcher_id},
+        )
+    else:
+        session.execute(text('DELETE FROM researcher_production'))
 
 
 def bibliographic_production_count(session):
@@ -123,15 +136,20 @@ def list_address(session):
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--researcher-id', type=str, default=None,
+                        help='UUID do pesquisador a processar (opcional)')
+    args = parser.parse_args()
+
     session = next(get_sync_session())
     start_time = time.perf_counter()
     logger.info('researcher_production_routine_started')
 
     try:
-        delete_researcher_production(session)
+        delete_researcher_production(session, args.researcher_id)
 
         researchers = pd.DataFrame(
-            list_researchers(session),
+            list_researchers(session, args.researcher_id),
             columns=['researcher_id', 'name', 'lattes_id'],
         )
 

@@ -1,3 +1,4 @@
+import argparse
 import datetime
 import time
 
@@ -141,12 +142,20 @@ def simple_count_metrics(session, sql, params, column_name):
     return df
 
 
-def list_researchers(session):
-    SCRIPT_SQL = text("""
-        SELECT id AS researcher_id, name, lattes_id
-        FROM public.researcher
-    """)
-    result = session.execute(SCRIPT_SQL).mappings().all()
+def list_researchers(session, researcher_id=None):
+    if researcher_id:
+        SCRIPT_SQL = text("""
+            SELECT id AS researcher_id, name, lattes_id
+            FROM public.researcher
+            WHERE id = :researcher_id
+        """)
+        result = session.execute(SCRIPT_SQL, {'researcher_id': researcher_id}).mappings().all()
+    else:
+        SCRIPT_SQL = text("""
+            SELECT id AS researcher_id, name, lattes_id
+            FROM public.researcher
+        """)
+        result = session.execute(SCRIPT_SQL).mappings().all()
     return pd.DataFrame(result)
 
 
@@ -240,13 +249,18 @@ def researcher_classification(researcher: pd.Series) -> str:
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--researcher-id', type=str, default=None,
+                        help='UUID do pesquisador a processar (opcional)')
+    args = parser.parse_args()
+
     YEAR_FILTER = 2019
     session = next(get_sync_session())
     start_time = time.perf_counter()
     logger.info('researcher_classification_routine_started')
 
     try:
-        dataframe = list_researchers(session)
+        dataframe = list_researchers(session, args.researcher_id)
 
         if dataframe.empty:
             duration = time.perf_counter() - start_time

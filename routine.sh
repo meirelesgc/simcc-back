@@ -17,7 +17,7 @@ echo "1/12 Running soap_lattes.py..."
 poetry run python scripts/routines/soap_lattes.py
 
 echo "2/12 Running simcc_hop (Docker)..."
-docker compose --profile routines run --rm simcc_hop
+docker compose --profile routines run --rm hop
 
 echo "3/12 Running pog.py..."
 poetry run python scripts/routines/pog.py
