@@ -3,9 +3,8 @@ from http import HTTPStatus
 from uuid import UUID
 
 import docker
-from fastapi import APIRouter, BackgroundTasks, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Header, HTTPException
 
-from simcc.core.dependencies import CurrentUser
 from simcc.core.logging import get_logger
 from simcc.core.settings import Settings
 
@@ -47,7 +46,7 @@ def _run_hop_sync() -> None:
         volumes=[
             f'{SETTINGS.HOP_XML_VOLUME}:/files/jade-extrator/datasets/lattes_xml'
         ],
-        network_mode='host',
+        network=SETTINGS.HOP_NETWORK,
         remove=True,
     )
 
@@ -88,9 +87,9 @@ async def _run_routines(researcher_id: str) -> None:
 async def trigger_researcher_routines(
     researcher_id: UUID,
     background_tasks: BackgroundTasks,
-    current_user: CurrentUser,
+    x_internal_key: str | None = Header(default=None),
 ) -> dict:
-    if not current_user:
+    if not SETTINGS.INTERNAL_API_KEY or x_internal_key != SETTINGS.INTERNAL_API_KEY:
         raise HTTPException(status_code=HTTPStatus.UNAUTHORIZED)
     background_tasks.add_task(_run_routines, str(researcher_id))
     return {'researcher_id': str(researcher_id)}

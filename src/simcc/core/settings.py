@@ -8,6 +8,7 @@ class Settings(BaseSettings, extra='ignore'):
     ADMIN_DATABASE_URL: str
 
     ADMIN_URL: str = 'http://localhost:0000'
+    INTERNAL_API_KEY: Optional[str] = None
     OPENAI_API_KEY: Optional[str] = None
 
     FIREBASE_COLLECTION: str = 'termos_busca'
@@ -22,6 +23,7 @@ class Settings(BaseSettings, extra='ignore'):
 
     HOP_IMAGE: str = 'gleidsoncosta/simcc-extrator:latest'
     HOP_XML_VOLUME: str = 'simcc_xml'
+    HOP_NETWORK: str = 'simcc-back_default'
     HOP_RUN_PARAMETERS: Optional[str] = None
 
     class Config:
