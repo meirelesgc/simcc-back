@@ -4,10 +4,8 @@ set -e
 
 mkdir -p storage/xml/current
 mkdir -p storage/xml/zip
-chown -R appuser:appuser storage/xml
 
 mkdir -p logs
-chown -R appuser:appuser logs
 
 find storage/xml logs -type d -exec chmod 777 {} +
 find storage/xml logs -type f -exec chmod 666 {} +
