@@ -287,7 +287,7 @@ def main():
 
         if errors:
             error_file = (
-                f'errors_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv'
+                f'logs/errors_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv'
             )
 
             with open(
