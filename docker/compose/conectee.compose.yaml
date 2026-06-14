@@ -3,7 +3,6 @@ services:
     extends:
       file: base.compose.yaml
       service: base_db
-    container_name: conectee_db
     volumes:
       - conectee_db:/var/lib/postgresql/data
     environment:
@@ -13,7 +12,6 @@ services:
     extends:
       file: base.compose.yaml
       service: base_hop
-    container_name: conectee_hop
     environment:
       HOP_PROJECT_NAME: Jade-Extrator
       HOP_PROJECT_FOLDER: /files/jade-extrator
@@ -28,7 +26,6 @@ services:
     extends:
       file: base.compose.yaml
       service: base_api
-    container_name: conectee_api
     ports:
       - "8000:8000"
     environment:
