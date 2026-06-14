@@ -2,61 +2,21 @@
 
 set -e
 
-CONTAINER_NAME="$1"
+API_SERVICE=$(docker compose config --services | grep '_api$' | head -n1)
+HOP_SERVICE=$(docker compose config --services | grep '_hop$' | head -n1)
 
-PRE_HOP=(
-    "sync_admin/sync_graduate_programs.py"
-    "sync_admin/sync_gp_researchers.py"
-    "soap_lattes.py"
-)
+if [ -z "$API_SERVICE" ] || [ -z "$HOP_SERVICE" ]; then
+  echo "Erro: Servicos nao encontrados."
+  exit 1
+fi
 
-POST_HOP=(
-    "pog.py"
-    "researcher_production.py"
-    "research_dictionaries.py"
-    "get_lattes_10.py"
-    "researcher_indprod.py"
-    "graduate_program_indprod.py"
-    "abstract_ai.py"
-    "get_openAlex.py"
-    "search_terms.py"
-    "researcher_classification.py"
-    "sync_research_lines.py"
-)
+echo "Starting PRE_HOP routines..."
+docker compose exec "$API_SERVICE" ./scripts/routines/pre_hop.sh
 
-run_python() {
-    local script="$1"
+echo "Running Apache Hop..."
+docker compose --profile routines run --rm "$HOP_SERVICE"
 
-    if [ -n "$CONTAINER_NAME" ]; then
-        docker compose exec -T "$CONTAINER_NAME" \
-            python "scripts/routines/$script"
-    else
-        poetry run python "scripts/routines/$script"
-    fi
-}
+echo "Starting POST_HOP routines..."
+docker compose exec "$API_SERVICE" ./scripts/routines/post_hop.sh
 
-run_group() {
-    local group_name="$1"
-    shift
-    local routines=("$@")
-
-    local total=${#routines[@]}
-
-    for i in "${!routines[@]}"; do
-        local current=$((i + 1))
-
-        echo "[$group_name] $current/$total Running ${routines[$i]}..."
-        run_python "${routines[$i]}"
-    done
-}
-
-echo "Starting SIMCC Routines..."
-
-run_group "PRE_HOP" "${PRE_HOP[@]}"
-
-echo "Running simcc_hop (Docker)..."
-docker compose --profile routines run --rm simcc_hop
-
-run_group "POST_HOP" "${POST_HOP[@]}"
-
-echo "All SIMCC routines completed successfully."
+echo "All routines completed successfully."
