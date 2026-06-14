@@ -40,6 +40,7 @@ WORKDIR /app
 COPY src ./src
 COPY migrations ./migrations
 COPY alembic.ini .
+COPY scripts .
 COPY entrypoint.sh .
 
 RUN useradd --create-home appuser
