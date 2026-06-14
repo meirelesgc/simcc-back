@@ -3,7 +3,7 @@
 set -e
 
 API_SERVICE=$(docker compose config --services | grep '_api$' | head -n1)
-HOP_SERVICE=$(docker compose config --services | grep '_hop$' | head -n1)
+HOP_SERVICE=$(docker compose --profile routines config --services | grep '_hop$' | head -n1)
 
 if [ -z "$API_SERVICE" ] || [ -z "$HOP_SERVICE" ]; then
   echo "Erro: Servicos nao encontrados."
