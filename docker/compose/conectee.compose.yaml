@@ -29,6 +29,7 @@ services:
     ports:
       - "8000:8000"
     environment:
+      ALTERNATIVE_CNPQ_SERVICE: True
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@conectee_db:5432/conectee
       ADMIN_DATABASE_URL: postgresql+asyncpg://postgres:postgres@conectee_db:5432/conectee_admin
     depends_on:
