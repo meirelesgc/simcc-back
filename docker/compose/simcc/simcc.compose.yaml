@@ -1,7 +1,7 @@
 services:
   simcc_db:
     extends:
-      file: base.compose.yaml
+      file: ../base.compose.yaml
       service: base_db
     volumes:
       - simcc_db:/var/lib/postgresql/data
@@ -10,7 +10,7 @@ services:
 
   simcc_hop:
     extends:
-      file: base.compose.yaml
+      file: ../base.compose.yaml
       service: base_hop
     environment:
       HOP_PROJECT_NAME: Jade-Extrator
@@ -22,7 +22,7 @@ services:
 
   simcc_api:
     extends:
-      file: base.compose.yaml
+      file: ../base.compose.yaml
       service: base_api
     ports:
       - "8000:8000"
