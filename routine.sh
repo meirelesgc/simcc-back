@@ -2,13 +2,15 @@
 
 set -e
 
-mkdir -p storage/xml/current
-mkdir -p storage/xml/zip
+SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
 
-mkdir -p logs
+mkdir -p "$SCRIPT_DIR/storage/xml/current"
+mkdir -p "$SCRIPT_DIR/storage/xml/zip"
 
-find storage/xml logs -type d -exec chmod 777 {} +
-find storage/xml logs -type f -exec chmod 666 {} +
+mkdir -p "$SCRIPT_DIR/logs"
+
+find "$SCRIPT_DIR/storage/xml" "$SCRIPT_DIR/logs" -type d -exec chmod 777 {} +
+find "$SCRIPT_DIR/storage/xml" "$SCRIPT_DIR/logs" -type f -exec chmod 666 {} +
 
 API_SERVICE=$(docker compose config --services | grep '_api$' | head -n1)
 HOP_SERVICE=$(docker compose --profile routines config --services | grep '_hop$' | head -n1)
