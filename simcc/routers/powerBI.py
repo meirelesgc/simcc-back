@@ -610,3 +610,11 @@ def fat_guidance_history_csv():
     file_name = 'fat_guidance_history.csv'
     file_path = os.path.join(STORAGE_PATH, file_name)
     return FileResponse(file_path, filename=file_name)
+
+
+@router.get('/dim_territorio_identidade.csv')
+def dim_territorio_identidade_csv():
+    powerBI.dim_territorio_identidade()
+    file_name = 'dim_territorio_identidade.csv'
+    file_path = os.path.join(STORAGE_PATH, file_name)
+    return FileResponse(file_path, filename=file_name)

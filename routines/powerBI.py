@@ -2211,6 +2211,10 @@ def fat_guidance_history():
     csv.to_csv(csv_path, index=True, quoting=QUOTE_ALL, encoding='utf-8-sig')
 
 
+def dim_territorio_identidade():
+    print('dim_territorio_identidade')
+
+
 if __name__ == '__main__':
     dim_titulacao()
     print('dim_titulacao finalizado')
