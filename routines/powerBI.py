@@ -586,14 +586,28 @@ def production_researcher():
             rp.articles AS articles, rp.book_chapters AS book_chapters,
             rp.book AS book, rp.work_in_event AS work_in_event,
             rp.great_area AS great_area, rp.area_specialty AS area_specialty,
-            r.graduation as graduation
+            r.graduation as graduation, rp.city as city
         FROM researcher_production rp, researcher r
         WHERE r.id = rp.researcher_id
         """
     result = conn.select(SCRIPT_SQL)
-    csv = pd.DataFrame(result)
+    df_researcher = pd.DataFrame(result)
+
+    path_dim = 'storage/powerBI/dim_territorio_identidade.csv'
+    df_territorio = pd.read_csv(path_dim)
+
+    df_final = pd.merge(
+        df_researcher,
+        df_territorio[['Territorio_ID', 'Municipio']],
+        left_on='city',
+        right_on='Municipio',
+        how='left',
+    )
+
+    df_final = df_final.drop(columns=['Municipio'])
+
     csv_path = os.path.join(PATH, 'production_researcher.csv')
-    csv.to_csv(csv_path)
+    df_final.to_csv(csv_path, index=False)
 
 
 def article_qualis_year():
