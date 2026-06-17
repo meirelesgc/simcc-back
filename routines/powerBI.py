@@ -4,6 +4,7 @@ from datetime import datetime
 
 import nltk
 import pandas as pd
+from unidecode import unidecode
 
 from simcc.repositories import conn, conn_admin
 
@@ -596,15 +597,33 @@ def production_researcher():
     path_dim = 'storage/powerBI/dim_territorio_identidade.csv'
     df_territorio = pd.read_csv(path_dim)
 
+    df_researcher['city_norm'] = (
+        df_researcher['city']
+        .astype(str)
+        .apply(unidecode)
+        .str.lower()
+        .str.strip()
+    )
+    df_territorio['Municipio_norm'] = (
+        df_territorio['Municipio']
+        .astype(str)
+        .apply(unidecode)
+        .str.lower()
+        .str.strip()
+    )
+
     df_final = pd.merge(
         df_researcher,
-        df_territorio[['Territorio_ID', 'Municipio']],
-        left_on='city',
-        right_on='Municipio',
+        df_territorio[['Territorio_ID', 'Municipio_norm']],
+        left_on='city_norm',
+        right_on='Municipio_norm',
         how='left',
     )
 
-    df_final = df_final.drop(columns=['Municipio'])
+    df_final['Territorio_ID'] = df_final['Territorio_ID'].fillna(0).astype(int)
+    df_final = df_final.rename(columns={'Territorio_ID': 't_id'})
+
+    df_final = df_final.drop(columns=['Municipio_norm', 'city_norm'])
 
     csv_path = os.path.join(PATH, 'production_researcher.csv')
     df_final.to_csv(csv_path, index=False)
