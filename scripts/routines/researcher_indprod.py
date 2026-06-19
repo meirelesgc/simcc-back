@@ -1,3 +1,4 @@
+import argparse
 import time
 from datetime import datetime
 from uuid import uuid4
@@ -217,16 +218,27 @@ def guidance_indprod(session):
     return guidance.to_dict(orient='records')
 
 
-def list_researchers(session):
+def list_researchers(session, researcher_id=None):
+    if researcher_id:
+        SCRIPT_SQL = text("""
+            SELECT id AS researcher_id
+            FROM public.researcher
+            WHERE id = :researcher_id;
+        """)
+        return session.execute(SCRIPT_SQL, {'researcher_id': researcher_id}).mappings().all()
     SCRIPT_SQL = text("""
         SELECT id AS researcher_id
         FROM public.researcher;
     """)
-    result = session.execute(SCRIPT_SQL).mappings().all()
-    return result
+    return session.execute(SCRIPT_SQL).mappings().all()
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--researcher-id', type=str, default=None,
+                        help='UUID do pesquisador a processar (opcional)')
+    args = parser.parse_args()
+
     session = next(get_sync_session())
     start_time = time.perf_counter()
     logger.info('researcher_indprod_routine_started')
@@ -236,7 +248,7 @@ def main():
         YEAR = range(2008, current_year + 1)
         history = pd.DataFrame(YEAR, columns=['year'])
 
-        researchers = list_researchers(session)
+        researchers = list_researchers(session, args.researcher_id)
         if not researchers:
             raise ValueError('No researchers found')
         researchers = pd.DataFrame(researchers)
@@ -289,7 +301,13 @@ def main():
 
         researchers = researchers.fillna(0)
 
-        session.execute(text('DELETE FROM researcher_ind_prod;'))
+        if args.researcher_id:
+            session.execute(
+                text('DELETE FROM researcher_ind_prod WHERE researcher_id = :researcher_id;'),
+                {'researcher_id': args.researcher_id},
+            )
+        else:
+            session.execute(text('DELETE FROM researcher_ind_prod;'))
 
         query_insert = text("""
             INSERT INTO researcher_ind_prod (

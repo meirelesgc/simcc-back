@@ -92,7 +92,7 @@ def main():
         else:
             df['graduate_program_id'] = None
 
-        years = (2026, 2025, 2024, 2023)
+        years = [2026, 2025, 2024, 2023]
         stats = Counter()
         records_to_insert = []
 
@@ -108,14 +108,13 @@ def main():
                 stats['Barrado: programa nao encontrado'] += 1
                 continue
 
-            for year in years:
-                records_to_insert.append({
-                    'graduate_program_id': str(pg_id),
-                    'researcher_id': str(r_id),
-                    'year': year,
-                    'type_': row['categoria'],
-                })
-                stats['Processado'] += 1
+            records_to_insert.append({
+                'graduate_program_id': str(pg_id),
+                'researcher_id': str(r_id),
+                'year': years,
+                'type_': row['categoria'],
+            })
+            stats['Processado'] += 1
 
         if records_to_insert:
             query_insert = text("""
@@ -123,7 +122,9 @@ def main():
                     (graduate_program_id, researcher_id, year, type_)
                 VALUES
                     (:graduate_program_id, :researcher_id, :year, :type_)
-                ON CONFLICT DO NOTHING;
+                ON CONFLICT (graduate_program_id, researcher_id) DO UPDATE SET
+                    year = EXCLUDED.year,
+                    type_ = EXCLUDED.type_;
             """)
             session.execute(query_insert, records_to_insert)
 
