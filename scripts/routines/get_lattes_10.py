@@ -40,8 +40,12 @@ def get_lattes_id_10(lattes_id: str) -> str:
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--researcher-id', type=str, default=None,
-                        help='UUID do pesquisador a processar (opcional)')
+    parser.add_argument(
+        '--researcher-id',
+        type=str,
+        default=None,
+        help='UUID do pesquisador a processar (opcional)',
+    )
     args = parser.parse_args()
 
     session = next(get_sync_session())
@@ -55,9 +59,12 @@ def main():
                 FROM researcher
                 WHERE id = :researcher_id;
             """)
-            researchers = session.execute(
-                query_select, {'researcher_id': args.researcher_id}
-            ).mappings().all()
+            researchers = (
+                session
+                .execute(query_select, {'researcher_id': args.researcher_id})
+                .mappings()
+                .all()
+            )
         else:
             query_select = text("""
                 SELECT id AS researcher_id, lattes_id

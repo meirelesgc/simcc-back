@@ -249,18 +249,25 @@ def researcher_classification(researcher: pd.Series) -> str:
 
 
 def main():
+<<<<<<< HEAD
+=======
     parser = argparse.ArgumentParser()
     parser.add_argument('--researcher-id', type=str, default=None,
                         help='UUID do pesquisador a processar (opcional)')
     args = parser.parse_args()
 
+>>>>>>> origin/develop
     YEAR_FILTER = 2019
     session = next(get_sync_session())
     start_time = time.perf_counter()
     logger.info('researcher_classification_routine_started')
 
     try:
+<<<<<<< HEAD
+        dataframe = list_researchers(session)
+=======
         dataframe = list_researchers(session, args.researcher_id)
+>>>>>>> origin/develop
 
         if dataframe.empty:
             duration = time.perf_counter() - start_time
