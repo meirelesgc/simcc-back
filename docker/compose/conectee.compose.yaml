@@ -1,0 +1,45 @@
+services:
+  conectee_db:
+    extends:
+      file: base.compose.yaml
+      service: base_db
+    volumes:
+      - conectee_db:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: conectee
+
+  conectee_hop:
+    extends:
+      file: base.compose.yaml
+      service: base_hop
+    environment:
+      HOP_PROJECT_NAME: Jade-Extrator
+      HOP_PROJECT_FOLDER: /files/jade-extrator
+      HOP_RUN_PARAMETERS: "DATABASE_URL=jdbc:postgresql://conectee_db:5432/conectee?user=postgres&password=postgres,ADMIN_DATABASE_URL=jdbc:postgresql://conectee_db:5432/conectee_admin?user=postgres&password=postgres"
+    volumes:
+      - conectee_xml:/files/jade-extrator/datasets/lattes_xml
+    depends_on:
+      conectee_db:
+        condition: service_healthy
+
+  conectee_api:
+    extends:
+      file: base.compose.yaml
+      service: base_api
+    ports:
+      - "8000:8000"
+    environment:
+      ALTERNATIVE_CNPQ_SERVICE: True
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@conectee_db:5432/conectee
+      ADMIN_DATABASE_URL: postgresql+asyncpg://postgres:postgres@conectee_db:5432/conectee_admin
+      HOP_XML_VOLUME: conectee_xml
+      HOP_RUN_PARAMETERS: "DATABASE_URL=jdbc:postgresql://conectee_db:5432/conectee?user=postgres&password=postgres,ADMIN_DATABASE_URL=jdbc:postgresql://conectee_db:5432/conectee_admin?user=postgres&password=postgres"
+    volumes:
+      - conectee_xml:/app/storage/xml
+    depends_on:
+      conectee_db:
+        condition: service_healthy
+
+volumes:
+  conectee_db:
+  conectee_xml:

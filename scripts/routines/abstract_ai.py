@@ -1,3 +1,4 @@
+import argparse
 import time
 
 from langchain_openai import ChatOpenAI
@@ -89,6 +90,15 @@ def list_ufmg_data(session):
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--researcher-id',
+        type=str,
+        default=None,
+        help='UUID do pesquisador a processar (opcional)',
+    )
+    args = parser.parse_args()
+
     session = next(get_sync_session())
     start_time = time.perf_counter()
     logger.info('researcher_abstract_ai_routine_started')
@@ -116,7 +126,10 @@ def main():
         }
         ufmg_map = {item['id']: item for item in list_ufmg_data(session)}
 
-        SCRIPT_SQL_RESEARCHERS = text("""
+        researcher_filter = (
+            'AND r.id = :researcher_id' if args.researcher_id else ''
+        )
+        SCRIPT_SQL_RESEARCHERS = text(f"""
             SELECT
                 r.id, r.name, r.lattes_id, r.lattes_10_id, r.abstract, r.orcid,
                 r.graduation, r.last_update AS lattes_update,
@@ -130,10 +143,16 @@ def main():
                 LEFT JOIN institution i ON i.id = r.institution_id
                 LEFT JOIN researcher_production rp ON rp.researcher_id = r.id
                 LEFT JOIN openalex_researcher opr ON opr.researcher_id = r.id
-            WHERE abstract_ai IS NULL
+            WHERE abstract_ai IS NULL {researcher_filter}
         """)
+        query_params = (
+            {'researcher_id': args.researcher_id} if args.researcher_id else {}
+        )
         researchers_to_process = (
-            session.execute(SCRIPT_SQL_RESEARCHERS).mappings().all()
+            session
+            .execute(SCRIPT_SQL_RESEARCHERS, query_params)
+            .mappings()
+            .all()
         )
 
         total_researchers = len(researchers_to_process)

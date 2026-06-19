@@ -1,3 +1,4 @@
+import argparse
 import csv
 import os
 import time
@@ -43,12 +44,23 @@ if not PROXY:
     )
 
 
-def list_admin_researchers(session):
+def list_admin_researchers(session, researcher_id=None):
+    if researcher_id:
+        SCRIPT_SQL = text("""
+            SELECT researcher_id, name, lattes_id
+            FROM public.researcher
+            WHERE researcher_id = :researcher_id;
+        """)
+        return (
+            session
+            .execute(SCRIPT_SQL, {'researcher_id': researcher_id})
+            .mappings()
+            .all()
+        )
     SCRIPT_SQL = text("""
         SELECT researcher_id, name, lattes_id
         FROM public.researcher;
     """)
-
     return session.execute(SCRIPT_SQL).mappings().all()
 
 
@@ -186,6 +198,15 @@ def download_xml(lattes_id, researcher_id):
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--researcher-id',
+        type=str,
+        default=None,
+        help='UUID do pesquisador a processar (opcional)',
+    )
+    args = parser.parse_args()
+
     admin_session = next(get_admin_sync_session())
 
     start_time = time.perf_counter()
@@ -196,13 +217,14 @@ def main():
         for directory in [LOG_PATH, CURRENT_XML_PATH, ZIP_XML_PATH]:
             os.makedirs(directory, exist_ok=True)
 
-        for file in os.listdir(XML_PATH):
-            path = os.path.join(XML_PATH, file)
+        if not args.researcher_id:
+            for file in os.listdir(XML_PATH):
+                path = os.path.join(XML_PATH, file)
 
-            if os.path.isfile(path) and file.endswith('.xml'):
-                os.remove(path)
+                if os.path.isfile(path) and file.endswith('.xml'):
+                    os.remove(path)
 
-        researchers = list_admin_researchers(admin_session)
+        researchers = list_admin_researchers(admin_session, args.researcher_id)
 
         if not researchers:
             duration = time.perf_counter() - start_time
@@ -287,7 +309,7 @@ def main():
 
         if errors:
             error_file = (
-                f'errors_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv'
+                f'logs/errors_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv'
             )
 
             with open(

@@ -1,0 +1,47 @@
+services:
+  db:
+    extends:
+      file: docker/compose/base.compose.yaml
+      service: base_db
+    container_name: db
+    ports:
+      - "5432:5432"
+    volumes:
+      - db:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: postgres
+
+  hop:
+    extends:
+      file: docker/compose/base.compose.yaml
+      service: base_hop
+    container_name: hop
+    environment:
+      HOP_PROJECT_NAME: Jade-Extrator
+      HOP_PROJECT_FOLDER: /files/jade-extrator
+      HOP_RUN_PARAMETERS: "DATABASE_URL=jdbc:postgresql://db:5432/postgres?user=postgres&password=postgres,ADMIN_DATABASE_URL=jdbc:postgresql://db:5432/postgres?user=postgres&password=postgres"
+    volumes:
+      - ./storage/xml:/files/jade-extrator/datasets/lattes_xml
+    depends_on:
+      db:
+        condition: service_healthy
+
+  api:
+    extends:
+      file: docker/compose/base.compose.yaml
+      service: base_api
+    container_name: api
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/postgres
+      ADMIN_DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/postgres
+      HOP_XML_VOLUME: ${HOST_PROJECT_DIR}/storage/xml
+      HOP_RUN_PARAMETERS: "DATABASE_URL=jdbc:postgresql://db:5432/postgres?user=postgres&password=postgres,ADMIN_DATABASE_URL=jdbc:postgresql://db:5432/postgres?user=postgres&password=postgres"
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY}
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  db:

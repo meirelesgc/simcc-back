@@ -1,3 +1,4 @@
+import argparse
 import ssl
 import time
 from http import HTTPStatus
@@ -38,17 +39,39 @@ def get_lattes_id_10(lattes_id: str) -> str:
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--researcher-id',
+        type=str,
+        default=None,
+        help='UUID do pesquisador a processar (opcional)',
+    )
+    args = parser.parse_args()
+
     session = next(get_sync_session())
     start_time = time.perf_counter()
     logger.info('lattes_10_routine_started')
 
     try:
-        query_select = text("""
-            SELECT id AS researcher_id, lattes_id
-            FROM researcher
-            WHERE lattes_10_id IS NULL;
-        """)
-        researchers = session.execute(query_select).mappings().all()
+        if args.researcher_id:
+            query_select = text("""
+                SELECT id AS researcher_id, lattes_id
+                FROM researcher
+                WHERE id = :researcher_id;
+            """)
+            researchers = (
+                session
+                .execute(query_select, {'researcher_id': args.researcher_id})
+                .mappings()
+                .all()
+            )
+        else:
+            query_select = text("""
+                SELECT id AS researcher_id, lattes_id
+                FROM researcher
+                WHERE lattes_10_id IS NULL;
+            """)
+            researchers = session.execute(query_select).mappings().all()
 
         query_update = text("""
             UPDATE researcher

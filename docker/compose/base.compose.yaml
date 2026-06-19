@@ -1,0 +1,33 @@
+services:
+  base_db:
+    image: pgvector/pgvector:pg17
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  base_hop:
+    image: gleidsoncosta/simcc-extrator:latest
+    profiles:
+      - routines
+    environment:
+      HOP_LOG_LEVEL: Minimal
+      HOP_RUN_CONFIG: local
+      HOP_FILE_PATH: $${PROJECT_HOME}/workflows/Index.hwf
+      HOP_PROJECT_NAME: Jade-Extrator
+      HOP_PROJECT_FOLDER: /files/jade-extrator
+
+  base_api:
+    image: gleidsoncosta/simcc-back:latest
+    build: .
+    entrypoint: ./entrypoint.sh
+    group_add:
+      - "${DOCKER_GID:-docker}"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ../../logs:/app/logs
+      - ../../storage:/app/storage
