@@ -1,20 +1,23 @@
 #!/bin/bash
 
-# routine.sh - Orchestrates the execution of SIMCC routines in a specific order.
+set -e
 
-set -e # Exit immediately if a command exits with a non-zero status.
+API_SERVICE=$(docker compose config --services | grep '_api$' | head -n1)
+HOP_SERVICE=$(docker compose --profile routines config --services | grep '_hop$' | head -n1)
 
-echo "Starting SIMCC Routines..."
+if [ -z "$API_SERVICE" ] || [ -z "$HOP_SERVICE" ]; then
+  echo "Erro: Servicos nao encontrados."
+  exit 1
+fi
 
-# TODO
-echo "-2/-2 Running sync_graduate_programs.py..."
-poetry run python scripts/routines/sync_admin/sync_graduate_programs.py
+echo "Starting PRE_HOP routines..."
+docker compose exec "$API_SERVICE" ./scripts/routines/pre_hop.sh
 
-echo "-1/-2 Running sync_gp_researchers.py..."
-poetry run python scripts/routines/sync_admin/sync_gp_researchers.py
+echo "Running Apache Hop..."
+docker compose --profile routines run --rm "$HOP_SERVICE"
 
-echo "1/12 Running soap_lattes.py..."
-poetry run python scripts/routines/soap_lattes.py
+echo "Starting POST_HOP routines..."
+docker compose exec "$API_SERVICE" ./scripts/routines/post_hop.sh
 
 echo "2/12 Running simcc_hop (Docker)..."
 docker compose --profile routines run --rm hop

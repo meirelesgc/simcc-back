@@ -51,7 +51,12 @@ def list_admin_researchers(session, researcher_id=None):
             FROM public.researcher
             WHERE researcher_id = :researcher_id;
         """)
-        return session.execute(SCRIPT_SQL, {'researcher_id': researcher_id}).mappings().all()
+        return (
+            session
+            .execute(SCRIPT_SQL, {'researcher_id': researcher_id})
+            .mappings()
+            .all()
+        )
     SCRIPT_SQL = text("""
         SELECT researcher_id, name, lattes_id
         FROM public.researcher;
@@ -194,8 +199,12 @@ def download_xml(lattes_id, researcher_id):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--researcher-id', type=str, default=None,
-                        help='UUID do pesquisador a processar (opcional)')
+    parser.add_argument(
+        '--researcher-id',
+        type=str,
+        default=None,
+        help='UUID do pesquisador a processar (opcional)',
+    )
     args = parser.parse_args()
 
     admin_session = next(get_admin_sync_session())
@@ -300,7 +309,7 @@ def main():
 
         if errors:
             error_file = (
-                f'errors_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv'
+                f'logs/errors_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv'
             )
 
             with open(

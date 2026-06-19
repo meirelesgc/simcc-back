@@ -120,7 +120,6 @@ def setup_logging(debug: bool = False):
         level=logging_level,
     )
 
-
     # Silenciar loggers do Uvicorn para evitar duplicação
     for logger_name in ['uvicorn', 'uvicorn.error', 'uvicorn.access']:
         log = logging.getLogger(logger_name)

@@ -40,6 +40,7 @@ WORKDIR /app
 COPY src ./src
 COPY scripts ./scripts
 COPY migrations ./migrations
+COPY scripts ./scripts
 COPY alembic.ini .
 COPY entrypoint.sh .
 
