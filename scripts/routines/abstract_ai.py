@@ -91,8 +91,12 @@ def list_ufmg_data(session):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--researcher-id', type=str, default=None,
-                        help='UUID do pesquisador a processar (opcional)')
+    parser.add_argument(
+        '--researcher-id',
+        type=str,
+        default=None,
+        help='UUID do pesquisador a processar (opcional)',
+    )
     args = parser.parse_args()
 
     session = next(get_sync_session())
@@ -141,9 +145,14 @@ def main():
                 LEFT JOIN openalex_researcher opr ON opr.researcher_id = r.id
             WHERE abstract_ai IS NULL {researcher_filter}
         """)
-        query_params = {'researcher_id': args.researcher_id} if args.researcher_id else {}
+        query_params = (
+            {'researcher_id': args.researcher_id} if args.researcher_id else {}
+        )
         researchers_to_process = (
-            session.execute(SCRIPT_SQL_RESEARCHERS, query_params).mappings().all()
+            session
+            .execute(SCRIPT_SQL_RESEARCHERS, query_params)
+            .mappings()
+            .all()
         )
 
         total_researchers = len(researchers_to_process)
