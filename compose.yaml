@@ -36,9 +36,9 @@ services:
     environment:
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/postgres
       ADMIN_DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/postgres
-      HOP_XML_VOLUME: ${HOST_PROJECT_DIR}/storage/xml
       HOP_RUN_PARAMETERS: "DATABASE_URL=jdbc:postgresql://db:5432/postgres?user=postgres&password=postgres,ADMIN_DATABASE_URL=jdbc:postgresql://db:5432/postgres?user=postgres&password=postgres"
-      INTERNAL_API_KEY: ${INTERNAL_API_KEY}
+      HOP_XML_VOLUME: ./storage/xml
+      INTERNAL_API_KEY: SUPER_SECRET_KEY
     depends_on:
       db:
         condition: service_healthy

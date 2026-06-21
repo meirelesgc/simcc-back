@@ -15,7 +15,7 @@ services:
     profiles:
       - routines
     environment:
-      HOP_LOG_LEVEL: Minimal
+      HOP_LOG_LEVEL: Basic
       HOP_RUN_CONFIG: local
       HOP_FILE_PATH: $${PROJECT_HOME}/workflows/Index.hwf
       HOP_PROJECT_NAME: Jade-Extrator
