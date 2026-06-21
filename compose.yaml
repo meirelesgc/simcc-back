@@ -16,12 +16,10 @@ services:
       file: docker/compose/base.compose.yaml
       service: base_hop
     container_name: hop
-    environment:
-      HOP_PROJECT_NAME: Jade-Extrator
-      HOP_PROJECT_FOLDER: /files/jade-extrator
-      HOP_RUN_PARAMETERS: "DATABASE_URL=jdbc:postgresql://db:5432/postgres?user=postgres&password=postgres,ADMIN_DATABASE_URL=jdbc:postgresql://db:5432/postgres?user=postgres&password=postgres"
+    ports:
+      - "8080:8080"
     volumes:
-      - ./storage/xml:/files/jade-extrator/datasets/lattes_xml
+      - xml:/files/jade-extrator/datasets/lattes_xml
     depends_on:
       db:
         condition: service_healthy
@@ -36,12 +34,12 @@ services:
     environment:
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/postgres
       ADMIN_DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/postgres
-      HOP_XML_VOLUME: ${HOST_PROJECT_DIR}/storage/xml
-      HOP_RUN_PARAMETERS: "DATABASE_URL=jdbc:postgresql://db:5432/postgres?user=postgres&password=postgres,ADMIN_DATABASE_URL=jdbc:postgresql://db:5432/postgres?user=postgres&password=postgres"
-      INTERNAL_API_KEY: ${INTERNAL_API_KEY}
     depends_on:
       db:
         condition: service_healthy
+    volumes:
+      - xml:/app/storage/xml
 
 volumes:
   db:
+  xml:

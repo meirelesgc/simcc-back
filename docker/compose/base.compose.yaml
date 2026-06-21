@@ -12,21 +12,19 @@ services:
 
   base_hop:
     image: gleidsoncosta/simcc-extrator:latest
-    profiles:
-      - routines
     environment:
-      HOP_LOG_LEVEL: Minimal
-      HOP_RUN_CONFIG: local
-      HOP_FILE_PATH: $${PROJECT_HOME}/workflows/Index.hwf
+      HOP_LOG_LEVEL: Basic
       HOP_PROJECT_NAME: Jade-Extrator
       HOP_PROJECT_FOLDER: /files/jade-extrator
+      HOP_SERVER_HOSTNAME: 0.0.0.0
+      HOP_SERVER_PORT: 8080
+      HOP_SERVER_AUTH: false
+    command: ["/opt/hop/hop-server.sh"]
 
   base_api:
     image: gleidsoncosta/simcc-back:latest
     build: .
     entrypoint: ./entrypoint.sh
-    group_add:
-      - "${DOCKER_GID:-docker}"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ../../logs:/app/logs
