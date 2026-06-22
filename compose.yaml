@@ -9,7 +9,7 @@ services:
     volumes:
       - db:/var/lib/postgresql/data
     environment:
-      POSTGRES_DB: postgres
+      POSTGRES_DB: db
 
   hop:
     extends:
@@ -32,13 +32,15 @@ services:
     ports:
       - "8000:8000"
     environment:
-      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/postgres
-      ADMIN_DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/postgres
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/db
+      ADMIN_DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/db_admin
     depends_on:
       db:
         condition: service_healthy
     volumes:
       - xml:/app/storage/xml
+    env_file:
+      - .env
 
 volumes:
   db:

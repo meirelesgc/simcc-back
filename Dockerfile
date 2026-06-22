@@ -40,11 +40,12 @@ WORKDIR /app
 COPY src ./src
 COPY scripts ./scripts
 COPY migrations ./migrations
-COPY scripts ./scripts
 COPY alembic.ini .
 COPY entrypoint.sh .
 
-RUN useradd --create-home appuser
+RUN useradd --create-home appuser && \
+    mkdir -p storage/xml/zip storage/xml/current && \
+    chown -R appuser:appuser /app
 
 USER appuser
 
