@@ -38,30 +38,28 @@ def get_lattes_id_10(lattes_id: str) -> str:
     return None
 
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        '--researcher-id',
-        type=str,
-        default=None,
-        help='UUID do pesquisador a processar (opcional)',
-    )
-    args = parser.parse_args()
-
+def main(researcher_ids=None, lattes_ids=None):
     session = next(get_sync_session())
     start_time = time.perf_counter()
     logger.info('lattes_10_routine_started')
 
     try:
-        if args.researcher_id:
-            query_select = text("""
+        if researcher_ids or lattes_ids:
+            base_query = """
                 SELECT id AS researcher_id, lattes_id
                 FROM researcher
-                WHERE id = :researcher_id;
-            """)
+                WHERE 1=1
+            """
+            params = {}
+            if researcher_ids:
+                base_query += ' AND id IN (:researcher_ids)'
+                params['researcher_ids'] = tuple(researcher_ids)
+            if lattes_ids:
+                base_query += ' AND lattes_id IN (:lattes_ids)'
+                params['lattes_ids'] = tuple(lattes_ids)
             researchers = (
                 session
-                .execute(query_select, {'researcher_id': args.researcher_id})
+                .execute(text(base_query), params)
                 .mappings()
                 .all()
             )
@@ -107,4 +105,19 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--researcher-ids',
+        nargs='+',
+        type=str,
+        default=None,
+    )
+    parser.add_argument(
+        '--lattes-ids',
+        nargs='+',
+        type=str,
+        default=None,
+    )
+    args = parser.parse_args()
+
+    main(researcher_ids=args.researcher_ids, lattes_ids=args.lattes_ids)
