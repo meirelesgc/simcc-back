@@ -1,6 +1,7 @@
 import json
 import time
 from pathlib import Path
+from uuid import uuid4
 
 import requests
 from requests.adapters import HTTPAdapter
@@ -131,6 +132,7 @@ def extract_article(data, article_id):
             institutions.append(', '.join(institution_names))
 
     return OpenAlexArticle(
+        id=uuid4(),
         article_id=article_id,
         article_institution=safe_get(
             data, 'primary_location', 'source', 'display_name'
@@ -185,7 +187,6 @@ def process_articles(session):
             url = f'{WORK_URL}{doi}?mailto={OPENALEX_MAIL}'
 
             logger.info('fetching_article', article_id=str(article_id))
-
             payload, status = fetch_json(url)
 
             if not payload:
