@@ -31,10 +31,6 @@ from simcc.routers.production import (
 
 setup_logging()
 
-for path in ['storage/xml', 'storage/xml/zip', 'storage/xml/current']:
-    if not os.path.exists(path):
-        os.makedirs(path)
-
 app = FastAPI()
 
 app.add_middleware(LoggingMiddleware)

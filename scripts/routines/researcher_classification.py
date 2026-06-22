@@ -142,21 +142,30 @@ def simple_count_metrics(session, sql, params, column_name):
     return df
 
 
-def list_researchers(session, researcher_id=None):
-    if researcher_id:
-        SCRIPT_SQL = text("""
-            SELECT id AS researcher_id, name, lattes_id
-            FROM public.researcher
-            WHERE id = :researcher_id
-        """)
-        result = session.execute(SCRIPT_SQL, {'researcher_id': researcher_id}).mappings().all()
+def list_researchers(session, researcher_ids=None, lattes_ids=None):
+    base_query = """
+        SELECT id AS researcher_id, name, lattes_id
+        FROM public.researcher
+        WHERE 1=1
+    """
+    params = {}
+
+    if researcher_ids:
+        base_query += ' AND id IN (:researcher_ids)'
+        params['researcher_ids'] = tuple(researcher_ids)
+
+    if lattes_ids:
+        base_query += ' AND lattes_id IN (:lattes_ids)'
+        params['lattes_ids'] = tuple(lattes_ids)
+
+    script_sql = text(base_query)
+
+    if params:
+        result = session.execute(script_sql, params)
     else:
-        SCRIPT_SQL = text("""
-            SELECT id AS researcher_id, name, lattes_id
-            FROM public.researcher
-        """)
-        result = session.execute(SCRIPT_SQL).mappings().all()
-    return pd.DataFrame(result)
+        result = session.execute(script_sql)
+
+    return pd.DataFrame(result.mappings().all())
 
 
 def researcher_classification(researcher: pd.Series) -> str:
@@ -248,26 +257,14 @@ def researcher_classification(researcher: pd.Series) -> str:
     return 'E'
 
 
-def main():
-<<<<<<< HEAD
-=======
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--researcher-id', type=str, default=None,
-                        help='UUID do pesquisador a processar (opcional)')
-    args = parser.parse_args()
-
->>>>>>> origin/develop
+def main(researcher_ids=None, lattes_ids=None):
     YEAR_FILTER = 2019
     session = next(get_sync_session())
     start_time = time.perf_counter()
     logger.info('researcher_classification_routine_started')
 
     try:
-<<<<<<< HEAD
-        dataframe = list_researchers(session)
-=======
-        dataframe = list_researchers(session, args.researcher_id)
->>>>>>> origin/develop
+        dataframe = list_researchers(session, researcher_ids, lattes_ids)
 
         if dataframe.empty:
             duration = time.perf_counter() - start_time
@@ -277,7 +274,6 @@ def main():
             )
             return
 
-        # Merging metrics
         metrics_calls = [
             (article_metrics, [YEAR_FILTER]),
             (patent_metrics, [YEAR_FILTER]),
@@ -377,4 +373,19 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--researcher-ids',
+        nargs='+',
+        type=str,
+        default=None,
+    )
+    parser.add_argument(
+        '--lattes-ids',
+        nargs='+',
+        type=str,
+        default=None,
+    )
+    args = parser.parse_args()
+
+    main(researcher_ids=args.researcher_ids, lattes_ids=args.lattes_ids)

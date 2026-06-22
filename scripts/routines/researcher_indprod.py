@@ -218,27 +218,24 @@ def guidance_indprod(session):
     return guidance.to_dict(orient='records')
 
 
-def list_researchers(session, researcher_id=None):
-    if researcher_id:
-        SCRIPT_SQL = text("""
-            SELECT id AS researcher_id
-            FROM public.researcher
-            WHERE id = :researcher_id;
-        """)
-        return session.execute(SCRIPT_SQL, {'researcher_id': researcher_id}).mappings().all()
-    SCRIPT_SQL = text("""
+def list_researchers(session, researcher_ids=None, lattes_ids=None):
+    base_query = """
         SELECT id AS researcher_id
-        FROM public.researcher;
-    """)
-    return session.execute(SCRIPT_SQL).mappings().all()
+        FROM public.researcher
+        WHERE 1=1
+    """
+    params = {}
+    if researcher_ids:
+        base_query += ' AND id IN (:researcher_ids)'
+        params['researcher_ids'] = tuple(researcher_ids)
+    if lattes_ids:
+        base_query += ' AND lattes_id IN (:lattes_ids)'
+        params['lattes_ids'] = tuple(lattes_ids)
+
+    return session.execute(text(base_query), params).mappings().all()
 
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--researcher-id', type=str, default=None,
-                        help='UUID do pesquisador a processar (opcional)')
-    args = parser.parse_args()
-
+def main(researcher_ids=None, lattes_ids=None):
     session = next(get_sync_session())
     start_time = time.perf_counter()
     logger.info('researcher_indprod_routine_started')
@@ -248,7 +245,7 @@ def main():
         YEAR = range(2008, current_year + 1)
         history = pd.DataFrame(YEAR, columns=['year'])
 
-        researchers = list_researchers(session, args.researcher_id)
+        researchers = list_researchers(session, researcher_ids, lattes_ids)
         if not researchers:
             raise ValueError('No researchers found')
         researchers = pd.DataFrame(researchers)
@@ -301,11 +298,19 @@ def main():
 
         researchers = researchers.fillna(0)
 
-        if args.researcher_id:
-            session.execute(
-                text('DELETE FROM researcher_ind_prod WHERE researcher_id = :researcher_id;'),
-                {'researcher_id': args.researcher_id},
-            )
+        if researcher_ids or lattes_ids:
+            base_query = 'DELETE FROM researcher_ind_prod WHERE 1=1'
+            params = {}
+            if researcher_ids:
+                base_query += ' AND researcher_id IN (:researcher_ids)'
+                params['researcher_ids'] = tuple(researcher_ids)
+            if lattes_ids:
+                base_query += (
+                    ' AND researcher_id IN (SELECT id FROM researcher '
+                    'WHERE lattes_id IN (:lattes_ids))'
+                )
+                params['lattes_ids'] = tuple(lattes_ids)
+            session.execute(text(base_query), params)
         else:
             session.execute(text('DELETE FROM researcher_ind_prod;'))
 
@@ -360,4 +365,19 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--researcher-ids',
+        nargs='+',
+        type=str,
+        default=None,
+    )
+    parser.add_argument(
+        '--lattes-ids',
+        nargs='+',
+        type=str,
+        default=None,
+    )
+    args = parser.parse_args()
+
+    main(researcher_ids=args.researcher_ids, lattes_ids=args.lattes_ids)

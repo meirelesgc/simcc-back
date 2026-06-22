@@ -44,24 +44,27 @@ if not PROXY:
     )
 
 
-def list_admin_researchers(session, researcher_id=None):
-    if researcher_id:
-        SCRIPT_SQL = text("""
-            SELECT researcher_id, name, lattes_id
-            FROM public.researcher
-            WHERE researcher_id = :researcher_id;
-        """)
-        return (
-            session
-            .execute(SCRIPT_SQL, {'researcher_id': researcher_id})
-            .mappings()
-            .all()
-        )
-    SCRIPT_SQL = text("""
+def list_admin_researchers(session, researcher_ids=None, lattes_ids=None):
+    base_query = """
         SELECT researcher_id, name, lattes_id
-        FROM public.researcher;
-    """)
-    return session.execute(SCRIPT_SQL).mappings().all()
+        FROM public.researcher
+        WHERE 1=1
+    """
+    params = {}
+
+    if researcher_ids:
+        base_query += ' AND researcher_id IN (:researcher_ids)'
+        params['researcher_ids'] = tuple(researcher_ids)
+
+    if lattes_ids:
+        base_query += ' AND lattes_id IN (:lattes_ids)'
+        params['lattes_ids'] = tuple(lattes_ids)
+
+    script_sql = text(base_query)
+
+    result = session.execute(script_sql, params)
+
+    return result.mappings().all()
 
 
 def cnpq_att_call(lattes_id):
@@ -71,9 +74,7 @@ def cnpq_att_call(lattes_id):
             verify=False,
             timeout=HTTP_TIMEOUT,
         )
-
         response.raise_for_status()
-
         return response.json()
 
     return client.service.getDataAtualizacaoCV(lattes_id)
@@ -98,7 +99,6 @@ def cnpq_att(lattes_id):
                     lattes_id=lattes_id,
                     error=str(e),
                 )
-
                 return datetime.min
 
 
@@ -111,10 +111,7 @@ def database_att(session, lattes_id):
 
     result = (
         session
-        .execute(
-            SCRIPT_SQL,
-            {'lattes_id': lattes_id},
-        )
+        .execute(SCRIPT_SQL, {'lattes_id': lattes_id})
         .mappings()
         .first()
     )
@@ -142,11 +139,8 @@ def download_xml(lattes_id, researcher_id):
                     verify=False,
                     timeout=HTTP_TIMEOUT,
                 )
-
                 response.raise_for_status()
-
                 content = response.content
-
             else:
                 content = client.service.getCurriculoCompactado(lattes_id)
 
@@ -157,14 +151,10 @@ def download_xml(lattes_id, researcher_id):
                 lattes_id=lattes_id,
                 error=str(e),
             )
-
             return str(e)
 
         try:
-            zip_path = os.path.join(
-                ZIP_XML_PATH,
-                f'{lattes_id}.zip',
-            )
+            zip_path = os.path.join(ZIP_XML_PATH, f'{lattes_id}.zip')
 
             with open(zip_path, 'wb') as f:
                 f.write(content)
@@ -190,51 +180,35 @@ def download_xml(lattes_id, researcher_id):
                 lattes_id=lattes_id,
                 error=str(e),
             )
-
             return str(e)
 
     finally:
         session.close()
 
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        '--researcher-id',
-        type=str,
-        default=None,
-        help='UUID do pesquisador a processar (opcional)',
-    )
-    args = parser.parse_args()
-
+def main(researcher_ids=None, lattes_ids=None):
     admin_session = next(get_admin_sync_session())
-
     start_time = time.perf_counter()
 
     logger.info('soap_lattes_routine_started')
 
     try:
-        for directory in [LOG_PATH, CURRENT_XML_PATH, ZIP_XML_PATH]:
-            os.makedirs(directory, exist_ok=True)
+        for file in os.listdir(XML_PATH):
+            path = os.path.join(XML_PATH, file)
+            if os.path.isfile(path) and file.endswith('.xml'):
+                os.remove(path)
 
-        if not args.researcher_id:
-            for file in os.listdir(XML_PATH):
-                path = os.path.join(XML_PATH, file)
-
-                if os.path.isfile(path) and file.endswith('.xml'):
-                    os.remove(path)
-
-        researchers = list_admin_researchers(admin_session, args.researcher_id)
+        researchers = list_admin_researchers(
+            admin_session, researcher_ids, lattes_ids
+        )
 
         if not researchers:
             duration = time.perf_counter() - start_time
-
             logger.info(
                 'soap_lattes_routine_finished_successfully',
                 count=0,
                 duration=f'{duration:.2f}s',
             )
-
             return
 
         total_researchers = len(researchers)
@@ -269,16 +243,12 @@ def main():
                     researcher_id,
                 )
 
-                futures[future] = (
-                    lattes_id,
-                    researcher_id,
-                )
+                futures[future] = (lattes_id, researcher_id)
 
             completed = 0
 
             for future in as_completed(futures):
                 completed += 1
-
                 lattes_id, researcher_id = futures[future]
 
                 logger.info(
@@ -291,7 +261,6 @@ def main():
 
                 try:
                     error = future.result()
-
                     if error:
                         errors.append((lattes_id, error))
 
@@ -304,7 +273,6 @@ def main():
                         lattes_id=lattes_id,
                         error=str(e),
                     )
-
                     errors.append((lattes_id, str(e)))
 
         if errors:
@@ -312,19 +280,9 @@ def main():
                 f'logs/errors_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv'
             )
 
-            with open(
-                error_file,
-                'w',
-                newline='',
-                encoding='utf-8',
-            ) as f:
+            with open(error_file, 'w', newline='', encoding='utf-8') as f:
                 writer = csv.writer(f)
-
-                writer.writerow([
-                    'lattes_id',
-                    'erro',
-                ])
-
+                writer.writerow(['lattes_id', 'erro'])
                 writer.writerows(errors)
 
         duration = time.perf_counter() - start_time
@@ -348,4 +306,19 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--researcher-ids',
+        nargs='+',
+        type=str,
+        default=None,
+    )
+    parser.add_argument(
+        '--lattes-ids',
+        nargs='+',
+        type=str,
+        default=None,
+    )
+    args = parser.parse_args()
+
+    main(researcher_ids=args.researcher_ids, lattes_ids=args.lattes_ids)

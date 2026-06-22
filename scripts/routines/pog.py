@@ -1,3 +1,4 @@
+import argparse
 import time
 
 from sqlalchemy import text
@@ -8,7 +9,7 @@ from simcc.core.logging import get_logger
 logger = get_logger('routines')
 
 
-def main():
+def main(researcher_ids=None, lattes_ids=None):
     session = next(get_sync_session())
     start_time = time.perf_counter()
     logger.info('pog_routine_started')
@@ -102,4 +103,19 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--researcher-ids',
+        nargs='+',
+        type=str,
+        default=None,
+    )
+    parser.add_argument(
+        '--lattes-ids',
+        nargs='+',
+        type=str,
+        default=None,
+    )
+    args = parser.parse_args()
+
+    main(researcher_ids=args.researcher_ids, lattes_ids=args.lattes_ids)

@@ -11,27 +11,39 @@ from simcc.core.logging import get_logger
 logger = get_logger('routines')
 
 
-def list_researchers(session, researcher_id=None):
-    if researcher_id:
-        query = """
-            SELECT id AS researcher_id, name, lattes_id
-            FROM public.researcher
-            WHERE id = :researcher_id
-        """
-        return session.execute(text(query), {'researcher_id': researcher_id}).fetchall()
-    query = """
+def list_researchers(session, researcher_ids=None, lattes_ids=None):
+    base_query = """
         SELECT id AS researcher_id, name, lattes_id
         FROM public.researcher
+        WHERE 1=1
     """
-    return session.execute(text(query)).fetchall()
+    params = {}
+    if researcher_ids:
+        base_query += ' AND id IN (:researcher_ids)'
+        params['researcher_ids'] = tuple(researcher_ids)
+    if lattes_ids:
+        base_query += ' AND lattes_id IN (:lattes_ids)'
+        params['lattes_ids'] = tuple(lattes_ids)
+
+    return session.execute(text(base_query), params).fetchall()
 
 
-def delete_researcher_production(session, researcher_id=None):
-    if researcher_id:
-        session.execute(
-            text('DELETE FROM researcher_production WHERE researcher_id = :researcher_id'),
-            {'researcher_id': researcher_id},
-        )
+def delete_researcher_production(
+    session, researcher_ids=None, lattes_ids=None
+):
+    if researcher_ids or lattes_ids:
+        base_query = 'DELETE FROM researcher_production WHERE 1=1'
+        params = {}
+        if researcher_ids:
+            base_query += ' AND researcher_id IN (:researcher_ids)'
+            params['researcher_ids'] = tuple(researcher_ids)
+        if lattes_ids:
+            base_query += (
+                ' AND researcher_id IN (SELECT id FROM researcher '
+                'WHERE lattes_id IN (:lattes_ids))'
+            )
+            params['lattes_ids'] = tuple(lattes_ids)
+        session.execute(text(base_query), params)
     else:
         session.execute(text('DELETE FROM researcher_production'))
 
@@ -135,21 +147,16 @@ def list_address(session):
     return session.execute(text(query)).fetchall()
 
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--researcher-id', type=str, default=None,
-                        help='UUID do pesquisador a processar (opcional)')
-    args = parser.parse_args()
-
+def main(researcher_ids=None, lattes_ids=None):
     session = next(get_sync_session())
     start_time = time.perf_counter()
     logger.info('researcher_production_routine_started')
 
     try:
-        delete_researcher_production(session, args.researcher_id)
+        delete_researcher_production(session, researcher_ids, lattes_ids)
 
         researchers = pd.DataFrame(
-            list_researchers(session, args.researcher_id),
+            list_researchers(session, researcher_ids, lattes_ids),
             columns=['researcher_id', 'name', 'lattes_id'],
         )
 
@@ -255,4 +262,19 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--researcher-ids',
+        nargs='+',
+        type=str,
+        default=None,
+    )
+    parser.add_argument(
+        '--lattes-ids',
+        nargs='+',
+        type=str,
+        default=None,
+    )
+    args = parser.parse_args()
+
+    main(researcher_ids=args.researcher_ids, lattes_ids=args.lattes_ids)

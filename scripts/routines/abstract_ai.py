@@ -89,16 +89,7 @@ def list_ufmg_data(session):
     return session.execute(SCRIPT_SQL).mappings().all()
 
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        '--researcher-id',
-        type=str,
-        default=None,
-        help='UUID do pesquisador a processar (opcional)',
-    )
-    args = parser.parse_args()
-
+def main(researcher_ids=None, lattes_ids=None):
     session = next(get_sync_session())
     start_time = time.perf_counter()
     logger.info('researcher_abstract_ai_routine_started')
@@ -126,9 +117,15 @@ def main():
         }
         ufmg_map = {item['id']: item for item in list_ufmg_data(session)}
 
-        researcher_filter = (
-            'AND r.id = :researcher_id' if args.researcher_id else ''
-        )
+        researcher_filter = ''
+        query_params = {}
+        if researcher_ids:
+            researcher_filter += ' AND r.id IN (:researcher_ids)'
+            query_params['researcher_ids'] = tuple(researcher_ids)
+        if lattes_ids:
+            researcher_filter += ' AND r.lattes_id IN (:lattes_ids)'
+            query_params['lattes_ids'] = tuple(lattes_ids)
+
         SCRIPT_SQL_RESEARCHERS = text(f"""
             SELECT
                 r.id, r.name, r.lattes_id, r.lattes_10_id, r.abstract, r.orcid,
@@ -145,9 +142,6 @@ def main():
                 LEFT JOIN openalex_researcher opr ON opr.researcher_id = r.id
             WHERE abstract_ai IS NULL {researcher_filter}
         """)
-        query_params = (
-            {'researcher_id': args.researcher_id} if args.researcher_id else {}
-        )
         researchers_to_process = (
             session
             .execute(SCRIPT_SQL_RESEARCHERS, query_params)
@@ -336,4 +330,19 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--researcher-ids',
+        nargs='+',
+        type=str,
+        default=None,
+    )
+    parser.add_argument(
+        '--lattes-ids',
+        nargs='+',
+        type=str,
+        default=None,
+    )
+    args = parser.parse_args()
+
+    main(researcher_ids=args.researcher_ids, lattes_ids=args.lattes_ids)

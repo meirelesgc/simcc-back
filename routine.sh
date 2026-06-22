@@ -1,20 +1,24 @@
 #!/bin/bash
-
 set -e
 
-API_SERVICE=$(docker compose config --services | grep '_api$' | head -n1)
-HOP_SERVICE=$(docker compose --profile routines config --services | grep '_hop$' | head -n1)
+API_SERVICE=$(docker compose config --services | grep -E '(^|_)api$' | head -n1)
 
-if [ -z "$API_SERVICE" ] || [ -z "$HOP_SERVICE" ]; then
-  echo "Erro: Servicos nao encontrados."
-  exit 1
+if [ "$API_SERVICE" = "api" ]; then
+  HOP_SERVICE="hop"
+  DB_SERVICE="db"
+  DB_NAME="db"
+else
+  PREFIX=${API_SERVICE%_api}
+  HOP_SERVICE="${PREFIX}_hop"
+  DB_SERVICE="${PREFIX}_db"
+  DB_NAME="${PREFIX}"
 fi
 
-echo "Starting PRE_HOP routines..."
 docker compose exec "$API_SERVICE" ./scripts/routines/pre_hop.sh
 
-echo "Running Apache Hop..."
-docker compose --profile routines run --rm "$HOP_SERVICE"
+docker compose exec "$API_SERVICE" http GET "http://${HOP_SERVICE}:8080/hop/execWorkflow" \
+  workflow==/files/jade-extrator/workflows/Index.hwf \
+  DATABASE_URL=="jdbc:postgresql://${DB_SERVICE}:5432/${DB_NAME}?user=postgres&password=postgres" \
+  ADMIN_DATABASE_URL=="jdbc:postgresql://${DB_SERVICE}:5432/${DB_NAME}_admin?user=postgres&password=postgres"
 
-echo "Starting POST_HOP routines..."
 docker compose exec "$API_SERVICE" ./scripts/routines/post_hop.sh
