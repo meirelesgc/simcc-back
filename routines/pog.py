@@ -137,7 +137,7 @@ if __name__ == '__main__':
         WHERE rg.second_leader = r.name;
 
         UPDATE research_group rg
-        SET first_leader = r.id
+        SET first_leader_id = r.id
         FROM researcher r
         WHERE rg.first_leader = r.name;
         """
