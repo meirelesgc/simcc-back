@@ -1,7 +1,7 @@
 from typing import List
 
 import nltk
-import pandas as pd
+import polars as pl
 from nltk.corpus import stopwords
 
 from simcc.repositories import external_repo
@@ -22,35 +22,36 @@ async def list_article_production(
     if not article_production:
         return []
 
-    df = pd.DataFrame(article_production)
+    df = pl.DataFrame(article_production)
 
-    # pivot_table handles grouping and counting qualis
-    article_production_pivot = df.pivot_table(
+    # pivot handles grouping and counting qualis
+    article_production_pivot = df.pivot(
+        on='qualis',
         index=['name', 'year'],
-        columns='qualis',
-        values='among',  # 'among' is already COUNT(*) from SQL
-        aggfunc='sum',
-        fill_value=0,
-    ).reset_index()
+        values='among',
+        aggregate_function='sum',
+    ).fill_null(0)
 
     # Citations are already SUMmed in SQL, but we need to group them if multiple qualis exist for same name/year
-    citations = df.groupby(['name', 'year'])['citations'].sum().reset_index()
+    citations = df.group_by(['name', 'year']).agg(pl.col('citations').sum())
 
-    article_production_pivot = article_production_pivot.merge(
+    article_production_pivot = article_production_pivot.join(
         citations, on=['name', 'year'], how='left'
     )
 
     # Ensure all qualis columns exist and match schema
     for q in ['A1', 'A2', 'A3', 'A4', 'B1', 'B2', 'B3', 'B4', 'C', 'SQ']:
         if q not in article_production_pivot.columns:
-            article_production_pivot[q] = 0
+            article_production_pivot = article_production_pivot.with_columns(
+                pl.lit(0).alias(q)
+            )
 
     # Normalize column names to lowercase for schema compatibility
-    article_production_pivot.columns = [
-        c.lower() for c in article_production_pivot.columns
-    ]
+    article_production_pivot = article_production_pivot.rename({
+        c: c.lower() for c in article_production_pivot.columns
+    })
 
-    return article_production_pivot.to_dict(orient='records')
+    return article_production_pivot.to_dicts()
 
 
 async def get_departament(session, dep_id=None):
@@ -80,16 +81,13 @@ async def list_words(session, term: str) -> List[dict]:
 
 async def post_congregation(session, file):
     # Process Excel file
-    df = pd.read_excel(file.file, skiprows=2)
-    # Basic cleaning as hinted in the prompt
-    df = df.where(pd.notna(df), None)
-    df = df.dropna(how='all')
+    df = pl.read_excel(file.file, read_options={'header_row': 2})
+    # Basic cleaning
+    df = df.filter(~pl.all_horizontal(pl.all().is_null()))
 
     # Map DataFrame columns to expected repository format
-    # The prompt uses: %(MEMBRO)s, %(DEPARTAMENTO)s, %(MANDATO)s, %(E-MAIL)s, %(TELEFONE)s
-    # We should ensure the dict keys match these
     congregation_data = []
-    for _, row in df.iterrows():
+    for row in df.to_dicts():
         congregation_data.append({
             'MEMBRO': row.get('MEMBRO'),
             'DEPARTAMENTO': row.get('DEPARTAMENTO'),

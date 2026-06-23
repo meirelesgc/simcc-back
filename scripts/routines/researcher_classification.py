@@ -2,7 +2,7 @@ import argparse
 import datetime
 import time
 
-import pandas as pd
+import polars as pl
 from sqlalchemy import text
 
 from simcc.core.db.database import get_sync_session
@@ -22,8 +22,6 @@ def article_metrics(session, year):
     """)
 
     result = session.execute(SCRIPT_SQL, {'year': year}).mappings().all()
-    articles = pd.DataFrame(result)
-
     columns = [
         'researcher_id',
         'A1',
@@ -38,19 +36,23 @@ def article_metrics(session, year):
         'SQ',
     ]
 
-    if articles.empty:
-        return pd.DataFrame(columns=columns)
+    if not result:
+        return pl.DataFrame(schema={c: pl.Int64 if c != 'researcher_id' else pl.String for c in columns})
 
-    articles = articles.pivot_table(
-        index=['researcher_id'],
-        columns='qualis',
+    df = pl.DataFrame(result).with_columns(pl.col('researcher_id').cast(pl.String))
+
+    df = df.pivot(
+        on='qualis',
+        index='researcher_id',
         values='count_article',
-        aggfunc='sum',
-        fill_value=0,
-    ).reset_index()
+        aggregate_function='sum',
+    ).fill_null(0)
 
-    articles = articles.reindex(columns, axis='columns', fill_value=0)
-    return articles
+    for col in columns:
+        if col not in df.columns:
+            df = df.with_columns(pl.lit(0).alias(col))
+
+    return df.select(columns)
 
 
 def patent_metrics(session, year):
@@ -63,12 +65,10 @@ def patent_metrics(session, year):
         GROUP BY researcher_id;
     """)
     result = session.execute(SCRIPT_SQL, {'year': year}).mappings().all()
-    df = pd.DataFrame(result)
-    if df.empty:
-        return pd.DataFrame(
-            columns=['researcher_id', 'patent_not_granted', 'patent_granted']
-        )
-    return df
+    columns = ['researcher_id', 'patent_not_granted', 'patent_granted']
+    if not result:
+        return pl.DataFrame(schema={c: pl.Int64 if c != 'researcher_id' else pl.String for c in columns})
+    return pl.DataFrame(result).with_columns(pl.col('researcher_id').cast(pl.String))
 
 
 def guidance_metrics(session, year):
@@ -81,7 +81,6 @@ def guidance_metrics(session, year):
         GROUP BY nature, g.status, g.researcher_id;
     """)
     result = session.execute(SCRIPT_SQL, {'year': year}).mappings().all()
-    guidance = pd.DataFrame(result)
 
     rename_dict = {
         'iniciacao cientifica concluida': 'ic_completed',
@@ -100,24 +99,25 @@ def guidance_metrics(session, year):
     }
     columns = ['researcher_id'] + list(rename_dict.values())
 
-    if guidance.empty:
-        return pd.DataFrame(columns=columns)
+    if not result:
+        return pl.DataFrame(schema={c: pl.Int64 if c != 'researcher_id' else pl.String for c in columns})
 
-    guidance = (
-        guidance
-        .pivot_table(
-            index=['researcher_id'],
-            columns='nature',
-            values='count_nature',
-            aggfunc='sum',
-            fill_value=0,
-        )
-        .reset_index()
-        .rename(columns=rename_dict)
-    )
+    df = pl.DataFrame(result).with_columns(pl.col('researcher_id').cast(pl.String))
+    df = df.pivot(
+        on='nature',
+        index='researcher_id',
+        values='count_nature',
+        aggregate_function='sum',
+    ).fill_null(0)
 
-    guidance = guidance.reindex(columns, axis='columns', fill_value=0)
-    return guidance
+    rename_existing = {k: v for k, v in rename_dict.items() if k in df.columns}
+    df = df.rename(rename_existing)
+
+    for col in columns:
+        if col not in df.columns:
+            df = df.with_columns(pl.lit(0).alias(col))
+
+    return df.select(columns)
 
 
 def academic_degree_metrics(session):
@@ -128,18 +128,19 @@ def academic_degree_metrics(session):
         GROUP BY researcher_id
     """)
     result = session.execute(SCRIPT_SQL).mappings().all()
-    df = pd.DataFrame(result)
-    if df.empty:
-        return pd.DataFrame(columns=['researcher_id', 'first_doc'])
-    return df
+    if not result:
+        return pl.DataFrame(schema={'researcher_id': pl.String, 'first_doc': pl.Int64})
+    return pl.DataFrame(result).with_columns(
+        pl.col('researcher_id').cast(pl.String),
+        pl.col('first_doc').cast(pl.Int64)
+    )
 
 
 def simple_count_metrics(session, sql, params, column_name):
     result = session.execute(text(sql), params).mappings().all()
-    df = pd.DataFrame(result)
-    if df.empty:
-        return pd.DataFrame(columns=['researcher_id', column_name])
-    return df
+    if not result:
+        return pl.DataFrame(schema={'researcher_id': pl.String, column_name: pl.Int64})
+    return pl.DataFrame(result).with_columns(pl.col('researcher_id').cast(pl.String))
 
 
 def list_researchers(session, researcher_ids=None, lattes_ids=None):
@@ -165,10 +166,13 @@ def list_researchers(session, researcher_ids=None, lattes_ids=None):
     else:
         result = session.execute(script_sql)
 
-    return pd.DataFrame(result.mappings().all())
+    res_list = result.mappings().all()
+    if not res_list:
+        return pl.DataFrame(schema={'researcher_id': pl.String, 'name': pl.String, 'lattes_id': pl.String})
+    return pl.DataFrame(res_list).with_columns(pl.col('researcher_id').cast(pl.String))
 
 
-def researcher_classification(researcher: pd.Series) -> str:
+def researcher_classification(researcher: dict) -> str:
     if researcher['first_doc'] == 0:
         return 'E'
 
@@ -266,7 +270,7 @@ def main(researcher_ids=None, lattes_ids=None):
     try:
         dataframe = list_researchers(session, researcher_ids, lattes_ids)
 
-        if dataframe.empty:
+        if dataframe.is_empty():
             duration = time.perf_counter() - start_time
             logger.info(
                 'researcher_classification_routine_no_data',
@@ -335,11 +339,14 @@ def main(researcher_ids=None, lattes_ids=None):
 
         for func, args in metrics_calls:
             m_df = func(session, *args)
-            dataframe = dataframe.merge(m_df, how='left', on='researcher_id')
+            dataframe = dataframe.join(m_df, how='left', on='researcher_id')
 
-        dataframe = dataframe.fillna(0)
+        dataframe = dataframe.fill_null(0)
 
-        dataframe['class'] = dataframe.apply(researcher_classification, axis=1)
+        classes = []
+        for row in dataframe.to_dicts():
+            classes.append(researcher_classification(row))
+        dataframe = dataframe.with_columns(pl.Series(name='class', values=classes))
 
         UPDATE_SQL = text("""
             UPDATE researcher
@@ -347,12 +354,12 @@ def main(researcher_ids=None, lattes_ids=None):
             WHERE id = :researcher_id
         """)
 
-        for _, researcher in dataframe.iterrows():
+        for row in dataframe.to_dicts():
             session.execute(
                 UPDATE_SQL,
                 {
-                    'class': researcher['class'],
-                    'researcher_id': researcher['researcher_id'],
+                    'class': row['class'],
+                    'researcher_id': row['researcher_id'],
                 },
             )
 
@@ -389,3 +396,4 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     main(researcher_ids=args.researcher_ids, lattes_ids=args.lattes_ids)
+

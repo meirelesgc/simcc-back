@@ -1,6 +1,6 @@
 from pathlib import Path
 
-import pandas as pd
+import polars as pl
 import structlog
 
 from simcc.core.dependencies import get_settings
@@ -245,33 +245,39 @@ async def list_co_authorship(session, researcher_id):
     researcher_institution_name = researcher.get('university')
     researcher_name = researcher.get('name')
 
-    df = pd.DataFrame(co_authors_data)
+    df = pl.DataFrame(co_authors_data)
 
-    def co_authorship_type(co_authorship_institution):
-        if co_authorship_institution == researcher_institution_name:
-            return 'internal'
-        return 'external'
-
-    df['type'] = df['institution'].apply(co_authorship_type)
-
-    df['initials'] = df['name'].apply(
-        lambda name: (
-            ''.join(w[0] for w in str(name).replace('.', '').split() if w)
-            if pd.notnull(name)
-            else ''
-        )
+    df = df.with_columns(
+        pl.when(pl.col('institution') == researcher_institution_name)
+        .then(pl.lit('internal'))
+        .otherwise(pl.lit('external'))
+        .alias('type')
     )
 
-    agg_config = {
-        'among': 'sum',
-        'type': lambda x: 'internal' if 'internal' in x.values else 'external',
-    }
-    columns = ['name', 'initials']
-    df = df.groupby(columns).agg(agg_config).reset_index()
+    df = df.with_columns(
+        pl.col('name')
+        .map_elements(
+            lambda name: (
+                ''.join(w[0] for w in str(name).replace('.', '').split() if w)
+                if name is not None
+                else ''
+            ),
+            return_dtype=pl.String,
+        )
+        .alias('initials')
+    )
 
-    df = df[df['name'] != researcher_name]
+    df = df.group_by(['name', 'initials']).agg([
+        pl.col('among').sum().alias('among'),
+        pl.when((pl.col('type') == 'internal').any())
+        .then(pl.lit('internal'))
+        .otherwise(pl.lit('external'))
+        .alias('type'),
+    ])
 
-    return df.to_dict(orient='records')
+    df = df.filter(pl.col('name') != researcher_name)
+
+    return df.to_dicts()
 
 
 async def get_departament_rt(session):

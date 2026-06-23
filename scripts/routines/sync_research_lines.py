@@ -2,8 +2,7 @@ import time
 import unicodedata
 from collections import Counter
 
-import pandas as pd
-from numpy import nan
+import polars as pl
 from sqlalchemy import text
 
 from simcc.core.db.database import get_sync_session
@@ -21,19 +20,13 @@ def normalize_string(s):
 
 
 def load_research_lines_csv(path='storage/seed/program_research_lines.csv'):
-    df = pd.read_csv(path)
-    df.columns = [normalize_string(col) for col in df.columns]
+    df = pl.read_csv(path)
+    df = df.rename({col: normalize_string(col) for col in df.columns})
 
-    df['start_year'] = pd.to_datetime(
-        df['data de inicio'], format='%d/%m/%Y', errors='coerce'
-    ).dt.year
-
-    df['end_year'] = pd.to_datetime(
-        df['data de fim'], format='%d/%m/%Y', errors='coerce'
-    ).dt.year
-
-    df['start_year'] = df['start_year'].replace({nan: None})
-    df['end_year'] = df['end_year'].replace({nan: None})
+    df = df.with_columns(
+        pl.col('data de inicio').str.to_date(format='%d/%m/%Y', strict=False).dt.year().alias('start_year'),
+        pl.col('data de fim').str.to_date(format='%d/%m/%Y', strict=False).dt.year().alias('end_year')
+    )
     return df
 
 
@@ -66,7 +59,7 @@ def main():
         stats = Counter()
         records_to_insert = []
 
-        for _, row in df.iterrows():
+        for row in df.to_dicts():
             code = row.get('codigo do programa')
             graduate_program_id = programs_map.get(code)
 
@@ -118,3 +111,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+

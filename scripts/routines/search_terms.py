@@ -3,7 +3,6 @@ import time
 from itertools import islice
 
 import firebase_admin
-import pandas as pd
 from firebase_admin import credentials, firestore
 from sqlalchemy import text
 
@@ -36,7 +35,7 @@ def chunked(iterable, size):
 
 
 def normalize_value(value):
-    if pd.isna(value):
+    if value is None:
         return None
     if hasattr(value, 'item'):
         try:
@@ -46,12 +45,11 @@ def normalize_value(value):
     return value
 
 
-def dataframe_to_records(df):
-    columns = list(df.columns)
-    for row in df.itertuples(index=False, name=None):
+def list_to_records(records_list):
+    for row in records_list:
         yield {
             column: normalize_value(value)
-            for column, value in zip(columns, row)
+            for column, value in row.items()
         }
 
 
@@ -95,7 +93,7 @@ def insert_data_batch(db, collection_ref, records, batch_size):
     return total_inserted
 
 
-def terms_dataframe(session) -> pd.DataFrame:
+def terms_dataframe(session) -> list[dict]:
     script_sql = r"""
         SELECT
             INITCAP(TRANSLATE(term, $$-\".:[],;()'$$, ' ')) AS term,
@@ -143,7 +141,7 @@ def terms_dataframe(session) -> pd.DataFrame:
         FROM researcher
     """
     result = session.execute(text(script_sql))
-    return pd.DataFrame(result.mappings().all())
+    return result.mappings().all()
 
 
 def main():
@@ -164,8 +162,8 @@ def main():
                 break
             deleted_total += deleted
 
-        terms_df = terms_dataframe(session)
-        records = dataframe_to_records(terms_df)
+        terms_list = terms_dataframe(session)
+        records = list_to_records(terms_list)
         inserted_total = insert_data_batch(
             db,
             collection_ref,
@@ -193,3 +191,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+

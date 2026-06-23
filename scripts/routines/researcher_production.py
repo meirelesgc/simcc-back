@@ -1,8 +1,7 @@
 import argparse
 import time
 
-import numpy as np
-import pandas as pd
+import polars as pl
 from sqlalchemy import text
 
 from simcc.core.db.database import get_sync_session
@@ -25,7 +24,7 @@ def list_researchers(session, researcher_ids=None, lattes_ids=None):
         base_query += ' AND lattes_id IN (:lattes_ids)'
         params['lattes_ids'] = tuple(lattes_ids)
 
-    return session.execute(text(base_query), params).fetchall()
+    return session.execute(text(base_query), params).mappings().all()
 
 
 def delete_researcher_production(
@@ -50,25 +49,13 @@ def delete_researcher_production(
 
 def bibliographic_production_count(session):
     query = """
-        SELECT researcher_id, type, COUNT(*)
+        SELECT researcher_id, type, COUNT(*) AS count
         FROM bibliographic_production
         GROUP BY researcher_id, type;
     """
-    result = session.execute(text(query)).fetchall()
+    result = session.execute(text(query)).mappings().all()
 
-    columns = ['researcher_id', 'type', 'count']
-    bibliographic_production = pd.DataFrame(result, columns=columns)
-
-    if not bibliographic_production.empty:
-        bibliographic_production = bibliographic_production.pivot_table(
-            index='researcher_id', columns='type', aggfunc='sum', fill_value=0
-        )
-        bibliographic_production.columns = (
-            bibliographic_production.columns.get_level_values(1)
-        )
-        bibliographic_production = bibliographic_production.reset_index()
-
-    columns = [
+    target_cols = [
         'researcher_id',
         'BOOK',
         'BOOK_CHAPTER',
@@ -77,15 +64,25 @@ def bibliographic_production_count(session):
         'TEXT_IN_NEWSPAPER_MAGAZINE',
     ]
 
-    bibliographic_production = bibliographic_production.reindex(
-        columns, axis='columns', fill_value=0
-    )
+    if not result:
+        return []
 
-    bibliographic_production.columns = (
-        bibliographic_production.columns.str.lower()
-    )
+    df = pl.DataFrame(result).with_columns(pl.col('researcher_id').cast(pl.String))
+    df = df.pivot(
+        on='type',
+        index='researcher_id',
+        values='count',
+        aggregate_function='sum',
+    ).fill_null(0)
 
-    return bibliographic_production.to_dict(orient='records')
+    for col in target_cols:
+        if col not in df.columns:
+            df = df.with_columns(pl.lit(0).alias(col))
+
+    df = df.select(target_cols)
+    df = df.rename({c: c.lower() for c in df.columns})
+
+    return df.to_dicts()
 
 
 def list_great_area(session):
@@ -96,7 +93,7 @@ def list_great_area(session):
                 ON gae.id = r.great_area_expertise_id
         GROUP BY researcher_id
     """
-    return session.execute(text(query)).fetchall()
+    return session.execute(text(query)).mappings().all()
 
 
 def list_speciality(session):
@@ -108,7 +105,7 @@ def list_speciality(session):
         LEFT JOIN area_expertise ae ON r.area_expertise_id = ae.id
         GROUP BY researcher_id;
     """
-    return session.execute(text(query)).fetchall()
+    return session.execute(text(query)).mappings().all()
 
 
 def list_software(session):
@@ -117,7 +114,7 @@ def list_software(session):
         FROM software
         GROUP BY researcher_id;
     """
-    return session.execute(text(query)).fetchall()
+    return session.execute(text(query)).mappings().all()
 
 
 def list_brand(session):
@@ -126,7 +123,7 @@ def list_brand(session):
         FROM brand
         GROUP BY researcher_id;
     """
-    return session.execute(text(query)).fetchall()
+    return session.execute(text(query)).mappings().all()
 
 
 def list_patent(session):
@@ -135,7 +132,7 @@ def list_patent(session):
         FROM patent
         GROUP BY researcher_id;
     """
-    return session.execute(text(query)).fetchall()
+    return session.execute(text(query)).mappings().all()
 
 
 def list_address(session):
@@ -144,7 +141,7 @@ def list_address(session):
         FROM researcher_address
         ORDER BY researcher_id;
     """
-    return session.execute(text(query)).fetchall()
+    return session.execute(text(query)).mappings().all()
 
 
 def main(researcher_ids=None, lattes_ids=None):
@@ -155,61 +152,70 @@ def main(researcher_ids=None, lattes_ids=None):
     try:
         delete_researcher_production(session, researcher_ids, lattes_ids)
 
-        researchers = pd.DataFrame(
+        def to_df(data, schema):
+            if not data:
+                return pl.DataFrame(schema=schema)
+            return pl.DataFrame(data).with_columns(pl.col('researcher_id').cast(pl.String))
+
+        researchers = to_df(
             list_researchers(session, researcher_ids, lattes_ids),
-            columns=['researcher_id', 'name', 'lattes_id'],
+            {'researcher_id': pl.String, 'name': pl.String, 'lattes_id': pl.String}
         )
 
-        b_production = bibliographic_production_count(session)
-        columns = [
-            'researcher_id',
-            'book',
-            'book_chapter',
-            'article',
-            'work_in_event',
-            'text_in_newspaper_magazine',
-        ]
-        b_production = pd.DataFrame(b_production, columns=columns)
+        if researchers.is_empty():
+            duration = time.perf_counter() - start_time
+            logger.info(
+                'researcher_production_routine_finished',
+                duration=f'{duration:.2f}s',
+            )
+            return
 
-        a_speciality = pd.DataFrame(
+        b_production = to_df(
+            bibliographic_production_count(session),
+            {
+                'researcher_id': pl.String,
+                'book': pl.Int64,
+                'book_chapter': pl.Int64,
+                'article': pl.Int64,
+                'work_in_event': pl.Int64,
+                'text_in_newspaper_magazine': pl.Int64,
+            }
+        )
+
+        a_speciality = to_df(
             list_speciality(session),
-            columns=['researcher_id', 'area_specialty'],
+            {'researcher_id': pl.String, 'area_specialty': pl.String}
         )
-        great_area = pd.DataFrame(
-            list_great_area(session), columns=['researcher_id', 'area']
+        great_area = to_df(
+            list_great_area(session),
+            {'researcher_id': pl.String, 'area': pl.String}
         )
-        software = pd.DataFrame(
-            list_software(session), columns=['researcher_id', 'software']
+        software = to_df(
+            list_software(session),
+            {'researcher_id': pl.String, 'software': pl.Int64}
         )
-        brand = pd.DataFrame(
-            list_brand(session), columns=['researcher_id', 'brand']
+        brand = to_df(
+            list_brand(session),
+            {'researcher_id': pl.String, 'brand': pl.Int64}
         )
-        patent = pd.DataFrame(
-            list_patent(session), columns=['researcher_id', 'patent']
+        patent = to_df(
+            list_patent(session),
+            {'researcher_id': pl.String, 'patent': pl.Int64}
         )
-        address = pd.DataFrame(
-            list_address(session), columns=['researcher_id', 'city', 'organ']
-        )
-
-        researchers = researchers.merge(
-            b_production, how='left', on='researcher_id'
-        )
-        researchers = researchers.merge(
-            a_speciality, how='left', on='researcher_id'
-        )
-        researchers = researchers.merge(
-            great_area, how='left', on='researcher_id'
-        )
-        researchers = researchers.merge(
-            software, how='left', on='researcher_id'
-        )
-        researchers = researchers.merge(brand, how='left', on='researcher_id')
-        researchers = researchers.merge(patent, how='left', on='researcher_id')
-        researchers = researchers.merge(
-            address, how='left', on='researcher_id'
+        address = to_df(
+            list_address(session),
+            {'researcher_id': pl.String, 'city': pl.String, 'organ': pl.String}
         )
 
-        researchers = researchers.rename(columns=str.lower)
+        researchers = researchers.join(b_production, how='left', on='researcher_id')
+        researchers = researchers.join(a_speciality, how='left', on='researcher_id')
+        researchers = researchers.join(great_area, how='left', on='researcher_id')
+        researchers = researchers.join(software, how='left', on='researcher_id')
+        researchers = researchers.join(brand, how='left', on='researcher_id')
+        researchers = researchers.join(patent, how='left', on='researcher_id')
+        researchers = researchers.join(address, how='left', on='researcher_id')
+
+        researchers = researchers.rename({c: c.lower() for c in researchers.columns})
 
         numeric_cols = [
             'book',
@@ -221,12 +227,10 @@ def main(researcher_ids=None, lattes_ids=None):
             'brand',
             'patent',
         ]
-        text_cols = ['area_specialty', 'area', 'city', 'organ']
 
-        researchers[numeric_cols] = researchers[numeric_cols].fillna(0)
-        researchers[text_cols] = (
-            researchers[text_cols].fillna(None).replace({np.nan: None})
-        )
+        researchers = researchers.with_columns([
+            pl.col(c).fill_null(0) for c in numeric_cols
+        ])
 
         insert_query = text("""
             INSERT INTO researcher_production
@@ -239,7 +243,7 @@ def main(researcher_ids=None, lattes_ids=None):
                 :area, :area_specialty, :city, :organ);
         """)
 
-        records = researchers.to_dict(orient='records')
+        records = researchers.to_dicts()
 
         for researcher in records:
             session.execute(insert_query, researcher)
@@ -278,3 +282,4 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     main(researcher_ids=args.researcher_ids, lattes_ids=args.lattes_ids)
+

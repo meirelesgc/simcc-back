@@ -4,7 +4,7 @@ import unicodedata
 from collections import Counter
 from datetime import datetime
 
-import pandas as pd
+import polars as pl
 from sqlalchemy import text
 
 from simcc.core.db.database import get_admin_sync_session
@@ -36,9 +36,8 @@ def get_institutions_mapping(session):
 
 
 def load_programs_csv(path='storage/seed/programs.csv'):
-    df = pd.read_csv(path)
-    df.columns = [normalize_string(col) for col in df.columns]
-    df['ies_nome'] = df['ies_nome'].where(df['ies_nome'].notnull(), None)
+    df = pl.read_csv(path)
+    df = df.rename({col: normalize_string(col) for col in df.columns})
     return df
 
 
@@ -66,8 +65,8 @@ def process_program_row(pg, institutions_map):
     types = []
 
     try:
-        cursos_raw = pg.get('cursos', '[]')
-        if pd.isna(cursos_raw):
+        cursos_raw = pg.get('cursos')
+        if cursos_raw is None:
             cursos_list = []
         else:
             cursos_list = ast.literal_eval(str(cursos_raw))
@@ -104,8 +103,8 @@ def process_program_row(pg, institutions_map):
         phone = None
 
     try:
-        regime_raw = pg.get('regime_letivo', '[]')
-        if pd.isna(regime_raw):
+        regime_raw = pg.get('regime_letivo')
+        if regime_raw is None:
             regimes = []
         else:
             regimes = ast.literal_eval(str(regime_raw))
@@ -164,8 +163,7 @@ def main():
         total_rows = len(programs_df)
         valid_programs = []
 
-        for _, row in programs_df.iterrows():
-            row_dict = row.to_dict()
+        for row_dict in programs_df.to_dicts():
             program_data, error_reason = process_program_row(
                 row_dict, institutions_map
             )
@@ -230,3 +228,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+

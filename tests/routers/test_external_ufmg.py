@@ -2,7 +2,7 @@ from http import HTTPStatus
 from io import BytesIO
 from uuid import uuid4
 
-import pandas as pd
+import polars as pl
 import pytest
 from sqlalchemy import text
 
@@ -158,8 +158,8 @@ async def test_list_article_production_ufmg(client, session):
 
 @pytest.mark.asyncio
 async def test_post_congregation_ufmg(client, session, monkeypatch):
-    # Mock pandas read_excel to avoid openpyxl dependency in tests
-    mock_data = pd.DataFrame({
+    # Mock polars read_excel to avoid dependency in tests
+    mock_data = pl.DataFrame({
         'MEMBRO': ['Membro Teste'],
         'DEPARTAMENTO': ['Depto Teste'],
         'MANDATO': ['2024-2026'],
@@ -170,7 +170,7 @@ async def test_post_congregation_ufmg(client, session, monkeypatch):
     def mock_read_excel(*args, **kwargs):
         return mock_data
 
-    monkeypatch.setattr(pd, 'read_excel', mock_read_excel)
+    monkeypatch.setattr(pl, 'read_excel', mock_read_excel)
 
     excel_file = BytesIO(b'fake excel content')
 

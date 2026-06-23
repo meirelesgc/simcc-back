@@ -3,7 +3,7 @@ import time
 import unicodedata
 from collections import Counter
 
-import pandas as pd
+import polars as pl
 from sqlalchemy import text
 
 from simcc.core.db.database import get_admin_sync_session
@@ -34,25 +34,33 @@ def normalize_categoria(value):
 
 
 def load_researchers_csv(path='storage/seed/program_researchers.csv'):
-    df = pd.read_csv(path)
-    df.columns = [normalize_string(col) for col in df.columns]
+    df = pl.read_csv(path)
+    df = df.rename({col: normalize_string(col) for col in df.columns})
     return df
 
 
 def get_researchers_mapping(session):
     sql = text('SELECT researcher_id, name FROM researcher')
     result = session.execute(sql).mappings().all()
-    df_res = pd.DataFrame(result)
-    if not df_res.empty:
-        df_res['match_name'] = df_res['name'].apply(normalize_name_match)
-        df_res = df_res.drop_duplicates(subset=['match_name'])
+    if not result:
+        return pl.DataFrame(schema={'researcher_id': pl.String, 'name': pl.String, 'match_name': pl.String})
+    df_res = pl.DataFrame(result).with_columns(pl.col('researcher_id').cast(pl.String))
+    df_res = df_res.with_columns(
+        pl.col('name').map_elements(normalize_name_match, return_dtype=pl.String).alias('match_name')
+    )
+    df_res = df_res.unique(subset=['match_name'])
     return df_res
 
 
 def get_programs_mapping(session):
     sql = text('SELECT graduate_program_id, code FROM graduate_program')
     result = session.execute(sql).mappings().all()
-    return pd.DataFrame(result)
+    if not result:
+        return pl.DataFrame(schema={'graduate_program_id': pl.String, 'code': pl.String})
+    return pl.DataFrame(result).with_columns(
+        pl.col('graduate_program_id').cast(pl.String),
+        pl.col('code').cast(pl.String)
+    )
 
 
 def main():
@@ -73,38 +81,41 @@ def main():
         df_res = get_researchers_mapping(session)
         df_prog = get_programs_mapping(session)
 
-        df['match_name'] = df['nome'].apply(normalize_name_match)
-        df['categoria'] = df['categoria'].apply(normalize_categoria)
+        df = df.with_columns(
+            pl.col('nome').map_elements(normalize_name_match, return_dtype=pl.String).alias('match_name'),
+            pl.col('categoria').map_elements(normalize_categoria, return_dtype=pl.String).alias('categoria'),
+            pl.col('id do programa').cast(pl.String)
+        )
 
-        if not df_res.empty:
-            df = df.merge(
-                df_res[['researcher_id', 'match_name']],
+        if not df_res.is_empty():
+            df = df.join(
+                df_res.select(['researcher_id', 'match_name']),
                 on='match_name',
                 how='left',
             )
         else:
-            df['researcher_id'] = None
+            df = df.with_columns(pl.lit(None).alias('researcher_id'))
 
-        if not df_prog.empty:
-            df = df.merge(
+        if not df_prog.is_empty():
+            df = df.join(
                 df_prog, left_on='id do programa', right_on='code', how='left'
             )
         else:
-            df['graduate_program_id'] = None
+            df = df.with_columns(pl.lit(None).alias('graduate_program_id'))
 
         years = [2026, 2025, 2024, 2023]
         stats = Counter()
         records_to_insert = []
 
-        for _, row in df.iterrows():
+        for row in df.to_dicts():
             r_id = row.get('researcher_id')
             pg_id = row.get('graduate_program_id')
 
-            if pd.isna(r_id):
+            if r_id is None:
                 stats['Barrado: pesquisador nao encontrado'] += 1
                 continue
 
-            if pd.isna(pg_id):
+            if pg_id is None:
                 stats['Barrado: programa nao encontrado'] += 1
                 continue
 
@@ -151,3 +162,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+

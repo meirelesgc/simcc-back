@@ -3,7 +3,7 @@ import time
 from datetime import datetime
 from uuid import uuid4
 
-import pandas as pd
+import polars as pl
 from sqlalchemy import text
 from unidecode import unidecode
 
@@ -13,7 +13,7 @@ from simcc.core.logging import get_logger
 logger = get_logger('routines')
 
 barema = {
-    'A1': 1,
+    'A1': 1.0,
     'A2': 0.875,
     'A3': 0.75,
     'A4': 0.625,
@@ -21,12 +21,12 @@ barema = {
     'B2': 0.375,
     'B3': 0.25,
     'B4': 0.125,
-    'C': 0,
-    'SQ': 0,
-    'BOOK': 1,
+    'C': 0.0,
+    'SQ': 0.0,
+    'BOOK': 1.0,
     'BOOK_CHAPTER': 0.25,
     'SOFTWARE': 0.25,
-    'PATENT_GRANTED': 1,
+    'PATENT_GRANTED': 1.0,
     'PATENT_NOT_GRANTED': 0.25,
     'REPORT': 0.25,
     'TESE DE DOUTORADO CONCLUIDA': 0.5,
@@ -48,25 +48,15 @@ def article_indprod(session):
     """)
     result = session.execute(SCRIPT_SQL).mappings().all()
     if not result:
-        return [{'year': 0000, 'researcher_id': uuid4(), 'article_prod': 0}]
+        return [{'year': 0, 'researcher_id': uuid4(), 'article_prod': 0.0}]
 
-    columns = ['year', 'qualis', 'count_article', 'researcher_id']
-    articles = pd.DataFrame(result, columns=columns)
-
-    articles['article_prod'] = (
-        articles['qualis'].map(barema) * articles['count_article']
+    df = pl.DataFrame(result)
+    df = df.with_columns(
+        (pl.col('qualis').replace_strict(barema, default=0.0).cast(pl.Float64) * pl.col('count_article')).alias('article_prod'),
+        pl.col('year').cast(pl.Int64)
     )
-    articles = (
-        articles
-        .groupby(['year', 'researcher_id'])['article_prod']
-        .sum()
-        .reset_index()
-    )
-
-    columns = ['year', 'researcher_id', 'article_prod']
-    articles = articles[columns]
-    articles['year'] = articles['year'].astype(int)
-    return articles.to_dict(orient='records')
+    df = df.group_by(['year', 'researcher_id']).agg(pl.col('article_prod').sum())
+    return df.select(['year', 'researcher_id', 'article_prod']).to_dicts()
 
 
 def book_indprod(session):
@@ -79,14 +69,12 @@ def book_indprod(session):
     result = session.execute(SCRIPT_SQL).mappings().all()
     if not result:
         return []
-    books = pd.DataFrame(result)
-
-    books['book_prod'] = books['count_book'] * barema.get('BOOK', 0)
-
-    columns = ['year', 'researcher_id', 'book_prod']
-    books = books[columns]
-    books['year'] = books['year'].astype(int)
-    return books.to_dict(orient='records')
+    df = pl.DataFrame(result)
+    df = df.with_columns(
+        (pl.col('count_book') * barema.get('BOOK', 0.0)).alias('book_prod'),
+        pl.col('year').cast(pl.Int64)
+    )
+    return df.select(['year', 'researcher_id', 'book_prod']).to_dicts()
 
 
 def book_chapter_indprod(session):
@@ -99,16 +87,12 @@ def book_chapter_indprod(session):
     result = session.execute(SCRIPT_SQL).mappings().all()
     if not result:
         return []
-    book_chapter = pd.DataFrame(result)
-
-    book_chapter['book_chapter_prod'] = book_chapter[
-        'count_book_chapter'
-    ] * barema.get('BOOK_CHAPTER', 0)
-
-    book_chapter['year'] = book_chapter['year'].astype(int)
-    return book_chapter[
-        ['year', 'researcher_id', 'book_chapter_prod']
-    ].to_dict(orient='records')
+    df = pl.DataFrame(result)
+    df = df.with_columns(
+        (pl.col('count_book_chapter') * barema.get('BOOK_CHAPTER', 0.0)).alias('book_chapter_prod'),
+        pl.col('year').cast(pl.Int64)
+    )
+    return df.select(['year', 'researcher_id', 'book_chapter_prod']).to_dicts()
 
 
 def patent_indprod(session):
@@ -130,22 +114,13 @@ def patent_indprod(session):
     result = session.execute(SCRIPT_SQL).mappings().all()
     if not result:
         return []
-    columns = ['year', 'granted', 'researcher_id', 'count_patent']
-    patent = pd.DataFrame(result, columns=columns)
-
-    patent['patent_prod'] = (
-        patent['granted'].map(barema) * patent['count_patent']
+    df = pl.DataFrame(result)
+    df = df.with_columns(
+        (pl.col('granted').replace_strict(barema, default=0.0).cast(pl.Float64) * pl.col('count_patent')).alias('patent_prod'),
+        pl.col('year').cast(pl.Int64)
     )
-    columns = ['patent_prod', 'year', 'researcher_id']
-    patent = patent[columns]
-    patent = (
-        patent
-        .groupby(['researcher_id', 'year'])['patent_prod']
-        .sum()
-        .reset_index()
-    )
-    patent['year'] = patent['year'].astype(int)
-    return patent.to_dict(orient='records')
+    df = df.group_by(['researcher_id', 'year']).agg(pl.col('patent_prod').sum())
+    return df.select(['year', 'researcher_id', 'patent_prod']).to_dicts()
 
 
 def software_indprod(session):
@@ -157,15 +132,12 @@ def software_indprod(session):
     result = session.execute(SCRIPT_SQL).mappings().all()
     if not result:
         return []
-    columns = ['year', 'software_count', 'researcher_id']
-    software = pd.DataFrame(result, columns=columns)
-    software['software_prod'] = software['software_count'] * barema.get(
-        'SOFTWARE', 0
+    df = pl.DataFrame(result)
+    df = df.with_columns(
+        (pl.col('software_count') * barema.get('SOFTWARE', 0.0)).alias('software_prod'),
+        pl.col('year').cast(pl.Int64)
     )
-    columns = ['software_prod', 'year', 'researcher_id']
-    software = software[columns]
-    software['year'] = software['year'].astype(int)
-    return software.to_dict(orient='records')
+    return df.select(['year', 'researcher_id', 'software_prod']).to_dicts()
 
 
 def report_indprod(session):
@@ -174,17 +146,15 @@ def report_indprod(session):
         FROM research_report
         GROUP BY year, researcher_id;
     """)
-
     result = session.execute(SCRIPT_SQL).mappings().all()
     if not result:
-        return [{'year': 0000, 'researcher_id': uuid4(), 'report_prod': 0}]
-
-    report = pd.DataFrame(result)
-    report['report_prod'] = report['report_count'] * barema.get('REPORT', 0)
-    columns = ['year', 'researcher_id', 'report_prod']
-    report = report[columns]
-    report['year'] = report['year'].astype(int)
-    return report.to_dict(orient='records')
+        return [{'year': 0, 'researcher_id': uuid4(), 'report_prod': 0.0}]
+    df = pl.DataFrame(result)
+    df = df.with_columns(
+        (pl.col('report_count') * barema.get('REPORT', 0.0)).alias('report_prod'),
+        pl.col('year').cast(pl.Int64)
+    )
+    return df.select(['year', 'researcher_id', 'report_prod']).to_dicts()
 
 
 def guidance_indprod(session):
@@ -197,25 +167,18 @@ def guidance_indprod(session):
     result = session.execute(SCRIPT_SQL).mappings().all()
     if not result:
         return []
-    guidance = pd.DataFrame(result)
-
-    def normalise(nature_status):
-        return unidecode(nature_status).upper()
-
-    guidance['nature_status'] = guidance['nature_status'].apply(normalise)
-    guidance['guidance_prod'] = (
-        guidance['nature_status'].map(barema) * guidance['guidance_count']
+    df = pl.DataFrame(result)
+    df = df.with_columns(
+        pl.col('nature_status')
+        .map_elements(lambda ns: unidecode(ns).upper() if ns is not None else '', return_dtype=pl.String)
+        .alias('nature_status'),
+        pl.col('year').cast(pl.Int64)
     )
-    guidance = (
-        guidance
-        .groupby(['year', 'researcher_id'])['guidance_prod']
-        .sum()
-        .reset_index()
+    df = df.with_columns(
+        (pl.col('nature_status').replace_strict(barema, default=0.0).cast(pl.Float64) * pl.col('guidance_count')).alias('guidance_prod')
     )
-    columns = ['year', 'researcher_id', 'guidance_prod']
-    guidance = guidance[columns]
-    guidance['year'] = guidance['year'].astype(int)
-    return guidance.to_dict(orient='records')
+    df = df.group_by(['year', 'researcher_id']).agg(pl.col('guidance_prod').sum())
+    return df.select(['year', 'researcher_id', 'guidance_prod']).to_dicts()
 
 
 def list_researchers(session, researcher_ids=None, lattes_ids=None):
@@ -243,60 +206,43 @@ def main(researcher_ids=None, lattes_ids=None):
     try:
         current_year = datetime.now().year
         YEAR = range(2008, current_year + 1)
-        history = pd.DataFrame(YEAR, columns=['year'])
+        history = pl.DataFrame({'year': list(YEAR)}).with_columns(pl.col('year').cast(pl.Int64))
 
         researchers = list_researchers(session, researcher_ids, lattes_ids)
         if not researchers:
             raise ValueError('No researchers found')
-        researchers = pd.DataFrame(researchers)
+        researchers = pl.DataFrame(researchers).with_columns(pl.col('researcher_id').cast(pl.String))
 
-        researchers = researchers.merge(history, how='cross')
+        researchers = researchers.join(history, how='cross')
 
         on = ['researcher_id', 'year']
 
-        articles = pd.DataFrame(
-            article_indprod(session),
-            columns=['researcher_id', 'year', 'article_prod'],
-        )
-        researchers = researchers.merge(articles, on=on, how='left')
+        articles = pl.DataFrame(article_indprod(session)).with_columns(pl.col('researcher_id').cast(pl.String))
+        researchers = researchers.join(articles, on=on, how='left')
 
-        books = pd.DataFrame(
-            book_indprod(session),
-            columns=['researcher_id', 'year', 'book_prod'],
-        )
-        researchers = researchers.merge(books, on=on, how='left')
+        books = pl.DataFrame(book_indprod(session)).with_columns(pl.col('researcher_id').cast(pl.String))
+        researchers = researchers.join(books, on=on, how='left')
 
-        book_chapter = pd.DataFrame(
-            book_chapter_indprod(session),
-            columns=['researcher_id', 'year', 'book_chapter_prod'],
-        )
-        researchers = researchers.merge(book_chapter, on=on, how='left')
+        book_chapter = pl.DataFrame(book_chapter_indprod(session)).with_columns(pl.col('researcher_id').cast(pl.String))
+        researchers = researchers.join(book_chapter, on=on, how='left')
 
-        software = pd.DataFrame(
-            software_indprod(session),
-            columns=['researcher_id', 'year', 'software_prod'],
-        )
-        researchers = researchers.merge(software, on=on, how='left')
+        software = pl.DataFrame(software_indprod(session)).with_columns(pl.col('researcher_id').cast(pl.String))
+        researchers = researchers.join(software, on=on, how='left')
 
-        patent = pd.DataFrame(
-            patent_indprod(session),
-            columns=['researcher_id', 'year', 'patent_prod'],
-        )
-        researchers = researchers.merge(patent, on=on, how='left')
+        patent = pl.DataFrame(patent_indprod(session)).with_columns(pl.col('researcher_id').cast(pl.String))
+        researchers = researchers.join(patent, on=on, how='left')
 
-        report = pd.DataFrame(
-            report_indprod(session),
-            columns=['researcher_id', 'year', 'report_prod'],
-        )
-        researchers = researchers.merge(report, on=on, how='left')
+        report = pl.DataFrame(report_indprod(session)).with_columns(pl.col('researcher_id').cast(pl.String))
+        researchers = researchers.join(report, on=on, how='left')
 
-        guidance = pd.DataFrame(guidance_indprod(session))
-        if not guidance.empty:
-            researchers = researchers.merge(guidance, on=on, how='left')
+        guidance = guidance_indprod(session)
+        if guidance:
+            guidance_df = pl.DataFrame(guidance).with_columns(pl.col('researcher_id').cast(pl.String))
+            researchers = researchers.join(guidance_df, on=on, how='left')
         else:
-            researchers['guidance_prod'] = 0
+            researchers = researchers.with_columns(pl.lit(0.0).alias('guidance_prod'))
 
-        researchers = researchers.fillna(0)
+        researchers = researchers.fill_null(0.0).with_columns(pl.col('year').cast(pl.Int64))
 
         if researcher_ids or lattes_ids:
             base_query = 'DELETE FROM researcher_ind_prod WHERE 1=1'
@@ -329,7 +275,7 @@ def main(researcher_ids=None, lattes_ids=None):
         """)
 
         params = []
-        for _, row in researchers.iterrows():
+        for row in researchers.to_dicts():
             params.append({
                 'researcher_id': str(row['researcher_id']),
                 'year': int(row['year']),
@@ -381,3 +327,4 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     main(researcher_ids=args.researcher_ids, lattes_ids=args.lattes_ids)
+
