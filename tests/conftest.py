@@ -54,8 +54,13 @@ async def session(engine):
         await conn.execute(text('CREATE SCHEMA IF NOT EXISTS admin_ufmg'))
         await conn.run_sync(table_registry.metadata.create_all)
 
-    async with AsyncSession(engine, expire_on_commit=False) as session:
-        yield session
+    async with engine.connect() as conn:
+        transaction = await conn.begin()
+        async with AsyncSession(
+            bind=conn, expire_on_commit=False, join_transaction_mode='create_savepoint'
+        ) as session:
+            yield session
+        await transaction.rollback()
 
 
 def _mock_db_time(model, time: datetime):

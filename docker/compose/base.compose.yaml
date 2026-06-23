@@ -25,7 +25,3 @@ services:
     image: gleidsoncosta/simcc-back:latest
     build: .
     entrypoint: ./entrypoint.sh
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ../../logs:/app/logs
-      - ../../storage:/app/storage

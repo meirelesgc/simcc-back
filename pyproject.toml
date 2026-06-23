@@ -33,6 +33,7 @@ dependencies = [
     "numpy (>=2.3,<2.4)",
     "docker (>=7.0)",
     "httpie (>=3.2.4,<4.0.0)",
+    "polars (>=1.41.2,<2.0.0)",
 ]
 
 [tool.poetry]
@@ -60,7 +61,7 @@ addopts = ['-p', 'no:warnings']
 
 [tool.taskipy.tasks]
 run = 'LOG_LEVEL_MIDDLEWARE=error fastapi dev src/simcc --reload-dir "src/simcc"'
-test = 'LOG_LEVEL_MIDDLEWARE=error pytest -s -x --cov=src/simcc -vv'
+test = 'pytest -s -x --cov=src/simcc'
 cov = 'coverage html'
 
 [dependency-groups]
