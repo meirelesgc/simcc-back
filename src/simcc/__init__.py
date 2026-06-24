@@ -1,12 +1,9 @@
-import os
-import re
 from http import HTTPStatus
 from pathlib import Path
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
-from starlette.middleware.base import BaseHTTPMiddleware
 
 from simcc.core.logging import setup_logging
 from simcc.core.middleware.logging import LoggingMiddleware
@@ -16,6 +13,7 @@ from simcc.routers import (
     institution,
     maria,
     metrics,
+    powerBi,
     research_group,
     researcher,
     routines,
@@ -56,6 +54,7 @@ app.include_router(graduate_program.router)
 app.include_router(research_group.router)
 app.include_router(maria.router)
 app.include_router(routines.router)
+app.include_router(powerBi.router)
 
 
 @app.get('/', status_code=HTTPStatus.OK)

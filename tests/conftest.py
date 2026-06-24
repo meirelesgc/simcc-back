@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from testcontainers.postgres import PostgresContainer
 
 from simcc import app
-from simcc.core.db.database import get_async_session
+from simcc.core.db.database import get_async_session, get_admin_async_session
 from simcc.core.db.model import table_registry
 from simcc.core.settings import Settings
 
@@ -20,6 +20,7 @@ def client(session):
 
     with TestClient(app) as client:
         app.dependency_overrides[get_async_session] = get_session_override
+        app.dependency_overrides[get_admin_async_session] = get_session_override
         yield client
 
     app.dependency_overrides.clear()
@@ -52,6 +53,20 @@ async def session(engine):
         await conn.execute(text('CREATE SCHEMA IF NOT EXISTS ufmg'))
         await conn.execute(text('CREATE SCHEMA IF NOT EXISTS admin'))
         await conn.execute(text('CREATE SCHEMA IF NOT EXISTS admin_ufmg'))
+        await conn.execute(text("""
+            DO $$
+            BEGIN
+                IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'routine_type') THEN
+                    CREATE TYPE routine_type AS ENUM ('dim_titulacao', 'fat_area_specialty');
+                END IF;
+            END$$;
+        """))
+        await conn.execute(text('CREATE TABLE IF NOT EXISTS admin.researcher_area (researcher_id UUID, area_id UUID, focal_point BOOLEAN)'))
+        await conn.execute(text('CREATE TABLE IF NOT EXISTS admin.areas (id UUID, name VARCHAR)'))
+        await conn.execute(text('CREATE TABLE IF NOT EXISTS admin.guidance_co_supervisors (guidance_tracking_id UUID, co_supervisor_researcher_id UUID)'))
+        await conn.execute(text('CREATE TABLE IF NOT EXISTS admin.guidance_tags (guidance_tracking_id UUID, tag_id UUID)'))
+        await conn.execute(text('CREATE TABLE IF NOT EXISTS admin.tags (id UUID, name VARCHAR, color_code VARCHAR)'))
+        await conn.execute(text('CREATE TABLE IF NOT EXISTS public.guidance_tracking (id UUID, student_researcher_id UUID, supervisor_researcher_id UUID, graduate_program_id UUID, deleted_at TIMESTAMP, start_date DATE, planned_date_project DATE, done_date_project DATE, planned_date_qualification DATE, done_date_qualification DATE, planned_date_conclusion DATE, done_date_conclusion DATE)'))
         await conn.run_sync(table_registry.metadata.create_all)
 
     async with engine.connect() as conn:
