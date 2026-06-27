@@ -85,7 +85,7 @@ def main(researcher_ids=None, lattes_ids=None):
         session.execute(
             text("""
             UPDATE research_group rg SET second_leader_id = r.id FROM researcher r WHERE rg.second_leader = r.name;
-            UPDATE research_group rg SET first_leader = r.id FROM researcher r WHERE rg.first_leader = r.name;
+            UPDATE research_group rg SET first_leader_id = r.id FROM researcher r WHERE rg.first_leader = r.name;
         """)
         )
 
