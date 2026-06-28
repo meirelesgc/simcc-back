@@ -3,7 +3,6 @@ services:
     extends:
       file: base.compose.yaml
       service: base_db
-    container_name: db
     ports:
       - "5432:5432"
     volumes:
@@ -15,7 +14,6 @@ services:
     extends:
       file: base.compose.yaml
       service: base_hop
-    container_name: hop
     ports:
       - "8080:8080"
     volumes:
@@ -28,7 +26,6 @@ services:
     extends:
       file: base.compose.yaml
       service: base_api
-    container_name: api
     image: gleidsoncosta/simcc-back:latest
     ports:
       - "8000:8000"
@@ -40,8 +37,6 @@ services:
         condition: service_healthy
     volumes:
       - xml:/app/storage/xml
-    env_file:
-      - .env
 
 volumes:
   db:

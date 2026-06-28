@@ -20,16 +20,18 @@ services:
       db:
         condition: service_healthy
 
-  api:
+api:
     extends:
       file: base.compose.yaml
       service: base_api
-    image: simcc-back:${COMPOSE_PROJECT_NAME}
+    image: gleidsoncosta/simcc-back:latest
+    ports:
+      - "${API_PORT}:8000"
     environment:
-      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/${COMPOSE_PROJECT_NAME}
+      DATABASE_URL: "postgresql+asyncpg://postgres:postgres@db:5432/${COMPOSE_PROJECT_NAME}"
+      ADMIN_DATABASE_URL: "postgresql+asyncpg://postgres:postgres@admin_db:5432/${COMPOSE_PROJECT_NAME}_admin"
     depends_on:
       db:
-        condition: service_healthy
     volumes:
       - xml:/app/storage/xml
 
