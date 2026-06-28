@@ -1,38 +1,38 @@
 name: ${COMPOSE_PROJECT_NAME}
 
 services:
-  simcc_db:
+  db:
     extends:
       file: base.compose.yaml
       service: base_db
-    volumes:
-      - simcc_db:/var/lib/postgresql/data
     environment:
-      POSTGRES_DB: simcc
+      POSTGRES_DB: ${COMPOSE_PROJECT_NAME}
+    volumes:
+      - db:/var/lib/postgresql/data
 
-  simcc_hop:
+  hop:
     extends:
       file: base.compose.yaml
       service: base_hop
-    container_name: simcc_hop
     volumes:
-      - simcc_xml:/files/jade-extrator/datasets/lattes_xml
+      - xml:/files/jade-extrator/datasets/lattes_xml
     depends_on:
-      simcc_db:
+      db:
         condition: service_healthy
 
-  simcc_api:
+  api:
     extends:
       file: base.compose.yaml
       service: base_api
+    image: simcc-back:${COMPOSE_PROJECT_NAME}
     environment:
-      DATABASE_URL: postgresql+asyncpg://postgres:postgres@simcc_db:5432/simcc
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/${COMPOSE_PROJECT_NAME}
     depends_on:
-      simcc_db:
+      db:
         condition: service_healthy
     volumes:
-      - simcc_xml:/app/storage/xml
+      - xml:/app/storage/xml
 
 volumes:
-  simcc_db:
-  simcc_xml:
+  db:
+  xml:

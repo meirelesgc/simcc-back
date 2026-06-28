@@ -22,6 +22,5 @@ services:
     command: ["/opt/hop/hop-server.sh"]
 
   base_api:
-    image: gleidsoncosta/simcc-back:latest
     build: .
     entrypoint: ./entrypoint.sh

@@ -1,7 +1,7 @@
 services:
   db:
     extends:
-      file: docker/compose/base.compose.yaml
+      file: base.compose.yaml
       service: base_db
     container_name: db
     ports:
@@ -13,7 +13,7 @@ services:
 
   hop:
     extends:
-      file: docker/compose/base.compose.yaml
+      file: base.compose.yaml
       service: base_hop
     container_name: hop
     ports:
@@ -26,9 +26,10 @@ services:
 
   api:
     extends:
-      file: docker/compose/base.compose.yaml
+      file: base.compose.yaml
       service: base_api
     container_name: api
+    image: gleidsoncosta/simcc-back:latest
     ports:
       - "8000:8000"
     environment:
