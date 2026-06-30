@@ -22,5 +22,5 @@ services:
     command: ["/opt/hop/hop-server.sh"]
 
   base_api:
-    build: .
+    build: ../..
     entrypoint: ./entrypoint.sh
