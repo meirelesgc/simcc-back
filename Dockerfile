@@ -37,15 +37,16 @@ COPY --from=builder /opt/pysetup /opt/pysetup
 
 WORKDIR /app
 
+RUN useradd --create-home appuser && \
+    mkdir -p storage/xml/zip storage/xml/current storage/openalex/researcher storage/openalex/article && \
+    chown -R appuser:appuser /app
+
 COPY src ./src
 COPY scripts ./scripts
 COPY migrations ./migrations
 COPY alembic.ini .
 COPY entrypoint.sh .
-
-RUN useradd --create-home appuser && \
-    mkdir -p storage/xml/zip storage/xml/current storage/openalex/researcher storage/openalex/article && \
-    chown -R appuser:appuser /app
+COPY storage/seed .
 
 USER appuser
 

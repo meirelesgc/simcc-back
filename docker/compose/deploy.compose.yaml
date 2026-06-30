@@ -29,7 +29,7 @@ services:
       - "${API_PORT}:8000"
     environment:
       DATABASE_URL: "postgresql+asyncpg://postgres:postgres@db:5432/${COMPOSE_PROJECT_NAME}"
-      ADMIN_DATABASE_URL: "postgresql+asyncpg://postgres:postgres@admin_db:5432/${COMPOSE_PROJECT_NAME}_admin"
+      ADMIN_DATABASE_URL: "postgresql+asyncpg://postgres:postgres@simcc-admin-db:5432/postgres" # ISSO VEM DE FORA
     depends_on:
       db:
         condition: service_healthy
