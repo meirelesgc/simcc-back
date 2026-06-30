@@ -24,7 +24,7 @@ services:
     extends:
       file: base.compose.yaml
       service: base_api
-    image: gleidsoncosta/simcc-back:latest
+    image: "${API_IMAGE}"
     ports:
       - "${API_PORT}:8000"
     environment:
