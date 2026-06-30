@@ -24,7 +24,7 @@ services:
     extends:
       file: base.compose.yaml
       service: base_api
-    image: "${API_IMAGE}"
+    image: "${COMPOSE_PROJECT_NAME}"
     ports:
       - "${API_PORT}:8000"
     environment:

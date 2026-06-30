@@ -16,6 +16,8 @@ services:
       service: base_hop
     ports:
       - "8080:8080"
+    environment:
+      HOP_RUN_PARAMETERS: DATABASE_URL=jdbc:postgresql://db:5432/db?user=postgres&password=postgres,ADMIN_DATABASE_URL=jdbc:postgresql://db:5435/db_admin?user=postgres&password=postgres
     volumes:
       - xml:/files/jade-extrator/datasets/lattes_xml
     depends_on:
