@@ -46,7 +46,7 @@ COPY scripts ./scripts
 COPY migrations ./migrations
 COPY alembic.ini .
 COPY entrypoint.sh .
-COPY storage/seed .
+COPY storage/seed ./storage/seed
 
 USER appuser
 
