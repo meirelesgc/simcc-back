@@ -70,7 +70,7 @@ class City:
         server_default=text('gen_random_uuid()'),
         init=False,
     )
-    name: Mapped[str] = mapped_column(String)
+    name: Mapped[str] = mapped_column(String, unique=True)
     country_id: Mapped[UUID] = mapped_column(ForeignKey('country.id'))
     state_id: Mapped[Optional[UUID]] = mapped_column(
         ForeignKey('state.id'), default=None
