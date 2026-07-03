@@ -13,7 +13,6 @@ def get_lattes_id_10(lattes_id: str) -> str:
     }
     with httpx.Client(follow_redirects=False, headers=headers) as client:
         response = client.get(URL, timeout=30.0)
-
         if response.status_code == HTTPStatus.FOUND:
             code = response.headers.get('Location')[-10:]
             print(f'FOUND: {code}')
