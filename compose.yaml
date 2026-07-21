@@ -42,9 +42,8 @@ services:
     ports:
       - "8000:8000"
     environment:
-      environment:
-        DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/${COMPOSE_PROJECT_NAME}
-        ADMIN_DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/${COMPOSE_PROJECT_NAME}_admin
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/${COMPOSE_PROJECT_NAME}
+      ADMIN_DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/${COMPOSE_PROJECT_NAME}_admin
     volumes:
       - xml:/app/storage/xml
     depends_on:
