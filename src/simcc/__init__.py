@@ -1,9 +1,10 @@
 from http import HTTPStatus
 from pathlib import Path
 
+import httpx
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 
 from simcc.core.logging import setup_logging
 from simcc.core.middleware.logging import LoggingMiddleware
@@ -63,6 +64,8 @@ def read_root():
 
 
 @app.get('/favicon.ico', status_code=HTTPStatus.OK)
-def favicon():
-    file_path = Path('storage/static', 'favicon.ico')
-    return FileResponse(file_path)
+async def favicon():
+    url = 'https://cdn-icons-png.flaticon.com/512/10446/10446694.png'
+    async with httpx.AsyncClient() as client:
+        resp = await client.get(url)
+    return StreamingResponse(iter([resp.content]), media_type='image/png')

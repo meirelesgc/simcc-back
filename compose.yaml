@@ -1,0 +1,54 @@
+services:
+  db:
+    image: pgvector/pgvector:pg17
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ${COMPOSE_PROJECT_NAME}
+    ports:
+      - "127.0.0.1:${DB_PORT}:5432"
+    volumes:
+      - db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  hop:
+    image: gleidsoncosta/simcc-extrator:latest
+    command: ["/opt/hop/hop-server.sh"]
+    environment:
+      HOP_LOG_LEVEL: Basic
+      HOP_PROJECT_NAME: Jade-Extrator
+      HOP_PROJECT_FOLDER: /files/jade-extrator
+      HOP_SERVER_HOSTNAME: 0.0.0.0
+      HOP_SERVER_PORT: 8080
+      HOP_SERVER_AUTH: false
+      HOP_RUN_PARAMETERS: DATABASE_URL=jdbc:postgresql://db:5432/${COMPOSE_PROJECT_NAME}?user=postgres&password=postgres,ADMIN_DATABASE_URL=jdbc:postgresql://db:5435/${COMPOSE_PROJECT_NAME}_admin?user=postgres&password=postgres
+    ports:
+      - "127.0.0.1:${HOP_PORT}:8080"
+    volumes:
+      - xml:/files/jade-extrator/datasets/lattes_xml
+    depends_on:
+      db:
+        condition: service_healthy
+
+  api:
+    build: .
+    image: ${COMPOSE_PROJECT_NAME}
+    entrypoint: ./entrypoint.sh
+    ports:
+      - "127.0.0.1:${API_PORT}:8000"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/${COMPOSE_PROJECT_NAME}
+      ADMIN_DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/${COMPOSE_PROJECT_NAME}_admin
+    volumes:
+      - xml:/app/storage/xml
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  db:
+  xml:
