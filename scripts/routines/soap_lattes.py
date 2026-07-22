@@ -1,5 +1,4 @@
 import argparse
-import csv
 import os
 import time
 import zipfile
@@ -124,7 +123,8 @@ def cnpq_att(lattes_id):
 
 def database_att(session, lattes_id):
     result = (
-        session.execute(
+        session
+        .execute(
             text(
                 """
                 SELECT last_update
@@ -279,26 +279,6 @@ def main(researcher_ids=None, lattes_ids=None):
 
                 except Exception as e:
                     errors.append((lattes_id, str(e)))
-
-        if errors:
-            os.makedirs(LOG_PATH, exist_ok=True)
-
-            error_file = os.path.join(
-                LOG_PATH,
-                f'errors_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv',
-            )
-
-            with open(error_file, 'w', newline='', encoding='utf-8') as f:
-                writer = csv.writer(f)
-                writer.writerow(['lattes_id', 'erro'])
-                writer.writerows(errors)
-
-            print(f'Arquivo de erros salvo em {error_file}')
-
-        duration = time.perf_counter() - start_time
-
-        print(f'Rotina finalizada em {duration:.2f}s')
-
     finally:
         if admin_session is not None:
             admin_session.close()
