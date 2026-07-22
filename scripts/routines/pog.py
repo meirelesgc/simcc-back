@@ -4,15 +4,13 @@ import time
 from sqlalchemy import text
 
 from simcc.core.db.database import get_sync_session
-from simcc.core.logging import get_logger
 
-logger = get_logger('routines')
 
 
 def main(researcher_ids=None, lattes_ids=None):
     session = next(get_sync_session())
     start_time = time.perf_counter()
-    logger.info('pog_routine_started')
+
 
     try:
         session.execute(
@@ -91,15 +89,9 @@ def main(researcher_ids=None, lattes_ids=None):
 
         session.commit()
         duration = time.perf_counter() - start_time
-        logger.info(
-            'pog_routine_finished_successfully', duration=f'{duration:.2f}s'
-        )
     except Exception as e:
         session.rollback()
         duration = time.perf_counter() - start_time
-        logger.error(
-            'pog_routine_failed', error=str(e), duration=f'{duration:.2f}s'
-        )
 
 
 if __name__ == '__main__':

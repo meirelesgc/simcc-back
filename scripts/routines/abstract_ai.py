@@ -5,10 +5,7 @@ from langchain_openai import ChatOpenAI
 from sqlalchemy import text
 
 from simcc.core.db.database import get_sync_session
-from simcc.core.logging import get_logger
 from simcc.core.settings import Settings
-
-logger = get_logger('routines')
 
 
 def list_graduate_programs(session):
@@ -92,7 +89,6 @@ def list_ufmg_data(session):
 def main(researcher_ids=None, lattes_ids=None):
     session = next(get_sync_session())
     start_time = time.perf_counter()
-    logger.info('researcher_abstract_ai_routine_started')
 
     try:
         model = ChatOpenAI(api_key=Settings().OPENAI_API_KEY)
@@ -150,7 +146,6 @@ def main(researcher_ids=None, lattes_ids=None):
         )
 
         total_researchers = len(researchers_to_process)
-        logger.info('researchers_found', count=total_researchers)
 
         SCRIPT_LAST_PROD = text("""
             SELECT bp.title, bp.type, bp.year FROM bibliographic_production bp
@@ -181,13 +176,6 @@ def main(researcher_ids=None, lattes_ids=None):
         for i, researcher_data in enumerate(researchers_to_process):
             researcher_id = researcher_data.get('id')
             lattes_id = researcher_data.get('lattes_id')
-
-            logger.info(
-                'processing_researcher',
-                current=i + 1,
-                total=total_researchers,
-                researcher_id=str(researcher_id),
-            )
 
             researcher_name = researcher_data.get('name', 'N/A')
             researcher_abstract = researcher_data.get(
@@ -296,37 +284,14 @@ def main(researcher_ids=None, lattes_ids=None):
                         {'id': researcher_id, 'abstract_ai': response.content},
                     )
                     session.commit()
-                    logger.info(
-                        'abstract_generated_and_saved',
-                        researcher_id=str(researcher_id),
-                    )
-                else:
-                    logger.warning(
-                        'model_response_empty',
-                        researcher_id=str(researcher_id),
-                    )
-            except Exception as e:
+            except Exception:
                 session.rollback()
-                logger.error(
-                    'researcher_processing_failed',
-                    researcher_id=str(researcher_id),
-                    error=str(e),
-                )
 
         duration = time.perf_counter() - start_time
-        logger.info(
-            'researcher_abstract_ai_routine_finished_successfully',
-            duration=f'{duration:.2f}s',
-        )
 
-    except Exception as e:
+    except Exception:
         session.rollback()
         duration = time.perf_counter() - start_time
-        logger.error(
-            'researcher_abstract_ai_routine_failed',
-            error=str(e),
-            duration=f'{duration:.2f}s',
-        )
 
 
 if __name__ == '__main__':

@@ -1,18 +1,14 @@
 import argparse
-import time
 
 import polars as pl
 from sqlalchemy import text
 
 from simcc.core.db.database import get_sync_session
-from simcc.core.logging import get_logger
-
-logger = get_logger('routines')
 
 
 def list_researchers(session, researcher_ids=None, lattes_ids=None):
     base_query = """
-        SELECT id AS researcher_id, name, lattes_id
+        SELECT id::TEXT AS researcher_id, name, lattes_id
         FROM public.researcher
         WHERE 1=1
     """
@@ -49,7 +45,7 @@ def delete_researcher_production(
 
 def bibliographic_production_count(session):
     query = """
-        SELECT researcher_id, type, COUNT(*) AS count
+        SELECT researcher_id::TEXT, type, COUNT(*) AS count
         FROM bibliographic_production
         GROUP BY researcher_id, type;
     """
@@ -67,7 +63,9 @@ def bibliographic_production_count(session):
     if not result:
         return []
 
-    df = pl.DataFrame(result).with_columns(pl.col('researcher_id').cast(pl.String))
+    df = pl.DataFrame(result).with_columns(
+        pl.col('researcher_id').cast(pl.String)
+    )
     df = df.pivot(
         on='type',
         index='researcher_id',
@@ -87,7 +85,7 @@ def bibliographic_production_count(session):
 
 def list_great_area(session):
     query = """
-        SELECT researcher_id, STRING_AGG(DISTINCT gae.name, ';') as area
+        SELECT researcher_id::TEXT, STRING_AGG(DISTINCT gae.name, ';') as area
         FROM great_area_expertise gae
         LEFT JOIN researcher_area_expertise r
                 ON gae.id = r.great_area_expertise_id
@@ -98,7 +96,7 @@ def list_great_area(session):
 
 def list_speciality(session):
     query = """
-        SELECT r.researcher_id,
+        SELECT r.researcher_id::TEXT,
             STRING_AGG(asp.name || ' | ' || ae.name, '; ') AS area_specialty
         FROM researcher_area_expertise r
         RIGHT JOIN area_specialty asp ON asp.id = r.area_specialty_id
@@ -110,7 +108,7 @@ def list_speciality(session):
 
 def list_software(session):
     query = """
-        SELECT researcher_id, COUNT(*) AS software
+        SELECT researcher_id::TEXT, COUNT(*) AS software
         FROM software
         GROUP BY researcher_id;
     """
@@ -119,7 +117,7 @@ def list_software(session):
 
 def list_brand(session):
     query = """
-        SELECT researcher_id, COUNT(*) AS brand
+        SELECT researcher_id::TEXT, COUNT(*) AS brand
         FROM brand
         GROUP BY researcher_id;
     """
@@ -128,7 +126,7 @@ def list_brand(session):
 
 def list_patent(session):
     query = """
-        SELECT researcher_id, COUNT(*) AS patent
+        SELECT researcher_id::TEXT, COUNT(*) AS patent
         FROM patent
         GROUP BY researcher_id;
     """
@@ -137,7 +135,7 @@ def list_patent(session):
 
 def list_address(session):
     query = """
-        SELECT researcher_id, city, organ
+        SELECT researcher_id::TEXT, city, organ
         FROM researcher_address
         ORDER BY researcher_id;
     """
@@ -146,28 +144,23 @@ def list_address(session):
 
 def main(researcher_ids=None, lattes_ids=None):
     session = next(get_sync_session())
-    start_time = time.perf_counter()
-    logger.info('researcher_production_routine_started')
 
     try:
         delete_researcher_production(session, researcher_ids, lattes_ids)
 
         def to_df(data, schema):
-            if not data:
-                return pl.DataFrame(schema=schema)
-            return pl.DataFrame(data).with_columns(pl.col('researcher_id').cast(pl.String))
+            return pl.DataFrame(data, schema=schema)
 
         researchers = to_df(
             list_researchers(session, researcher_ids, lattes_ids),
-            {'researcher_id': pl.String, 'name': pl.String, 'lattes_id': pl.String}
+            {
+                'researcher_id': pl.String,
+                'name': pl.String,
+                'lattes_id': pl.String,
+            },
         )
 
         if researchers.is_empty():
-            duration = time.perf_counter() - start_time
-            logger.info(
-                'researcher_production_routine_finished',
-                duration=f'{duration:.2f}s',
-            )
             return
 
         b_production = to_df(
@@ -179,43 +172,57 @@ def main(researcher_ids=None, lattes_ids=None):
                 'article': pl.Int64,
                 'work_in_event': pl.Int64,
                 'text_in_newspaper_magazine': pl.Int64,
-            }
+            },
         )
 
         a_speciality = to_df(
             list_speciality(session),
-            {'researcher_id': pl.String, 'area_specialty': pl.String}
+            {'researcher_id': pl.String, 'area_specialty': pl.String},
         )
         great_area = to_df(
             list_great_area(session),
-            {'researcher_id': pl.String, 'area': pl.String}
+            {'researcher_id': pl.String, 'area': pl.String},
         )
         software = to_df(
             list_software(session),
-            {'researcher_id': pl.String, 'software': pl.Int64}
+            {'researcher_id': pl.String, 'software': pl.Int64},
         )
         brand = to_df(
             list_brand(session),
-            {'researcher_id': pl.String, 'brand': pl.Int64}
+            {'researcher_id': pl.String, 'brand': pl.Int64},
         )
         patent = to_df(
             list_patent(session),
-            {'researcher_id': pl.String, 'patent': pl.Int64}
+            {'researcher_id': pl.String, 'patent': pl.Int64},
         )
         address = to_df(
             list_address(session),
-            {'researcher_id': pl.String, 'city': pl.String, 'organ': pl.String}
+            {
+                'researcher_id': pl.String,
+                'city': pl.String,
+                'organ': pl.String,
+            },
         )
 
-        researchers = researchers.join(b_production, how='left', on='researcher_id')
-        researchers = researchers.join(a_speciality, how='left', on='researcher_id')
-        researchers = researchers.join(great_area, how='left', on='researcher_id')
-        researchers = researchers.join(software, how='left', on='researcher_id')
+        researchers = researchers.join(
+            b_production, how='left', on='researcher_id'
+        )
+        researchers = researchers.join(
+            a_speciality, how='left', on='researcher_id'
+        )
+        researchers = researchers.join(
+            great_area, how='left', on='researcher_id'
+        )
+        researchers = researchers.join(
+            software, how='left', on='researcher_id'
+        )
         researchers = researchers.join(brand, how='left', on='researcher_id')
         researchers = researchers.join(patent, how='left', on='researcher_id')
         researchers = researchers.join(address, how='left', on='researcher_id')
 
-        researchers = researchers.rename({c: c.lower() for c in researchers.columns})
+        researchers = researchers.rename({
+            c: c.lower() for c in researchers.columns
+        })
 
         numeric_cols = [
             'book',
@@ -247,22 +254,10 @@ def main(researcher_ids=None, lattes_ids=None):
 
         for researcher in records:
             session.execute(insert_query, researcher)
-
         session.commit()
-        duration = time.perf_counter() - start_time
-        logger.info(
-            'researcher_production_routine_finished',
-            duration=f'{duration:.2f}s',
-        )
 
-    except Exception as e:
+    except Exception as E:
         session.rollback()
-        duration = time.perf_counter() - start_time
-        logger.error(
-            'researcher_production_routine_failed',
-            error=str(e),
-            duration=f'{duration:.2f}s',
-        )
 
 
 if __name__ == '__main__':
@@ -282,4 +277,3 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     main(researcher_ids=args.researcher_ids, lattes_ids=args.lattes_ids)
-

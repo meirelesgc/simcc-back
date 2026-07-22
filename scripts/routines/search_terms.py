@@ -7,12 +7,11 @@ from firebase_admin import credentials, firestore
 from sqlalchemy import text
 
 from simcc.core.db.database import get_sync_session
-from simcc.core.logging import get_logger
 from simcc.core.settings import Settings
 
 FIRESTORE_BATCH_LIMIT = 500
 
-logger = get_logger('routines')
+
 SETTINGS = Settings()
 
 
@@ -147,7 +146,7 @@ def terms_dataframe(session) -> list[dict]:
 def main():
     session = next(get_sync_session())
     start_time = time.perf_counter()
-    logger.info('search_term_routine_started')
+
 
     try:
         db = get_db()
@@ -173,20 +172,9 @@ def main():
 
         session.commit()
         duration = time.perf_counter() - start_time
-        logger.info(
-            'search_term_routine_finished_successfully',
-            deleted=deleted_total,
-            inserted=inserted_total,
-            duration=f'{duration:.2f}s',
-        )
     except Exception as e:
         session.rollback()
         duration = time.perf_counter() - start_time
-        logger.error(
-            'search_term_routine_failed',
-            error=str(e),
-            duration=f'{duration:.2f}s',
-        )
 
 
 if __name__ == '__main__':

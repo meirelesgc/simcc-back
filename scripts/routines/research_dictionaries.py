@@ -4,9 +4,7 @@ import nltk
 from sqlalchemy import text
 
 from simcc.core.db.database import get_sync_session
-from simcc.core.logging import get_logger
 
-logger = get_logger('routines')
 
 
 def get_stopwords():
@@ -91,7 +89,7 @@ def list_researchers(session):
 def main():
     session = next(get_sync_session())
     start_time = time.perf_counter()
-    logger.info('dictionary_routine_started')
+
 
     try:
         stopwords = get_stopwords()
@@ -137,15 +135,9 @@ def main():
 
         session.commit()
         duration = time.perf_counter() - start_time
-        logger.info('dictionary_routine_finished', duration=f'{duration:.2f}s')
     except Exception as e:
         session.rollback()
         duration = time.perf_counter() - start_time
-        logger.error(
-            'dictionary_routine_failed',
-            error=str(e),
-            duration=f'{duration:.2f}s',
-        )
 
 
 if __name__ == '__main__':

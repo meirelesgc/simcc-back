@@ -6,9 +6,7 @@ from sqlalchemy import text
 from unidecode import unidecode
 
 from simcc.core.db.database import get_sync_session
-from simcc.core.logging import get_logger
 
-logger = get_logger('routines')
 
 barema = {
     'A1': 1.0,
@@ -200,7 +198,7 @@ def list_programs(session):
 def main():
     session = next(get_sync_session())
     start_time = time.perf_counter()
-    logger.info('graduate_program_indprod_routine_started')
+
 
     try:
         current_year = 2026
@@ -313,18 +311,9 @@ def main():
 
         session.commit()
         duration = time.perf_counter() - start_time
-        logger.info(
-            'graduate_program_indprod_routine_finished_successfully',
-            duration=f'{duration:.2f}s',
-        )
     except Exception as e:
         session.rollback()
         duration = time.perf_counter() - start_time
-        logger.error(
-            'graduate_program_indprod_routine_failed',
-            error=str(e),
-            duration=f'{duration:.2f}s',
-        )
 
 
 if __name__ == '__main__':

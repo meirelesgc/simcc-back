@@ -8,9 +8,6 @@ import polars as pl
 from sqlalchemy import text
 
 from simcc.core.db.database import get_admin_sync_session
-from simcc.core.logging import get_logger
-
-logger = get_logger('routines')
 
 
 def normalize_string(s):
@@ -153,7 +150,6 @@ def format_program_names(session):
 def main():
     session = next(get_admin_sync_session())
     start_time = time.perf_counter()
-    logger.info('graduate_program_seed_routine_started')
 
     try:
         programs_df = load_programs_csv()
@@ -207,25 +203,11 @@ def main():
 
         session.commit()
         duration = time.perf_counter() - start_time
-
-        logger.info(
-            'graduate_program_seed_routine_finished_successfully',
-            total_processed=total_rows,
-            success=stats['Sucesso'],
-            errors=dict(stats),
-            duration=f'{duration:.2f}s',
-        )
-
-    except Exception as e:
+    except Exception as E:
+        print(E)
         session.rollback()
         duration = time.perf_counter() - start_time
-        logger.error(
-            'graduate_program_seed_routine_failed',
-            error=str(e),
-            duration=f'{duration:.2f}s',
-        )
 
 
 if __name__ == '__main__':
     main()
-

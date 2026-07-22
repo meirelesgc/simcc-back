@@ -6,9 +6,7 @@ import polars as pl
 from sqlalchemy import text
 
 from simcc.core.db.database import get_sync_session
-from simcc.core.logging import get_logger
 
-logger = get_logger('routines')
 
 
 def normalize_string(s):
@@ -48,7 +46,7 @@ def format_research_lines(session):
 def main():
     session = next(get_sync_session())
     start_time = time.perf_counter()
-    logger.info('research_lines_seed_routine_started')
+
 
     try:
         df = load_research_lines_csv()
@@ -90,23 +88,9 @@ def main():
 
         session.commit()
         duration = time.perf_counter() - start_time
-
-        logger.info(
-            'research_lines_seed_routine_finished',
-            total_processed=total_rows,
-            success=stats['Processado'],
-            errors=dict(stats),
-            duration=f'{duration:.2f}s',
-        )
-
     except Exception as e:
         session.rollback()
         duration = time.perf_counter() - start_time
-        logger.error(
-            'research_lines_seed_routine_failed',
-            error=str(e),
-            duration=f'{duration:.2f}s',
-        )
 
 
 if __name__ == '__main__':

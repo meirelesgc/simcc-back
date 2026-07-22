@@ -10,9 +10,7 @@ from urllib3.util.retry import Retry
 
 from simcc.core.db.database import get_sync_session
 from simcc.core.db.model import OpenAlexArticle, OpenAlexResearcher
-from simcc.core.logging import get_logger
 
-logger = get_logger('openalex')
 
 
 BASE_PATH = Path('storage/openalex')
@@ -177,8 +175,6 @@ def extract_researcher(data, researcher_id):
 def process_articles(session):
     results = session.execute(SQL_SELECT_ARTICLES).mappings().all()
 
-    logger.info('articles_to_process', total=len(results))
-
     for row in results:
         article_id = row['id']
         doi = row['doi']
@@ -186,16 +182,9 @@ def process_articles(session):
         try:
             url = f'{WORK_URL}{doi}?mailto={OPENALEX_MAIL}'
 
-            logger.info('fetching_article', article_id=str(article_id))
             payload, status = fetch_json(url)
 
             if not payload:
-                logger.warning(
-                    'article_not_found',
-                    article_id=str(article_id),
-                    status=status,
-                )
-
                 continue
 
             article = extract_article(payload, article_id)
@@ -206,24 +195,14 @@ def process_articles(session):
 
             session.commit()
 
-            logger.info('article_processed', article_id=str(article_id))
-
             time.sleep(1)
 
         except Exception as error:
             session.rollback()
 
-            logger.error(
-                'article_processing_failed',
-                article_id=str(article_id),
-                error=str(error),
-            )
-
 
 def process_researchers(session):
     results = session.execute(SQL_SELECT_RESEARCHERS).mappings().all()
-
-    logger.info('researchers_to_process', total=len(results))
 
     for row in results:
         researcher_id = row['id']
@@ -232,19 +211,9 @@ def process_researchers(session):
         try:
             url = f'{AUTHOR_URL}{orcid}?mailto={OPENALEX_MAIL}'
 
-            logger.info(
-                'fetching_researcher', researcher_id=str(researcher_id)
-            )
-
             payload, status = fetch_json(url)
 
             if not payload:
-                logger.warning(
-                    'researcher_not_found',
-                    researcher_id=str(researcher_id),
-                    status=status,
-                )
-
                 continue
 
             researcher = extract_researcher(payload, researcher_id)
@@ -255,25 +224,13 @@ def process_researchers(session):
 
             session.commit()
 
-            logger.info(
-                'researcher_processed', researcher_id=str(researcher_id)
-            )
-
             time.sleep(1)
 
         except Exception as error:
             session.rollback()
 
-            logger.error(
-                'researcher_processing_failed',
-                researcher_id=str(researcher_id),
-                error=str(error),
-            )
-
 
 def main():
-    logger.info('openalex_routine_started')
-
     start = time.perf_counter()
 
     session = next(get_sync_session())
@@ -285,12 +242,8 @@ def main():
 
         duration = time.perf_counter() - start
 
-        logger.info('openalex_routine_finished', duration=f'{duration:.2f}s')
-
     except Exception as error:
         session.rollback()
-
-        logger.error('openalex_routine_failed', error=str(error))
 
         raise
 
