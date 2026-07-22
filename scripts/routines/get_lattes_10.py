@@ -1,13 +1,11 @@
 import argparse
 import ssl
-import time
 from http import HTTPStatus
 
 import httpx
 from sqlalchemy import text
 
 from simcc.core.db.database import get_sync_session
-
 
 
 def create_legacy_ssl_context() -> ssl.SSLContext:
@@ -38,8 +36,6 @@ def get_lattes_id_10(lattes_id: str) -> str:
 
 def main(researcher_ids=None, lattes_ids=None):
     session = next(get_sync_session())
-    start_time = time.perf_counter()
-
 
     try:
         if researcher_ids or lattes_ids:
@@ -56,10 +52,7 @@ def main(researcher_ids=None, lattes_ids=None):
                 base_query += ' AND lattes_id IN (:lattes_ids)'
                 params['lattes_ids'] = tuple(lattes_ids)
             researchers = (
-                session
-                .execute(text(base_query), params)
-                .mappings()
-                .all()
+                session.execute(text(base_query), params).mappings().all()
             )
         else:
             query_select = text("""
@@ -77,7 +70,6 @@ def main(researcher_ids=None, lattes_ids=None):
 
         for researcher in researchers:
             lattes_10_id = get_lattes_id_10(researcher['lattes_id'])
-
             session.execute(
                 query_update,
                 {
@@ -87,10 +79,9 @@ def main(researcher_ids=None, lattes_ids=None):
             )
 
         session.commit()
-        duration = time.perf_counter() - start_time
-    except Exception as e:
+    except Exception as E:
+        print(E)
         session.rollback()
-        duration = time.perf_counter() - start_time
 
 
 if __name__ == '__main__':

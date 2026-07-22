@@ -1,3 +1,5 @@
+import logging
+from contextlib import asynccontextmanager
 from http import HTTPStatus
 
 import httpx
@@ -5,6 +7,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 
+from simcc.core.logging.middleware import LoggingMiddleware
 from simcc.routers import (
     external,
     graduate_program,
@@ -34,6 +37,8 @@ app.add_middleware(
     allow_headers=['*'],
     allow_credentials=True,
 )
+app.add_middleware(LoggingMiddleware)
+
 
 app.include_router(external.router)
 app.include_router(bibliographic.router)

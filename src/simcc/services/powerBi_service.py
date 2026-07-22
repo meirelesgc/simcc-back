@@ -1,7 +1,8 @@
 import os
 import shutil
+from datetime import date, datetime
+
 import polars as pl
-from datetime import datetime, date
 
 from simcc.repositories import powerBi_repo
 
@@ -98,17 +99,25 @@ async def fat_openalex_researcher(session):
 
 async def researcher_area_leader(session, admin_session):
     data_admin = await powerBi_repo.get_researcher_area_leader(admin_session)
-    data_main = await powerBi_repo.get_researcher_area_leader_researcher(session)
+    data_main = await powerBi_repo.get_researcher_area_leader_researcher(
+        session
+    )
 
-    df_admin = pl.DataFrame(data_admin, schema={
-        'lattes_id': pl.Utf8,
-        'area_leader': pl.Utf8,
-        'focal_point': pl.Utf8,
-    })
-    df_main = pl.DataFrame(data_main, schema={
-        'researcher_id': pl.Utf8,
-        'lattes_id': pl.Utf8,
-    })
+    df_admin = pl.DataFrame(
+        data_admin,
+        schema={
+            'lattes_id': pl.Utf8,
+            'area_leader': pl.Utf8,
+            'focal_point': pl.Utf8,
+        },
+    )
+    df_main = pl.DataFrame(
+        data_main,
+        schema={
+            'researcher_id': pl.Utf8,
+            'lattes_id': pl.Utf8,
+        },
+    )
 
     df = df_admin.join(df_main, on='lattes_id', how='left')
     df = df.select(['researcher_id', 'area_leader', 'focal_point'])
@@ -194,7 +203,7 @@ async def ufmg_researcher(session):
         'semester_reference': pl.Utf8,
     }
     df = pl.DataFrame(data, schema=df_schema)
-    df = df.fill_null("0")
+    df = df.fill_null('0')
     df.write_csv(os.path.join(PATH, 'ufmg_researcher.csv'))
 
 
@@ -249,14 +258,18 @@ async def dim_graduate_program_acronym(session):
 
 
 async def graduate_program_researcher_year_unnest(session):
-    data = await powerBi_repo.get_graduate_program_researcher_year_unnest(session)
+    data = await powerBi_repo.get_graduate_program_researcher_year_unnest(
+        session
+    )
     df_schema = {
         'graduate_program_id': pl.Utf8,
         'researcher_id': pl.Utf8,
         'year': pl.Utf8,
     }
     df = pl.DataFrame(data, schema=df_schema)
-    df.write_csv(os.path.join(PATH, 'graduate_program_researcher_year_unnest.csv'))
+    df.write_csv(
+        os.path.join(PATH, 'graduate_program_researcher_year_unnest.csv')
+    )
 
 
 async def graduate_program_student_year_unnest(session):
@@ -267,7 +280,9 @@ async def graduate_program_student_year_unnest(session):
         'year': pl.Utf8,
     }
     df = pl.DataFrame(data, schema=df_schema)
-    df.write_csv(os.path.join(PATH, 'graduate_program_student_year_unnest.csv'))
+    df.write_csv(
+        os.path.join(PATH, 'graduate_program_student_year_unnest.csv')
+    )
 
 
 async def dim_departament_technician(session):
@@ -277,7 +292,7 @@ async def dim_departament_technician(session):
         'technician_id': pl.Utf8,
     }
     df = pl.DataFrame(data, schema=df_schema)
-    df = df.fill_null("0")
+    df = df.fill_null('0')
     df.write_csv(os.path.join(PATH, 'dim_departament_technician.csv'))
 
 
@@ -288,7 +303,7 @@ async def dim_departament_researcher(session):
         'researcher_id': pl.Utf8,
     }
     df = pl.DataFrame(data, schema=df_schema)
-    df = df.fill_null("0")
+    df = df.fill_null('0')
     df.write_csv(os.path.join(PATH, 'dim_departament_researcher.csv'))
 
 
@@ -353,7 +368,9 @@ async def fat_foment(session):
 
 
 async def fat_production_tecnical_year_novo_csv_db(session):
-    data = await powerBi_repo.get_fat_production_tecnical_year_novo_csv_db(session)
+    data = await powerBi_repo.get_fat_production_tecnical_year_novo_csv_db(
+        session
+    )
     df_schema = {
         'title': pl.Utf8,
         'year': pl.Utf8,
@@ -365,7 +382,9 @@ async def fat_production_tecnical_year_novo_csv_db(session):
         'id': pl.Utf8,
     }
     df = pl.DataFrame(data, schema=df_schema)
-    df.write_csv(os.path.join(PATH, 'fat_production_tecnical_year_novo_csv_db.csv'))
+    df.write_csv(
+        os.path.join(PATH, 'fat_production_tecnical_year_novo_csv_db.csv')
+    )
 
 
 async def dim_institution(session):
@@ -405,6 +424,7 @@ async def dim_researcher(session, origin):
     df = pl.DataFrame(data, schema=df_schema)
 
     import nltk
+
     try:
         stopwords = nltk.corpus.stopwords.words('english')
     except LookupError:
@@ -412,11 +432,16 @@ async def dim_researcher(session, origin):
         stopwords = nltk.corpus.stopwords.words('english')
     stopwords += nltk.corpus.stopwords.words('portuguese')
 
-    words_data = await powerBi_repo.get_dim_researcher_words(session, stopwords)
-    df_words = pl.DataFrame(words_data, schema={
-        'researcher_id': pl.Utf8,
-        'list_of_words': pl.Utf8,
-    })
+    words_data = await powerBi_repo.get_dim_researcher_words(
+        session, stopwords
+    )
+    df_words = pl.DataFrame(
+        words_data,
+        schema={
+            'researcher_id': pl.Utf8,
+            'list_of_words': pl.Utf8,
+        },
+    )
 
     df = df.join(df_words, on='researcher_id', how='left')
     df.write_csv(os.path.join(PATH, 'dim_researcher.csv'))
@@ -508,21 +533,27 @@ async def production_researcher(session):
 
     def normalize_str(s):
         if s is None:
-            return ""
+            return ''
         return unidecode(str(s)).lower().strip()
 
     df_researcher = df_researcher.with_columns(
-        pl.col('city').map_elements(normalize_str, return_dtype=pl.Utf8).alias('city_norm')
+        pl
+        .col('city')
+        .map_elements(normalize_str, return_dtype=pl.Utf8)
+        .alias('city_norm')
     )
     df_territorio = df_territorio.with_columns(
-        pl.col('Municipio').map_elements(normalize_str, return_dtype=pl.Utf8).alias('Municipio_norm')
+        pl
+        .col('Municipio')
+        .map_elements(normalize_str, return_dtype=pl.Utf8)
+        .alias('Municipio_norm')
     )
 
     df_final = df_researcher.join(
         df_territorio.select(['Territorio_ID', 'Municipio_norm']),
         left_on='city_norm',
         right_on='Municipio_norm',
-        how='left'
+        how='left',
     )
 
     df_final = df_final.with_columns(
@@ -611,10 +642,10 @@ async def fat_researcher_ind_prod(session):
     df = pl.DataFrame(data, schema=df_schema)
     ind_cols = [c for c in df.columns if c.startswith('ind_prod_')]
     for col in ind_cols:
-        df = df.with_columns(
-            pl.col(col).str.replace('.', ',', literal=True)
-        )
-    df.write_csv(os.path.join(PATH, 'fat_researcher_ind_prod.csv'), separator=';')
+        df = df.with_columns(pl.col(col).str.replace('.', ',', literal=True))
+    df.write_csv(
+        os.path.join(PATH, 'fat_researcher_ind_prod.csv'), separator=';'
+    )
 
 
 async def graduate_program_ind_prod(session):
@@ -634,10 +665,10 @@ async def graduate_program_ind_prod(session):
     df = pl.DataFrame(data, schema=df_schema)
     ind_cols = [c for c in df.columns if c.startswith('ind_prod_')]
     for col in ind_cols:
-        df = df.with_columns(
-            pl.col(col).str.replace('.', ',', literal=True)
-        )
-    df.write_csv(os.path.join(PATH, 'graduate_program_ind_prod.csv'), separator=';')
+        df = df.with_columns(pl.col(col).str.replace('.', ',', literal=True))
+    df.write_csv(
+        os.path.join(PATH, 'graduate_program_ind_prod.csv'), separator=';'
+    )
 
 
 async def researcher_production_novo_csv_db(session):
@@ -727,7 +758,7 @@ async def dim_departament(session):
         'institution_id': pl.Utf8,
     }
     df = pl.DataFrame(data, schema=df_schema)
-    df = df.fill_null("0")
+    df = df.fill_null('0')
     df.write_csv(os.path.join(PATH, 'dim_departament.csv'))
 
 
@@ -751,8 +782,16 @@ async def dim_research_project(session):
     }
     df = pl.DataFrame(data, schema=df_schema)
     df = df.with_columns(
-        pl.col('start_year').cast(pl.Int64, strict=False).fill_null(0).cast(pl.Utf8),
-        pl.col('end_year').cast(pl.Int64, strict=False).fill_null(0).cast(pl.Utf8)
+        pl
+        .col('start_year')
+        .cast(pl.Int64, strict=False)
+        .fill_null(0)
+        .cast(pl.Utf8),
+        pl
+        .col('end_year')
+        .cast(pl.Int64, strict=False)
+        .fill_null(0)
+        .cast(pl.Utf8),
     )
     df.write_csv(os.path.join(PATH, 'dim_research_project.csv'))
 
@@ -771,6 +810,7 @@ async def fat_research_project_foment(session):
 
 async def dim_bibliographic_production_terms(session):
     import nltk
+
     try:
         stopwords = nltk.corpus.stopwords.words('english')
     except LookupError:
@@ -778,7 +818,9 @@ async def dim_bibliographic_production_terms(session):
         stopwords = nltk.corpus.stopwords.words('english')
     stopwords += nltk.corpus.stopwords.words('portuguese')
 
-    data = await powerBi_repo.get_dim_bibliographic_production_terms(session, stopwords)
+    data = await powerBi_repo.get_dim_bibliographic_production_terms(
+        session, stopwords
+    )
     df_schema = {
         'id': pl.Utf8,
         'type_': pl.Utf8,
@@ -790,6 +832,7 @@ async def dim_bibliographic_production_terms(session):
 
 async def dim_tecnical_production_terms(session):
     import nltk
+
     try:
         stopwords = nltk.corpus.stopwords.words('english')
     except LookupError:
@@ -797,7 +840,9 @@ async def dim_tecnical_production_terms(session):
         stopwords = nltk.corpus.stopwords.words('english')
     stopwords += nltk.corpus.stopwords.words('portuguese')
 
-    data = await powerBi_repo.get_dim_tecnical_production_terms(session, stopwords)
+    data = await powerBi_repo.get_dim_tecnical_production_terms(
+        session, stopwords
+    )
     df_schema = {
         'id': pl.Utf8,
         'type_': pl.Utf8,
@@ -871,13 +916,13 @@ async def materialized_vision(session):
     }
     df = pl.DataFrame(data, schema=df_schema)
     df.write_csv(
-        os.path.join(PATH, 'materialized_vision.csv'),
-        quote_style='always'
+        os.path.join(PATH, 'materialized_vision.csv'), quote_style='always'
     )
 
 
 async def dim_article_keyword(session):
     import nltk
+
     try:
         stopwords = nltk.corpus.stopwords.words('english')
     except LookupError:
@@ -896,6 +941,7 @@ async def dim_article_keyword(session):
 
 async def fat_article_keyword_(session):
     import nltk
+
     try:
         stopwords = nltk.corpus.stopwords.words('english')
     except LookupError:
@@ -925,6 +971,7 @@ async def fat_article_co_authorship(session):
 
 async def fat_keywords_cooccurrences(session):
     import nltk
+
     try:
         stopwords = nltk.corpus.stopwords.words('english')
     except LookupError:
@@ -932,7 +979,9 @@ async def fat_keywords_cooccurrences(session):
         stopwords = nltk.corpus.stopwords.words('english')
     stopwords += nltk.corpus.stopwords.words('portuguese')
 
-    data = await powerBi_repo.get_fat_keywords_cooccurrences(session, stopwords)
+    data = await powerBi_repo.get_fat_keywords_cooccurrences(
+        session, stopwords
+    )
     df_schema = {
         'word1': pl.Utf8,
         'word2': pl.Utf8,
@@ -957,47 +1006,59 @@ async def _guidance(session, admin_session):
     data_guidance = await powerBi_repo.get_guidance(admin_session)
     data_researchers = await powerBi_repo.get_guidance_researcher(session)
 
-    df_guidance = pl.DataFrame(data_guidance, schema={
-        'id': pl.Utf8,
-        'student_lattes_id': pl.Utf8,
-        'supervisor_lattes_id': pl.Utf8,
-        'co_supervisor_lattes_id': pl.Utf8,
-        'graduate_program_id': pl.Utf8,
-        'start_date': pl.Utf8,
-        'planned_date_project': pl.Utf8,
-        'done_date_project': pl.Utf8,
-        'planned_date_qualification': pl.Utf8,
-        'done_date_qualification': pl.Utf8,
-        'planned_date_conclusion': pl.Utf8,
-        'done_date_conclusion': pl.Utf8,
-        'student_name': pl.Utf8,
-        'supervisor_name': pl.Utf8,
-        'co_name': pl.Utf8,
-        'type': pl.Utf8,
-    })
+    df_guidance = pl.DataFrame(
+        data_guidance,
+        schema={
+            'id': pl.Utf8,
+            'student_lattes_id': pl.Utf8,
+            'supervisor_lattes_id': pl.Utf8,
+            'co_supervisor_lattes_id': pl.Utf8,
+            'graduate_program_id': pl.Utf8,
+            'start_date': pl.Utf8,
+            'planned_date_project': pl.Utf8,
+            'done_date_project': pl.Utf8,
+            'planned_date_qualification': pl.Utf8,
+            'done_date_qualification': pl.Utf8,
+            'planned_date_conclusion': pl.Utf8,
+            'done_date_conclusion': pl.Utf8,
+            'student_name': pl.Utf8,
+            'supervisor_name': pl.Utf8,
+            'co_name': pl.Utf8,
+            'type': pl.Utf8,
+        },
+    )
 
-    df_researchers = pl.DataFrame(data_researchers, schema={
-        'researcher_id': pl.Utf8,
-        'lattes_id': pl.Utf8,
-    })
+    df_researchers = pl.DataFrame(
+        data_researchers,
+        schema={
+            'researcher_id': pl.Utf8,
+            'lattes_id': pl.Utf8,
+        },
+    )
 
     df = df_guidance.join(
-        df_researchers.select(['researcher_id', 'lattes_id']).rename({'researcher_id': 'student_researcher_id'}),
+        df_researchers.select(['researcher_id', 'lattes_id']).rename({
+            'researcher_id': 'student_researcher_id'
+        }),
         left_on='student_lattes_id',
         right_on='lattes_id',
-        how='left'
+        how='left',
     )
     df = df.join(
-        df_researchers.select(['researcher_id', 'lattes_id']).rename({'researcher_id': 'supervisor_researcher_id'}),
+        df_researchers.select(['researcher_id', 'lattes_id']).rename({
+            'researcher_id': 'supervisor_researcher_id'
+        }),
         left_on='supervisor_lattes_id',
         right_on='lattes_id',
-        how='left'
+        how='left',
     )
     df = df.join(
-        df_researchers.select(['researcher_id', 'lattes_id']).rename({'researcher_id': 'co_supervisor_researcher_id'}),
+        df_researchers.select(['researcher_id', 'lattes_id']).rename({
+            'researcher_id': 'co_supervisor_researcher_id'
+        }),
         left_on='co_supervisor_lattes_id',
         right_on='lattes_id',
-        how='left'
+        how='left',
     )
     return df
 
@@ -1006,30 +1067,61 @@ async def supervisor(session, admin_session):
     df_original = await _guidance(session, admin_session)
 
     df_original = df_original.with_columns(
-        pl.col('planned_date_conclusion').str.to_date(strict=False).dt.year().alias('year')
+        pl
+        .col('planned_date_conclusion')
+        .str.to_date(strict=False)
+        .dt.year()
+        .alias('year')
     ).filter(pl.col('year').is_not_null())
 
     df_original = df_original.select(['year', 'supervisor_researcher_id'])
 
-    df_min_max = df_original.group_by('supervisor_researcher_id').agg(
-        pl.col('year').min().alias('min_year'),
-        pl.col('year').max().alias('max_year')
-    ).filter(pl.col('min_year').is_not_null() & pl.col('max_year').is_not_null())
-
-    df_expanded = df_min_max.with_columns(
-        pl.int_ranges('min_year', pl.col('max_year') + 1).alias('year')
-    ).explode('year').select(['supervisor_researcher_id', 'year'])
-
-    df_counts = df_original.group_by(['supervisor_researcher_id', 'year']).len(name='ended_in_year')
-
-    df_joined = df_expanded.join(df_counts, on=['supervisor_researcher_id', 'year'], how='left').fill_null(0)
-
-    df_sorted = df_joined.sort(['supervisor_researcher_id', 'year'], descending=[False, True])
-    df_sorted = df_sorted.with_columns(
-        pl.col('ended_in_year').cum_sum().over('supervisor_researcher_id').cast(pl.Int64).alias('count')
+    df_min_max = (
+        df_original
+        .group_by('supervisor_researcher_id')
+        .agg(
+            pl.col('year').min().alias('min_year'),
+            pl.col('year').max().alias('max_year'),
+        )
+        .filter(
+            pl.col('min_year').is_not_null() & pl.col('max_year').is_not_null()
+        )
     )
 
-    df_final = df_sorted.select(['supervisor_researcher_id', 'year', 'count']).sort(['supervisor_researcher_id', 'year'])
+    df_expanded = (
+        df_min_max
+        .with_columns(
+            pl.int_ranges('min_year', pl.col('max_year') + 1).alias('year')
+        )
+        .explode('year')
+        .select(['supervisor_researcher_id', 'year'])
+    )
+
+    df_counts = df_original.group_by(['supervisor_researcher_id', 'year']).len(
+        name='ended_in_year'
+    )
+
+    df_joined = df_expanded.join(
+        df_counts, on=['supervisor_researcher_id', 'year'], how='left'
+    ).fill_null(0)
+
+    df_sorted = df_joined.sort(
+        ['supervisor_researcher_id', 'year'], descending=[False, True]
+    )
+    df_sorted = df_sorted.with_columns(
+        pl
+        .col('ended_in_year')
+        .cum_sum()
+        .over('supervisor_researcher_id')
+        .cast(pl.Int64)
+        .alias('count')
+    )
+
+    df_final = df_sorted.select([
+        'supervisor_researcher_id',
+        'year',
+        'count',
+    ]).sort(['supervisor_researcher_id', 'year'])
     df_final.write_csv(os.path.join(PATH, 'supervisor.csv'))
 
 
@@ -1046,28 +1138,38 @@ async def guidance(session, admin_session):
         done_date_conclusion = parse_date(row['done_date_conclusion'])
         planned_date_conclusion = parse_date(row['planned_date_conclusion'])
         done_date_qualification = parse_date(row['done_date_qualification'])
-        planned_date_qualification = parse_date(row['planned_date_qualification'])
+        planned_date_qualification = parse_date(
+            row['planned_date_qualification']
+        )
         done_date_project = parse_date(row['done_date_project'])
         planned_date_project = parse_date(row['planned_date_project'])
         start_date = parse_date(row['start_date'])
 
         delays = []
         if done_date_conclusion is None:
-            if planned_date_conclusion is not None and planned_date_conclusion < today:
+            if (
+                planned_date_conclusion is not None
+                and planned_date_conclusion < today
+            ):
                 delays.append((today - planned_date_conclusion).days)
         if done_date_qualification is None:
-            if planned_date_qualification is not None and planned_date_qualification < today:
+            if (
+                planned_date_qualification is not None
+                and planned_date_qualification < today
+            ):
                 delays.append((today - planned_date_qualification).days)
         if done_date_project is None:
-            if planned_date_project is not None and planned_date_project < today:
+            if (
+                planned_date_project is not None
+                and planned_date_project < today
+            ):
                 delays.append((today - planned_date_project).days)
 
         ped_days = 0
         if delays:
             ped_days = max(delays)
-        else:
-            if planned_date_conclusion is not None:
-                ped_days = (planned_date_conclusion - today).days
+        elif planned_date_conclusion is not None:
+            ped_days = (planned_date_conclusion - today).days
 
         ped_days_ = max(delays) if delays else 0
         row['peding_days'] = str(ped_days)
@@ -1088,13 +1190,15 @@ async def guidance(session, admin_session):
             days_offset = (done_date_conclusion - start_date).days
         elif planned_date_conclusion is not None and start_date is not None:
             days_offset = (planned_date_conclusion - start_date).days
-        row['days_offset'] = str(days_offset) if days_offset is not None else ""
+        row['days_offset'] = (
+            str(days_offset) if days_offset is not None else ''
+        )
 
         new_rows.append(row)
 
     df_new = pl.DataFrame(new_rows)
     if not df_new.is_empty():
-        df_new = df_new.with_row_index(name="")
+        df_new = df_new.with_row_index(name='')
     df_new.write_csv(os.path.join(PATH, 'guidance.csv'), quote_style='always')
 
 
@@ -1108,9 +1212,15 @@ async def guidance_per_year(session, admin_session):
         row_orig['program_type'] = row_orig.pop('type', None)
 
         done_date_conclusion = parse_date(row_orig['done_date_conclusion'])
-        planned_date_conclusion = parse_date(row_orig['planned_date_conclusion'])
-        done_date_qualification = parse_date(row_orig['done_date_qualification'])
-        planned_date_qualification = parse_date(row_orig['planned_date_qualification'])
+        planned_date_conclusion = parse_date(
+            row_orig['planned_date_conclusion']
+        )
+        done_date_qualification = parse_date(
+            row_orig['done_date_qualification']
+        )
+        planned_date_qualification = parse_date(
+            row_orig['planned_date_qualification']
+        )
         done_date_project = parse_date(row_orig['done_date_project'])
         planned_date_project = parse_date(row_orig['planned_date_project'])
 
@@ -1132,11 +1242,23 @@ async def guidance_per_year(session, admin_session):
             row['status'] = 'FINALIZADO' if t == 'FINALIZADO' else 'EM CURSO'
 
             if t == 'PROJETO':
-                row['status_'] = 'REALIZADO' if done_date_project is not None else 'EM ANDAMENTO'
+                row['status_'] = (
+                    'REALIZADO'
+                    if done_date_project is not None
+                    else 'EM ANDAMENTO'
+                )
             elif t == 'QUALIFICAÇÃO':
-                row['status_'] = 'REALIZADO' if done_date_qualification is not None else 'EM ANDAMENTO'
+                row['status_'] = (
+                    'REALIZADO'
+                    if done_date_qualification is not None
+                    else 'EM ANDAMENTO'
+                )
             elif t == 'DEFESA':
-                row['status_'] = 'REALIZADO' if done_date_conclusion is not None else 'EM ANDAMENTO'
+                row['status_'] = (
+                    'REALIZADO'
+                    if done_date_conclusion is not None
+                    else 'EM ANDAMENTO'
+                )
             elif t == 'FINALIZADO':
                 row['status_'] = 'REALIZADO'
             else:
@@ -1152,13 +1274,17 @@ async def guidance_per_year(session, admin_session):
             elif t in {'DEFESA', 'FINALIZADO'}:
                 dt = done_date_conclusion or planned_date_conclusion
                 year_val = dt.year if dt else None
-            row['year'] = str(year_val) if year_val else ""
+            row['year'] = str(year_val) if year_val else ''
 
-            row['in_progress'] = 'FINALIZADO' if (t == 'FINALIZADO' and row['status_'] == 'REALIZADO') else 'EM CURSO'
+            row['in_progress'] = (
+                'FINALIZADO'
+                if (t == 'FINALIZADO' and row['status_'] == 'REALIZADO')
+                else 'EM CURSO'
+            )
 
             new_rows.append(row)
 
-    new_rows.sort(key=lambda x: x.get('student_name') or "")
+    new_rows.sort(key=lambda x: x.get('student_name') or '')
 
     columns = [
         'id',
@@ -1177,8 +1303,10 @@ async def guidance_per_year(session, admin_session):
     df_new = pl.DataFrame(new_rows)
     if not df_new.is_empty():
         df_new = df_new.select(columns)
-        df_new = df_new.with_row_index(name="")
-    df_new.write_csv(os.path.join(PATH, 'guidance_per_year.csv'), quote_style='always')
+        df_new = df_new.with_row_index(name='')
+    df_new.write_csv(
+        os.path.join(PATH, 'guidance_per_year.csv'), quote_style='always'
+    )
 
 
 async def in_progress_per_year(session, admin_session):
@@ -1191,9 +1319,15 @@ async def in_progress_per_year(session, admin_session):
         row_orig['program_type'] = row_orig.pop('type', None)
 
         done_date_conclusion = parse_date(row_orig['done_date_conclusion'])
-        planned_date_conclusion = parse_date(row_orig['planned_date_conclusion'])
-        done_date_qualification = parse_date(row_orig['done_date_qualification'])
-        planned_date_qualification = parse_date(row_orig['planned_date_qualification'])
+        planned_date_conclusion = parse_date(
+            row_orig['planned_date_conclusion']
+        )
+        done_date_qualification = parse_date(
+            row_orig['done_date_qualification']
+        )
+        planned_date_qualification = parse_date(
+            row_orig['planned_date_qualification']
+        )
         done_date_project = parse_date(row_orig['done_date_project'])
         planned_date_project = parse_date(row_orig['planned_date_project'])
 
@@ -1214,11 +1348,23 @@ async def in_progress_per_year(session, admin_session):
             row['type'] = t
 
             if t == 'PROJETO':
-                status_val = 'REALIZADO' if done_date_project is not None else 'EM ANDAMENTO'
+                status_val = (
+                    'REALIZADO'
+                    if done_date_project is not None
+                    else 'EM ANDAMENTO'
+                )
             elif t == 'QUALIFICAÇÃO':
-                status_val = 'REALIZADO' if done_date_qualification is not None else 'EM ANDAMENTO'
+                status_val = (
+                    'REALIZADO'
+                    if done_date_qualification is not None
+                    else 'EM ANDAMENTO'
+                )
             elif t == 'DEFESA':
-                status_val = 'REALIZADO' if done_date_conclusion is not None else 'EM ANDAMENTO'
+                status_val = (
+                    'REALIZADO'
+                    if done_date_conclusion is not None
+                    else 'EM ANDAMENTO'
+                )
             elif t == 'FINALIZADO':
                 status_val = 'REALIZADO'
             else:
@@ -1237,18 +1383,25 @@ async def in_progress_per_year(session, admin_session):
 
             if year_val is not None:
                 row['year'] = int(year_val)
-                row['in_progress'] = 'FINALIZADO' if (t == 'FINALIZADO' and status_val == 'REALIZADO') else 'EM CURSO'
+                row['in_progress'] = (
+                    'FINALIZADO'
+                    if (t == 'FINALIZADO' and status_val == 'REALIZADO')
+                    else 'EM CURSO'
+                )
                 exploded_list.append(row)
 
     if not exploded_list:
-        df_new = pl.DataFrame([], schema={
-            'in_progress': pl.Utf8,
-            'year': pl.Int64,
-            'supervisor_name': pl.Utf8,
-            'supervisor_researcher_id': pl.Utf8,
-            'graduate_program_id': pl.Utf8,
-            'count': pl.Int64,
-        })
+        df_new = pl.DataFrame(
+            [],
+            schema={
+                'in_progress': pl.Utf8,
+                'year': pl.Int64,
+                'supervisor_name': pl.Utf8,
+                'supervisor_researcher_id': pl.Utf8,
+                'graduate_program_id': pl.Utf8,
+                'count': pl.Int64,
+            },
+        )
         df_new.write_csv(os.path.join(PATH, 'in_progress_per_year.csv'))
         return
 
@@ -1257,7 +1410,10 @@ async def in_progress_per_year(session, admin_session):
     statuses = set()
     programs = set()
     for item in exploded_list:
-        supervisors.add((item['supervisor_name'], item['supervisor_researcher_id']))
+        supervisors.add((
+            item['supervisor_name'],
+            item['supervisor_researcher_id'],
+        ))
         years.add(item['year'])
         statuses.add(item['in_progress'])
         programs.add(item['graduate_program_id'])
@@ -1276,7 +1432,7 @@ async def in_progress_per_year(session, admin_session):
             item['supervisor_researcher_id'],
             item['year'],
             item['in_progress'],
-            item['graduate_program_id']
+            item['graduate_program_id'],
         )
         counts_map[key] = counts_map.get(key, 0) + 1
 
@@ -1293,15 +1449,17 @@ async def in_progress_per_year(session, admin_session):
                         'year': yr,
                         'in_progress': st,
                         'graduate_program_id': prog,
-                        'count': cnt
+                        'count': cnt,
                     })
 
-    result_list.sort(key=lambda x: (
-        x.get('supervisor_name') or "",
-        x.get('year') or 0,
-        x.get('graduate_program_id') or "",
-        x.get('in_progress') or ""
-    ))
+    result_list.sort(
+        key=lambda x: (
+            x.get('supervisor_name') or '',
+            x.get('year') or 0,
+            x.get('graduate_program_id') or '',
+            x.get('in_progress') or '',
+        )
+    )
 
     df_result = pl.DataFrame(result_list)
     df_result.write_csv(os.path.join(PATH, 'in_progress_per_year.csv'))
@@ -1315,7 +1473,7 @@ async def dim_tags_csv(session, admin_session):
         'color_code': pl.Utf8,
     }
     df = pl.DataFrame(data, schema=df_schema)
-    df = df.with_row_index(name="")
+    df = df.with_row_index(name='')
     df.write_csv(os.path.join(PATH, 'dim_tags.csv'), quote_style='always')
 
 
@@ -1326,7 +1484,7 @@ async def fat_tags_csv(session, admin_session):
         'tag_id': pl.Utf8,
     }
     df = pl.DataFrame(data, schema=df_schema)
-    df = df.with_row_index(name="")
+    df = df.with_row_index(name='')
     df.write_csv(os.path.join(PATH, 'fat_tags.csv'), quote_style='always')
 
 
@@ -1345,24 +1503,22 @@ async def ind_guidance_ori(session, admin_session):
     df = df.with_columns(
         pl.col('year').cast(pl.Int64, strict=False).cast(pl.Utf8)
     )
-    df = df.with_columns(
-        pl.col('ind_ori').str.replace('.', ',', literal=True)
-    )
-    df = df.with_row_index(name="")
+    df = df.with_columns(pl.col('ind_ori').str.replace('.', ',', literal=True))
+    df = df.with_row_index(name='')
     df.write_csv(
         os.path.join(PATH, 'ind_guidance_ori.csv'),
         separator=';',
-        quote_style='always'
+        quote_style='always',
     )
 
 
 async def ind_guidance_coaut(session, admin_session):
     data_prog = await powerBi_repo.get_ind_guidance_coaut_prog(admin_session)
     data_prod = await powerBi_repo.get_ind_guidance_coaut_prod(session)
-    
+
     prog_rows = [dict(r) for r in data_prog]
     prod_rows = [dict(r) for r in data_prod]
-    
+
     prod_filtered = []
     for r in prod_rows:
         if r.get('identifier') and r.get('year'):
@@ -1390,10 +1546,16 @@ async def ind_guidance_coaut(session, admin_session):
     for item in merged:
         key = (item['identifier'], item['type'])
         coaut_count.setdefault(key, set()).add(item['researcher_id'])
-        
-    coaut_keys = {key for key, res_set in coaut_count.items() if len(res_set) > 1}
 
-    df_filtered = [item for item in merged if (item['identifier'], item['type']) in coaut_keys]
+    coaut_keys = {
+        key for key, res_set in coaut_count.items() if len(res_set) > 1
+    }
+
+    df_filtered = [
+        item
+        for item in merged
+        if (item['identifier'], item['type']) in coaut_keys
+    ]
 
     seen = set()
     df_unique = []
@@ -1420,11 +1582,13 @@ async def ind_guidance_coaut(session, admin_session):
             'year': yr,
             'IndProdArtCoAut': art_count,
             'IndProdLivCoAut': book_count,
-            'IndProdCapCoAut': chapter_count
+            'IndProdCapCoAut': chapter_count,
         })
 
     df_new = pl.DataFrame(pivot_rows)
-    df_new.write_csv(os.path.join(PATH, 'ind_guidance_coaut.csv'), quote_style='always')
+    df_new.write_csv(
+        os.path.join(PATH, 'ind_guidance_coaut.csv'), quote_style='always'
+    )
 
 
 async def ind_guidance_distori(session, admin_session):
@@ -1444,25 +1608,33 @@ async def ind_guidance_distori(session, admin_session):
     df = df.with_columns(
         pl.col('ind_dist_ori').str.replace('.', ',', literal=True)
     )
-    df = df.with_row_index(name="")
-    df.write_csv(os.path.join(PATH, 'ind_guidance_distori.csv'), separator=';', quote_style='always')
+    df = df.with_row_index(name='')
+    df.write_csv(
+        os.path.join(PATH, 'ind_guidance_distori.csv'),
+        separator=';',
+        quote_style='always',
+    )
 
 
 async def fat_guidance_history(session, admin_session):
     data_history = await powerBi_repo.get_fat_guidance_history(admin_session)
     df_researcher_map = await powerBi_repo.get_guidance_researcher(session)
 
-    res_map = {r['lattes_id']: r['id'] for r in df_researcher_map if r.get('lattes_id')}
+    res_map = {
+        r['lattes_id']: r['id']
+        for r in df_researcher_map
+        if r.get('lattes_id')
+    }
 
     history_joined = []
     for h in data_history:
         h_dict = dict(h)
         student_lattes = h_dict.get('student_lattes_id')
         supervisor_lattes = h_dict.get('supervisor_lattes_id')
-        
+
         if student_lattes in res_map:
             h_dict['student_id'] = res_map[student_lattes]
-            h_dict['supervisor_id'] = res_map.get(supervisor_lattes, "")
+            h_dict['supervisor_id'] = res_map.get(supervisor_lattes, '')
             history_joined.append(h_dict)
 
     history_dates = []
@@ -1470,13 +1642,21 @@ async def fat_guidance_history(session, admin_session):
         start_date = parse_date(h['start_date'])
         done_date_conclusion = parse_date(h['done_date_conclusion'])
         planned_date_conclusion = parse_date(h['planned_date_conclusion'])
-        
-        end_date = done_date_conclusion if done_date_conclusion is not None else planned_date_conclusion
-        
+
+        end_date = (
+            done_date_conclusion
+            if done_date_conclusion is not None
+            else planned_date_conclusion
+        )
+
         if start_date is not None and end_date is not None:
             h['start_year'] = start_date.year
             h['end_year'] = end_date.year
-            h['done_year'] = done_date_conclusion.year if done_date_conclusion is not None else None
+            h['done_year'] = (
+                done_date_conclusion.year
+                if done_date_conclusion is not None
+                else None
+            )
             history_dates.append(h)
 
     exploded = []
@@ -1484,42 +1664,44 @@ async def fat_guidance_history(session, admin_session):
         start_yr = h['start_year']
         end_yr = h['end_year']
         done_yr = h['done_year']
-        
+
         for yr in range(start_yr, end_yr + 1):
             exploded.append({
                 'student_name': h['student_name'],
                 'student_id': h['student_id'],
                 'supervisor_id': h['supervisor_id'],
                 'year': yr,
-                'done_year': done_yr
+                'done_year': done_yr,
             })
 
     current_year = datetime.now().year
-    
+
     final_rows = []
     for item in exploded:
         yr = item['year']
         done_yr = item['done_year']
-        
+
         if done_yr is not None and yr == done_yr:
             t = 'CONCLUÍDO'
         elif yr >= current_year:
             t = 'EXPECTATIVA'
         else:
             t = 'EM ANDAMENTO'
-            
+
         final_rows.append({
             'student_name': item['student_name'],
             'student_id': item['student_id'],
             'supervisor_id': item['supervisor_id'],
             'year': yr,
-            'type': t
+            'type': t,
         })
 
     df_new = pl.DataFrame(final_rows)
     if not df_new.is_empty():
-        df_new = df_new.with_row_index(name="")
-    df_new.write_csv(os.path.join(PATH, 'fat_guidance_history.csv'), quote_style='always')
+        df_new = df_new.with_row_index(name='')
+    df_new.write_csv(
+        os.path.join(PATH, 'fat_guidance_history.csv'), quote_style='always'
+    )
 
 
 async def dim_sdg(session):
@@ -1530,7 +1712,9 @@ async def dim_sdg(session):
         'name': pl.Utf8,
     }
     df = pl.DataFrame(data, schema=df_schema)
-    df.write_csv(os.path.join(PATH, 'dim_sdg.csv'), separator=';', quote_style='always')
+    df.write_csv(
+        os.path.join(PATH, 'dim_sdg.csv'), separator=';', quote_style='always'
+    )
 
 
 async def fat_sdg_articles(session):
@@ -1545,7 +1729,11 @@ async def fat_sdg_articles(session):
         'periodical_magazine_name': pl.Utf8,
     }
     df = pl.DataFrame(data, schema=df_schema)
-    df.write_csv(os.path.join(PATH, 'fat_sdg_articles.csv'), separator=';', quote_style='always')
+    df.write_csv(
+        os.path.join(PATH, 'fat_sdg_articles.csv'),
+        separator=';',
+        quote_style='always',
+    )
 
 
 async def fat_sdg_alignment_researcher(session):
@@ -1561,7 +1749,11 @@ async def fat_sdg_alignment_researcher(session):
     df = df.with_columns(
         pl.col('percentage').str.replace('.', ',', literal=True)
     )
-    df.write_csv(os.path.join(PATH, 'fat_sdg_alignment_researcher.csv'), separator=';', quote_style='always')
+    df.write_csv(
+        os.path.join(PATH, 'fat_sdg_alignment_researcher.csv'),
+        separator=';',
+        quote_style='always',
+    )
 
 
 async def dim_territorio_identidade(session):

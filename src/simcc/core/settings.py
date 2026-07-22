@@ -26,6 +26,12 @@ class Settings(BaseSettings, extra='ignore'):
     HOP_NETWORK: str = 'simcc-back_default'
     HOP_RUN_PARAMETERS: Optional[str] = None
 
+    APPLICATION: str = 'simcc'
+    ENVIRONMENT: str = 'development'
+    LOG_LEVEL: str = 'INFO'
+    LOG_DIR: str = 'logs'
+
     class Config:
         env_file = '.env'
         env_file_encoding = 'utf-8'
+
