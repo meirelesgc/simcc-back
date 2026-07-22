@@ -1,6 +1,10 @@
 services:
   db:
     image: pgvector/pgvector:pg17
+    mem_limit: 1g
+    mem_reservation: 512m
+    cpus: 1.0
+    pids_limit: 200
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -9,14 +13,13 @@ services:
       - "127.0.0.1:${DB_PORT}:5432"
     volumes:
       - db:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
   hop:
     image: gleidsoncosta/simcc-extrator:latest
+    mem_limit: 2g
+    mem_reservation: 1g
+    cpus: 2.0
+    pids_limit: 300
     command: ["/opt/hop/hop-server.sh"]
     environment:
       HOP_LOG_LEVEL: Basic
@@ -37,6 +40,10 @@ services:
   api:
     build: .
     image: ${COMPOSE_PROJECT_NAME}
+    mem_limit: 1g
+    mem_reservation: 512m
+    cpus: 1.5
+    pids_limit: 200
     entrypoint: ./entrypoint.sh
     ports:
       - "127.0.0.1:${API_PORT}:8000"
