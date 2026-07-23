@@ -42,14 +42,37 @@ def main():
         # Execute the module code
         spec.loader.exec_module(module)
         
+        # Extract metrics if they exist in the module
+        items_found = getattr(module, 'items_found', None)
+        items_succeeded = getattr(module, 'items_succeeded', None)
+        items_failed = getattr(module, 'items_failed', None)
+        
         # Calculate duration and log success
         duration_ms = (time.perf_counter() - start_time) * 1000.0
-        routine_finished(routine_name, duration_ms)
+        routine_finished(
+            routine_name,
+            duration_ms,
+            items_found=items_found,
+            items_succeeded=items_succeeded,
+            items_failed=items_failed,
+        )
         
     except Exception as e:
+        # Extract metrics even if failure happened (if they were set before the crash)
+        items_found = getattr(module, 'items_found', None)
+        items_succeeded = getattr(module, 'items_succeeded', None)
+        items_failed = getattr(module, 'items_failed', None)
+        
         # Calculate duration and log error
         duration_ms = (time.perf_counter() - start_time) * 1000.0
-        routine_error(routine_name, duration_ms, str(e))
+        routine_error(
+            routine_name,
+            duration_ms,
+            str(e),
+            items_found=items_found,
+            items_succeeded=items_succeeded,
+            items_failed=items_failed,
+        )
         # Bubble up exit code
         sys.exit(1)
 

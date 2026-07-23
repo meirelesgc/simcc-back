@@ -23,18 +23,18 @@ async def ping():
   "timestamp": "2026-07-22T17:23:33.444004Z",
   "level": "info",
   "application": "simcc",
+  "environment": "development",
+  "hostname": "srv-01",
   "category": "http",
   "event": "request.received",
   "message": "Request received: GET /ping",
   "request_id": "f6eeb62f-5e38-467c-a7c5-eebacb4725a7",
   "duration": null,
   "data": {
-    "environment": "development",
-    "hostname": "srv-01",
-    "user_id": null,
     "route": "/ping",
     "method": "GET",
-    "routine_name": null
+    "user_id": null,
+    "error_message": null
   }
 }
 ```
@@ -45,18 +45,18 @@ async def ping():
   "timestamp": "2026-07-22T17:23:33.445204Z",
   "level": "info",
   "application": "simcc",
+  "environment": "development",
+  "hostname": "srv-01",
   "category": "http",
   "event": "request.finished",
   "message": "Request finished: GET /ping",
   "request_id": "f6eeb62f-5e38-467c-a7c5-eebacb4725a7",
   "duration": 1.2,
   "data": {
-    "environment": "development",
-    "hostname": "srv-01",
-    "user_id": null,
     "route": "/ping",
     "method": "GET",
-    "routine_name": null
+    "user_id": null,
+    "error_message": null
   }
 }
 ```
@@ -84,18 +84,16 @@ if __name__ == '__main__':
   "timestamp": "2026-07-22T17:20:26.522185Z",
   "level": "info",
   "application": "simcc",
+  "environment": "development",
+  "hostname": "srv-01",
   "category": "routine",
   "event": "routine.started",
   "message": "Routine started: sync_xml",
   "request_id": null,
   "duration": null,
   "data": {
-    "environment": "development",
-    "hostname": "srv-01",
-    "user_id": null,
-    "route": null,
-    "method": null,
-    "routine_name": "sync_xml"
+    "routine_name": "sync_xml",
+    "error_message": null
   }
 }
 ```
@@ -106,18 +104,16 @@ if __name__ == '__main__':
   "timestamp": "2026-07-22T17:20:28.522185Z",
   "level": "info",
   "application": "simcc",
+  "environment": "development",
+  "hostname": "srv-01",
   "category": "routine",
   "event": "routine.finished",
   "message": "Routine finished: sync_xml",
   "request_id": null,
   "duration": 2000.0,
   "data": {
-    "environment": "development",
-    "hostname": "srv-01",
-    "user_id": null,
-    "route": null,
-    "method": null,
-    "routine_name": "sync_xml"
+    "routine_name": "sync_xml",
+    "error_message": null
   }
 }
 ```
@@ -139,29 +135,26 @@ async def fetch_invalid(session):
   "timestamp": "2026-07-22T17:22:45.319268Z",
   "level": "error",
   "application": "simcc",
+  "environment": "development",
+  "hostname": "srv-01",
   "category": "database",
   "event": "query.error",
   "message": "Database query error in operation: database.query on db: test",
   "request_id": "f6eeb62f-5e38-467c-a7c5-eebacb4725a7",
   "duration": 3.32,
   "data": {
-    "environment": "development",
-    "hostname": "srv-01",
-    "user_id": null,
-    "route": "/test",
-    "method": "GET",
-    "routine_name": null,
     "operation_name": "database.query",
     "database_name": "test",
-    "error_message": "relation \"non_existent\" does not exist"
+    "error_message": "relation \"non_existent\" does not exist",
+    "sql": null
   }
 }
 ```
-*(Nota: O SQL `SELECT * FROM non_existent` não foi incluído no JSON pois o LOG_LEVEL da aplicação está configurado como INFO em produção).*
+*(Nota: O SQL `SELECT * FROM non_existent` é omitido/retorna `null` no log pois o LOG_LEVEL da aplicação está configurado como INFO em produção).*
 
 ---
 
-## 4. Registro de Novo Evento Customizado
+## 4. Registro de Novo Evento Customizado (Categoria `system`)
 
 ### 1. Adicionar constante em `constants.py`:
 ```python
@@ -198,20 +191,21 @@ if not verify_password(password, user.hash):
   "timestamp": "2026-07-22T17:25:12.301294Z",
   "level": "warning",
   "application": "simcc",
+  "environment": "development",
+  "hostname": "srv-01",
   "category": "system",
   "event": "auth.login_failed",
   "message": "Failed login attempt for email: user@domain.com (Reason: wrong_password)",
   "request_id": "a9a3b02c-4919-482a-adab-92ba3df1d182",
   "duration": null,
   "data": {
-    "environment": "development",
-    "hostname": "srv-01",
-    "user_id": null,
     "route": "/api/v1/auth/login",
     "method": "POST",
+    "user_id": null,
     "routine_name": null,
     "email": "user@domain.com",
     "reason": "wrong_password"
   }
 }
 ```
+*(Nota: Logs da categoria `system` contêm dinamicamente metadados herdados do contexto ativo, como `route` e `method` se preenchidos, além de chaves livres como `email` e `reason`).*

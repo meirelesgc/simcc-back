@@ -72,10 +72,17 @@ def get_programs_mapping(session):
     )
 
 
+items_found = 0
+items_succeeded = 0
+items_failed = 0
+
+
 def main():
+    global items_found, items_succeeded, items_failed
     session = next(get_admin_sync_session())
     try:
         df = load_researchers_csv()
+        items_found = len(df)
         required_cols = {'nome', 'id do programa', 'categoria'}
         missing = required_cols - set(df.columns)
         if missing:
@@ -135,6 +142,9 @@ def main():
                 'type_': row['categoria'],
             })
             stats['Processado'] += 1
+            
+        items_succeeded = stats['Processado']
+        items_failed = items_found - items_succeeded
 
         if records_to_insert:
             query_insert = text("""

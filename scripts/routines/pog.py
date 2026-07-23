@@ -7,10 +7,16 @@ from simcc.core.db.database import get_sync_session
 
 
 
+items_found = 0
+items_succeeded = 0
+items_failed = 0
+
+
 def main(researcher_ids=None, lattes_ids=None):
+    global items_found, items_succeeded, items_failed
     session = next(get_sync_session())
     start_time = time.perf_counter()
-
+    items_found = 13
 
     try:
         session.execute(
@@ -88,8 +94,12 @@ def main(researcher_ids=None, lattes_ids=None):
         )
 
         session.commit()
+        items_succeeded = 13
+        items_failed = 0
         duration = time.perf_counter() - start_time
     except Exception as e:
+        items_succeeded = 0
+        items_failed = 13
         session.rollback()
         duration = time.perf_counter() - start_time
 

@@ -60,7 +60,7 @@ def test_logger_schema_and_file_creation(tmp_path, monkeypatch):
     assert log_data['duration'] is None
     assert isinstance(log_data['data'], dict)
     assert log_data['data']['extra_param'] == 'hello'
-    assert log_data['data']['environment'] == 'development'
+    assert log_data['environment'] == 'development'
 
 
 def test_context_vars_propagation(tmp_path, monkeypatch):
@@ -142,8 +142,8 @@ def test_event_helpers(tmp_path, monkeypatch):
     assert log_db['data']['operation_name'] == 'find_by_id'
     assert log_db['data']['database_name'] == 'users_db'
     assert log_db['data']['error_message'] == 'Connection failure'
-    # SQL should not be logged because configured level is INFO, not DEBUG
-    assert 'sql' not in log_db['data']
+    # SQL should be None because configured level is INFO, not DEBUG
+    assert log_db['data']['sql'] is None
 
 
 @pytest.mark.asyncio
@@ -182,7 +182,7 @@ async def test_database_query_error_logging(
     assert log_db['data']['database_name'] is not None
     assert 'table_that_does_not_exist' in log_db['data']['error_message']
     assert (
-        'sql' not in log_db['data']
+        log_db['data']['sql'] is None
     )  # Because configured log level is INFO (production default)
 
 

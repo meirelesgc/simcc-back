@@ -143,10 +143,15 @@ def terms_dataframe(session) -> list[dict]:
     return result.mappings().all()
 
 
+items_found = 0
+items_succeeded = 0
+items_failed = 0
+
+
 def main():
+    global items_found, items_succeeded, items_failed
     session = next(get_sync_session())
     start_time = time.perf_counter()
-
 
     try:
         db = get_db()
@@ -162,6 +167,7 @@ def main():
             deleted_total += deleted
 
         terms_list = terms_dataframe(session)
+        items_found = len(terms_list)
         records = list_to_records(terms_list)
         inserted_total = insert_data_batch(
             db,
@@ -171,8 +177,12 @@ def main():
         )
 
         session.commit()
+        items_succeeded = inserted_total
+        items_failed = items_found - items_succeeded
         duration = time.perf_counter() - start_time
     except Exception as e:
+        items_succeeded = 0
+        items_failed = items_found
         session.rollback()
         duration = time.perf_counter() - start_time
 

@@ -14,11 +14,11 @@ def list_researchers(session, researcher_ids=None, lattes_ids=None):
     """
     params = {}
     if researcher_ids:
-        base_query += ' AND id IN (:researcher_ids)'
-        params['researcher_ids'] = tuple(researcher_ids)
+        base_query += ' AND id = ANY(:researcher_ids)'
+        params['researcher_ids'] = list(researcher_ids)
     if lattes_ids:
-        base_query += ' AND lattes_id IN (:lattes_ids)'
-        params['lattes_ids'] = tuple(lattes_ids)
+        base_query += ' AND lattes_id = ANY(:lattes_ids)'
+        params['lattes_ids'] = list(lattes_ids)
 
     return session.execute(text(base_query), params).mappings().all()
 
@@ -30,14 +30,14 @@ def delete_researcher_production(
         base_query = 'DELETE FROM researcher_production WHERE 1=1'
         params = {}
         if researcher_ids:
-            base_query += ' AND researcher_id IN (:researcher_ids)'
-            params['researcher_ids'] = tuple(researcher_ids)
+            base_query += ' AND researcher_id = ANY(:researcher_ids)'
+            params['researcher_ids'] = list(researcher_ids)
         if lattes_ids:
             base_query += (
                 ' AND researcher_id IN (SELECT id FROM researcher '
-                'WHERE lattes_id IN (:lattes_ids))'
+                'WHERE lattes_id = ANY(:lattes_ids))'
             )
-            params['lattes_ids'] = tuple(lattes_ids)
+            params['lattes_ids'] = list(lattes_ids)
         session.execute(text(base_query), params)
     else:
         session.execute(text('DELETE FROM researcher_production'))
@@ -142,7 +142,13 @@ def list_address(session):
     return session.execute(text(query)).mappings().all()
 
 
+items_found = 0
+items_succeeded = 0
+items_failed = 0
+
+
 def main(researcher_ids=None, lattes_ids=None):
+    global items_found, items_succeeded, items_failed
     session = next(get_sync_session())
 
     try:
@@ -251,12 +257,17 @@ def main(researcher_ids=None, lattes_ids=None):
         """)
 
         records = researchers.to_dicts()
+        items_found = len(records)
 
         for researcher in records:
             session.execute(insert_query, researcher)
         session.commit()
+        items_succeeded = items_found
+        items_failed = 0
 
     except Exception as E:
+        items_succeeded = 0
+        items_failed = items_found
         session.rollback()
 
 

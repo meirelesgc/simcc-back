@@ -8,7 +8,6 @@ from sqlalchemy import text
 from simcc.core.db.database import get_sync_session
 
 
-
 def normalize_string(s):
     if not isinstance(s, str):
         return str(s) if s is not None else ''
@@ -22,8 +21,14 @@ def load_research_lines_csv(path='storage/seed/program_research_lines.csv'):
     df = df.rename({col: normalize_string(col) for col in df.columns})
 
     df = df.with_columns(
-        pl.col('data de inicio').str.to_date(format='%d/%m/%Y', strict=False).dt.year().alias('start_year'),
-        pl.col('data de fim').str.to_date(format='%d/%m/%Y', strict=False).dt.year().alias('end_year')
+        pl.col('data de inicio')
+        .str.to_date(format='%d/%m/%Y', strict=False)
+        .dt.year()
+        .alias('start_year'),
+        pl.col('data de fim')
+        .str.to_date(format='%d/%m/%Y', strict=False)
+        .dt.year()
+        .alias('end_year'),
     )
     return df
 
@@ -43,14 +48,20 @@ def format_research_lines(session):
     session.execute(sql)
 
 
+items_found = 0
+items_succeeded = 0
+items_failed = 0
+
+
 def main():
+    global items_found, items_succeeded, items_failed
     session = next(get_sync_session())
     start_time = time.perf_counter()
-
 
     try:
         df = load_research_lines_csv()
         total_rows = len(df)
+        items_found = total_rows
 
         programs_map = get_programs_mapping(session)
 
@@ -87,12 +98,15 @@ def main():
         format_research_lines(session)
 
         session.commit()
+        items_succeeded = stats['Processado']
+        items_failed = total_rows - items_succeeded
         duration = time.perf_counter() - start_time
-    except Exception as e:
+    except Exception:
+        items_succeeded = 0
+        items_failed = items_found
         session.rollback()
         duration = time.perf_counter() - start_time
 
 
 if __name__ == '__main__':
     main()
-

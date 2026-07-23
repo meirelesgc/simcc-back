@@ -86,10 +86,16 @@ def list_researchers(session):
     return result.fetchall()
 
 
+items_found = 0
+items_succeeded = 0
+items_failed = 0
+
+
 def main():
+    global items_found, items_succeeded, items_failed
     session = next(get_sync_session())
     start_time = time.perf_counter()
-
+    items_found = 6
 
     try:
         stopwords = get_stopwords()
@@ -134,8 +140,12 @@ def main():
             session.execute(text(query), {'stopwords': stopwords})
 
         session.commit()
+        items_succeeded = 6
+        items_failed = 0
         duration = time.perf_counter() - start_time
     except Exception as e:
+        items_succeeded = 0
+        items_failed = 6
         session.rollback()
         duration = time.perf_counter() - start_time
 

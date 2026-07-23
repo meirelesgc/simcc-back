@@ -51,12 +51,12 @@ def list_admin_researchers(session, researcher_ids=None, lattes_ids=None):
     params = {}
 
     if researcher_ids:
-        query += ' AND researcher_id IN :researcher_ids'
-        params['researcher_ids'] = tuple(researcher_ids)
+        query += ' AND researcher_id = ANY(:researcher_ids)'
+        params['researcher_ids'] = list(researcher_ids)
 
     if lattes_ids:
-        query += ' AND lattes_id IN :lattes_ids'
-        params['lattes_ids'] = tuple(lattes_ids)
+        query += ' AND lattes_id = ANY(:lattes_ids)'
+        params['lattes_ids'] = list(lattes_ids)
 
     result = session.execute(text(query), params)
 
@@ -76,12 +76,12 @@ def list_main_researchers(session, researcher_ids=None, lattes_ids=None):
     params = {}
 
     if researcher_ids:
-        query += ' AND id IN :researcher_ids'
-        params['researcher_ids'] = tuple(researcher_ids)
+        query += ' AND id = ANY(:researcher_ids)'
+        params['researcher_ids'] = list(researcher_ids)
 
     if lattes_ids:
-        query += ' AND lattes_id IN :lattes_ids'
-        params['lattes_ids'] = tuple(lattes_ids)
+        query += ' AND lattes_id = ANY(:lattes_ids)'
+        params['lattes_ids'] = list(lattes_ids)
 
     result = session.execute(text(query), params)
 
@@ -194,7 +194,13 @@ def download_xml(lattes_id, researcher_id):
         session.close()
 
 
+items_found = 0
+items_succeeded = 0
+items_failed = 0
+
+
 def main(researcher_ids=None, lattes_ids=None):
+    global items_found, items_succeeded, items_failed
     start_time = time.perf_counter()
 
     print('Iniciando rotina...')
@@ -240,6 +246,7 @@ def main(researcher_ids=None, lattes_ids=None):
             return
 
         total = len(researchers)
+        items_found = total
 
         errors = []
 
@@ -279,6 +286,9 @@ def main(researcher_ids=None, lattes_ids=None):
 
                 except Exception as e:
                     errors.append((lattes_id, str(e)))
+                    
+        items_failed = len(errors)
+        items_succeeded = total - items_failed
     finally:
         if admin_session is not None:
             admin_session.close()

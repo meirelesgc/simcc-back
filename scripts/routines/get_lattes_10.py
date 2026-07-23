@@ -34,7 +34,13 @@ def get_lattes_id_10(lattes_id: str) -> str:
     return None
 
 
+items_found = 0
+items_succeeded = 0
+items_failed = 0
+
+
 def main(researcher_ids=None, lattes_ids=None):
+    global items_found, items_succeeded, items_failed
     session = next(get_sync_session())
 
     try:
@@ -46,11 +52,11 @@ def main(researcher_ids=None, lattes_ids=None):
             """
             params = {}
             if researcher_ids:
-                base_query += ' AND id IN (:researcher_ids)'
-                params['researcher_ids'] = tuple(researcher_ids)
+                base_query += ' AND id = ANY(:researcher_ids)'
+                params['researcher_ids'] = list(researcher_ids)
             if lattes_ids:
-                base_query += ' AND lattes_id IN (:lattes_ids)'
-                params['lattes_ids'] = tuple(lattes_ids)
+                base_query += ' AND lattes_id = ANY(:lattes_ids)'
+                params['lattes_ids'] = list(lattes_ids)
             researchers = (
                 session.execute(text(base_query), params).mappings().all()
             )
@@ -61,6 +67,10 @@ def main(researcher_ids=None, lattes_ids=None):
                 WHERE lattes_10_id IS NULL;
             """)
             researchers = session.execute(query_select).mappings().all()
+
+        items_found = len(researchers)
+        success = 0
+        failed = 0
 
         query_update = text("""
             UPDATE researcher
@@ -77,9 +87,17 @@ def main(researcher_ids=None, lattes_ids=None):
                     'lattes_10_id': lattes_10_id,
                 },
             )
+            if lattes_10_id:
+                success += 1
+            else:
+                failed += 1
 
         session.commit()
+        items_succeeded = success
+        items_failed = failed
     except Exception as E:
+        items_succeeded = 0
+        items_failed = items_found
         print(E)
         session.rollback()
 

@@ -195,10 +195,15 @@ def list_programs(session):
     return result
 
 
+items_found = 0
+items_succeeded = 0
+items_failed = 0
+
+
 def main():
+    global items_found, items_succeeded, items_failed
     session = next(get_sync_session())
     start_time = time.perf_counter()
-
 
     try:
         current_year = 2026
@@ -304,14 +309,19 @@ def main():
                 'guidance_prod': float(row['guidance_prod']),
             })
 
+        items_found = len(params)
         BATCH_SIZE = 5000
         for i in range(0, len(params), BATCH_SIZE):
             batch = params[i : i + BATCH_SIZE]
             session.execute(query_insert, batch)
 
         session.commit()
+        items_succeeded = items_found
+        items_failed = 0
         duration = time.perf_counter() - start_time
     except Exception as e:
+        items_succeeded = 0
+        items_failed = items_found
         session.rollback()
         duration = time.perf_counter() - start_time
 

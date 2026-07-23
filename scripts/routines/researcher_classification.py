@@ -11,7 +11,7 @@ from simcc.core.db.database import get_sync_session
 
 def article_metrics(session, year):
     SCRIPT_SQL = text("""
-        SELECT qualis, COUNT(*) AS count_article, researcher_id
+        SELECT qualis, COUNT(*) AS count_article, researcher_id::TEXT
         FROM public.bibliographic_production bp
             JOIN public.bibliographic_production_article bpa ON
                 bp.id = bpa.bibliographic_production_id
@@ -55,7 +55,7 @@ def article_metrics(session, year):
 
 def patent_metrics(session, year):
     SCRIPT_SQL = text("""
-        SELECT researcher_id,
+        SELECT researcher_id::TEXT,
             COUNT(*) FILTER (WHERE p.grant_date IS NULL) AS patent_not_granted,
             COUNT(*) FILTER (WHERE p.grant_date IS NOT NULL) AS patent_granted
         FROM patent p
@@ -71,7 +71,7 @@ def patent_metrics(session, year):
 
 def guidance_metrics(session, year):
     SCRIPT_SQL = text("""
-        SELECT researcher_id,
+        SELECT researcher_id::TEXT,
             unaccent(lower((g.nature || ' ' || g.status))) AS nature,
             COUNT(*) as count_nature
         FROM guidance g
@@ -120,7 +120,7 @@ def guidance_metrics(session, year):
 
 def academic_degree_metrics(session):
     SCRIPT_SQL = text("""
-        SELECT researcher_id, MAX(education_end) AS first_doc
+        SELECT researcher_id::TEXT, MAX(education_end) AS first_doc
         FROM education
         WHERE degree = 'DOCTORATE'
         GROUP BY researcher_id
@@ -143,19 +143,19 @@ def simple_count_metrics(session, sql, params, column_name):
 
 def list_researchers(session, researcher_ids=None, lattes_ids=None):
     base_query = """
-        SELECT id AS researcher_id, name, lattes_id
+        SELECT id::TEXT AS researcher_id, name, lattes_id
         FROM public.researcher
         WHERE 1=1
     """
     params = {}
 
     if researcher_ids:
-        base_query += ' AND id IN (:researcher_ids)'
-        params['researcher_ids'] = tuple(researcher_ids)
+        base_query += ' AND id = ANY(:researcher_ids)'
+        params['researcher_ids'] = list(researcher_ids)
 
     if lattes_ids:
-        base_query += ' AND lattes_id IN (:lattes_ids)'
-        params['lattes_ids'] = tuple(lattes_ids)
+        base_query += ' AND lattes_id = ANY(:lattes_ids)'
+        params['lattes_ids'] = list(lattes_ids)
 
     script_sql = text(base_query)
 
@@ -259,11 +259,16 @@ def researcher_classification(researcher: dict) -> str:
     return 'E'
 
 
+items_found = 0
+items_succeeded = 0
+items_failed = 0
+
+
 def main(researcher_ids=None, lattes_ids=None):
+    global items_found, items_succeeded, items_failed
     YEAR_FILTER = 2019
     session = next(get_sync_session())
     start_time = time.perf_counter()
-
 
     try:
         dataframe = list_researchers(session, researcher_ids, lattes_ids)
@@ -280,7 +285,7 @@ def main(researcher_ids=None, lattes_ids=None):
                 simple_count_metrics,
                 [
                     """
-                SELECT researcher_id, COUNT(*) AS software
+                SELECT researcher_id::TEXT, COUNT(*) AS software
                 FROM public.software s
                 WHERE s.year >= :year
                 GROUP BY researcher_id;
@@ -293,7 +298,7 @@ def main(researcher_ids=None, lattes_ids=None):
                 simple_count_metrics,
                 [
                     """
-                SELECT researcher_id, COUNT(*) AS book
+                SELECT researcher_id::TEXT, COUNT(*) AS book
                 FROM bibliographic_production
                 WHERE type = 'BOOK' AND year_ >= :year
                 GROUP BY researcher_id
@@ -306,7 +311,7 @@ def main(researcher_ids=None, lattes_ids=None):
                 simple_count_metrics,
                 [
                     """
-                SELECT researcher_id, COUNT(*) AS book_chapter
+                SELECT researcher_id::TEXT, COUNT(*) AS book_chapter
                 FROM bibliographic_production
                 WHERE type = 'BOOK_CHAPTER' AND year_ >= :year
                 GROUP BY researcher_id
@@ -319,7 +324,7 @@ def main(researcher_ids=None, lattes_ids=None):
                 simple_count_metrics,
                 [
                     """
-                SELECT researcher_id, COUNT(*) AS brand
+                SELECT researcher_id::TEXT, COUNT(*) AS brand
                 FROM public.brand b
                 WHERE b.year >= :year
                 GROUP BY researcher_id;
@@ -356,9 +361,14 @@ def main(researcher_ids=None, lattes_ids=None):
                 },
             )
 
+        items_found = len(classes)
         session.commit()
+        items_succeeded = items_found
+        items_failed = 0
         duration = time.perf_counter() - start_time
     except Exception as e:
+        items_succeeded = 0
+        items_failed = items_found
         session.rollback()
         duration = time.perf_counter() - start_time
 

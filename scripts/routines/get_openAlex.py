@@ -174,6 +174,9 @@ def extract_researcher(data, researcher_id):
 
 def process_articles(session):
     results = session.execute(SQL_SELECT_ARTICLES).mappings().all()
+    found = len(results)
+    success = 0
+    failed = 0
 
     for row in results:
         article_id = row['id']
@@ -185,6 +188,7 @@ def process_articles(session):
             payload, status = fetch_json(url)
 
             if not payload:
+                failed += 1
                 continue
 
             article = extract_article(payload, article_id)
@@ -194,15 +198,22 @@ def process_articles(session):
             save_json(ARTICLE_PATH / f'{article_id}.json', payload)
 
             session.commit()
+            success += 1
 
             time.sleep(1)
 
         except Exception as error:
             session.rollback()
+            failed += 1
+            
+    return found, success, failed
 
 
 def process_researchers(session):
     results = session.execute(SQL_SELECT_RESEARCHERS).mappings().all()
+    found = len(results)
+    success = 0
+    failed = 0
 
     for row in results:
         researcher_id = row['id']
@@ -214,6 +225,7 @@ def process_researchers(session):
             payload, status = fetch_json(url)
 
             if not payload:
+                failed += 1
                 continue
 
             researcher = extract_researcher(payload, researcher_id)
@@ -223,26 +235,42 @@ def process_researchers(session):
             save_json(RESEARCHER_PATH / f'{researcher_id}.json', payload)
 
             session.commit()
+            success += 1
 
             time.sleep(1)
 
         except Exception as error:
             session.rollback()
+            failed += 1
+            
+    return found, success, failed
+
+
+items_found = 0
+items_succeeded = 0
+items_failed = 0
 
 
 def main():
+    global items_found, items_succeeded, items_failed
     start = time.perf_counter()
 
     session = next(get_sync_session())
 
     try:
-        process_researchers(session)
+        found_res, success_res, failed_res = process_researchers(session)
 
-        process_articles(session)
+        found_art, success_art, failed_art = process_articles(session)
+        
+        items_found = found_res + found_art
+        items_succeeded = success_res + success_art
+        items_failed = failed_res + failed_art
 
         duration = time.perf_counter() - start
 
     except Exception as error:
+        items_succeeded = 0
+        items_failed = items_found
         session.rollback()
 
         raise

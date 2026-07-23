@@ -86,7 +86,13 @@ def list_ufmg_data(session):
     return session.execute(SCRIPT_SQL).mappings().all()
 
 
+items_found = 0
+items_succeeded = 0
+items_failed = 0
+
+
 def main(researcher_ids=None, lattes_ids=None):
+    global items_found, items_succeeded, items_failed
     session = next(get_sync_session())
     start_time = time.perf_counter()
 
@@ -116,11 +122,11 @@ def main(researcher_ids=None, lattes_ids=None):
         researcher_filter = ''
         query_params = {}
         if researcher_ids:
-            researcher_filter += ' AND r.id IN (:researcher_ids)'
-            query_params['researcher_ids'] = tuple(researcher_ids)
+            researcher_filter += ' AND r.id = ANY(:researcher_ids)'
+            query_params['researcher_ids'] = list(researcher_ids)
         if lattes_ids:
-            researcher_filter += ' AND r.lattes_id IN (:lattes_ids)'
-            query_params['lattes_ids'] = tuple(lattes_ids)
+            researcher_filter += ' AND r.lattes_id = ANY(:lattes_ids)'
+            query_params['lattes_ids'] = list(lattes_ids)
 
         SCRIPT_SQL_RESEARCHERS = text(f"""
             SELECT
@@ -146,6 +152,9 @@ def main(researcher_ids=None, lattes_ids=None):
         )
 
         total_researchers = len(researchers_to_process)
+        items_found = total_researchers
+        success_count = 0
+        failed_count = 0
 
         SCRIPT_LAST_PROD = text("""
             SELECT bp.title, bp.type, bp.year FROM bibliographic_production bp
@@ -284,12 +293,18 @@ def main(researcher_ids=None, lattes_ids=None):
                         {'id': researcher_id, 'abstract_ai': response.content},
                     )
                     session.commit()
+                    success_count += 1
             except Exception:
                 session.rollback()
+                failed_count += 1
 
+        items_succeeded = success_count
+        items_failed = failed_count
         duration = time.perf_counter() - start_time
 
     except Exception:
+        items_succeeded = success_count if 'success_count' in locals() else 0
+        items_failed = items_found - items_succeeded
         session.rollback()
         duration = time.perf_counter() - start_time
 

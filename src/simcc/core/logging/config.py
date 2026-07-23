@@ -100,15 +100,40 @@ def format_schema_processor(logger, method_name, event_dict):
         except ValueError:
             pass
             
-    # 8. Data: contains environment, hostname, user_id, route, method, routine_name, and any extra fields
-    data_dict = {
-        'environment': ctx.get('environment'),
-        'hostname': ctx.get('hostname'),
-        'user_id': ctx.get('user_id'),
-        'route': ctx.get('route'),
-        'method': ctx.get('method'),
-        'routine_name': ctx.get('routine_name'),
-    }
+    # 8. Environment and Hostname (standard root-level fields)
+    environment = event_dict.pop('environment', ctx.get('environment') or 'development')
+    hostname = event_dict.pop('hostname', ctx.get('hostname'))
+    
+    # 9. Data: standardized by category
+    if category == 'http':
+        data_dict = {
+            'route': ctx.get('route'),
+            'method': ctx.get('method'),
+            'user_id': ctx.get('user_id'),
+            'error_message': None,
+        }
+    elif category == 'database':
+        data_dict = {
+            'database_name': None,
+            'operation_name': None,
+            'error_message': None,
+            'sql': None,
+        }
+    elif category == 'routine':
+        data_dict = {
+            'routine_name': ctx.get('routine_name'),
+            'error_message': None,
+            'items_found': None,
+            'items_succeeded': None,
+            'items_failed': None,
+        }
+    else:
+        # 'system', 'frontend' or other categories
+        data_dict = {}
+        for key in ['route', 'method', 'user_id', 'routine_name']:
+            val = ctx.get(key)
+            if val is not None:
+                data_dict[key] = val
     
     # Merge custom 'data' dictionary if passed
     user_data = event_dict.pop('data', {})
@@ -123,6 +148,8 @@ def format_schema_processor(logger, method_name, event_dict):
         'timestamp': timestamp,
         'level': level,
         'application': application,
+        'environment': environment,
+        'hostname': hostname,
         'category': category,
         'event': event,
         'message': message,

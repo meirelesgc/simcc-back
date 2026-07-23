@@ -187,19 +187,24 @@ def list_researchers(session, researcher_ids=None, lattes_ids=None):
     """
     params = {}
     if researcher_ids:
-        base_query += ' AND id IN (:researcher_ids)'
-        params['researcher_ids'] = tuple(researcher_ids)
+        base_query += ' AND id = ANY(:researcher_ids)'
+        params['researcher_ids'] = list(researcher_ids)
     if lattes_ids:
-        base_query += ' AND lattes_id IN (:lattes_ids)'
-        params['lattes_ids'] = tuple(lattes_ids)
+        base_query += ' AND lattes_id = ANY(:lattes_ids)'
+        params['lattes_ids'] = list(lattes_ids)
 
     return session.execute(text(base_query), params).mappings().all()
 
 
+items_found = 0
+items_succeeded = 0
+items_failed = 0
+
+
 def main(researcher_ids=None, lattes_ids=None):
+    global items_found, items_succeeded, items_failed
     session = next(get_sync_session())
     start_time = time.perf_counter()
-
 
     try:
         current_year = datetime.now().year
@@ -246,14 +251,14 @@ def main(researcher_ids=None, lattes_ids=None):
             base_query = 'DELETE FROM researcher_ind_prod WHERE 1=1'
             params = {}
             if researcher_ids:
-                base_query += ' AND researcher_id IN (:researcher_ids)'
-                params['researcher_ids'] = tuple(researcher_ids)
+                base_query += ' AND researcher_id = ANY(:researcher_ids)'
+                params['researcher_ids'] = list(researcher_ids)
             if lattes_ids:
                 base_query += (
                     ' AND researcher_id IN (SELECT id FROM researcher '
-                    'WHERE lattes_id IN (:lattes_ids))'
+                    'WHERE lattes_id = ANY(:lattes_ids))'
                 )
-                params['lattes_ids'] = tuple(lattes_ids)
+                params['lattes_ids'] = list(lattes_ids)
             session.execute(text(base_query), params)
         else:
             session.execute(text('DELETE FROM researcher_ind_prod;'))
@@ -287,14 +292,19 @@ def main(researcher_ids=None, lattes_ids=None):
                 'guidance_prod': float(row['guidance_prod']),
             })
 
+        items_found = len(params)
         BATCH_SIZE = 5000
         for i in range(0, len(params), BATCH_SIZE):
             batch = params[i : i + BATCH_SIZE]
             session.execute(query_insert, batch)
 
         session.commit()
+        items_succeeded = items_found
+        items_failed = 0
         duration = time.perf_counter() - start_time
     except Exception as e:
+        items_succeeded = 0
+        items_failed = items_found
         session.rollback()
         duration = time.perf_counter() - start_time
 

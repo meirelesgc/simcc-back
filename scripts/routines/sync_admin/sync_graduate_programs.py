@@ -147,7 +147,13 @@ def format_program_names(session):
     session.execute(sql)
 
 
+items_found = 0
+items_succeeded = 0
+items_failed = 0
+
+
 def main():
+    global items_found, items_succeeded, items_failed
     session = next(get_admin_sync_session())
     start_time = time.perf_counter()
 
@@ -157,6 +163,7 @@ def main():
 
         stats = Counter()
         total_rows = len(programs_df)
+        items_found = total_rows
         valid_programs = []
 
         for row_dict in programs_df.to_dicts():
@@ -169,6 +176,9 @@ def main():
                 stats['Sucesso'] += 1
             else:
                 stats[error_reason] += 1
+                
+        items_succeeded = stats['Sucesso']
+        items_failed = total_rows - items_succeeded
 
         if valid_programs:
             query_upsert = text("""
