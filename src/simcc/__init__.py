@@ -1,13 +1,11 @@
 from http import HTTPStatus
-from pathlib import Path
 
 import httpx
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.responses import StreamingResponse
 
-from simcc.core.logging import setup_logging
-from simcc.core.middleware.logging import LoggingMiddleware
+from simcc.core.logging.middleware import LoggingMiddleware
 from simcc.routers import (
     external,
     graduate_program,
@@ -28,11 +26,8 @@ from simcc.routers.production import (
     summaries,
 )
 
-setup_logging()
-
 app = FastAPI()
 
-app.add_middleware(LoggingMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=['*'],
@@ -40,6 +35,8 @@ app.add_middleware(
     allow_headers=['*'],
     allow_credentials=True,
 )
+app.add_middleware(LoggingMiddleware)
+
 
 app.include_router(external.router)
 app.include_router(bibliographic.router)

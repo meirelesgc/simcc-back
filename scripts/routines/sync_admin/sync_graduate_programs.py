@@ -8,9 +8,6 @@ import polars as pl
 from sqlalchemy import text
 
 from simcc.core.db.database import get_admin_sync_session
-from simcc.core.logging import get_logger
-
-logger = get_logger('routines')
 
 
 def normalize_string(s):
@@ -150,10 +147,15 @@ def format_program_names(session):
     session.execute(sql)
 
 
+items_found = 0
+items_succeeded = 0
+items_failed = 0
+
+
 def main():
+    global items_found, items_succeeded, items_failed
     session = next(get_admin_sync_session())
     start_time = time.perf_counter()
-    logger.info('graduate_program_seed_routine_started')
 
     try:
         programs_df = load_programs_csv()
@@ -161,6 +163,7 @@ def main():
 
         stats = Counter()
         total_rows = len(programs_df)
+        items_found = total_rows
         valid_programs = []
 
         for row_dict in programs_df.to_dicts():
@@ -173,6 +176,9 @@ def main():
                 stats['Sucesso'] += 1
             else:
                 stats[error_reason] += 1
+                
+        items_succeeded = stats['Sucesso']
+        items_failed = total_rows - items_succeeded
 
         if valid_programs:
             query_upsert = text("""
@@ -207,25 +213,11 @@ def main():
 
         session.commit()
         duration = time.perf_counter() - start_time
-
-        logger.info(
-            'graduate_program_seed_routine_finished_successfully',
-            total_processed=total_rows,
-            success=stats['Sucesso'],
-            errors=dict(stats),
-            duration=f'{duration:.2f}s',
-        )
-
-    except Exception as e:
+    except Exception as E:
+        print(E)
         session.rollback()
         duration = time.perf_counter() - start_time
-        logger.error(
-            'graduate_program_seed_routine_failed',
-            error=str(e),
-            duration=f'{duration:.2f}s',
-        )
 
 
 if __name__ == '__main__':
     main()
-

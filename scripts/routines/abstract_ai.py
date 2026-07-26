@@ -5,10 +5,7 @@ from langchain_openai import ChatOpenAI
 from sqlalchemy import text
 
 from simcc.core.db.database import get_sync_session
-from simcc.core.logging import get_logger
 from simcc.core.settings import Settings
-
-logger = get_logger('routines')
 
 
 def list_graduate_programs(session):
@@ -89,10 +86,15 @@ def list_ufmg_data(session):
     return session.execute(SCRIPT_SQL).mappings().all()
 
 
+items_found = 0
+items_succeeded = 0
+items_failed = 0
+
+
 def main(researcher_ids=None, lattes_ids=None):
+    global items_found, items_succeeded, items_failed
     session = next(get_sync_session())
     start_time = time.perf_counter()
-    logger.info('researcher_abstract_ai_routine_started')
 
     try:
         model = ChatOpenAI(api_key=Settings().OPENAI_API_KEY)
@@ -120,11 +122,11 @@ def main(researcher_ids=None, lattes_ids=None):
         researcher_filter = ''
         query_params = {}
         if researcher_ids:
-            researcher_filter += ' AND r.id IN (:researcher_ids)'
-            query_params['researcher_ids'] = tuple(researcher_ids)
+            researcher_filter += ' AND r.id = ANY(:researcher_ids)'
+            query_params['researcher_ids'] = list(researcher_ids)
         if lattes_ids:
-            researcher_filter += ' AND r.lattes_id IN (:lattes_ids)'
-            query_params['lattes_ids'] = tuple(lattes_ids)
+            researcher_filter += ' AND r.lattes_id = ANY(:lattes_ids)'
+            query_params['lattes_ids'] = list(lattes_ids)
 
         SCRIPT_SQL_RESEARCHERS = text(f"""
             SELECT
@@ -150,7 +152,9 @@ def main(researcher_ids=None, lattes_ids=None):
         )
 
         total_researchers = len(researchers_to_process)
-        logger.info('researchers_found', count=total_researchers)
+        items_found = total_researchers
+        success_count = 0
+        failed_count = 0
 
         SCRIPT_LAST_PROD = text("""
             SELECT bp.title, bp.type, bp.year FROM bibliographic_production bp
@@ -181,13 +185,6 @@ def main(researcher_ids=None, lattes_ids=None):
         for i, researcher_data in enumerate(researchers_to_process):
             researcher_id = researcher_data.get('id')
             lattes_id = researcher_data.get('lattes_id')
-
-            logger.info(
-                'processing_researcher',
-                current=i + 1,
-                total=total_researchers,
-                researcher_id=str(researcher_id),
-            )
 
             researcher_name = researcher_data.get('name', 'N/A')
             researcher_abstract = researcher_data.get(
@@ -296,37 +293,20 @@ def main(researcher_ids=None, lattes_ids=None):
                         {'id': researcher_id, 'abstract_ai': response.content},
                     )
                     session.commit()
-                    logger.info(
-                        'abstract_generated_and_saved',
-                        researcher_id=str(researcher_id),
-                    )
-                else:
-                    logger.warning(
-                        'model_response_empty',
-                        researcher_id=str(researcher_id),
-                    )
-            except Exception as e:
+                    success_count += 1
+            except Exception:
                 session.rollback()
-                logger.error(
-                    'researcher_processing_failed',
-                    researcher_id=str(researcher_id),
-                    error=str(e),
-                )
+                failed_count += 1
 
+        items_succeeded = success_count
+        items_failed = failed_count
         duration = time.perf_counter() - start_time
-        logger.info(
-            'researcher_abstract_ai_routine_finished_successfully',
-            duration=f'{duration:.2f}s',
-        )
 
-    except Exception as e:
+    except Exception:
+        items_succeeded = success_count if 'success_count' in locals() else 0
+        items_failed = items_found - items_succeeded
         session.rollback()
         duration = time.perf_counter() - start_time
-        logger.error(
-            'researcher_abstract_ai_routine_failed',
-            error=str(e),
-            duration=f'{duration:.2f}s',
-        )
 
 
 if __name__ == '__main__':

@@ -1,5 +1,4 @@
 import re
-import time
 import unicodedata
 from collections import Counter
 
@@ -7,9 +6,6 @@ import polars as pl
 from sqlalchemy import text
 
 from simcc.core.db.database import get_admin_sync_session
-from simcc.core.logging import get_logger
-
-logger = get_logger('routines')
 
 
 def normalize_string(s):
@@ -43,10 +39,21 @@ def get_researchers_mapping(session):
     sql = text('SELECT researcher_id, name FROM researcher')
     result = session.execute(sql).mappings().all()
     if not result:
-        return pl.DataFrame(schema={'researcher_id': pl.String, 'name': pl.String, 'match_name': pl.String})
-    df_res = pl.DataFrame(result).with_columns(pl.col('researcher_id').cast(pl.String))
+        return pl.DataFrame(
+            schema={
+                'researcher_id': pl.String,
+                'name': pl.String,
+                'match_name': pl.String,
+            }
+        )
+    df_res = pl.DataFrame(result).with_columns(
+        pl.col('researcher_id').cast(pl.String)
+    )
     df_res = df_res.with_columns(
-        pl.col('name').map_elements(normalize_name_match, return_dtype=pl.String).alias('match_name')
+        pl
+        .col('name')
+        .map_elements(normalize_name_match, return_dtype=pl.String)
+        .alias('match_name')
     )
     df_res = df_res.unique(subset=['match_name'])
     return df_res
@@ -56,35 +63,44 @@ def get_programs_mapping(session):
     sql = text('SELECT graduate_program_id, code FROM graduate_program')
     result = session.execute(sql).mappings().all()
     if not result:
-        return pl.DataFrame(schema={'graduate_program_id': pl.String, 'code': pl.String})
+        return pl.DataFrame(
+            schema={'graduate_program_id': pl.String, 'code': pl.String}
+        )
     return pl.DataFrame(result).with_columns(
         pl.col('graduate_program_id').cast(pl.String),
-        pl.col('code').cast(pl.String)
+        pl.col('code').cast(pl.String),
     )
 
 
-def main():
-    session = next(get_admin_sync_session())
-    start_time = time.perf_counter()
-    logger.info('program_researchers_seed_routine_started')
+items_found = 0
+items_succeeded = 0
+items_failed = 0
 
+
+def main():
+    global items_found, items_succeeded, items_failed
+    session = next(get_admin_sync_session())
     try:
         df = load_researchers_csv()
-        total_rows = len(df)
-
+        items_found = len(df)
         required_cols = {'nome', 'id do programa', 'categoria'}
         missing = required_cols - set(df.columns)
         if missing:
-            logger.error('csv_missing_columns', missing=list(missing))
             return
 
         df_res = get_researchers_mapping(session)
         df_prog = get_programs_mapping(session)
 
         df = df.with_columns(
-            pl.col('nome').map_elements(normalize_name_match, return_dtype=pl.String).alias('match_name'),
-            pl.col('categoria').map_elements(normalize_categoria, return_dtype=pl.String).alias('categoria'),
-            pl.col('id do programa').cast(pl.String)
+            pl
+            .col('nome')
+            .map_elements(normalize_name_match, return_dtype=pl.String)
+            .alias('match_name'),
+            pl
+            .col('categoria')
+            .map_elements(normalize_categoria, return_dtype=pl.String)
+            .alias('categoria'),
+            pl.col('id do programa').cast(pl.String),
         )
 
         if not df_res.is_empty():
@@ -126,6 +142,9 @@ def main():
                 'type_': row['categoria'],
             })
             stats['Processado'] += 1
+            
+        items_succeeded = stats['Processado']
+        items_failed = items_found - items_succeeded
 
         if records_to_insert:
             query_insert = text("""
@@ -140,26 +159,10 @@ def main():
             session.execute(query_insert, records_to_insert)
 
         session.commit()
-        duration = time.perf_counter() - start_time
-
-        logger.info(
-            'program_researchers_seed_routine_finished',
-            total_processed=total_rows,
-            success=stats['Processado'],
-            errors=dict(stats),
-            duration=f'{duration:.2f}s',
-        )
-
-    except Exception as e:
+    except Exception as E:
+        print(E)
         session.rollback()
-        duration = time.perf_counter() - start_time
-        logger.error(
-            'program_researchers_seed_routine_failed',
-            error=str(e),
-            duration=f'{duration:.2f}s',
-        )
 
 
 if __name__ == '__main__':
     main()
-

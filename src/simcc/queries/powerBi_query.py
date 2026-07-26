@@ -847,37 +847,37 @@ class MaterializedVisionQuery(BaseQuery):
         FROM researcher
             UNION
         SELECT researcher_id::TEXT, title::TEXT AS search_term,
-            UNACCENT(LOWER(TRANSLATE(title, $$-\.":,;'$$, ' ')))::TEXT
+            UNACCENT(LOWER(TRANSLATE(title, $$-\\.:,;'$$, ' ')))::TEXT
             AS normalized_search_term, 'PATENT'::TEXT AS type, development_year::TEXT
         FROM patent
             UNION
         SELECT researcher_id::TEXT, title::TEXT AS search_term,
-            UNACCENT(LOWER(TRANSLATE(title, $$-\.":,;'$$, ' ')))::TEXT
+            UNACCENT(LOWER(TRANSLATE(title, $$-\\.:,;'$$, ' ')))::TEXT
             AS normalized_search_term, type::TEXT AS type, year::TEXT AS year_
         FROM bibliographic_production
             UNION
         SELECT researcher_id::TEXT, title::TEXT AS search_term,
-            UNACCENT(LOWER(TRANSLATE(title, $$-\.:",;'$$, ' ')))::TEXT
+            UNACCENT(LOWER(TRANSLATE(title, $$-\\.:",;'$$, ' ')))::TEXT
             AS normalized_search_term, 'REPORT'::TEXT AS type, year::TEXT AS year
         FROM research_report
             UNION
         SELECT researcher_id::TEXT, title::TEXT AS search_term,
-            UNACCENT(LOWER(TRANSLATE(title, $$-\.:,",;'$$, ' ')))::TEXT
+            UNACCENT(LOWER(TRANSLATE(title, $$-\\.:,",;'$$, ' ')))::TEXT
                 AS normalized_search_term, 'SOFTWARE'::TEXT AS type, year::TEXT AS year
         FROM software
             UNION
         SELECT researcher_id::TEXT, title::TEXT AS search_term,
-            UNACCENT(LOWER(TRANSLATE(title, $$-\.":,;'$$, ' ')))::TEXT
+            UNACCENT(LOWER(TRANSLATE(title, $$-\\.:,;'$$, ' ')))::TEXT
             AS normalized_search_term, 'GUIDANCE'::TEXT AS type, year::TEXT AS year
         FROM guidance
             UNION
         SELECT researcher_id::TEXT, title::TEXT AS search_term,
-            UNACCENT(LOWER(TRANSLATE(title, $$-\.":,;'$$, ' ')))::TEXT
+            UNACCENT(LOWER(TRANSLATE(title, $$-\\.:,;'$$, ' ')))::TEXT
             AS normalized_search_term, 'BRAND'::TEXT AS type, year::TEXT AS year
         FROM brand
             UNION
         SELECT researcher_id::TEXT, title::TEXT AS search_term,
-            UNACCENT(LOWER(TRANSLATE(title, $$-\.":,;'$$, ' ')))::TEXT
+            UNACCENT(LOWER(TRANSLATE(title, $$-\\.:,;'$$, ' ')))::TEXT
             AS normalized_search_term, 'EVENT_ORGANIZATION'::TEXT AS type,
             year::TEXT AS year
         FROM public.event_organization
@@ -894,7 +894,7 @@ class FatArticleKeywordUnderscoreQuery(BaseQuery):
     def build_sql(self) -> str:
         return """
         WITH unified_data AS (
-            SELECT bp.title AS title_, REGEXP_REPLACE(TRANSLATE(bp.title, $$-\.":,;$$, ' '), '<[^>]*>', '', 'g') AS title, bp.researcher_id
+            SELECT bp.title AS title_, REGEXP_REPLACE(TRANSLATE(bp.title, $$-\\.:,;$$, ' '), '<[^>]*>', '', 'g') AS title, bp.researcher_id
             FROM bibliographic_production bp
             WHERE type = 'ARTICLE'
         ),
@@ -918,7 +918,7 @@ class DimArticleKeywordQuery(BaseQuery):
     def build_sql(self) -> str:
         return """
         WITH unified_data AS (
-            SELECT REGEXP_REPLACE(TRANSLATE(title, $$-\.":,;$$, ' '), '<[^>]*>', '', 'g') AS title
+            SELECT REGEXP_REPLACE(TRANSLATE(title, $$-\\.:,;$$, ' '), '<[^>]*>', '', 'g') AS title
             FROM bibliographic_production
             WHERE type = 'ARTICLE'
         ),
@@ -957,13 +957,13 @@ class FatKeywordsCooccurrencesQuery(BaseQuery):
     def build_sql(self) -> str:
         return """
         WITH unified_data AS (
-            SELECT REGEXP_REPLACE(TRANSLATE(title, $$-\.":,;$$, ' '), '<[^>]*>', '', 'g') AS title
+            SELECT REGEXP_REPLACE(TRANSLATE(title, $$-\\.:,;$$, ' '), '<[^>]*>', '', 'g') AS title
             FROM bibliographic_production
             WHERE type = 'ARTICLE'
         ),
         tokenized_titles AS (
             SELECT ROW_NUMBER() OVER () AS title_id,
-                regexp_split_to_array(lower(trim(REGEXP_REPLACE(TRANSLATE(title, $$-\.":,;$$, ' '), '<[^>]*>', '', 'g'))), '\\\\s+') AS words
+                regexp_split_to_array(lower(trim(REGEXP_REPLACE(TRANSLATE(title, $$-\\.:,;$$, ' '), '<[^>]*>', '', 'g'))), '\\\\s+') AS words
             FROM unified_data
         ),
         filtered_tokens AS (

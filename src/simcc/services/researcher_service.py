@@ -1,16 +1,10 @@
 from pathlib import Path
 
 import polars as pl
-import structlog
 
-from simcc.core.dependencies import get_settings
 from simcc.core.utils import download_researcher_image
 from simcc.repositories import researcher_repo
 from simcc.schemas.common import PaginationParams
-
-logger = structlog.get_logger(__name__)
-settings = get_settings()
-log_config = settings.LOG_LEVEL_MIDDLEWARE
 
 
 async def search_researchers(
@@ -20,15 +14,6 @@ async def search_researchers(
     name=None,
     pagination: PaginationParams = None,
 ):
-    if log_config == 'all':
-        logger.info(
-            'searching_researchers',
-            search_type=search_type,
-            name=name,
-            filters=filters.model_dump()
-            if hasattr(filters, 'model_dump')
-            else str(filters),
-        )
 
     if search_type == 'FOMENT' and not filters.modality:
         filters.modality = '*'
@@ -248,14 +233,16 @@ async def list_co_authorship(session, researcher_id):
     df = pl.DataFrame(co_authors_data)
 
     df = df.with_columns(
-        pl.when(pl.col('institution') == researcher_institution_name)
+        pl
+        .when(pl.col('institution') == researcher_institution_name)
         .then(pl.lit('internal'))
         .otherwise(pl.lit('external'))
         .alias('type')
     )
 
     df = df.with_columns(
-        pl.col('name')
+        pl
+        .col('name')
         .map_elements(
             lambda name: (
                 ''.join(w[0] for w in str(name).replace('.', '').split() if w)
@@ -269,7 +256,8 @@ async def list_co_authorship(session, researcher_id):
 
     df = df.group_by(['name', 'initials']).agg([
         pl.col('among').sum().alias('among'),
-        pl.when((pl.col('type') == 'internal').any())
+        pl
+        .when((pl.col('type') == 'internal').any())
         .then(pl.lit('internal'))
         .otherwise(pl.lit('external'))
         .alias('type'),

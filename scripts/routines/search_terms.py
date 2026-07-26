@@ -7,12 +7,11 @@ from firebase_admin import credentials, firestore
 from sqlalchemy import text
 
 from simcc.core.db.database import get_sync_session
-from simcc.core.logging import get_logger
 from simcc.core.settings import Settings
 
 FIRESTORE_BATCH_LIMIT = 500
 
-logger = get_logger('routines')
+
 SETTINGS = Settings()
 
 
@@ -144,10 +143,15 @@ def terms_dataframe(session) -> list[dict]:
     return result.mappings().all()
 
 
+items_found = 0
+items_succeeded = 0
+items_failed = 0
+
+
 def main():
+    global items_found, items_succeeded, items_failed
     session = next(get_sync_session())
     start_time = time.perf_counter()
-    logger.info('search_term_routine_started')
 
     try:
         db = get_db()
@@ -163,6 +167,7 @@ def main():
             deleted_total += deleted
 
         terms_list = terms_dataframe(session)
+        items_found = len(terms_list)
         records = list_to_records(terms_list)
         inserted_total = insert_data_batch(
             db,
@@ -172,21 +177,14 @@ def main():
         )
 
         session.commit()
+        items_succeeded = inserted_total
+        items_failed = items_found - items_succeeded
         duration = time.perf_counter() - start_time
-        logger.info(
-            'search_term_routine_finished_successfully',
-            deleted=deleted_total,
-            inserted=inserted_total,
-            duration=f'{duration:.2f}s',
-        )
     except Exception as e:
+        items_succeeded = 0
+        items_failed = items_found
         session.rollback()
         duration = time.perf_counter() - start_time
-        logger.error(
-            'search_term_routine_failed',
-            error=str(e),
-            duration=f'{duration:.2f}s',
-        )
 
 
 if __name__ == '__main__':

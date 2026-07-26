@@ -1,5 +1,3 @@
-import structlog
-
 from simcc.ai.prompts.maria_prompts import (
     MARIA_PROMPT_TEMPLATE,
     SUMMARY_SEARCH_PROMPT,
@@ -9,8 +7,6 @@ from simcc.ai.schemas.maria import MariaResponse
 from simcc.repositories import maria_repo, researcher_repo
 from simcc.schemas import DefaultFilters
 from simcc.services import production_service, researcher_service
-
-logger = structlog.get_logger(__name__)
 
 
 class MariaService:
@@ -69,10 +65,6 @@ class MariaService:
         filters.page = 1
 
         data = []
-
-        logger.info(
-            'generating_search_summary', type=search_type, term=filters.term
-        )
 
         if search_type == 'ARTICLE':
             data = await production_service.list_bibliographic_production(

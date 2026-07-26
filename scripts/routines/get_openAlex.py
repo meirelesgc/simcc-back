@@ -10,9 +10,7 @@ from urllib3.util.retry import Retry
 
 from simcc.core.db.database import get_sync_session
 from simcc.core.db.model import OpenAlexArticle, OpenAlexResearcher
-from simcc.core.logging import get_logger
 
-logger = get_logger('openalex')
 
 
 BASE_PATH = Path('storage/openalex')
@@ -176,8 +174,9 @@ def extract_researcher(data, researcher_id):
 
 def process_articles(session):
     results = session.execute(SQL_SELECT_ARTICLES).mappings().all()
-
-    logger.info('articles_to_process', total=len(results))
+    found = len(results)
+    success = 0
+    failed = 0
 
     for row in results:
         article_id = row['id']
@@ -186,16 +185,10 @@ def process_articles(session):
         try:
             url = f'{WORK_URL}{doi}?mailto={OPENALEX_MAIL}'
 
-            logger.info('fetching_article', article_id=str(article_id))
             payload, status = fetch_json(url)
 
             if not payload:
-                logger.warning(
-                    'article_not_found',
-                    article_id=str(article_id),
-                    status=status,
-                )
-
+                failed += 1
                 continue
 
             article = extract_article(payload, article_id)
@@ -205,25 +198,22 @@ def process_articles(session):
             save_json(ARTICLE_PATH / f'{article_id}.json', payload)
 
             session.commit()
-
-            logger.info('article_processed', article_id=str(article_id))
+            success += 1
 
             time.sleep(1)
 
         except Exception as error:
             session.rollback()
-
-            logger.error(
-                'article_processing_failed',
-                article_id=str(article_id),
-                error=str(error),
-            )
+            failed += 1
+            
+    return found, success, failed
 
 
 def process_researchers(session):
     results = session.execute(SQL_SELECT_RESEARCHERS).mappings().all()
-
-    logger.info('researchers_to_process', total=len(results))
+    found = len(results)
+    success = 0
+    failed = 0
 
     for row in results:
         researcher_id = row['id']
@@ -232,19 +222,10 @@ def process_researchers(session):
         try:
             url = f'{AUTHOR_URL}{orcid}?mailto={OPENALEX_MAIL}'
 
-            logger.info(
-                'fetching_researcher', researcher_id=str(researcher_id)
-            )
-
             payload, status = fetch_json(url)
 
             if not payload:
-                logger.warning(
-                    'researcher_not_found',
-                    researcher_id=str(researcher_id),
-                    status=status,
-                )
-
+                failed += 1
                 continue
 
             researcher = extract_researcher(payload, researcher_id)
@@ -254,43 +235,43 @@ def process_researchers(session):
             save_json(RESEARCHER_PATH / f'{researcher_id}.json', payload)
 
             session.commit()
-
-            logger.info(
-                'researcher_processed', researcher_id=str(researcher_id)
-            )
+            success += 1
 
             time.sleep(1)
 
         except Exception as error:
             session.rollback()
+            failed += 1
+            
+    return found, success, failed
 
-            logger.error(
-                'researcher_processing_failed',
-                researcher_id=str(researcher_id),
-                error=str(error),
-            )
+
+items_found = 0
+items_succeeded = 0
+items_failed = 0
 
 
 def main():
-    logger.info('openalex_routine_started')
-
+    global items_found, items_succeeded, items_failed
     start = time.perf_counter()
 
     session = next(get_sync_session())
 
     try:
-        process_researchers(session)
+        found_res, success_res, failed_res = process_researchers(session)
 
-        process_articles(session)
+        found_art, success_art, failed_art = process_articles(session)
+        
+        items_found = found_res + found_art
+        items_succeeded = success_res + success_art
+        items_failed = failed_res + failed_art
 
         duration = time.perf_counter() - start
 
-        logger.info('openalex_routine_finished', duration=f'{duration:.2f}s')
-
     except Exception as error:
+        items_succeeded = 0
+        items_failed = items_found
         session.rollback()
-
-        logger.error('openalex_routine_failed', error=str(error))
 
         raise
 

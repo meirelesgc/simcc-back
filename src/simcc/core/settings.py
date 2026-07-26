@@ -1,4 +1,4 @@
-from typing import Literal, Optional
+from typing import Optional
 
 from pydantic_settings import BaseSettings
 
@@ -14,7 +14,6 @@ class Settings(BaseSettings, extra='ignore'):
     INTERNAL_API_KEY: Optional[str] = None
 
     FIREBASE_CERT_PATH: str = 'cert.json'
-    LOG_LEVEL_MIDDLEWARE: Literal['all', 'intermediate', 'error'] = 'all'
 
     XML_PATH: str = 'storage/xml'
     CURRENT_XML_PATH: str = 'storage/xml/current'
@@ -27,6 +26,12 @@ class Settings(BaseSettings, extra='ignore'):
     HOP_NETWORK: str = 'simcc-back_default'
     HOP_RUN_PARAMETERS: Optional[str] = None
 
+    APPLICATION: str = 'simcc'
+    ENVIRONMENT: str = 'development'
+    LOG_LEVEL: str = 'INFO'
+    LOG_DIR: str = 'logs'
+
     class Config:
         env_file = '.env'
         env_file_encoding = 'utf-8'
+

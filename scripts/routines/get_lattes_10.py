@@ -1,15 +1,11 @@
 import argparse
 import ssl
-import time
 from http import HTTPStatus
 
 import httpx
 from sqlalchemy import text
 
 from simcc.core.db.database import get_sync_session
-from simcc.core.logging import get_logger
-
-logger = get_logger('routines')
 
 
 def create_legacy_ssl_context() -> ssl.SSLContext:
@@ -38,10 +34,14 @@ def get_lattes_id_10(lattes_id: str) -> str:
     return None
 
 
+items_found = 0
+items_succeeded = 0
+items_failed = 0
+
+
 def main(researcher_ids=None, lattes_ids=None):
+    global items_found, items_succeeded, items_failed
     session = next(get_sync_session())
-    start_time = time.perf_counter()
-    logger.info('lattes_10_routine_started')
 
     try:
         if researcher_ids or lattes_ids:
@@ -52,16 +52,13 @@ def main(researcher_ids=None, lattes_ids=None):
             """
             params = {}
             if researcher_ids:
-                base_query += ' AND id IN (:researcher_ids)'
-                params['researcher_ids'] = tuple(researcher_ids)
+                base_query += ' AND id = ANY(:researcher_ids)'
+                params['researcher_ids'] = list(researcher_ids)
             if lattes_ids:
-                base_query += ' AND lattes_id IN (:lattes_ids)'
-                params['lattes_ids'] = tuple(lattes_ids)
+                base_query += ' AND lattes_id = ANY(:lattes_ids)'
+                params['lattes_ids'] = list(lattes_ids)
             researchers = (
-                session
-                .execute(text(base_query), params)
-                .mappings()
-                .all()
+                session.execute(text(base_query), params).mappings().all()
             )
         else:
             query_select = text("""
@@ -71,6 +68,10 @@ def main(researcher_ids=None, lattes_ids=None):
             """)
             researchers = session.execute(query_select).mappings().all()
 
+        items_found = len(researchers)
+        success = 0
+        failed = 0
+
         query_update = text("""
             UPDATE researcher
             SET lattes_10_id = :lattes_10_id
@@ -79,7 +80,6 @@ def main(researcher_ids=None, lattes_ids=None):
 
         for researcher in researchers:
             lattes_10_id = get_lattes_id_10(researcher['lattes_id'])
-
             session.execute(
                 query_update,
                 {
@@ -87,21 +87,19 @@ def main(researcher_ids=None, lattes_ids=None):
                     'lattes_10_id': lattes_10_id,
                 },
             )
+            if lattes_10_id:
+                success += 1
+            else:
+                failed += 1
 
         session.commit()
-        duration = time.perf_counter() - start_time
-        logger.info(
-            'lattes_10_routine_finished_successfully',
-            duration=f'{duration:.2f}s',
-        )
-    except Exception as e:
+        items_succeeded = success
+        items_failed = failed
+    except Exception as E:
+        items_succeeded = 0
+        items_failed = items_found
+        print(E)
         session.rollback()
-        duration = time.perf_counter() - start_time
-        logger.error(
-            'lattes_10_routine_failed',
-            error=str(e),
-            duration=f'{duration:.2f}s',
-        )
 
 
 if __name__ == '__main__':

@@ -15,5 +15,5 @@ for i in "${!ROUTINES[@]}"; do
 
     echo "[PRE_HOP] $current/$total Running ${ROUTINES[$i]}..."
 
-    python "scripts/routines/${ROUTINES[$i]}"
+    python scripts/routines/run_routine.py "${ROUTINES[$i]}"
 done

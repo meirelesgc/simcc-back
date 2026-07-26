@@ -54,7 +54,7 @@ class DefaultFilters(PaginationParams, BaseModel):
     type: Optional[str] = None
     distinct: Optional[Union[int, str]] = 1
 
-    # Métricas e Flags
+    # Métricas e Flags (deprecated)
     star: Optional[bool] = False
     has_image: Optional[bool] = False
     relevance: Optional[bool] = False

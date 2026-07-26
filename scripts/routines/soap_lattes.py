@@ -1,5 +1,4 @@
 import argparse
-import csv
 import os
 import time
 import zipfile
@@ -12,10 +11,8 @@ from zeep import Client
 from zeep.transports import Transport
 
 from simcc.core.db.database import get_admin_sync_session, get_sync_session
-from simcc.core.logging import get_logger
 from simcc.core.settings import Settings
 
-logger = get_logger('routines')
 SETTINGS = Settings()
 
 LOG_PATH = 'logs'
@@ -45,24 +42,48 @@ if not PROXY:
 
 
 def list_admin_researchers(session, researcher_ids=None, lattes_ids=None):
-    base_query = """
+    query = """
         SELECT researcher_id, name, lattes_id
         FROM public.researcher
         WHERE 1=1
     """
+
     params = {}
 
     if researcher_ids:
-        base_query += ' AND researcher_id IN (:researcher_ids)'
-        params['researcher_ids'] = tuple(researcher_ids)
+        query += ' AND researcher_id = ANY(:researcher_ids)'
+        params['researcher_ids'] = list(researcher_ids)
 
     if lattes_ids:
-        base_query += ' AND lattes_id IN (:lattes_ids)'
-        params['lattes_ids'] = tuple(lattes_ids)
+        query += ' AND lattes_id = ANY(:lattes_ids)'
+        params['lattes_ids'] = list(lattes_ids)
 
-    script_sql = text(base_query)
+    result = session.execute(text(query), params)
 
-    result = session.execute(script_sql, params)
+    return result.mappings().all()
+
+
+def list_main_researchers(session, researcher_ids=None, lattes_ids=None):
+    query = """
+        SELECT
+            id AS researcher_id,
+            name,
+            lattes_id
+        FROM researcher
+        WHERE 1=1
+    """
+
+    params = {}
+
+    if researcher_ids:
+        query += ' AND id = ANY(:researcher_ids)'
+        params['researcher_ids'] = list(researcher_ids)
+
+    if lattes_ids:
+        query += ' AND lattes_id = ANY(:lattes_ids)'
+        params['lattes_ids'] = list(lattes_ids)
+
+    result = session.execute(text(query), params)
 
     return result.mappings().all()
 
@@ -94,30 +115,31 @@ def cnpq_att(lattes_id):
             if attempt < MAX_RETRIES:
                 time.sleep(2**attempt)
             else:
-                logger.error(
-                    'cnpq_att_failed',
-                    lattes_id=lattes_id,
-                    error=str(e),
+                print(
+                    f'[ERRO] Falha ao consultar atualização do currículo {lattes_id}: {e}'
                 )
                 return datetime.min
 
 
 def database_att(session, lattes_id):
-    SCRIPT_SQL = text("""
-        SELECT last_update
-        FROM researcher
-        WHERE lattes_id = :lattes_id;
-    """)
-
     result = (
         session
-        .execute(SCRIPT_SQL, {'lattes_id': lattes_id})
+        .execute(
+            text(
+                """
+                SELECT last_update
+                FROM researcher
+                WHERE lattes_id = :lattes_id
+                """
+            ),
+            {'lattes_id': lattes_id},
+        )
         .mappings()
         .first()
     )
 
     if result and result.get('last_update'):
-        return result.get('last_update')
+        return result['last_update']
 
     return datetime.min
 
@@ -145,12 +167,7 @@ def download_xml(lattes_id, researcher_id):
                 content = client.service.getCurriculoCompactado(lattes_id)
 
         except Exception as e:
-            logger.error(
-                'download_xml_failed',
-                researcher_id=researcher_id,
-                lattes_id=lattes_id,
-                error=str(e),
-            )
+            print(f'[ERRO] Download XML {lattes_id}: {e}')
             return str(e)
 
         try:
@@ -165,58 +182,71 @@ def download_xml(lattes_id, researcher_id):
 
             os.remove(zip_path)
 
-            logger.info(
-                'download_xml_success',
-                researcher_id=researcher_id,
-                lattes_id=lattes_id,
-            )
+            print(f'[OK] XML baixado: {lattes_id}')
 
             return None
 
         except Exception as e:
-            logger.error(
-                'extract_xml_failed',
-                researcher_id=researcher_id,
-                lattes_id=lattes_id,
-                error=str(e),
-            )
+            print(f'[ERRO] Extração XML {lattes_id}: {e}')
             return str(e)
 
     finally:
         session.close()
 
 
+items_found = 0
+items_succeeded = 0
+items_failed = 0
+
+
 def main(researcher_ids=None, lattes_ids=None):
-    admin_session = next(get_admin_sync_session())
+    global items_found, items_succeeded, items_failed
     start_time = time.perf_counter()
 
-    logger.info('soap_lattes_routine_started')
+    print('Iniciando rotina...')
+
+    admin_session = None
+    using_admin = True
 
     try:
+        try:
+            admin_session = next(get_admin_sync_session())
+
+            researchers = list_admin_researchers(
+                admin_session,
+                researcher_ids,
+                lattes_ids,
+            )
+
+            print(
+                f'Utilizando banco administrativo ({len(researchers)} pesquisadores).'
+            )
+
+        except Exception as e:
+            print(f'Não foi possível conectar ao banco administrativo: {e}')
+            print('Utilizando banco principal.')
+
+            using_admin = False
+
+            admin_session = next(get_sync_session())
+
+            researchers = list_main_researchers(
+                admin_session,
+                researcher_ids,
+                lattes_ids,
+            )
+
         for file in os.listdir(XML_PATH):
             path = os.path.join(XML_PATH, file)
             if os.path.isfile(path) and file.endswith('.xml'):
                 os.remove(path)
 
-        researchers = list_admin_researchers(
-            admin_session, researcher_ids, lattes_ids
-        )
-
         if not researchers:
-            duration = time.perf_counter() - start_time
-            logger.info(
-                'soap_lattes_routine_finished_successfully',
-                count=0,
-                duration=f'{duration:.2f}s',
-            )
+            print('Nenhum pesquisador encontrado.')
             return
 
-        total_researchers = len(researchers)
-
-        logger.info(
-            'researchers_found',
-            count=total_researchers,
-        )
+        total = len(researchers)
+        items_found = total
 
         errors = []
 
@@ -229,13 +259,7 @@ def main(researcher_ids=None, lattes_ids=None):
                 lattes_id = researcher['lattes_id'].zfill(16)
                 researcher_id = str(researcher['researcher_id'])
 
-                logger.info(
-                    'processing_researcher',
-                    current=i + 1,
-                    total=total_researchers,
-                    researcher_id=researcher_id,
-                    lattes_id=lattes_id,
-                )
+                print(f'[{i + 1}/{total}] {researcher_id} - {lattes_id}')
 
                 future = executor.submit(
                     download_xml,
@@ -249,76 +273,47 @@ def main(researcher_ids=None, lattes_ids=None):
 
             for future in as_completed(futures):
                 completed += 1
+
                 lattes_id, researcher_id = futures[future]
 
-                logger.info(
-                    'researcher_completed',
-                    current=completed,
-                    total=total_researchers,
-                    researcher_id=researcher_id,
-                    lattes_id=lattes_id,
-                )
+                print(f'Concluído {completed}/{total}: {lattes_id}')
 
                 try:
                     error = future.result()
+
                     if error:
                         errors.append((lattes_id, error))
 
                 except Exception as e:
-                    logger.error(
-                        'parallel_download_failed',
-                        current=completed,
-                        total=total_researchers,
-                        researcher_id=researcher_id,
-                        lattes_id=lattes_id,
-                        error=str(e),
-                    )
                     errors.append((lattes_id, str(e)))
-
-        if errors:
-            error_file = (
-                f'logs/errors_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv'
-            )
-
-            with open(error_file, 'w', newline='', encoding='utf-8') as f:
-                writer = csv.writer(f)
-                writer.writerow(['lattes_id', 'erro'])
-                writer.writerows(errors)
-
-        duration = time.perf_counter() - start_time
-
-        logger.info(
-            'soap_lattes_routine_finished_successfully',
-            duration=f'{duration:.2f}s',
-        )
-
-    except Exception as e:
-        duration = time.perf_counter() - start_time
-
-        logger.error(
-            'soap_lattes_routine_failed',
-            error=str(e),
-            duration=f'{duration:.2f}s',
-        )
-
+                    
+        items_failed = len(errors)
+        items_succeeded = total - items_failed
     finally:
-        admin_session.close()
+        if admin_session is not None:
+            admin_session.close()
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
+
     parser.add_argument(
         '--researcher-ids',
         nargs='+',
         type=str,
         default=None,
     )
+
     parser.add_argument(
         '--lattes-ids',
         nargs='+',
         type=str,
         default=None,
     )
+
     args = parser.parse_args()
 
-    main(researcher_ids=args.researcher_ids, lattes_ids=args.lattes_ids)
+    main(
+        researcher_ids=args.researcher_ids,
+        lattes_ids=args.lattes_ids,
+    )
