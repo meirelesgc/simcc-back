@@ -43,20 +43,16 @@ services:
     depends_on:
       db:
         condition: service_healthy
-
   api:
     build: .
     image: ${COMPOSE_PROJECT_NAME}
     entrypoint: ./entrypoint.sh
-    ports:
-      - "${API_PORT}:8000"
-    environment:
     mem_limit: 1g
     mem_reservation: 512m
     cpus: 1.5
     pids_limit: 200
-    entrypoint: ./entrypoint.sh
     ports:
+      - "${API_PORT}:8000"
       - "127.0.0.1:${API_PORT}:8000"
     environment:
       ALTERNATIVE_CNPQ_SERVICE: ${ALTERNATIVE_CNPQ_SERVICE}
