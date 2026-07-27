@@ -1,7 +1,7 @@
 services:
   db:
     image: pgvector/pgvector:pg17
-    mem_limit: 1g
+    mem_limit: 2g
     mem_reservation: 512m
     cpus: 1.0
     pids_limit: 200
@@ -21,10 +21,9 @@ services:
 
   hop:
     image: gleidsoncosta/simcc-extrator:latest
-    mem_limit: 2g
+    mem_limit: 3g
     mem_reservation: 1g
     cpus: 2.0
-    pids_limit: 300
     command: ["/opt/hop/hop-server.sh"]
     environment:
       HOP_LOG_LEVEL: Basic
@@ -45,10 +44,9 @@ services:
     build: .
     image: ${COMPOSE_PROJECT_NAME}
     entrypoint: ./entrypoint.sh
-    mem_limit: 1g
+    mem_limit: 2g
     mem_reservation: 512m
     cpus: 1.5
-    pids_limit: 200
     ports:
       - "127.0.0.1:${API_PORT}:8000"
     environment:
