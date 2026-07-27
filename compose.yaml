@@ -10,7 +10,6 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: ${COMPOSE_PROJECT_NAME}
     ports:
-      - "${DB_PORT}:5432"
       - "127.0.0.1:${DB_PORT}:5432"
     volumes:
       - db:/var/lib/postgresql/data
@@ -36,7 +35,6 @@ services:
       HOP_SERVER_AUTH: false
       HOP_RUN_PARAMETERS: DATABASE_URL=jdbc:postgresql://db:5432/${COMPOSE_PROJECT_NAME}?user=postgres&password=postgres,ADMIN_DATABASE_URL=jdbc:postgresql://db:5435/${COMPOSE_PROJECT_NAME}_admin?user=postgres&password=postgres
     ports:
-      - "${HOP_PORT}:8080"
       - "127.0.0.1:${HOP_PORT}:8080"
     volumes:
       - xml:/files/jade-extrator/datasets/lattes_xml
@@ -52,7 +50,6 @@ services:
     cpus: 1.5
     pids_limit: 200
     ports:
-      - "${API_PORT}:8000"
       - "127.0.0.1:${API_PORT}:8000"
     environment:
       ALTERNATIVE_CNPQ_SERVICE: ${ALTERNATIVE_CNPQ_SERVICE}
