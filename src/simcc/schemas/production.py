@@ -36,10 +36,11 @@ class ArticleProduction(BaseModel):
     pdf: Optional[str]
 
     # Métricas e Flags
-    stars: int = 0
+    stars: Optional[int] = 0
     citations_count: Optional[Union[int, str]]
     has_image: Optional[bool] = False
     relevance: Optional[bool] = False
+    quadrennial: Optional[str] = None
 
 
 class BookProduction(BaseModel):
@@ -58,7 +59,7 @@ class BookProduction(BaseModel):
     publishing_company: Optional[str]
 
     # Métricas e Flags
-    stars: int = 0
+    stars: Optional[int] = 0
     has_image: Optional[bool] = False
     relevance: Optional[bool] = False
 
@@ -79,7 +80,7 @@ class BookChapterProduction(BaseModel):
     publishing_company: Optional[str]
 
     # Métricas e Flags
-    stars: int = 0
+    stars: Optional[int] = 0
     has_image: Optional[bool] = False
     relevance: Optional[bool] = False
 
@@ -101,7 +102,7 @@ class PapersProduction(BaseModel):
     homepage: Optional[str]
 
     # Métricas e Flags
-    stars: int = 0
+    stars: Optional[int] = 0
     has_image: Optional[bool] = False
     relevance: Optional[bool] = False
     scientific_divulgation: Optional[bool]
@@ -144,7 +145,7 @@ class EventProduction(BaseModel):
     isbn: Optional[str]
 
     # Métricas e Flags
-    stars: int = 0
+    stars: Optional[int] = 0
     relevance: Optional[bool] = False
 
 
@@ -174,7 +175,7 @@ class ResearchProjectProduction(BaseModel):
     components: Optional[list]
 
     # Métricas e Flags
-    stars: int = 0
+    stars: Optional[int] = 0
 
 
 class GuidanceProduction(BaseModel):
@@ -193,7 +194,7 @@ class GuidanceProduction(BaseModel):
     status: Optional[str]
 
     # Métricas e Flags
-    stars: int = 0
+    stars: Optional[int] = 0
 
 
 class ReportProduction(BaseModel):
@@ -210,7 +211,7 @@ class ReportProduction(BaseModel):
     financing: Optional[str]
 
     # Métricas e Flags
-    stars: int = 0
+    stars: Optional[int] = 0
 
 
 class SoftwareProduction(BaseModel):
@@ -232,7 +233,7 @@ class SoftwareProduction(BaseModel):
     financing_institutionc: Optional[str]
 
     # Métricas e Flags
-    stars: int = 0
+    stars: Optional[int] = 0
     has_image: Optional[bool] = False
     relevance: Optional[bool] = False
 
@@ -253,7 +254,7 @@ class BrandProduction(BaseModel):
     nature: Optional[str]
 
     # Métricas e Flags
-    stars: int = 0
+    stars: Optional[int] = 0
     has_image: Optional[bool] = False
     relevance: Optional[bool] = False
 
@@ -313,7 +314,7 @@ class PatentProduction(BaseModel):
     code: Optional[str]
 
     # Métricas e Flags
-    stars: int = 0
+    stars: Optional[int] = 0
     has_image: Optional[bool] = False
     relevance: Optional[bool] = False
 

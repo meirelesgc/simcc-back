@@ -93,6 +93,31 @@ def main(researcher_ids=None, lattes_ids=None):
         """)
         )
 
+        quadrennials = [
+            {"start_year": 2013, "end_year": 2016},
+            {"start_year": 2017, "end_year": 2020},
+            {"start_year": 2021, "end_year": 2024},
+            {"start_year": 2025, "end_year": 2028},
+        ]
+        case_clauses = []
+        for q in quadrennials:
+            start = q["start_year"]
+            end = q["end_year"]
+            case_clauses.append(
+                f"WHEN bp.year_ BETWEEN {start} AND {end} THEN '{start}/{end}'"
+            )
+        case_sql = " ".join(case_clauses)
+        update_quadrennial_sql = f"""
+            UPDATE bibliographic_production_article bpa
+            SET quadrennial = CASE
+                {case_sql}
+                ELSE NULL
+            END
+            FROM bibliographic_production bp
+            WHERE bpa.bibliographic_production_id = bp.id;
+        """
+        session.execute(text(update_quadrennial_sql))
+
         session.commit()
         items_succeeded = 13
         items_failed = 0

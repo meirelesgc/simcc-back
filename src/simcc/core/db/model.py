@@ -489,6 +489,7 @@ class BibliographicProductionArticle:
     jcr: Mapped[Optional[str]] = mapped_column(String, default=None)
     jcr_link: Mapped[Optional[str]] = mapped_column(String, default=None)
     stars: Mapped[Optional[int]] = mapped_column(Integer, default=0)
+    quadrennial: Mapped[Optional[str]] = mapped_column(String, default=None)
 
 
 @table_registry.mapped_as_dataclass
