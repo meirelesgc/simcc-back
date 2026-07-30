@@ -9,6 +9,7 @@ services:
       - "127.0.0.1:${DB_PORT}:5432"
     volumes:
       - db:/var/lib/postgresql/data
+    restart: always
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
@@ -33,6 +34,7 @@ services:
       - "127.0.0.1:${HOP_PORT}:8080"
     volumes:
       - xml:/files/jade-extrator/datasets/lattes_xml
+    restart: always
     depends_on:
       db:
         condition: service_healthy
@@ -48,6 +50,7 @@ services:
       ADMIN_DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/${COMPOSE_PROJECT_NAME}_admin
     volumes:
       - xml:/app/storage/xml
+    restart: always
     depends_on:
       db:
         condition: service_healthy

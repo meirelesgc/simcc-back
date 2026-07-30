@@ -433,14 +433,6 @@ async def dim_logs_routine_csv(session: AsyncSession):
     return FileResponse(file_path, filename=file_name)
 
 
-@router.get('/fat_logs_routine.csv')
-async def fat_logs_routine_csv(session: AsyncSession):
-    await powerBi_service.fat_logs_routine(session)
-    file_name = 'fat_logs_routine.csv'
-    file_path = os.path.join(STORAGE_PATH, file_name)
-    return FileResponse(file_path, filename=file_name)
-
-
 @router.get('/fat_event_organization.csv')
 async def fat_event_organization_csv(session: AsyncSession):
     await powerBi_service.fat_event_organization(session)
@@ -687,7 +679,7 @@ async def fat_logs_database_csv(session: AsyncSession):
 
 
 @router.get('/fat_logs_routine.csv')
-async def fat_logs_routine_csv(session: AsyncSession):
+async def _fat_logs_routine_csv(session: AsyncSession):
     await powerBi_service.fat_logs_routine(session)
     file_name = 'fat_logs_routine.csv'
     file_path = os.path.join(STORAGE_PATH, file_name)
