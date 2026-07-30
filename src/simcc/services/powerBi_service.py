@@ -14,7 +14,7 @@ PATH = 'storage/powerBI'
 def _ensure_static_file(filename):
     dest_path = os.path.join(PATH, filename)
     if not os.path.exists(dest_path):
-        src_path = os.path.join('storage/powerBi', filename)
+        src_path = os.path.join('storage/powerBI', filename)
         if os.path.exists(src_path):
             os.makedirs(os.path.dirname(dest_path), exist_ok=True)
             shutil.copy(src_path, dest_path)
@@ -539,12 +539,14 @@ async def production_researcher(session):
         return unidecode(str(s)).lower().strip()
 
     df_researcher = df_researcher.with_columns(
-        pl.col('city')
+        pl
+        .col('city')
         .map_elements(normalize_str, return_dtype=pl.Utf8)
         .alias('city_norm')
     )
     df_territorio = df_territorio.with_columns(
-        pl.col('Municipio')
+        pl
+        .col('Municipio')
         .map_elements(normalize_str, return_dtype=pl.Utf8)
         .alias('Municipio_norm')
     )
@@ -782,11 +784,13 @@ async def dim_research_project(session):
     }
     df = pl.DataFrame(data, schema=df_schema)
     df = df.with_columns(
-        pl.col('start_year')
+        pl
+        .col('start_year')
         .cast(pl.Int64, strict=False)
         .fill_null(0)
         .cast(pl.Utf8),
-        pl.col('end_year')
+        pl
+        .col('end_year')
         .cast(pl.Int64, strict=False)
         .fill_null(0)
         .cast(pl.Utf8),
@@ -1065,7 +1069,8 @@ async def supervisor(session, admin_session):
     df_original = await _guidance(session, admin_session)
 
     df_original = df_original.with_columns(
-        pl.col('planned_date_conclusion')
+        pl
+        .col('planned_date_conclusion')
         .str.to_date(strict=False)
         .dt.year()
         .alias('year')
@@ -1074,7 +1079,8 @@ async def supervisor(session, admin_session):
     df_original = df_original.select(['year', 'supervisor_researcher_id'])
 
     df_min_max = (
-        df_original.group_by('supervisor_researcher_id')
+        df_original
+        .group_by('supervisor_researcher_id')
         .agg(
             pl.col('year').min().alias('min_year'),
             pl.col('year').max().alias('max_year'),
@@ -1085,7 +1091,8 @@ async def supervisor(session, admin_session):
     )
 
     df_expanded = (
-        df_min_max.with_columns(
+        df_min_max
+        .with_columns(
             pl.int_ranges('min_year', pl.col('max_year') + 1).alias('year')
         )
         .explode('year')
@@ -1104,7 +1111,8 @@ async def supervisor(session, admin_session):
         ['supervisor_researcher_id', 'year'], descending=[False, True]
     )
     df_sorted = df_sorted.with_columns(
-        pl.col('ended_in_year')
+        pl
+        .col('ended_in_year')
         .cum_sum()
         .over('supervisor_researcher_id')
         .cast(pl.Int64)
@@ -1782,11 +1790,10 @@ async def dim_log_event(session):
 
 
 def _load_all_logs(log_dir: str):
-    import json
     logs_data = []
     if not os.path.exists(log_dir):
         return logs_data
-        
+
     idx = 0
     for file in sorted(os.listdir(log_dir)):
         if file.endswith('.jsonl'):
@@ -1797,7 +1804,7 @@ def _load_all_logs(log_dir: str):
                         if line.strip():
                             try:
                                 log_entry = json.loads(line)
-                                log_entry['log_id'] = f"LOG_{idx}"
+                                log_entry['log_id'] = f'LOG_{idx}'
                                 logs_data.append(log_entry)
                                 idx += 1
                             except Exception:
@@ -1808,12 +1815,11 @@ def _load_all_logs(log_dir: str):
 
 
 async def fat_logs(session):
-    from simcc.core.settings import Settings
     try:
         log_dir = Settings().LOG_DIR
     except Exception:
         log_dir = 'logs'
-        
+
     logs = _load_all_logs(log_dir)
     rows = []
     for entry in logs:
@@ -1830,7 +1836,7 @@ async def fat_logs(session):
             'request_id': entry.get('request_id'),
             'duration': entry.get('duration'),
         })
-        
+
     df_schema = {
         'log_id': pl.Utf8,
         'timestamp': pl.Utf8,
@@ -1844,7 +1850,7 @@ async def fat_logs(session):
         'request_id': pl.Utf8,
         'duration': pl.Float64,
     }
-    
+
     if rows:
         for entry in rows:
             dur = entry.get('duration')
@@ -1856,7 +1862,7 @@ async def fat_logs(session):
         df = pl.DataFrame(rows, schema=df_schema)
     else:
         df = pl.DataFrame([], schema=df_schema)
-        
+
     os.makedirs(PATH, exist_ok=True)
     df.write_csv(
         os.path.join(PATH, 'fat_logs.csv'),
@@ -1866,12 +1872,11 @@ async def fat_logs(session):
 
 
 async def fat_logs_http(session):
-    from simcc.core.settings import Settings
     try:
         log_dir = Settings().LOG_DIR
     except Exception:
         log_dir = 'logs'
-        
+
     logs = _load_all_logs(log_dir)
     rows = []
     for entry in logs:
@@ -1884,7 +1889,7 @@ async def fat_logs_http(session):
                 'user_id': data_dict.get('user_id'),
                 'error_message': data_dict.get('error_message'),
             })
-            
+
     df_schema = {
         'log_id': pl.Utf8,
         'route': pl.Utf8,
@@ -1902,12 +1907,11 @@ async def fat_logs_http(session):
 
 
 async def fat_logs_database(session):
-    from simcc.core.settings import Settings
     try:
         log_dir = Settings().LOG_DIR
     except Exception:
         log_dir = 'logs'
-        
+
     logs = _load_all_logs(log_dir)
     rows = []
     for entry in logs:
@@ -1920,7 +1924,7 @@ async def fat_logs_database(session):
                 'error_message': data_dict.get('error_message'),
                 'sql': data_dict.get('sql'),
             })
-            
+
     df_schema = {
         'log_id': pl.Utf8,
         'database_name': pl.Utf8,
@@ -1938,18 +1942,17 @@ async def fat_logs_database(session):
 
 
 async def fat_logs_routine(session):
-    from simcc.core.settings import Settings
     try:
         log_dir = Settings().LOG_DIR
     except Exception:
         log_dir = 'logs'
-        
+
     logs = _load_all_logs(log_dir)
     rows = []
     for entry in logs:
         if entry.get('category') == 'routine':
             data_dict = entry.get('data') or {}
-            
+
             # Safely cast metrics to int/None
             items_found = data_dict.get('items_found')
             if items_found is not None:
@@ -1957,21 +1960,21 @@ async def fat_logs_routine(session):
                     items_found = int(items_found)
                 except (ValueError, TypeError):
                     items_found = None
-                    
+
             items_succeeded = data_dict.get('items_succeeded')
             if items_succeeded is not None:
                 try:
                     items_succeeded = int(items_succeeded)
                 except (ValueError, TypeError):
                     items_succeeded = None
-                    
+
             items_failed = data_dict.get('items_failed')
             if items_failed is not None:
                 try:
                     items_failed = int(items_failed)
                 except (ValueError, TypeError):
                     items_failed = None
-            
+
             rows.append({
                 'log_id': entry.get('log_id'),
                 'routine_name': data_dict.get('routine_name'),
@@ -1980,7 +1983,7 @@ async def fat_logs_routine(session):
                 'items_succeeded': items_succeeded,
                 'items_failed': items_failed,
             })
-            
+
     df_schema = {
         'log_id': pl.Utf8,
         'routine_name': pl.Utf8,
