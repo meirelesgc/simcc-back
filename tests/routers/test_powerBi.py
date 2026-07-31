@@ -166,7 +166,7 @@ async def test_fat_logs_and_supporting_csvs(client, tmp_path, monkeypatch):
     assert csv_routine.exists()
     
     with open(csv_routine, mode='r', encoding='utf-8') as f:
-        reader = csv.DictReader(f, delimiter=';')
+        reader = csv.DictReader(f)
         routine_rows = list(reader)
         
     assert len(routine_rows) == 1

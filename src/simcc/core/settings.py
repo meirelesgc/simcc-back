@@ -7,8 +7,8 @@ class Settings(BaseSettings, extra='ignore'):
     DATABASE_URL: str
     ADMIN_DATABASE_URL: str
 
-    ADMIN_URL: str = 'http://localhost:0000'
-    URL: str = 'http://localhost:0000'
+    ADMIN_URL: str = 'http://localhost:0000/'
+    URL: str = 'http://localhost:0000/'
     OPENAI_API_KEY: Optional[str] = None
     FIREBASE_COLLECTION: str = 'termos_busca'
     INTERNAL_API_KEY: Optional[str] = None
@@ -34,4 +34,3 @@ class Settings(BaseSettings, extra='ignore'):
     class Config:
         env_file = '.env'
         env_file_encoding = 'utf-8'
-

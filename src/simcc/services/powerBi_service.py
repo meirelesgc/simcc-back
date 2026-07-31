@@ -47,6 +47,7 @@ async def fat_area_specialty(session):
         'area_specialty': pl.Utf8,
     }
     df = pl.DataFrame(data, schema=df_schema)
+    df = df.with_row_index(name='')
     csv_path = os.path.join(PATH, 'fat_area_specialty.csv')
     df.write_csv(csv_path)
 
@@ -59,6 +60,7 @@ async def fat_great_area(session):
         'name': pl.Utf8,
     }
     df = pl.DataFrame(data, schema=df_schema)
+    df = df.with_row_index(name='')
     df.write_csv(os.path.join(PATH, 'fat_great_area.csv'))
 
 
@@ -69,6 +71,7 @@ async def dim_area_specialty(session):
         'name': pl.Utf8,
     }
     df = pl.DataFrame(data, schema=df_schema)
+    df = df.with_row_index(name='')
     df.write_csv(os.path.join(PATH, 'dim_area_specialty.csv'))
 
 
@@ -79,6 +82,7 @@ async def dim_great_area(session):
         'name': pl.Utf8,
     }
     df = pl.DataFrame(data, schema=df_schema)
+    df = df.with_row_index(name='')
     df.write_csv(os.path.join(PATH, 'dim_great_area.csv'))
 
 
@@ -96,6 +100,7 @@ async def fat_openalex_researcher(session):
         'openalex': pl.Utf8,
     }
     df = pl.DataFrame(data, schema=df_schema)
+    df = df.with_row_index(name='')
     df.write_csv(os.path.join(PATH, 'fat_openalex_researcher.csv'))
 
 
@@ -123,6 +128,7 @@ async def researcher_area_leader(session, admin_session):
 
     df = df_admin.join(df_main, on='lattes_id', how='left')
     df = df.select(['researcher_id', 'area_leader', 'focal_point'])
+    df = df.with_row_index(name='')
     df.write_csv(os.path.join(PATH, 'researcher_area_leader.csv'))
 
 
@@ -142,6 +148,7 @@ async def fat_openalex_article(session):
         'keywords': pl.Utf8,
     }
     df = pl.DataFrame(data, schema=df_schema)
+    df = df.with_row_index(name='')
     df.write_csv(os.path.join(PATH, 'fat_openalex_article.csv'))
 
 
@@ -151,6 +158,7 @@ async def dim_area_leader(session):
         'area_leader': pl.Utf8,
     }
     df = pl.DataFrame(data, schema=df_schema)
+    df = df.with_row_index(name='')
     df.write_csv(os.path.join(PATH, 'dim_area_leader.csv'))
 
 
@@ -171,6 +179,7 @@ async def dim_city(session):
         'name': pl.Utf8,
     }
     df = pl.DataFrame(data, schema=df_schema)
+    df = df.with_row_index(name='')
     df.write_csv(os.path.join(PATH, 'dim_city.csv'))
 
 
@@ -206,6 +215,7 @@ async def ufmg_researcher(session):
     }
     df = pl.DataFrame(data, schema=df_schema)
     df = df.fill_null('0')
+    df = df.with_row_index(name='')
     df.write_csv(os.path.join(PATH, 'ufmg_researcher.csv'))
 
 
@@ -233,6 +243,7 @@ async def data(session):
     now = datetime.now()
     date_str = now.strftime('%Y-%m-%d %H:%M:%S.%f')
     df = pl.DataFrame({'data': [date_str]})
+    df = df.with_row_index(name='')
     df.write_csv(os.path.join(PATH, 'data.csv'))
     return date_str
 
@@ -245,6 +256,7 @@ async def cimatec_graduate_program_student(session):
         'year': pl.Utf8,
     }
     df = pl.DataFrame(data, schema=df_schema)
+    df = df.with_row_index(name='')
     df.write_csv(os.path.join(PATH, 'cimatec_graduate_program_student.csv'))
 
 
@@ -256,6 +268,7 @@ async def dim_graduate_program_acronym(session):
         'name': pl.Utf8,
     }
     df = pl.DataFrame(data, schema=df_schema)
+    df = df.with_row_index(name='')
     df.write_csv(os.path.join(PATH, 'dim_graduate_program_acronym.csv'))
 
 
@@ -269,6 +282,7 @@ async def graduate_program_researcher_year_unnest(session):
         'year': pl.Utf8,
     }
     df = pl.DataFrame(data, schema=df_schema)
+    df = df.with_row_index(name='')
     df.write_csv(
         os.path.join(PATH, 'graduate_program_researcher_year_unnest.csv')
     )
@@ -282,6 +296,7 @@ async def graduate_program_student_year_unnest(session):
         'year': pl.Utf8,
     }
     df = pl.DataFrame(data, schema=df_schema)
+    df = df.with_row_index(name='')
     df.write_csv(
         os.path.join(PATH, 'graduate_program_student_year_unnest.csv')
     )
@@ -295,6 +310,7 @@ async def dim_departament_technician(session):
     }
     df = pl.DataFrame(data, schema=df_schema)
     df = df.fill_null('0')
+    df = df.with_row_index(name='')
     df.write_csv(os.path.join(PATH, 'dim_departament_technician.csv'))
 
 
@@ -306,6 +322,7 @@ async def dim_departament_researcher(session):
     }
     df = pl.DataFrame(data, schema=df_schema)
     df = df.fill_null('0')
+    df = df.with_row_index(name='')
     df.write_csv(os.path.join(PATH, 'dim_departament_researcher.csv'))
 
 
@@ -329,6 +346,7 @@ async def fat_group_leaders(session):
         'category': pl.Utf8,
     }
     df = pl.DataFrame(data, schema=df_schema)
+    df = df.with_row_index(name='')
     df.write_csv(os.path.join(PATH, 'fat_group_leaders.csv'))
 
 
@@ -341,6 +359,7 @@ async def dim_research_group(session):
         'institution_id': pl.Utf8,
     }
     df = pl.DataFrame(data, schema=df_schema)
+    df = df.with_row_index(name='')
     df.write_csv(os.path.join(PATH, 'dim_research_group.csv'))
 
 
@@ -350,6 +369,7 @@ async def dim_category_level_code(session):
         'category_level_code': pl.Utf8,
     }
     df = pl.DataFrame(data, schema=df_schema)
+    df = df.with_row_index(name='')
     df.write_csv(os.path.join(PATH, 'dim_category_level_code.csv'))
 
 
@@ -366,6 +386,7 @@ async def fat_foment(session):
         'scholarship_quantity': pl.Utf8,
     }
     df = pl.DataFrame(data, schema=df_schema)
+    df = df.with_row_index(name='')
     df.write_csv(os.path.join(PATH, 'fat_foment.csv'))
 
 
@@ -384,6 +405,7 @@ async def fat_production_tecnical_year_novo_csv_db(session):
         'id': pl.Utf8,
     }
     df = pl.DataFrame(data, schema=df_schema)
+    df = df.with_row_index(name='')
     df.write_csv(
         os.path.join(PATH, 'fat_production_tecnical_year_novo_csv_db.csv')
     )
@@ -397,6 +419,7 @@ async def dim_institution(session):
         'acronym': pl.Utf8,
     }
     df = pl.DataFrame(data, schema=df_schema)
+    df = df.with_row_index(name='')
     df.write_csv(os.path.join(PATH, 'dim_institution.csv'))
 
 
@@ -407,6 +430,7 @@ async def researcher_city(session):
         'city': pl.Utf8,
     }
     df = pl.DataFrame(data, schema=df_schema)
+    df = df.with_row_index(name='')
     df.write_csv(os.path.join(PATH, 'researcher_city.csv'))
 
 
@@ -446,6 +470,7 @@ async def dim_researcher(session, origin):
     )
 
     df = df.join(df_words, on='researcher_id', how='left')
+    df = df.with_row_index(name='')
     df.write_csv(os.path.join(PATH, 'dim_researcher.csv'))
 
 
@@ -467,6 +492,7 @@ async def fat_simcc_bibliographic_production(session):
         'id': pl.Utf8,
     }
     df = pl.DataFrame(data, schema=df_schema)
+    df = df.with_row_index(name='')
     df.write_csv(os.path.join(PATH, 'fat_simcc_bibliographic_production.csv'))
 
 
@@ -479,6 +505,7 @@ async def production_tecnical_year(session):
         'type': pl.Utf8,
     }
     df = pl.DataFrame(data, schema=df_schema)
+    df = df.with_row_index(name='')
     df.write_csv(os.path.join(PATH, 'production_tecnical_year.csv'))
 
 
@@ -493,6 +520,7 @@ async def researcher(session):
         'area_leader': pl.Utf8,
     }
     df = pl.DataFrame(data, schema=df_schema)
+    df = df.with_row_index(name='')
     df.write_csv(os.path.join(PATH, 'researcher.csv'))
 
 
@@ -508,6 +536,7 @@ async def article_qualis_year_institution(session):
         'jcr_link': pl.Utf8,
     }
     df = pl.DataFrame(data, schema=df_schema)
+    df = df.with_row_index(name='')
     df.write_csv(os.path.join(PATH, 'article_qualis_year_institution.csv'))
 
 
@@ -583,6 +612,7 @@ async def article_qualis_year(session):
         'type': pl.Utf8,
     }
     df = pl.DataFrame(data, schema=df_schema)
+    df = df.with_row_index(name='')
     df.write_csv(os.path.join(PATH, 'article_qualis_year.csv'))
 
 
@@ -595,6 +625,7 @@ async def production_year_distinct(session):
         'institution': pl.Utf8,
     }
     df = pl.DataFrame(data, schema=df_schema)
+    df = df.with_row_index(name='')
     df.write_csv(os.path.join(PATH, 'production_year_distinct.csv'))
 
 
@@ -608,6 +639,7 @@ async def production_year(session):
         'institution': pl.Utf8,
     }
     df = pl.DataFrame(data, schema=df_schema)
+    df = df.with_row_index(name='')
     df.write_csv(os.path.join(PATH, 'production_year.csv'))
 
 
@@ -624,6 +656,7 @@ async def production_coauthors_csv_db(session):
         'type': pl.Utf8,
     }
     df = pl.DataFrame(data, schema=df_schema)
+    df = df.with_row_index(name='')
     df.write_csv(os.path.join(PATH, 'production_coauthors_csv_db.csv'))
 
 
@@ -688,6 +721,7 @@ async def researcher_production_novo_csv_db(session):
         'type': pl.Utf8,
     }
     df = pl.DataFrame(data, schema=df_schema)
+    df = df.with_row_index(name='')
     df.write_csv(os.path.join(PATH, 'researcher_production_novo_csv_db.csv'))
 
 
@@ -703,6 +737,7 @@ async def article_distinct_novo_csv_db(session):
         'type': pl.Utf8,
     }
     df = pl.DataFrame(data, schema=df_schema)
+    df = df.with_row_index(name='')
     df.write_csv(os.path.join(PATH, 'article_distinct_novo_csv_db.csv'))
 
 
@@ -718,6 +753,7 @@ async def production_distinct_novo_csv_db(session):
         'type': pl.Utf8,
     }
     df = pl.DataFrame(data, schema=df_schema)
+    df = df.with_row_index(name='')
     df.write_csv(os.path.join(PATH, 'production_distinct_novo_csv_db.csv'))
 
 
@@ -730,6 +766,7 @@ async def cimatec_graduate_program_researcher(session):
         'type_': pl.Utf8,
     }
     df = pl.DataFrame(data, schema=df_schema)
+    df = df.with_row_index(name='')
     df.write_csv(os.path.join(PATH, 'cimatec_graduate_program_researcher.csv'))
 
 
@@ -748,6 +785,7 @@ async def cimatec_graduate_program(session):
         'city': pl.Utf8,
     }
     df = pl.DataFrame(data, schema=df_schema)
+    df = df.with_row_index(name='')
     df.write_csv(os.path.join(PATH, 'cimatec_graduate_program.csv'))
 
 
@@ -761,6 +799,7 @@ async def dim_departament(session):
     }
     df = pl.DataFrame(data, schema=df_schema)
     df = df.fill_null('0')
+    df = df.with_row_index(name='')
     df.write_csv(os.path.join(PATH, 'dim_departament.csv'))
 
 
@@ -795,6 +834,7 @@ async def dim_research_project(session):
         .fill_null(0)
         .cast(pl.Utf8),
     )
+    df = df.with_row_index(name='')
     df.write_csv(os.path.join(PATH, 'dim_research_project.csv'))
 
 
@@ -807,6 +847,7 @@ async def fat_research_project_foment(session):
         'nature': pl.Utf8,
     }
     df = pl.DataFrame(data, schema=df_schema)
+    df = df.with_row_index(name='')
     df.write_csv(os.path.join(PATH, 'fat_research_project_foment.csv'))
 
 
@@ -829,6 +870,7 @@ async def dim_bibliographic_production_terms(session):
         'term': pl.Utf8,
     }
     df = pl.DataFrame(data, schema=df_schema)
+    df = df.with_row_index(name='')
     df.write_csv(os.path.join(PATH, 'dim_bibliographic_production_terms.csv'))
 
 
@@ -851,6 +893,7 @@ async def dim_tecnical_production_terms(session):
         'term': pl.Utf8,
     }
     df = pl.DataFrame(data, schema=df_schema)
+    df = df.with_row_index(name='')
     df.write_csv(os.path.join(PATH, 'dim_tecnical_production_terms.csv'))
 
 
@@ -860,6 +903,7 @@ async def dim_logs_routine(session):
         'routine_type': pl.Utf8,
     }
     df = pl.DataFrame(data, schema=df_schema)
+    df = df.with_row_index(name='')
     df.write_csv(os.path.join(PATH, 'dim_logs_routine.csv'))
 
 
@@ -872,6 +916,7 @@ async def fat_logs_routine(session):
         'created_at': pl.Utf8,
     }
     df = pl.DataFrame(data, schema=df_schema)
+    df = df.with_row_index(name='')
     df.write_csv(os.path.join(PATH, 'fat_logs_routine.csv'))
 
 
@@ -888,6 +933,7 @@ async def fat_event_organization(session):
         'year': pl.Utf8,
     }
     df = pl.DataFrame(data, schema=df_schema)
+    df = df.with_row_index(name='')
     df.write_csv(os.path.join(PATH, 'fat_event_organization.csv'))
 
 
@@ -904,6 +950,7 @@ async def fat_participation_events(session):
         'year': pl.Utf8,
     }
     df = pl.DataFrame(data, schema=df_schema)
+    df = df.with_row_index(name='')
     df.write_csv(os.path.join(PATH, 'fat_participation_events.csv'))
 
 
@@ -917,6 +964,7 @@ async def materialized_vision(session):
         'year': pl.Utf8,
     }
     df = pl.DataFrame(data, schema=df_schema)
+    df = df.with_row_index(name='')
     df.write_csv(
         os.path.join(PATH, 'materialized_vision.csv'), quote_style='always'
     )
@@ -938,6 +986,7 @@ async def dim_article_keyword(session):
         'frequency': pl.Utf8,
     }
     df = pl.DataFrame(data, schema=df_schema)
+    df = df.with_row_index(name='')
     df.write_csv(os.path.join(PATH, 'dim_article_keyword.csv'))
 
 
@@ -958,6 +1007,7 @@ async def fat_article_keyword_(session):
         'researcher_id': pl.Utf8,
     }
     df = pl.DataFrame(data, schema=df_schema)
+    df = df.with_row_index(name='')
     df.write_csv(os.path.join(PATH, 'fat_article_keyword_.csv'))
 
 
@@ -968,6 +1018,7 @@ async def fat_article_co_authorship(session):
         'researcher_id': pl.Utf8,
     }
     df = pl.DataFrame(data, schema=df_schema)
+    df = df.with_row_index(name='')
     df.write_csv(os.path.join(PATH, 'fat_article_co_authorship.csv'))
 
 
@@ -990,6 +1041,7 @@ async def fat_keywords_cooccurrences(session):
         'frequency': pl.Utf8,
     }
     df = pl.DataFrame(data, schema=df_schema)
+    df = df.with_row_index(name='')
     df.write_csv(os.path.join(PATH, 'fat_keywords_cooccurrences.csv'))
 
 
@@ -1001,6 +1053,7 @@ async def fat_co_authorship(session):
         'co_author': pl.Utf8,
     }
     df = pl.DataFrame(data, schema=df_schema)
+    df = df.with_row_index(name='')
     df.write_csv(os.path.join(PATH, 'fat_co_authorship.csv'))
 
 
@@ -1124,6 +1177,7 @@ async def supervisor(session, admin_session):
         'year',
         'count',
     ]).sort(['supervisor_researcher_id', 'year'])
+    df_final = df_final.with_row_index(name='')
     df_final.write_csv(os.path.join(PATH, 'supervisor.csv'))
 
 
@@ -1509,7 +1563,6 @@ async def ind_guidance_ori(session, admin_session):
     df = df.with_row_index(name='')
     df.write_csv(
         os.path.join(PATH, 'ind_guidance_ori.csv'),
-        separator=';',
         quote_style='always',
     )
 
@@ -1613,7 +1666,6 @@ async def ind_guidance_distori(session, admin_session):
     df = df.with_row_index(name='')
     df.write_csv(
         os.path.join(PATH, 'ind_guidance_distori.csv'),
-        separator=';',
         quote_style='always',
     )
 
@@ -1994,8 +2046,8 @@ async def fat_logs_routine(session):
     }
     df = pl.DataFrame(rows, schema=df_schema)
     os.makedirs(PATH, exist_ok=True)
+    df = df.with_row_index(name='')
     df.write_csv(
         os.path.join(PATH, 'fat_logs_routine.csv'),
-        separator=';',
         quote_style='always',
     )
