@@ -12,6 +12,7 @@ class Settings(BaseSettings, extra='ignore'):
     OPENAI_API_KEY: Optional[str] = None
     FIREBASE_COLLECTION: str = 'termos_busca'
     INTERNAL_API_KEY: Optional[str] = None
+    LOG_STREAM_TOKEN: Optional[str] = None
 
     FIREBASE_CERT_PATH: str = 'cert.json'
 

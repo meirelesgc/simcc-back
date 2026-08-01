@@ -10,6 +10,7 @@ from simcc.routers import (
     external,
     graduate_program,
     institution,
+    logs,
     maria,
     metrics,
     powerBi,
@@ -53,6 +54,7 @@ app.include_router(research_group.router)
 app.include_router(maria.router)
 app.include_router(routines.router)
 app.include_router(powerBi.router)
+app.include_router(logs.router)
 
 
 @app.get('/', status_code=HTTPStatus.OK)

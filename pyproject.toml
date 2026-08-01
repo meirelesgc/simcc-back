@@ -57,6 +57,7 @@ quote-style = 'single'
 [tool.pytest]
 pythonpath = ['.']
 addopts = ['-p', 'no:warnings']
+timeout = "60"
 
 [tool.taskipy.tasks]
 run = 'fastapi dev src/simcc --reload-dir "src/simcc"'
