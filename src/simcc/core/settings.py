@@ -1,11 +1,17 @@
 from typing import Optional
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings, extra='ignore'):
     DATABASE_URL: str
     ADMIN_DATABASE_URL: str
+
+    CORS_ALLOW_ORIGINS: list[str] = ['*']
+    CORS_ALLOW_METHODS: list[str] = ['*']
+    CORS_ALLOW_HEADERS: list[str] = ['*']
+    CORS_ALLOW_CREDENTIALS: bool = True
 
     ADMIN_URL: str = 'http://localhost:0000/'
     URL: str = 'http://localhost:0000/'
@@ -31,6 +37,20 @@ class Settings(BaseSettings, extra='ignore'):
     ENVIRONMENT: str = 'development'
     LOG_LEVEL: str = 'INFO'
     LOG_DIR: str = 'logs'
+
+    @field_validator(
+        'CORS_ALLOW_ORIGINS',
+        'CORS_ALLOW_METHODS',
+        'CORS_ALLOW_HEADERS',
+        mode='before',
+    )
+    @classmethod
+    def assemble_cors_list(cls, v: str | list[str]) -> list[str]:
+        if isinstance(v, str) and not v.startswith('['):
+            return [i.strip() for i in v.split(',') if i.strip()]
+        elif isinstance(v, (list, str)):
+            return v
+        raise ValueError(v)
 
     class Config:
         env_file = '.env'

@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 
 from simcc.core.logging.middleware import LoggingMiddleware
+from simcc.core.settings import Settings
 from simcc.routers import (
     external,
     graduate_program,
@@ -27,14 +28,16 @@ from simcc.routers.production import (
     summaries,
 )
 
+settings = Settings()
+
 app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=['*'],
-    allow_methods=['*'],
-    allow_headers=['*'],
-    allow_credentials=True,
+    allow_origins=settings.CORS_ALLOW_ORIGINS,
+    allow_methods=settings.CORS_ALLOW_METHODS,
+    allow_headers=settings.CORS_ALLOW_HEADERS,
+    allow_credentials=settings.CORS_ALLOW_CREDENTIALS,
 )
 app.add_middleware(LoggingMiddleware)
 
