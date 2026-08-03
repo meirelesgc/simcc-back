@@ -139,12 +139,13 @@ def main():
                 stats['Barrado: programa nao encontrado'] += 1
                 continue
 
-            records_to_insert.append({
-                'graduate_program_id': str(pg_id),
-                'researcher_id': str(r_id),
-                'year': years,
-                'type_': row['categoria'],
-            })
+            for year in years:
+                records_to_insert.append({
+                    'graduate_program_id': str(pg_id),
+                    'researcher_id': str(r_id),
+                    'year': year,
+                    'type_': row['categoria'],
+                })
             stats['Processado'] += 1
             
         items_succeeded = stats['Processado']
@@ -156,8 +157,7 @@ def main():
                     (graduate_program_id, researcher_id, year, type_)
                 VALUES
                     (:graduate_program_id, :researcher_id, :year, :type_)
-                ON CONFLICT (graduate_program_id, researcher_id) DO UPDATE SET
-                    year = EXCLUDED.year,
+                ON CONFLICT (graduate_program_id, researcher_id, year) DO UPDATE SET
                     type_ = EXCLUDED.type_;
             """)
             session.execute(query_insert, records_to_insert)
