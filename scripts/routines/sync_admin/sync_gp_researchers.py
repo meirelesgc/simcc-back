@@ -36,7 +36,7 @@ def load_researchers_csv(path='storage/seed/program_researchers.csv'):
 
 
 def get_researchers_mapping(session):
-    sql = text('SELECT researcher_id, name FROM researcher')
+    sql = text('SELECT researcher_id::TEXT, name FROM researcher')
     result = session.execute(sql).mappings().all()
     if not result:
         return pl.DataFrame(
@@ -46,8 +46,9 @@ def get_researchers_mapping(session):
                 'match_name': pl.String,
             }
         )
-    df_res = pl.DataFrame(result).with_columns(
-        pl.col('researcher_id').cast(pl.String)
+    df_res = pl.DataFrame(
+        result,
+        schema_overrides={'researcher_id': pl.String, 'name': pl.String}
     )
     df_res = df_res.with_columns(
         pl
@@ -60,15 +61,18 @@ def get_researchers_mapping(session):
 
 
 def get_programs_mapping(session):
-    sql = text('SELECT graduate_program_id, code FROM graduate_program')
+    sql = text('SELECT graduate_program_id::TEXT, code FROM graduate_program')
     result = session.execute(sql).mappings().all()
     if not result:
         return pl.DataFrame(
             schema={'graduate_program_id': pl.String, 'code': pl.String}
         )
-    return pl.DataFrame(result).with_columns(
-        pl.col('graduate_program_id').cast(pl.String),
-        pl.col('code').cast(pl.String),
+    return pl.DataFrame(
+        result,
+        schema_overrides={
+            'graduate_program_id': pl.String,
+            'code': pl.String
+        }
     )
 
 
@@ -110,14 +114,14 @@ def main():
                 how='left',
             )
         else:
-            df = df.with_columns(pl.lit(None).alias('researcher_id'))
+            df = df.with_columns(pl.lit(None, dtype=pl.String).alias('researcher_id'))
 
         if not df_prog.is_empty():
             df = df.join(
                 df_prog, left_on='id do programa', right_on='code', how='left'
             )
         else:
-            df = df.with_columns(pl.lit(None).alias('graduate_program_id'))
+            df = df.with_columns(pl.lit(None, dtype=pl.String).alias('graduate_program_id'))
 
         years = [2026, 2025, 2024, 2023]
         stats = Counter()

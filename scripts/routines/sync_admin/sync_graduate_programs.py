@@ -24,7 +24,7 @@ def normalize_keys(d):
 
 def get_institutions_mapping(session):
     sql = text(
-        'SELECT institution_id, name FROM institution WHERE name IS NOT NULL'
+        'SELECT institution_id::TEXT, name FROM institution WHERE name IS NOT NULL'
     )
     result = session.execute(sql).mappings().all()
     return {
