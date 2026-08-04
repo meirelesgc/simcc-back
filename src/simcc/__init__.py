@@ -5,6 +5,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 
+import sys
+from contextlib import asynccontextmanager
+
+from simcc.core.logging.cleanup import clean_old_logs
 from simcc.core.logging.middleware import LoggingMiddleware
 from simcc.core.settings import Settings
 from simcc.routers import (
@@ -30,7 +34,17 @@ from simcc.routers.production import (
 
 settings = Settings()
 
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    try:
+        clean_old_logs()
+    except Exception as e:
+        sys.stderr.write(f"[Log Cleanup] Startup cleanup failed: {e}\n")
+    yield
+
+
+app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,

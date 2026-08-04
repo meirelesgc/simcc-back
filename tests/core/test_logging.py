@@ -231,3 +231,28 @@ async def test_request_id_traceability_across_layers(
     # Assert that they all share the same request_id!
     assert db_error[0]['request_id'] == req_id
     assert http_error[0]['request_id'] == req_id
+
+
+def test_clean_old_logs(tmp_path):
+    from datetime import timedelta
+    from simcc.core.logging.cleanup import clean_old_logs
+
+    today = datetime.now()
+    old_date = today - timedelta(days=10)
+    recent_date = today - timedelta(days=2)
+
+    old_file = tmp_path / f"{old_date.strftime('%Y-%m-%d')}.jsonl"
+    recent_file = tmp_path / f"{recent_date.strftime('%Y-%m-%d')}.jsonl"
+    today_file = tmp_path / f"{today.strftime('%Y-%m-%d')}.jsonl"
+
+    old_file.write_text('{"log": "old"}\n')
+    recent_file.write_text('{"log": "recent"}\n')
+    today_file.write_text('{"log": "today"}\n')
+
+    deleted = clean_old_logs(log_dir=str(tmp_path), max_age_days=7)
+
+    assert len(deleted) == 1
+    assert str(old_file) in deleted
+    assert not old_file.exists()
+    assert recent_file.exists()
+    assert today_file.exists()

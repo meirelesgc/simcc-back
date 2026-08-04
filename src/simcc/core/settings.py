@@ -37,6 +37,7 @@ class Settings(BaseSettings, extra='ignore'):
     ENVIRONMENT: str = 'development'
     LOG_LEVEL: str = 'INFO'
     LOG_DIR: str = 'logs'
+    LOG_RETENTION_DAYS: int = 7
 
     @field_validator(
         'CORS_ALLOW_ORIGINS',

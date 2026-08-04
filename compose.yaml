@@ -48,6 +48,7 @@ services:
       ADMIN_DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/${COMPOSE_PROJECT_NAME}_admin
     volumes:
       - xml:/app/storage/xml
+      - logs:/app/logs
     restart: always
     depends_on:
       db:
@@ -56,3 +57,4 @@ services:
 volumes:
   db:
   xml:
+  logs:

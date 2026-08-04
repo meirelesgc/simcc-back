@@ -4,22 +4,37 @@ from datetime import datetime
 import json
 from typing import Dict, Any, List, Callable
 
+from simcc.core.logging.cleanup import clean_old_logs
+
 try:
     from simcc.core.settings import Settings
+
     settings = Settings()
     LOG_DIR = settings.LOG_DIR
 except Exception:
     LOG_DIR = 'logs'
 
+_last_cleanup_date: str | None = None
+
+
 def write_to_file(log_data: Dict[str, Any]) -> None:
     """Writes a log entry dictionary as a single line in JSONL format to a file."""
+    global _last_cleanup_date
     os.makedirs(LOG_DIR, exist_ok=True)
     date_str = datetime.now().strftime('%Y-%m-%d')
+
+    if _last_cleanup_date != date_str:
+        _last_cleanup_date = date_str
+        try:
+            clean_old_logs(LOG_DIR)
+        except Exception:
+            pass
+
     filepath = os.path.join(LOG_DIR, f'{date_str}.jsonl')
-    
+
     # Serialize structure to JSON using default=str to catch non-serializable objects
     log_line = json.dumps(log_data, default=str)
-    
+
     with open(filepath, 'a', encoding='utf-8') as f:
         f.write(log_line + '\n')
 
