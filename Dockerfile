@@ -45,7 +45,7 @@ COPY entrypoint.sh .
 COPY storage ./storage
 
 RUN useradd --create-home appuser && \
-    mkdir -p storage/xml/zip storage/xml/current storage/openalex/researcher storage/openalex/article && \
+    mkdir -p storage/xml/zip storage/xml/current storage/openalex/researcher storage/openalex/article logs && \
     chown -R appuser:appuser /app
 
 USER appuser
