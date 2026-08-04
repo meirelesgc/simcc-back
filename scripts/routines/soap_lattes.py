@@ -1,5 +1,4 @@
 import argparse
-import logging
 import os
 import sys
 import time
@@ -13,11 +12,12 @@ from zeep import Client
 from zeep.transports import Transport
 
 from simcc.core.db.database import get_admin_sync_session, get_sync_session
+from simcc.core.logging import logger
+from simcc.core.logging.context import routine_name_ctx
 from simcc.core.settings import Settings
 
 SETTINGS = Settings()
 
-LOG_PATH = getattr(SETTINGS, 'LOG_DIR', 'logs')
 XML_PATH = SETTINGS.XML_PATH
 CURRENT_XML_PATH = SETTINGS.CURRENT_XML_PATH
 ZIP_XML_PATH = SETTINGS.ZIP_XML_PATH
@@ -44,29 +44,6 @@ def get_zeep_client():
             transport=Transport(timeout=30, operation_timeout=30),
         )
     return client
-
-
-def setup_logger():
-    os.makedirs(LOG_PATH, exist_ok=True)
-    logger = logging.getLogger('soap_lattes')
-    logger.setLevel(logging.INFO)
-
-    if not logger.handlers:
-        formatter = logging.Formatter(
-            fmt='%(asctime)s [%(levelname)s] %(message)s',
-            datefmt='%Y-%m-%d %H:%M:%S',
-        )
-
-        log_file = os.path.join(LOG_PATH, 'soap_lattes.log')
-        file_handler = logging.FileHandler(log_file, encoding='utf-8')
-        file_handler.setFormatter(formatter)
-        logger.addHandler(file_handler)
-
-        stream_handler = logging.StreamHandler(sys.stdout)
-        stream_handler.setFormatter(formatter)
-        logger.addHandler(stream_handler)
-
-    return logger
 
 
 def list_admin_researchers(session, researcher_ids=None, lattes_ids=None):
@@ -266,7 +243,8 @@ items_failed = 0
 def main(researcher_ids=None, lattes_ids=None):
     global items_found, items_succeeded, items_failed
 
-    logger = setup_logger()
+    if not routine_name_ctx.get():
+        routine_name_ctx.set('soap_lattes')
     start_time = datetime.now()
     logger.info(
         f"[INÍCIO] Rotina soap_lattes iniciada em {start_time.strftime('%Y-%m-%d %H:%M:%S')}"
