@@ -37,7 +37,6 @@ services:
   hop:
     image: gleidsoncosta/simcc-extrator:latest
     mem_limit: 4g
-    command: ["/opt/hop/hop-server.sh"]
     environment:
       HOP_LOG_LEVEL: Basic
       HOP_PROJECT_NAME: Jade-Extrator
