@@ -8,6 +8,7 @@ import polars as pl
 from sqlalchemy import text
 
 from simcc.core.db.database import get_admin_sync_session
+from simcc.core.logging import logger
 
 
 def normalize_string(s):
@@ -155,13 +156,10 @@ items_failed = 0
 def main():
     global items_found, items_succeeded, items_failed
     session = next(get_admin_sync_session())
-    start_time = time.perf_counter()
 
     try:
         programs_df = load_programs_csv()
         institutions_map = get_institutions_mapping(session)
-        programs_df.write_excel('NOVA VERSÃO')
-        return
         stats = Counter()
         total_rows = len(programs_df)
         items_found = total_rows
@@ -180,6 +178,12 @@ def main():
 
         items_succeeded = stats['Sucesso']
         items_failed = total_rows - items_succeeded
+
+        for reason, count in stats.items():
+            if reason != 'Sucesso' and count > 0:
+                logger.warning(f"Programas ignorados ou nao inseridos ({reason}): {count}")
+
+        logger.info(f"Processamento de programas de pos-graduacao finalizado. Encontrados: {items_found}, Sucesso: {items_succeeded}, Falhas: {items_failed}")
 
         if valid_programs:
             query_upsert = text("""
@@ -213,11 +217,11 @@ def main():
             format_program_names(session)
 
         session.commit()
-        duration = time.perf_counter() - start_time
     except Exception as E:
-        print(E)
+        items_failed = items_found - items_succeeded
+        logger.error(f"Erro na execucao da rotina sync_graduate_programs: {str(E)}")
         session.rollback()
-        duration = time.perf_counter() - start_time
+        raise E
 
 
 if __name__ == '__main__':

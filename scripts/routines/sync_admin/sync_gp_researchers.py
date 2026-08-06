@@ -6,6 +6,7 @@ import polars as pl
 from sqlalchemy import text
 
 from simcc.core.db.database import get_admin_sync_session
+from simcc.core.logging import logger
 
 
 def normalize_string(s):
@@ -90,7 +91,11 @@ def main():
         required_cols = {'nome', 'id do programa', 'categoria'}
         missing = required_cols - set(df.columns)
         if missing:
-            return
+            items_succeeded = 0
+            items_failed = items_found
+            err_msg = f'Colunas obrigatorias ausentes no CSV: {missing}'
+            logger.error(err_msg)
+            raise ValueError(err_msg)
 
         df_res = get_researchers_mapping(session)
         df_prog = get_programs_mapping(session)
@@ -151,6 +156,14 @@ def main():
         items_succeeded = stats['Processado']
         items_failed = items_found - items_succeeded
 
+        if stats['Barrado: pesquisador nao encontrado'] > 0:
+            logger.warning(f"Pesquisadores nao encontrados no banco: {stats['Barrado: pesquisador nao encontrado']}")
+
+        if stats['Barrado: programa nao encontrado'] > 0:
+            logger.warning(f"Programas nao encontrados no banco: {stats['Barrado: programa nao encontrado']}")
+
+        logger.info(f"Processamento de pesquisadores do programa finalizado. Encontrados: {items_found}, Sucesso: {items_succeeded}, Falhas: {items_failed}")
+
         if records_to_insert:
             query_insert = text("""
                 INSERT INTO public.graduate_program_researcher
@@ -164,8 +177,10 @@ def main():
 
         session.commit()
     except Exception as E:
-        print(E)
+        items_failed = items_found - items_succeeded
+        logger.error(f"Erro na execucao da rotina sync_gp_researchers: {str(E)}")
         session.rollback()
+        raise E
 
 
 if __name__ == '__main__':
