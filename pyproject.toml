@@ -33,6 +33,7 @@ dependencies = [
     "httpie (>=3.2.4,<4.0.0)",
     "polars[rtcompat] (>=1.42.0,<2.0.0)",
     "structlog (>=26.1.0,<27.0.0)",
+    "xlsxwriter (>=3.2.9,<4.0.0)",
 ]
 
 [tool.poetry]

@@ -160,7 +160,8 @@ def main():
     try:
         programs_df = load_programs_csv()
         institutions_map = get_institutions_mapping(session)
-
+        programs_df.write_excel('NOVA VERSÃO')
+        return
         stats = Counter()
         total_rows = len(programs_df)
         items_found = total_rows
@@ -176,7 +177,7 @@ def main():
                 stats['Sucesso'] += 1
             else:
                 stats[error_reason] += 1
-                
+
         items_succeeded = stats['Sucesso']
         items_failed = total_rows - items_succeeded
 
