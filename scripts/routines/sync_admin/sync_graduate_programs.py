@@ -1,5 +1,4 @@
 import ast
-import time
 import unicodedata
 from collections import Counter
 from datetime import datetime
@@ -181,9 +180,13 @@ def main():
 
         for reason, count in stats.items():
             if reason != 'Sucesso' and count > 0:
-                logger.warning(f"Programas ignorados ou nao inseridos ({reason}): {count}")
+                logger.warning(
+                    f'Programas ignorados ou nao inseridos ({reason}): {count}'
+                )
 
-        logger.info(f"Processamento de programas de pos-graduacao finalizado. Encontrados: {items_found}, Sucesso: {items_succeeded}, Falhas: {items_failed}")
+        logger.info(
+            f'Processamento de programas de pos-graduacao finalizado. Encontrados: {items_found}, Sucesso: {items_succeeded}, Falhas: {items_failed}'
+        )
 
         if valid_programs:
             query_upsert = text("""
@@ -219,7 +222,9 @@ def main():
         session.commit()
     except Exception as E:
         items_failed = items_found - items_succeeded
-        logger.error(f"Erro na execucao da rotina sync_graduate_programs: {str(E)}")
+        logger.error(
+            f'Erro na execucao da rotina sync_graduate_programs: {str(E)}'
+        )
         session.rollback()
         raise E
 
