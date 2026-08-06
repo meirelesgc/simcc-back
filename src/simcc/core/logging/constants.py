@@ -17,3 +17,8 @@ class LogEvent(str, Enum):
     ROUTINE_STARTED = 'routine.started'
     ROUTINE_FINISHED = 'routine.finished'
     ROUTINE_ERROR = 'routine.error'
+    ROUTINE_STEP_STARTED = 'routine.step.started'
+    ROUTINE_STEP_FINISHED = 'routine.step.finished'
+    ROUTINE_PROGRESS = 'routine.progress'
+    ROUTINE_ITEM_ERROR = 'routine.item_error'
+

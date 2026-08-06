@@ -5,6 +5,13 @@ from langchain_openai import ChatOpenAI
 from sqlalchemy import text
 
 from simcc.core.db.database import get_sync_session
+from simcc.core.logging import logger
+from simcc.core.logging.events import (
+    routine_item_error,
+    routine_progress,
+    routine_step_finished,
+    routine_step_started,
+)
 from simcc.core.settings import Settings
 
 
@@ -156,6 +163,8 @@ def main(researcher_ids=None, lattes_ids=None):
         success_count = 0
         failed_count = 0
 
+        routine_step_started("generate_abstract_ai", total_items=total_researchers)
+
         SCRIPT_LAST_PROD = text("""
             SELECT bp.title, bp.type, bp.year FROM bibliographic_production bp
             WHERE bp.researcher_id = :researcher_id
@@ -294,12 +303,31 @@ def main(researcher_ids=None, lattes_ids=None):
                     )
                     session.commit()
                     success_count += 1
-            except Exception:
+                    logger.debug(
+                        f"Abstract AI generated for researcher {researcher_name} ({researcher_id})"
+                    )
+            except Exception as e:
                 session.rollback()
                 failed_count += 1
+                routine_item_error(
+                    researcher_id,
+                    str(e),
+                    researcher_name=researcher_name,
+                    lattes_id=lattes_id,
+                )
+
+            if (i + 1) % 20 == 0 or (i + 1) == total_researchers:
+                routine_progress(
+                    "generate_abstract_ai",
+                    i + 1,
+                    total_researchers,
+                    success_count,
+                    failed_count,
+                )
 
         items_succeeded = success_count
         items_failed = failed_count
+        routine_step_finished("generate_abstract_ai")
         duration = time.perf_counter() - start_time
 
     except Exception:

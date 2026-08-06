@@ -7,6 +7,13 @@ from sqlalchemy import text
 
 from simcc.core.db.database import get_admin_sync_session
 from simcc.core.logging import logger
+from simcc.core.logging.events import (
+    routine_item_error,
+    routine_progress,
+    routine_step_finished,
+    routine_step_started,
+)
+
 
 
 def normalize_string(s):
@@ -86,6 +93,7 @@ def main():
     global items_found, items_succeeded, items_failed
     session = next(get_admin_sync_session())
     try:
+        routine_step_started("load_and_match_gp_researchers_csv")
         df = load_researchers_csv()
         items_found = len(df)
         required_cols = {'nome', 'id do programa', 'categoria'}
@@ -132,16 +140,21 @@ def main():
         stats = Counter()
         records_to_insert = []
 
-        for row in df.to_dicts():
+        records = df.to_dicts()
+        for idx, row in enumerate(records):
             r_id = row.get('researcher_id')
             pg_id = row.get('graduate_program_id')
+            name = row.get('nome')
+            pg_code = row.get('id do programa')
 
             if r_id is None:
                 stats['Barrado: pesquisador nao encontrado'] += 1
+                routine_item_error(name, "Pesquisador não encontrado no banco", programa_codigo=pg_code)
                 continue
 
             if pg_id is None:
                 stats['Barrado: programa nao encontrado'] += 1
+                routine_item_error(name, "Programa de pós não encontrado no banco", programa_codigo=pg_code)
                 continue
 
             for year in years:
@@ -152,19 +165,16 @@ def main():
                     'type_': row['categoria'],
                 })
             stats['Processado'] += 1
-            
+
+            if (idx + 1) % 50 == 0 or (idx + 1) == items_found:
+                routine_progress("load_and_match_gp_researchers_csv", idx + 1, items_found, stats['Processado'], items_found - stats['Processado'])
+
         items_succeeded = stats['Processado']
         items_failed = items_found - items_succeeded
-
-        if stats['Barrado: pesquisador nao encontrado'] > 0:
-            logger.warning(f"Pesquisadores nao encontrados no banco: {stats['Barrado: pesquisador nao encontrado']}")
-
-        if stats['Barrado: programa nao encontrado'] > 0:
-            logger.warning(f"Programas nao encontrados no banco: {stats['Barrado: programa nao encontrado']}")
-
-        logger.info(f"Processamento de pesquisadores do programa finalizado. Encontrados: {items_found}, Sucesso: {items_succeeded}, Falhas: {items_failed}")
+        routine_step_finished("load_and_match_gp_researchers_csv", total_matched=items_succeeded, total_failed=items_failed)
 
         if records_to_insert:
+            routine_step_started("upsert_graduate_program_researchers")
             query_insert = text("""
                 INSERT INTO public.graduate_program_researcher
                     (graduate_program_id, researcher_id, year, type_)
@@ -174,6 +184,7 @@ def main():
                     type_ = EXCLUDED.type_;
             """)
             session.execute(query_insert, records_to_insert)
+            routine_step_finished("upsert_graduate_program_researchers", total_records=len(records_to_insert))
 
         session.commit()
     except Exception as E:
@@ -181,6 +192,7 @@ def main():
         logger.error(f"Erro na execucao da rotina sync_gp_researchers: {str(E)}")
         session.rollback()
         raise E
+
 
 
 if __name__ == '__main__':

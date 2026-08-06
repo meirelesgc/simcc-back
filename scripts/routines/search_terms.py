@@ -7,6 +7,12 @@ from firebase_admin import credentials, firestore
 from sqlalchemy import text
 
 from simcc.core.db.database import get_sync_session
+from simcc.core.logging import logger
+from simcc.core.logging.events import (
+    routine_progress,
+    routine_step_finished,
+    routine_step_started,
+)
 from simcc.core.settings import Settings
 
 FIRESTORE_BATCH_LIMIT = 500
@@ -78,7 +84,7 @@ def delete_collection(db, coll_ref, batch_size):
     return len(docs)
 
 
-def insert_data_batch(db, collection_ref, records, batch_size):
+def insert_data_batch(db, collection_ref, records, batch_size, total_items=0):
     total_inserted = 0
 
     for chunk in chunked(records, batch_size):
@@ -88,6 +94,8 @@ def insert_data_batch(db, collection_ref, records, batch_size):
             batch.set(collection_ref.document(doc_id), item)
         batch.commit()
         total_inserted += len(chunk)
+        if total_items > 0:
+            routine_progress("sync_firestore_search_terms", total_inserted, total_items, total_inserted, 0)
 
     return total_inserted
 
@@ -157,6 +165,7 @@ def main():
         db = get_db()
         collection_ref = db.collection(SETTINGS.FIREBASE_COLLECTION)
 
+        routine_step_started("clear_firestore_collection")
         deleted_total = 0
         while True:
             deleted = delete_collection(
@@ -165,7 +174,9 @@ def main():
             if deleted == 0:
                 break
             deleted_total += deleted
+        routine_step_finished("clear_firestore_collection", deleted_docs=deleted_total)
 
+        routine_step_started("sync_firestore_search_terms")
         terms_list = terms_dataframe(session)
         items_found = len(terms_list)
         records = list_to_records(terms_list)
@@ -174,7 +185,9 @@ def main():
             collection_ref,
             records,
             FIRESTORE_BATCH_LIMIT,
+            total_items=items_found,
         )
+        routine_step_finished("sync_firestore_search_terms", total_inserted=inserted_total)
 
         session.commit()
         items_succeeded = inserted_total
@@ -183,8 +196,11 @@ def main():
     except Exception as e:
         items_succeeded = 0
         items_failed = items_found
+        logger.error(f"Error in search_terms: {e}")
         session.rollback()
         duration = time.perf_counter() - start_time
+        raise e
+
 
 
 if __name__ == '__main__':

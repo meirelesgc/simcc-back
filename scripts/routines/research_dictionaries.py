@@ -4,7 +4,11 @@ import nltk
 from sqlalchemy import text
 
 from simcc.core.db.database import get_sync_session
-
+from simcc.core.logging import logger
+from simcc.core.logging.events import (
+    routine_step_finished,
+    routine_step_started,
+)
 
 
 def get_stopwords():
@@ -131,23 +135,29 @@ def main():
             ),
         ]
 
+        succeeded_count = 0
         for doc_type, query in configurations:
+            routine_step_started(f"dictionary_{doc_type.lower()}")
             session.execute(
                 text(
                     f"DELETE FROM research_dictionary WHERE type_ = '{doc_type}';"
                 )
             )
             session.execute(text(query), {'stopwords': stopwords})
+            routine_step_finished(f"dictionary_{doc_type.lower()}")
+            succeeded_count += 1
 
         session.commit()
-        items_succeeded = 6
-        items_failed = 0
+        items_succeeded = succeeded_count
+        items_failed = items_found - items_succeeded
         duration = time.perf_counter() - start_time
     except Exception as e:
-        items_succeeded = 0
-        items_failed = 6
+        items_succeeded = succeeded_count if 'succeeded_count' in locals() else 0
+        items_failed = items_found - items_succeeded
+        logger.error(f"Error in research_dictionaries: {e}")
         session.rollback()
         duration = time.perf_counter() - start_time
+        raise e
 
 
 if __name__ == '__main__':

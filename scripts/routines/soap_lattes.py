@@ -14,7 +14,14 @@ from zeep.transports import Transport
 from simcc.core.db.database import get_admin_sync_session, get_sync_session
 from simcc.core.logging import logger
 from simcc.core.logging.context import routine_name_ctx
+from simcc.core.logging.events import (
+    routine_item_error,
+    routine_progress,
+    routine_step_finished,
+    routine_step_started,
+)
 from simcc.core.settings import Settings
+
 
 SETTINGS = Settings()
 
@@ -343,6 +350,8 @@ def main(researcher_ids=None, lattes_ids=None):
 
                 futures[future] = (lattes_id_clean, researcher_id, name)
 
+            routine_step_started("download_cnpq_lattes", total_items=total)
+
             completed = 0
             for future in as_completed(futures):
                 completed += 1
@@ -353,21 +362,38 @@ def main(researcher_ids=None, lattes_ids=None):
 
                     if success:
                         succeeded_count += 1
-                        logger.info(
-                            f'[OK] [{completed}/{total}] Pesquisador {name} (ID: {researcher_id}, Lattes: {lattes_id_clean}): {detail}'
+                        logger.debug(
+                            f"[OK] [{completed}/{total}] Pesquisador {name} (ID: {researcher_id}, Lattes: {lattes_id_clean}): {detail}"
                         )
                     else:
                         failed_count += 1
-                        logger.warning(
-                            f'[NÃO BAIXADO] Pesquisador {name} (ID: {researcher_id}, Lattes: {lattes_id_clean}): Motivo: {detail}'
+                        routine_item_error(
+                            researcher_id,
+                            f"NÃO BAIXADO: {detail}",
+                            name=name,
+                            lattes_id=lattes_id_clean,
                         )
 
                 except Exception as e:
                     failed_count += 1
-                    reason = f'Erro inesperado no processamento: {e}'
-                    logger.error(
-                        f'[NÃO BAIXADO] Pesquisador {name} (ID: {researcher_id}, Lattes: {lattes_id_clean}): Motivo: {reason}'
+                    reason = f"Erro inesperado no processamento: {e}"
+                    routine_item_error(
+                        researcher_id,
+                        reason,
+                        name=name,
+                        lattes_id=lattes_id_clean,
                     )
+
+                if completed % 20 == 0 or completed == total:
+                    routine_progress(
+                        "download_cnpq_lattes",
+                        completed,
+                        total,
+                        succeeded_count,
+                        failed_count,
+                    )
+
+            routine_step_finished("download_cnpq_lattes", total_items=total)
 
         items_succeeded = succeeded_count
         items_failed = failed_count
@@ -383,6 +409,7 @@ def main(researcher_ids=None, lattes_ids=None):
         logger.error(
             f"[INTERROMPIDO] Rotina soap_lattes parou no meio em {end_time.strftime('%Y-%m-%d %H:%M:%S')}. Motivo: {e}"
         )
+
         raise e
     finally:
         if admin_session is not None:

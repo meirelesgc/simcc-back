@@ -6,6 +6,12 @@ import polars as pl
 from sqlalchemy import text
 
 from simcc.core.db.database import get_sync_session
+from simcc.core.logging import logger
+from simcc.core.logging.events import (
+    routine_progress,
+    routine_step_finished,
+    routine_step_started,
+)
 
 
 
@@ -271,9 +277,11 @@ def main(researcher_ids=None, lattes_ids=None):
     start_time = time.perf_counter()
 
     try:
+        routine_step_started("gather_classification_metrics")
         dataframe = list_researchers(session, researcher_ids, lattes_ids)
 
         if dataframe.is_empty():
+            routine_step_finished("gather_classification_metrics", items_found=0)
             return
 
         metrics_calls = [
@@ -340,7 +348,9 @@ def main(researcher_ids=None, lattes_ids=None):
             dataframe = dataframe.join(m_df, how='left', on='researcher_id')
 
         dataframe = dataframe.fill_null(0)
+        routine_step_finished("gather_classification_metrics")
 
+        routine_step_started("update_researcher_classification")
         classes = []
         for row in dataframe.to_dicts():
             classes.append(researcher_classification(row))
@@ -352,7 +362,10 @@ def main(researcher_ids=None, lattes_ids=None):
             WHERE id = :researcher_id
         """)
 
-        for row in dataframe.to_dicts():
+        records = dataframe.to_dicts()
+        items_found = len(records)
+
+        for i, row in enumerate(records):
             session.execute(
                 UPDATE_SQL,
                 {
@@ -360,17 +373,22 @@ def main(researcher_ids=None, lattes_ids=None):
                     'researcher_id': row['researcher_id'],
                 },
             )
+            if (i + 1) % 100 == 0 or (i + 1) == items_found:
+                routine_progress("update_researcher_classification", i + 1, items_found, i + 1, 0)
 
-        items_found = len(classes)
         session.commit()
         items_succeeded = items_found
         items_failed = 0
+        routine_step_finished("update_researcher_classification", total_updated=items_succeeded)
         duration = time.perf_counter() - start_time
     except Exception as e:
         items_succeeded = 0
         items_failed = items_found
+        logger.error(f"Error in researcher_classification: {e}")
         session.rollback()
         duration = time.perf_counter() - start_time
+        raise e
+
 
 
 if __name__ == '__main__':

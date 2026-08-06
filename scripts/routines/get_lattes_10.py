@@ -6,6 +6,13 @@ import httpx
 from sqlalchemy import text
 
 from simcc.core.db.database import get_sync_session
+from simcc.core.logging import logger
+from simcc.core.logging.events import (
+    routine_item_error,
+    routine_progress,
+    routine_step_finished,
+    routine_step_started,
+)
 
 
 def create_legacy_ssl_context() -> ssl.SSLContext:
@@ -30,7 +37,9 @@ def get_lattes_id_10(lattes_id: str) -> str:
         response = client.get(URL, timeout=30.0)
 
         if response.status_code == HTTPStatus.FOUND:
-            return response.headers.get('Location')[-10:]
+            location = response.headers.get('Location', '')
+            if location and len(location) >= 10:
+                return location[-10:]
     return None
 
 
@@ -72,34 +81,50 @@ def main(researcher_ids=None, lattes_ids=None):
         success = 0
         failed = 0
 
+        routine_step_started("fetch_lattes_10", total_items=items_found)
+
         query_update = text("""
             UPDATE researcher
             SET lattes_10_id = :lattes_10_id
             WHERE id = :id;
         """)
 
-        for researcher in researchers:
-            lattes_10_id = get_lattes_id_10(researcher['lattes_id'])
-            session.execute(
-                query_update,
-                {
-                    'id': researcher['researcher_id'],
-                    'lattes_10_id': lattes_10_id,
-                },
-            )
-            if lattes_10_id:
-                success += 1
-            else:
+        for i, researcher in enumerate(researchers):
+            r_id = researcher['researcher_id']
+            l_id = researcher['lattes_id']
+            try:
+                lattes_10_id = get_lattes_id_10(l_id)
+                session.execute(
+                    query_update,
+                    {
+                        'id': r_id,
+                        'lattes_10_id': lattes_10_id,
+                    },
+                )
+                if lattes_10_id:
+                    success += 1
+                    logger.debug(f"Fetched lattes_10_id {lattes_10_id} for researcher {r_id}")
+                else:
+                    failed += 1
+                    routine_item_error(r_id, "Could not resolve lattes_10_id from CNPq redirect", lattes_id=l_id)
+            except Exception as item_err:
                 failed += 1
+                routine_item_error(r_id, str(item_err), lattes_id=l_id)
+
+            if (i + 1) % 50 == 0 or (i + 1) == items_found:
+                routine_progress("fetch_lattes_10", i + 1, items_found, success, failed)
 
         session.commit()
         items_succeeded = success
         items_failed = failed
+        routine_step_finished("fetch_lattes_10")
     except Exception as E:
         items_succeeded = 0
         items_failed = items_found
-        print(E)
+        logger.error(f"Error in get_lattes_10: {E}")
         session.rollback()
+        raise E
+
 
 
 if __name__ == '__main__':

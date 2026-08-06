@@ -8,6 +8,12 @@ from sqlalchemy import text
 from unidecode import unidecode
 
 from simcc.core.db.database import get_sync_session
+from simcc.core.logging import logger
+from simcc.core.logging.events import (
+    routine_progress,
+    routine_step_finished,
+    routine_step_started,
+)
 
 
 barema = {
@@ -207,6 +213,7 @@ def main(researcher_ids=None, lattes_ids=None):
     start_time = time.perf_counter()
 
     try:
+        routine_step_started("calculate_researcher_indprod")
         current_year = datetime.now().year
         YEAR = range(2008, current_year + 1)
         history = pl.DataFrame({'year': list(YEAR)}).with_columns(pl.col('year').cast(pl.Int64))
@@ -246,7 +253,9 @@ def main(researcher_ids=None, lattes_ids=None):
             researchers = researchers.with_columns(pl.lit(0.0).alias('guidance_prod'))
 
         researchers = researchers.fill_null(0.0).with_columns(pl.col('year').cast(pl.Int64))
+        routine_step_finished("calculate_researcher_indprod")
 
+        routine_step_started("insert_researcher_indprod")
         if researcher_ids or lattes_ids:
             base_query = 'DELETE FROM researcher_ind_prod WHERE 1=1'
             params = {}
@@ -297,16 +306,22 @@ def main(researcher_ids=None, lattes_ids=None):
         for i in range(0, len(params), BATCH_SIZE):
             batch = params[i : i + BATCH_SIZE]
             session.execute(query_insert, batch)
+            current_inserted = min(i + BATCH_SIZE, items_found)
+            routine_progress("insert_researcher_indprod", current_inserted, items_found, current_inserted, 0)
 
         session.commit()
         items_succeeded = items_found
         items_failed = 0
+        routine_step_finished("insert_researcher_indprod", total_inserted=items_succeeded)
         duration = time.perf_counter() - start_time
     except Exception as e:
         items_succeeded = 0
         items_failed = items_found
+        logger.error(f"Error in researcher_indprod: {e}")
         session.rollback()
         duration = time.perf_counter() - start_time
+        raise e
+
 
 
 if __name__ == '__main__':

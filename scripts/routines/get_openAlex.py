@@ -10,8 +10,13 @@ from urllib3.util.retry import Retry
 
 from simcc.core.db.database import get_sync_session
 from simcc.core.db.model import OpenAlexArticle, OpenAlexResearcher
-
-
+from simcc.core.logging import logger
+from simcc.core.logging.events import (
+    routine_item_error,
+    routine_progress,
+    routine_step_finished,
+    routine_step_started,
+)
 
 BASE_PATH = Path('storage/openalex')
 
@@ -178,7 +183,9 @@ def process_articles(session):
     success = 0
     failed = 0
 
-    for row in results:
+    routine_step_started("openalex_articles", total_items=found)
+
+    for i, row in enumerate(results):
         article_id = row['id']
         doi = row['doi']
 
@@ -189,6 +196,7 @@ def process_articles(session):
 
             if not payload:
                 failed += 1
+                routine_item_error(article_id, f"OpenAlex returned status {status}", doi=doi)
                 continue
 
             article = extract_article(payload, article_id)
@@ -202,10 +210,15 @@ def process_articles(session):
 
             time.sleep(1)
 
-        except Exception as error:
+        except Exception as e:
             session.rollback()
             failed += 1
-            
+            routine_item_error(article_id, str(e), doi=doi)
+
+        if (i + 1) % 100 == 0 or (i + 1) == found:
+            routine_progress("openalex_articles", i + 1, found, success, failed)
+
+    routine_step_finished("openalex_articles", total_items=found)
     return found, success, failed
 
 
@@ -215,7 +228,9 @@ def process_researchers(session):
     success = 0
     failed = 0
 
-    for row in results:
+    routine_step_started("openalex_researchers", total_items=found)
+
+    for i, row in enumerate(results):
         researcher_id = row['id']
         orcid = row['orcid']
 
@@ -226,6 +241,7 @@ def process_researchers(session):
 
             if not payload:
                 failed += 1
+                routine_item_error(researcher_id, f"OpenAlex returned status {status}", orcid=orcid)
                 continue
 
             researcher = extract_researcher(payload, researcher_id)
@@ -239,11 +255,17 @@ def process_researchers(session):
 
             time.sleep(1)
 
-        except Exception as error:
+        except Exception as e:
             session.rollback()
             failed += 1
-            
+            routine_item_error(researcher_id, str(e), orcid=orcid)
+
+        if (i + 1) % 50 == 0 or (i + 1) == found:
+            routine_progress("openalex_researchers", i + 1, found, success, failed)
+
+    routine_step_finished("openalex_researchers", total_items=found)
     return found, success, failed
+
 
 
 items_found = 0
@@ -261,14 +283,14 @@ def main():
         found_res, success_res, failed_res = process_researchers(session)
 
         found_art, success_art, failed_art = process_articles(session)
-        
+
         items_found = found_res + found_art
         items_succeeded = success_res + success_art
         items_failed = failed_res + failed_art
 
         duration = time.perf_counter() - start
 
-    except Exception as error:
+    except Exception:
         items_succeeded = 0
         items_failed = items_found
         session.rollback()

@@ -4,6 +4,12 @@ import polars as pl
 from sqlalchemy import text
 
 from simcc.core.db.database import get_sync_session
+from simcc.core.logging import logger
+from simcc.core.logging.events import (
+    routine_progress,
+    routine_step_finished,
+    routine_step_started,
+)
 
 
 def list_researchers(session, researcher_ids=None, lattes_ids=None):
@@ -152,22 +158,33 @@ def main(researcher_ids=None, lattes_ids=None):
     session = next(get_sync_session())
 
     try:
-        delete_researcher_production(session, researcher_ids, lattes_ids)
+        routine_step_started("gather_researcher_production")
+        delete_researcher_production(
+            session, researcher_ids=researcher_ids, lattes_ids=lattes_ids
+        )
+
+        researchers = list_researchers(
+            session, researcher_ids=researcher_ids, lattes_ids=lattes_ids
+        )
+        if not researchers:
+            routine_step_finished("gather_researcher_production", items_found=0)
+            return
 
         def to_df(data, schema):
-            return pl.DataFrame(data, schema=schema)
+            return (
+                pl.DataFrame(data, schema=schema)
+                if data
+                else pl.DataFrame(schema=schema)
+            )
 
         researchers = to_df(
-            list_researchers(session, researcher_ids, lattes_ids),
+            researchers,
             {
                 'researcher_id': pl.String,
                 'name': pl.String,
                 'lattes_id': pl.String,
             },
         )
-
-        if researchers.is_empty():
-            return
 
         b_production = to_df(
             bibliographic_production_count(session),
@@ -244,7 +261,9 @@ def main(researcher_ids=None, lattes_ids=None):
         researchers = researchers.with_columns([
             pl.col(c).fill_null(0) for c in numeric_cols
         ])
+        routine_step_finished("gather_researcher_production")
 
+        routine_step_started("insert_researcher_production")
         insert_query = text("""
             INSERT INTO researcher_production
                 (researcher_id, articles, book_chapters,
@@ -259,16 +278,22 @@ def main(researcher_ids=None, lattes_ids=None):
         records = researchers.to_dicts()
         items_found = len(records)
 
-        for researcher in records:
+        for i, researcher in enumerate(records):
             session.execute(insert_query, researcher)
+            if (i + 1) % 100 == 0 or (i + 1) == items_found:
+                routine_progress("insert_researcher_production", i + 1, items_found, i + 1, 0)
+
         session.commit()
         items_succeeded = items_found
         items_failed = 0
+        routine_step_finished("insert_researcher_production", total_inserted=items_succeeded)
 
     except Exception as E:
         items_succeeded = 0
         items_failed = items_found
+        logger.error(f"Error in researcher_production: {E}")
         session.rollback()
+        raise E
 
 
 if __name__ == '__main__':

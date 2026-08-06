@@ -76,6 +76,53 @@ def routine_error(routine_name: str, duration: float, error: str, **kwargs) -> N
         **kwargs
     )
 
+def routine_step_started(step_name: str, **kwargs) -> None:
+    message = f"Routine step started: {step_name}"
+    logger.info(
+        LogEvent.ROUTINE_STEP_STARTED,
+        message=message,
+        category=LogCategory.ROUTINE,
+        step_name=step_name,
+        **kwargs
+    )
+
+def routine_step_finished(step_name: str, duration: Optional[float] = None, **kwargs) -> None:
+    message = f"Routine step finished: {step_name}"
+    logger.info(
+        LogEvent.ROUTINE_STEP_FINISHED,
+        message=message,
+        category=LogCategory.ROUTINE,
+        step_name=step_name,
+        duration=duration,
+        **kwargs
+    )
+
+def routine_progress(step_name: str, current: int, total: int, succeeded: int, failed: int, **kwargs) -> None:
+    message = f"Routine progress [{current}/{total}]: {step_name}"
+    logger.info(
+        LogEvent.ROUTINE_PROGRESS,
+        message=message,
+        category=LogCategory.ROUTINE,
+        step_name=step_name,
+        current=current,
+        total=total,
+        succeeded=succeeded,
+        failed=failed,
+        **kwargs
+    )
+
+def routine_item_error(item_id: str, error: str, **kwargs) -> None:
+    message = f"Routine item error ({item_id}): {error}"
+    logger.warning(
+        LogEvent.ROUTINE_ITEM_ERROR,
+        message=message,
+        category=LogCategory.ROUTINE,
+        item_id=str(item_id),
+        error_message=error,
+        **kwargs
+    )
+
+
 def query_error(operation_name: str, database_name: str, error: str, duration: Optional[float] = None, sql: Optional[str] = None, **kwargs) -> None:
     message = f"Database query error in operation: {operation_name} on db: {database_name}"
     
