@@ -759,9 +759,15 @@ class DimTecnicalProductionTermsQuery(BaseQuery):
         return r"""
 
         WITH unified_data AS (
-            SELECT id::TEXT, 'BIBLIOGRAPHIC_PRODUCTION' AS type_,
+            SELECT id::TEXT, 'PATENT' AS type_,
                 translate(title,'-\.:,;''', ' ') AS title
-            FROM bibliographic_production
+            FROM patent
+            UNION ALL
+            SELECT id, 'BRAND', translate(title,'-\.:,;''', ' ') AS title
+            FROM brand
+            UNION ALL
+            SELECT id, 'SOFTWARE', translate(title,'-\.:,;''', ' ') AS title
+            FROM software
         ),
         word_split AS (
             SELECT id, type_,
@@ -779,7 +785,7 @@ class DimTecnicalProductionTermsQuery(BaseQuery):
         ),
         ranked_words AS (
             SELECT id, type_, word, frequency,
-            RANK() OVER (PARTITION BY id ORDER BY frequency DESC) AS rank
+                RANK() OVER (PARTITION BY id ORDER BY frequency DESC) AS rank
             FROM word_count
         )
         SELECT id, type_, UNNEST(ARRAY_AGG(ranked_words.word)) AS term
