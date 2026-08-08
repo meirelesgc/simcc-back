@@ -719,7 +719,7 @@ class DimBibliographicProductionTermsQuery(BaseQuery):
     def build_sql(self) -> str:
         return r"""
         WITH unified_data AS (
-            SELECT id, 'BIBLIOGRAPHIC_PRODUCTION' AS type_,
+            SELECT id::TEXT, 'BIBLIOGRAPHIC_PRODUCTION' AS type_,
                 translate(title,'-\.:,;''', ' ') AS title
             FROM bibliographic_production
         ),
@@ -759,7 +759,7 @@ class DimTecnicalProductionTermsQuery(BaseQuery):
         return r"""
 
         WITH unified_data AS (
-            SELECT id, 'BIBLIOGRAPHIC_PRODUCTION' AS type_,
+            SELECT id::TEXT, 'BIBLIOGRAPHIC_PRODUCTION' AS type_,
                 translate(title,'-\.:,;''', ' ') AS title
             FROM bibliographic_production
         ),
