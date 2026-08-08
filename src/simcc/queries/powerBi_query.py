@@ -747,7 +747,7 @@ class DimBibliographicProductionTermsQuery(BaseQuery):
         WHERE 1 = 1
             AND rank <= 20
             AND CHAR_LENGTH(word) > 3
-            AND TRIM(word) <> ALL(%(stopwords)s)
+            AND TRIM(word) <> ALL(:stopwords)
         GROUP BY id, type_
         ORDER BY id;
         """
@@ -787,7 +787,7 @@ class DimTecnicalProductionTermsQuery(BaseQuery):
         WHERE 1 = 1
             AND rank <= 20
             AND CHAR_LENGTH(word) > 3
-            AND TRIM(word) <> ALL(%(stopwords)s)
+            AND TRIM(word) <> ALL(:stopwords)
         GROUP BY id, type_
         ORDER BY id;
         """
