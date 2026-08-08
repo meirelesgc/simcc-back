@@ -1,4 +1,5 @@
 from typing import override
+
 from simcc.queries.base import BaseQuery
 
 
@@ -716,10 +717,10 @@ class FatResearchProjectFomentQuery(BaseQuery):
 class DimBibliographicProductionTermsQuery(BaseQuery):
     @override
     def build_sql(self) -> str:
-        return """
+        return r"""
         WITH unified_data AS (
             SELECT id, 'BIBLIOGRAPHIC_PRODUCTION' AS type_,
-                translate(title,'-\\.:,;''', ' ') AS title
+                translate(title,'-\.:,;''', ' ') AS title
             FROM bibliographic_production
         ),
         word_split AS (
@@ -727,7 +728,7 @@ class DimBibliographicProductionTermsQuery(BaseQuery):
                 unnest(
                 string_to_array(
                 lower(
-                regexp_replace(title, '[^a-zA-Z0-9\\\\s]', '', 'g')), ' ')) AS word
+                regexp_replace(title, '[^a-zA-Z0-9\s]', '', 'g')), ' ')) AS word
             FROM unified_data
         ),
         word_count AS (
@@ -741,12 +742,12 @@ class DimBibliographicProductionTermsQuery(BaseQuery):
             RANK() OVER (PARTITION BY id ORDER BY frequency DESC) AS rank
             FROM word_count
         )
-        SELECT id::TEXT, type_::TEXT, (UNNEST(ARRAY_AGG(ranked_words.word)))::TEXT AS term
+        SELECT id, type_, UNNEST(ARRAY_AGG(ranked_words.word)) AS term
         FROM ranked_words
         WHERE 1 = 1
             AND rank <= 20
             AND CHAR_LENGTH(word) > 3
-            AND TRIM(word) <> ALL(:stopwords)
+            AND TRIM(word) <> ALL(%(stopwords)s)
         GROUP BY id, type_
         ORDER BY id;
         """
@@ -755,24 +756,19 @@ class DimBibliographicProductionTermsQuery(BaseQuery):
 class DimTecnicalProductionTermsQuery(BaseQuery):
     @override
     def build_sql(self) -> str:
-        return """
+        return r"""
+
         WITH unified_data AS (
-            SELECT id, 'PATENT' AS type_,
-                translate(title,'-\\.:,;''', ' ') AS title
-            FROM patent
-            UNION ALL
-            SELECT id, 'BRAND', translate(title,'-\\.:,;''', ' ') AS title
-            FROM brand
-            UNION ALL
-            SELECT id, 'SOFTWARE', translate(title,'-\\.:,;''', ' ') AS title
-            FROM software
+            SELECT id, 'BIBLIOGRAPHIC_PRODUCTION' AS type_,
+                translate(title,'-\.:,;''', ' ') AS title
+            FROM bibliographic_production
         ),
         word_split AS (
             SELECT id, type_,
                 unnest(
                 string_to_array(
                 lower(
-                regexp_replace(title, '[^a-zA-Z0-9\\\\s]', '', 'g')), ' ')) AS word
+                regexp_replace(title, '[^a-zA-Z0-9\s]', '', 'g')), ' ')) AS word
             FROM unified_data
         ),
         word_count AS (
@@ -783,15 +779,15 @@ class DimTecnicalProductionTermsQuery(BaseQuery):
         ),
         ranked_words AS (
             SELECT id, type_, word, frequency,
-                RANK() OVER (PARTITION BY id ORDER BY frequency DESC) AS rank
+            RANK() OVER (PARTITION BY id ORDER BY frequency DESC) AS rank
             FROM word_count
         )
-        SELECT id::TEXT, type_::TEXT, (UNNEST(ARRAY_AGG(ranked_words.word)))::TEXT AS term
+        SELECT id, type_, UNNEST(ARRAY_AGG(ranked_words.word)) AS term
         FROM ranked_words
         WHERE 1 = 1
             AND rank <= 20
             AND CHAR_LENGTH(word) > 3
-            AND TRIM(word) <> ALL(:stopwords)
+            AND TRIM(word) <> ALL(%(stopwords)s)
         GROUP BY id, type_
         ORDER BY id;
         """
