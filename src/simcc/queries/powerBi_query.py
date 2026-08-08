@@ -757,45 +757,44 @@ class DimTecnicalProductionTermsQuery(BaseQuery):
     @override
     def build_sql(self) -> str:
         return r"""
-
-        WITH unified_data AS (
-            SELECT id::TEXT, 'PATENT' AS type_,
-                translate(title,'-\.:,;''', ' ') AS title
-            FROM patent
-            UNION ALL
-            SELECT id, 'BRAND', translate(title,'-\.:,;''', ' ') AS title
-            FROM brand
-            UNION ALL
-            SELECT id, 'SOFTWARE', translate(title,'-\.:,;''', ' ') AS title
-            FROM software
-        ),
-        word_split AS (
-            SELECT id, type_,
-                unnest(
-                string_to_array(
-                lower(
-                regexp_replace(title, '[^a-zA-Z0-9\s]', '', 'g')), ' ')) AS word
-            FROM unified_data
-        ),
-        word_count AS (
-            SELECT id, type_, word, COUNT(*) AS frequency
-            FROM word_split
-            WHERE word <> ''
-            GROUP BY id, type_, word
-        ),
-        ranked_words AS (
-            SELECT id, type_, word, frequency,
-                RANK() OVER (PARTITION BY id ORDER BY frequency DESC) AS rank
-            FROM word_count
-        )
-        SELECT id, type_, UNNEST(ARRAY_AGG(ranked_words.word)) AS term
-        FROM ranked_words
-        WHERE 1 = 1
-            AND rank <= 20
-            AND CHAR_LENGTH(word) > 3
-            AND TRIM(word) <> ALL(:stopwords)
-        GROUP BY id, type_
-        ORDER BY id;
+WITH unified_data AS (
+    SELECT id::TEXT, 'PATENT' AS type_,
+        translate(title,'-\.:,;''', ' ') AS title
+    FROM patent
+    UNION ALL
+    SELECT id::TEXT, 'BRAND', translate(title,'-\.:,;''', ' ') AS title
+    FROM brand
+    UNION ALL
+    SELECT id::TEXT, 'SOFTWARE', translate(title,'-\.:,;''', ' ') AS title
+    FROM software
+),
+word_split AS (
+    SELECT id, type_,
+        unnest(
+        string_to_array(
+        lower(
+        regexp_replace(title, '[^a-zA-Z0-9\s]', '', 'g')), ' ')) AS word
+    FROM unified_data
+),
+word_count AS (
+    SELECT id, type_, word, COUNT(*) AS frequency
+    FROM word_split
+    WHERE word <> ''
+    GROUP BY id, type_, word
+),
+ranked_words AS (
+    SELECT id, type_, word, frequency,
+        RANK() OVER (PARTITION BY id ORDER BY frequency DESC) AS rank
+    FROM word_count
+)
+SELECT id, type_, UNNEST(ARRAY_AGG(ranked_words.word)) AS term
+FROM ranked_words
+WHERE 1 = 1
+    AND rank <= 20
+    AND CHAR_LENGTH(word) > 3
+    AND TRIM(word) <> ALL(:stopwords)
+GROUP BY id, type_
+ORDER BY id;
         """
 
 
