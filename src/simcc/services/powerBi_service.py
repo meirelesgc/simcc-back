@@ -907,19 +907,6 @@ async def dim_logs_routine(session):
     df.write_csv(os.path.join(PATH, 'dim_logs_routine.csv'))
 
 
-async def fat_logs_routine(session):
-    data = await powerBi_repo.get_fat_logs_routine(session)
-    df_schema = {
-        'type': pl.Utf8,
-        'error': pl.Utf8,
-        'detail': pl.Utf8,
-        'created_at': pl.Utf8,
-    }
-    df = pl.DataFrame(data, schema=df_schema)
-    df = df.with_row_index(name='')
-    df.write_csv(os.path.join(PATH, 'fat_logs_routine.csv'))
-
-
 async def fat_event_organization(session):
     data = await powerBi_repo.get_fat_event_organization(session)
     df_schema = {

@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """CLI Script for cleaning up logs older than LOG_RETENTION_DAYS (default 7 days)."""
+
 import argparse
-import sys
+
 from simcc.core.logging.cleanup import clean_old_logs
 
 

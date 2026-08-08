@@ -25,6 +25,9 @@ from simcc.core.logging.events import (
     routine_error,
     routine_finished,
     routine_started,
+    script_error,
+    script_finished,
+    script_started,
 )
 
 
@@ -100,6 +103,11 @@ def test_event_helpers(tmp_path, monkeypatch):
     routine_finished('import_xml', 1200.0)
     routine_error('import_xml', 1500.0, 'Disk full')
 
+    # Test Script events
+    script_started('test_script')
+    script_finished('test_script', 300.0, items_found=10, items_succeeded=10)
+    script_error('test_script', 50.0, 'Scraper error')
+
     # Test Database event
     query_error(
         'find_by_id',
@@ -113,8 +121,22 @@ def test_event_helpers(tmp_path, monkeypatch):
     filepath = tmp_path / f'{date_str}.jsonl'
     lines = filepath.read_text().splitlines()
 
-    # 7 logs emitted
-    assert len(lines) == 7
+    # 10 logs emitted
+    assert len(lines) == 10
+
+    # Verify script.started
+    log_s_start = json.loads(lines[6])
+    assert log_s_start['category'] == 'script'
+    assert log_s_start['event'] == 'script.started'
+    assert log_s_start['data']['script_name'] == 'test_script'
+
+    # Verify script.finished
+    log_s_fin = json.loads(lines[7])
+    assert log_s_fin['category'] == 'script'
+    assert log_s_fin['event'] == 'script.finished'
+    assert log_s_fin['duration'] == 300.0
+    assert log_s_fin['data']['items_found'] == 10
+
 
     # Verify request.received
     log_rec = json.loads(lines[0])
@@ -136,7 +158,7 @@ def test_event_helpers(tmp_path, monkeypatch):
     assert log_err['data']['error_message'] == 'Timeout'
 
     # Verify database query.error
-    log_db = json.loads(lines[6])
+    log_db = json.loads(lines[9])
     assert log_db['category'] == 'database'
     assert log_db['event'] == 'query.error'
     assert log_db['data']['operation_name'] == 'find_by_id'
