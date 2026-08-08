@@ -38,7 +38,7 @@ services:
     image: gleidsoncosta/simcc-extrator:latest
     mem_limit: 4g
     environment:
-      HOP_RUN_CONFIG=local
+      HOP_RUN_CONFIG: local
       HOP_LOG_LEVEL: Basic
       HOP_PROJECT_NAME: Jade-Extrator
       HOP_PROJECT_FOLDER: /files/jade-extrator
