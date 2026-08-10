@@ -15,7 +15,6 @@ from simcc.core.logging.events import (
 )
 
 
-
 def normalize_string(s):
     if not isinstance(s, str):
         return str(s) if s is not None else ''
@@ -56,7 +55,7 @@ def get_researchers_mapping(session):
         )
     df_res = pl.DataFrame(
         result,
-        schema_overrides={'researcher_id': pl.String, 'name': pl.String}
+        schema_overrides={'researcher_id': pl.String, 'name': pl.String},
     )
     df_res = df_res.with_columns(
         pl
@@ -77,10 +76,7 @@ def get_programs_mapping(session):
         )
     return pl.DataFrame(
         result,
-        schema_overrides={
-            'graduate_program_id': pl.String,
-            'code': pl.String
-        }
+        schema_overrides={'graduate_program_id': pl.String, 'code': pl.String},
     )
 
 
@@ -93,7 +89,7 @@ def main():
     global items_found, items_succeeded, items_failed
     session = next(get_admin_sync_session())
     try:
-        routine_step_started("load_and_match_gp_researchers_csv")
+        routine_step_started('load_and_match_gp_researchers_csv')
         df = load_researchers_csv()
         items_found = len(df)
         required_cols = {'nome', 'id do programa', 'categoria'}
@@ -127,14 +123,18 @@ def main():
                 how='left',
             )
         else:
-            df = df.with_columns(pl.lit(None, dtype=pl.String).alias('researcher_id'))
+            df = df.with_columns(
+                pl.lit(None, dtype=pl.String).alias('researcher_id')
+            )
 
         if not df_prog.is_empty():
             df = df.join(
                 df_prog, left_on='id do programa', right_on='code', how='left'
             )
         else:
-            df = df.with_columns(pl.lit(None, dtype=pl.String).alias('graduate_program_id'))
+            df = df.with_columns(
+                pl.lit(None, dtype=pl.String).alias('graduate_program_id')
+            )
 
         years = [2026, 2025, 2024, 2023]
         stats = Counter()
@@ -149,12 +149,20 @@ def main():
 
             if r_id is None:
                 stats['Barrado: pesquisador nao encontrado'] += 1
-                routine_item_error(name, "Pesquisador não encontrado no banco", programa_codigo=pg_code)
+                routine_item_error(
+                    name,
+                    'Pesquisador não encontrado no banco',
+                    programa_codigo=pg_code,
+                )
                 continue
 
             if pg_id is None:
                 stats['Barrado: programa nao encontrado'] += 1
-                routine_item_error(name, "Programa de pós não encontrado no banco", programa_codigo=pg_code)
+                routine_item_error(
+                    name,
+                    'Programa de pós não encontrado no banco',
+                    programa_codigo=pg_code,
+                )
                 continue
 
             for year in years:
@@ -167,14 +175,24 @@ def main():
             stats['Processado'] += 1
 
             if (idx + 1) % 50 == 0 or (idx + 1) == items_found:
-                routine_progress("load_and_match_gp_researchers_csv", idx + 1, items_found, stats['Processado'], items_found - stats['Processado'])
+                routine_progress(
+                    'load_and_match_gp_researchers_csv',
+                    idx + 1,
+                    items_found,
+                    stats['Processado'],
+                    items_found - stats['Processado'],
+                )
 
         items_succeeded = stats['Processado']
         items_failed = items_found - items_succeeded
-        routine_step_finished("load_and_match_gp_researchers_csv", total_matched=items_succeeded, total_failed=items_failed)
+        routine_step_finished(
+            'load_and_match_gp_researchers_csv',
+            total_matched=items_succeeded,
+            total_failed=items_failed,
+        )
 
         if records_to_insert:
-            routine_step_started("upsert_graduate_program_researchers")
+            routine_step_started('upsert_graduate_program_researchers')
             query_insert = text("""
                 INSERT INTO public.graduate_program_researcher
                     (graduate_program_id, researcher_id, year, type_)
@@ -184,15 +202,19 @@ def main():
                     type_ = EXCLUDED.type_;
             """)
             session.execute(query_insert, records_to_insert)
-            routine_step_finished("upsert_graduate_program_researchers", total_records=len(records_to_insert))
+            routine_step_finished(
+                'upsert_graduate_program_researchers',
+                total_records=len(records_to_insert),
+            )
 
         session.commit()
     except Exception as E:
         items_failed = items_found - items_succeeded
-        logger.error(f"Erro na execucao da rotina sync_gp_researchers: {str(E)}")
+        logger.error(
+            f'Erro na execucao da rotina sync_gp_researchers: {str(E)}'
+        )
         session.rollback()
         raise E
-
 
 
 if __name__ == '__main__':
