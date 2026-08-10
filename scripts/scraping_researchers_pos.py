@@ -229,11 +229,16 @@ class SucupiraDocenteSpider(scrapy.Spider):
         for opt in options:
             val = opt.attrib.get('value')
             txt = opt.text or ''
-            if val and val != '-1' and '(' in txt:
-                code_m = re.search(r'\((.*?)\)', txt)
+            if val and val != '-1':
+                code_m = re.search(r'\b(\d+P\d+)\b', txt)
                 if code_m:
                     prog_code = code_m.group(1).strip()
                     programs.append((val, prog_code, txt))
+                elif '(' in txt:
+                    fallback_m = re.search(r'\((.*?)\)', txt)
+                    if fallback_m:
+                        prog_code = fallback_m.group(1).strip()
+                        programs.append((val, prog_code, txt))
 
         script_step_finished(
             f'institution_lookup_{acronym}',
