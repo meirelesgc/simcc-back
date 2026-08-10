@@ -415,24 +415,24 @@ class SucupiraDocenteSpider(scrapy.Spider):
 
 def fetch_institution_acronyms() -> List[str]:
     try:
-        session = next(get_admin_sync_session())
-        res = session.execute(
-            text(
-                'SELECT DISTINCT acronym FROM institution '
-                "WHERE acronym IS NOT NULL AND acronym != ''"
+        for session in get_admin_sync_session():
+            res = session.execute(
+                text(
+                    'SELECT DISTINCT acronym FROM institution '
+                    "WHERE acronym IS NOT NULL AND acronym != ''"
+                )
             )
-        )
-        acronyms = [
-            row.acronym.strip()
-            for row in res
-            if row.acronym and row.acronym.strip()
-        ]
-        if acronyms:
-            return acronyms
+            acronyms = [
+                row.acronym.strip()
+                for row in res
+                if row.acronym and row.acronym.strip()
+            ]
+            if acronyms:
+                return acronyms
     except Exception as e:
         logger.warning(f'Could not fetch institution acronyms from DB: {e}')
 
-    return ['UFBA']
+    return []
 
 
 def main():
@@ -448,7 +448,7 @@ def main():
     parser.add_argument(
         '--output',
         type=str,
-        default='researchers_pos.csv',
+        default='storage/seed/program_researchers.csv',
         help='Output CSV file path',
     )
     parser.add_argument(
@@ -465,10 +465,42 @@ def main():
 
     start_time = time.perf_counter()
 
+    db_acronyms = fetch_institution_acronyms()
+
+    if not db_acronyms:
+        logger.warning('No institution acronyms found in administrative DB.')
+
     if args.acronyms:
-        acronyms = [a.strip() for a in args.acronyms.split(',') if a.strip()]
+        requested_acronyms = [
+            a.strip() for a in args.acronyms.split(',') if a.strip()
+        ]
+        db_acronyms_upper = {a.upper() for a in db_acronyms}
+        acronyms = [
+            a for a in requested_acronyms if a.upper() in db_acronyms_upper
+        ]
+        ignored = [
+            a for a in requested_acronyms if a.upper() not in db_acronyms_upper
+        ]
+        if ignored:
+            logger.warning(
+                'Some requested acronyms were not found in administrative DB and will be ignored',
+                ignored_acronyms=ignored,
+            )
     else:
-        acronyms = fetch_institution_acronyms()
+        acronyms = db_acronyms
+
+    if not acronyms:
+        logger.warning('No matching institution acronyms to scrape.')
+        duration_ms = (time.perf_counter() - start_time) * 1000.0
+        script_finished(
+            script_name,
+            duration_ms,
+            items_found=0,
+            items_succeeded=0,
+            items_failed=0,
+            programs_scraped=0,
+        )
+        return
 
     logger.info('Acronyms to scrape', acronyms=acronyms)
 
