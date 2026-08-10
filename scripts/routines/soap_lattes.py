@@ -1,6 +1,5 @@
 import argparse
 import os
-import sys
 import time
 import zipfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -21,7 +20,6 @@ from simcc.core.logging.events import (
     routine_step_started,
 )
 from simcc.core.settings import Settings
-
 
 SETTINGS = Settings()
 
@@ -139,7 +137,8 @@ def cnpq_att(lattes_id):
 def database_att(session, lattes_id):
     try:
         result = (
-            session.execute(
+            session
+            .execute(
                 text(
                     """
                     SELECT last_update
@@ -158,7 +157,10 @@ def database_att(session, lattes_id):
 
         return datetime.min, None
     except Exception as e:
-        return None, f'Falha ao consultar última atualização no banco de dados: {e}'
+        return (
+            None,
+            f'Falha ao consultar última atualização no banco de dados: {e}',
+        )
 
 
 def download_xml(lattes_id, researcher_id, name=None):
@@ -254,7 +256,7 @@ def main(researcher_ids=None, lattes_ids=None):
         routine_name_ctx.set('soap_lattes')
     start_time = datetime.now()
     logger.info(
-        f"[INÍCIO] Rotina soap_lattes iniciada em {start_time.strftime('%Y-%m-%d %H:%M:%S')}"
+        f'[INÍCIO] Rotina soap_lattes iniciada em {start_time.strftime("%Y-%m-%d %H:%M:%S")}'
     )
 
     admin_session = None
@@ -308,10 +310,12 @@ def main(researcher_ids=None, lattes_ids=None):
             os.makedirs(XML_PATH, exist_ok=True)
 
         if not researchers:
-            logger.warning('Nenhum pesquisador encontrado com os parâmetros informados.')
+            logger.warning(
+                'Nenhum pesquisador encontrado com os parâmetros informados.'
+            )
             end_time = datetime.now()
             logger.info(
-                f"[FIM] Rotina soap_lattes encerrada em {end_time.strftime('%Y-%m-%d %H:%M:%S')}. Total: 0 | Baixados: 0 | Não baixados: 0"
+                f'[FIM] Rotina soap_lattes encerrada em {end_time.strftime("%Y-%m-%d %H:%M:%S")}. Total: 0 | Baixados: 0 | Não baixados: 0'
             )
             return
 
@@ -350,7 +354,7 @@ def main(researcher_ids=None, lattes_ids=None):
 
                 futures[future] = (lattes_id_clean, researcher_id, name)
 
-            routine_step_started("download_cnpq_lattes", total_items=total)
+            routine_step_started('download_cnpq_lattes', total_items=total)
 
             completed = 0
             for future in as_completed(futures):
@@ -363,20 +367,20 @@ def main(researcher_ids=None, lattes_ids=None):
                     if success:
                         succeeded_count += 1
                         logger.debug(
-                            f"[OK] [{completed}/{total}] Pesquisador {name} (ID: {researcher_id}, Lattes: {lattes_id_clean}): {detail}"
+                            f'[OK] [{completed}/{total}] Pesquisador {name} (ID: {researcher_id}, Lattes: {lattes_id_clean}): {detail}'
                         )
                     else:
                         failed_count += 1
                         routine_item_error(
                             researcher_id,
-                            f"NÃO BAIXADO: {detail}",
+                            f'NÃO BAIXADO: {detail}',
                             name=name,
                             lattes_id=lattes_id_clean,
                         )
 
                 except Exception as e:
                     failed_count += 1
-                    reason = f"Erro inesperado no processamento: {e}"
+                    reason = f'Erro inesperado no processamento: {e}'
                     routine_item_error(
                         researcher_id,
                         reason,
@@ -386,14 +390,14 @@ def main(researcher_ids=None, lattes_ids=None):
 
                 if completed % 20 == 0 or completed == total:
                     routine_progress(
-                        "download_cnpq_lattes",
+                        'download_cnpq_lattes',
                         completed,
                         total,
                         succeeded_count,
                         failed_count,
                     )
 
-            routine_step_finished("download_cnpq_lattes", total_items=total)
+            routine_step_finished('download_cnpq_lattes', total_items=total)
 
         items_succeeded = succeeded_count
         items_failed = failed_count
@@ -401,13 +405,13 @@ def main(researcher_ids=None, lattes_ids=None):
         end_time = datetime.now()
         duration_str = str(end_time - start_time).split('.')[0]
         logger.info(
-            f"[FIM] Rotina soap_lattes encerrada em {end_time.strftime('%Y-%m-%d %H:%M:%S')} (Duração: {duration_str}). Total: {total} | Baixados com sucesso: {succeeded_count} | Não baixados: {failed_count}"
+            f'[FIM] Rotina soap_lattes encerrada em {end_time.strftime("%Y-%m-%d %H:%M:%S")} (Duração: {duration_str}). Total: {total} | Baixados com sucesso: {succeeded_count} | Não baixados: {failed_count}'
         )
 
     except Exception as e:
         end_time = datetime.now()
         logger.error(
-            f"[INTERROMPIDO] Rotina soap_lattes parou no meio em {end_time.strftime('%Y-%m-%d %H:%M:%S')}. Motivo: {e}"
+            f'[INTERROMPIDO] Rotina soap_lattes parou no meio em {end_time.strftime("%Y-%m-%d %H:%M:%S")}. Motivo: {e}'
         )
 
         raise e

@@ -48,6 +48,14 @@ async def stream_logs(websocket: WebSocket):
         )  # Policy Violation / Too many connections
         return
 
+    token = websocket.query_params.get('token')
+    expected_token = (
+        getattr(settings, 'LOG_WEBSOCKET_TOKEN', None) or FALLBACK_TOKEN
+    )
+    if not token or token != expected_token:
+        await websocket.close(code=4003)
+        return
+
     await websocket.accept()
 
     q = asyncio.Queue()

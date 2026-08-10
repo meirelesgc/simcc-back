@@ -136,10 +136,24 @@ def format_schema_processor(logger, method_name, event_dict):
             'items_succeeded': None,
             'items_failed': None,
         }
+    elif category == 'script':
+        data_dict = {
+            'script_name': ctx.get('script_name'),
+            'error_message': None,
+            'items_found': None,
+            'items_succeeded': None,
+            'items_failed': None,
+        }
     else:
         # 'system', 'frontend' or other categories
         data_dict = {}
-        for key in ['route', 'method', 'user_id', 'routine_name']:
+        for key in [
+            'route',
+            'method',
+            'user_id',
+            'routine_name',
+            'script_name',
+        ]:
             val = ctx.get(key)
             if val is not None:
                 data_dict[key] = val
