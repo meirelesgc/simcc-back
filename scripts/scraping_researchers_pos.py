@@ -48,72 +48,93 @@ class SucupiraDocenteSpider(scrapy.Spider):
         self.stats_container = (
             stats_container if stats_container is not None else {}
         )
+        self.stats_container.setdefault('institutions', {})
+        self.stats_container.setdefault('total_programs_scraped', 0)
+        self.stats_container.setdefault('total_docentes_scraped', 0)
         self.programs_scraped_count = 0
         self.stopped = False
 
     def parse(self, response):
+        if self.stopped:
+            return
+
+        inst_idx = response.meta.get('inst_idx', 0)
+        if inst_idx >= len(self.acronyms):
+            return
+
+        acronym = self.acronyms[inst_idx]
+        script_step_started(f'institution_lookup_{acronym}')
+        print(f"🔎 [{acronym}] Conectando e pesquisando instituição na Sucupira...")
+
         view_state = response.xpath(
             '//input[@name="javax.faces.ViewState"]/@value'
         ).get()
         action_url = response.xpath('//form[@id="form"]/@action').get()
         if not action_url or not view_state:
-            script_item_error(
-                'initial_page',
-                'Could not find initial ViewState or form action URL',
-            )
+            error_msg = 'Could not find initial ViewState or form action URL'
+            print(f"❌ [{acronym}] Erro na página inicial da Sucupira: {error_msg}")
+            script_item_error(acronym, error_msg)
+            yield from self._next_institution_or_stop(inst_idx, response.url)
             return
 
         if not action_url.startswith('http'):
             action_url = response.urljoin(action_url)
 
-        for idx, acronym in enumerate(self.acronyms):
-            if self.stopped:
-                break
-            script_step_started(f'institution_lookup_{acronym}')
+        ajax_payload = {
+            'form': 'form',
+            'form:j_idt33:ano': str(self.year),
+            'form:j_idt33:inst:input': acronym,
+            'javax.faces.ViewState': view_state,
+            'javax.faces.partial.ajax': 'true',
+            'javax.faces.source': 'form:j_idt33:inst:input',
+            'javax.faces.partial.execute': 'form:j_idt33:inst:input',
+            'javax.faces.partial.render': 'form:j_idt33:inst:listbox',
+            'javax.faces.behavior.event': 'valueChange',
+        }
 
-            ajax_payload = {
-                'form': 'form',
-                'form:j_idt33:ano': str(self.year),
-                'form:j_idt33:inst:input': acronym,
-                'javax.faces.ViewState': view_state,
-                'javax.faces.partial.ajax': 'true',
-                'javax.faces.source': 'form:j_idt33:inst:input',
-                'javax.faces.partial.execute': 'form:j_idt33:inst:input',
-                'javax.faces.partial.render': 'form:j_idt33:inst:listbox',
-                'javax.faces.behavior.event': 'valueChange',
-            }
+        headers = {
+            'Faces-Request': 'partial/ajax',
+            'X-Requested-With': 'XMLHttpRequest',
+        }
 
-            headers = {
-                'Faces-Request': 'partial/ajax',
-                'X-Requested-With': 'XMLHttpRequest',
-            }
-
-            yield scrapy.FormRequest(
-                url=action_url,
-                formdata=ajax_payload,
-                headers=headers,
-                callback=self.parse_inst_lookup,
-                meta={
-                    'acronym': acronym,
-                    'view_state': view_state,
-                    'action_url': action_url,
-                    'cookiejar': idx,
-                },
-                dont_filter=True,
-            )
+        yield scrapy.FormRequest(
+            url=action_url,
+            formdata=ajax_payload,
+            headers=headers,
+            callback=self.parse_inst_lookup,
+            meta={
+                'acronym': acronym,
+                'inst_idx': inst_idx,
+                'view_state': view_state,
+                'action_url': action_url,
+                'cookiejar': inst_idx,
+            },
+            dont_filter=True,
+        )
 
     def parse_inst_lookup(self, response):
         if self.stopped:
             return
 
         acronym = response.meta['acronym']
+        inst_idx = response.meta['inst_idx']
         action_url = response.meta['action_url']
         view_state = response.meta['view_state']
 
         try:
             xml_doc = etree.fromstring(response.body)
         except Exception as e:
-            script_item_error(acronym, f'XML parse error: {e}')
+            err_msg = f'XML parse error: {e}'
+            print(f"⚠️  [{acronym}] Erro ao analisar XML de resposta: {err_msg}")
+            script_item_error(acronym, err_msg)
+            self.stats_container['institutions'][acronym] = {
+                'status': 'ERROR',
+                'error': err_msg,
+                'programs_found': 0,
+                'programs_scraped': 0,
+                'docentes_scraped': 0,
+            }
+            yield from self._next_institution_or_stop(inst_idx, action_url)
             return
 
         vs_update = xml_doc.xpath(
@@ -126,7 +147,17 @@ class SucupiraDocenteSpider(scrapy.Spider):
             '//update[@id="form:j_idt33:inst:listbox"]/text()'
         )
         if not listbox_update or not listbox_update[0]:
-            script_item_error(acronym, 'No listbox update found in XML')
+            err_msg = 'No listbox update found in XML'
+            print(f"⚠️  [{acronym}] Resposta XML sem opções de instituição.")
+            script_item_error(acronym, err_msg)
+            self.stats_container['institutions'][acronym] = {
+                'status': 'NOT_FOUND',
+                'full_name': None,
+                'programs_found': 0,
+                'programs_scraped': 0,
+                'docentes_scraped': 0,
+            }
+            yield from self._next_institution_or_stop(inst_idx, action_url)
             return
 
         listbox_doc = html.fromstring(listbox_update[0])
@@ -143,13 +174,33 @@ class SucupiraDocenteSpider(scrapy.Spider):
             matched_option = options[0]
 
         if matched_option is None:
-            script_item_error(
-                acronym, f'No institution matching {acronym} found'
-            )
+            err_msg = f'No institution matching {acronym} found'
+            print(f"❌ [{acronym}] Instituição NÃO foi encontrada na Sucupira.")
+            logger.warning(f"Institution not found: {acronym}")
+            script_item_error(acronym, err_msg)
+            self.stats_container['institutions'][acronym] = {
+                'status': 'NOT_FOUND',
+                'full_name': None,
+                'programs_found': 0,
+                'programs_scraped': 0,
+                'docentes_scraped': 0,
+            }
+            yield from self._next_institution_or_stop(inst_idx, action_url)
             return
 
         inst_value_id = matched_option.attrib.get('value')
-        full_inst_text = matched_option.text or ''
+        full_inst_text = (matched_option.text or '').strip()
+
+        print(f"✅ [{acronym}] Instituição encontrada: '{full_inst_text}'")
+        logger.info(f"Institution found: {acronym} -> {full_inst_text}")
+
+        self.stats_container['institutions'][acronym] = {
+            'status': 'FOUND',
+            'full_name': full_inst_text,
+            'programs_found': 0,
+            'programs_scraped': 0,
+            'docentes_scraped': 0,
+        }
 
         # 2. Select institution and load programs
         ajax_payload = {
@@ -178,6 +229,7 @@ class SucupiraDocenteSpider(scrapy.Spider):
             callback=self.parse_programs,
             meta={
                 'acronym': acronym,
+                'inst_idx': inst_idx,
                 'full_inst_text': full_inst_text,
                 'inst_value_id': inst_value_id,
                 'view_state': view_state,
@@ -192,6 +244,7 @@ class SucupiraDocenteSpider(scrapy.Spider):
             return
 
         acronym = response.meta['acronym']
+        inst_idx = response.meta['inst_idx']
         action_url = response.meta['action_url']
         full_inst_text = response.meta['full_inst_text']
         inst_value_id = response.meta['inst_value_id']
@@ -200,7 +253,10 @@ class SucupiraDocenteSpider(scrapy.Spider):
         try:
             xml_doc = etree.fromstring(response.body)
         except Exception as e:
-            script_item_error(acronym, f'XML parse error: {e}')
+            err_msg = f'XML parse error: {e}'
+            print(f"⚠️  [{acronym}] Erro ao carregar programas (XML): {err_msg}")
+            script_item_error(acronym, err_msg)
+            yield from self._next_institution_or_stop(inst_idx, action_url)
             return
 
         vs_update = xml_doc.xpath(
@@ -213,13 +269,17 @@ class SucupiraDocenteSpider(scrapy.Spider):
             '//update[@id="form:j_idt33:programa"]/text()'
         )
         if not prog_update or not prog_update[0]:
+            print(f"⚠️  [{acronym}] Nenhum bloco de programa retornado na Sucupira.")
             script_item_error(acronym, 'No program update found')
+            yield from self._next_institution_or_stop(inst_idx, action_url)
             return
 
         prog_doc = html.fromstring(prog_update[0])
         selects = prog_doc.xpath('//select')
         if not selects:
+            print(f"⚠️  [{acronym}] Select de programas não encontrado na página.")
             script_item_error(acronym, 'No program select element found')
+            yield from self._next_institution_or_stop(inst_idx, action_url)
             return
 
         select_name = selects[0].attrib.get('name')
@@ -228,7 +288,7 @@ class SucupiraDocenteSpider(scrapy.Spider):
         programs = []
         for opt in options:
             val = opt.attrib.get('value')
-            txt = opt.text or ''
+            txt = (opt.text or '').strip()
             if val and val != '-1':
                 code_m = re.search(r'\b(\d+P\d+)\b', txt)
                 if code_m:
@@ -245,8 +305,19 @@ class SucupiraDocenteSpider(scrapy.Spider):
             programs_found=len(programs),
         )
 
+        if acronym in self.stats_container['institutions']:
+            self.stats_container['institutions'][acronym]['programs_found'] = len(programs)
+
         if not programs:
+            print(f"⚠️  [{acronym}] 0 programas de pós-graduação encontrados.")
+            logger.warning(f"No programs found for institution {acronym}")
+            yield from self._next_institution_or_stop(inst_idx, action_url)
             return
+
+        print(f"📚 [{acronym}] {len(programs)} programa(s) de pós-graduação encontrado(s):")
+        for _, prog_code, prog_text in programs:
+            print(f"   • [{prog_code}] {prog_text}")
+        logger.info(f"Programs found for {acronym}: {len(programs)}", acronym=acronym, count=len(programs))
 
         # Start querying programs sequentially for this institution
         first_prog_val, first_prog_code, first_prog_text = programs[0]
@@ -262,6 +333,7 @@ class SucupiraDocenteSpider(scrapy.Spider):
             programs=programs,
             prog_index=0,
             acronym=acronym,
+            inst_idx=inst_idx,
             cookiejar=response.meta['cookiejar'],
         )
 
@@ -278,8 +350,11 @@ class SucupiraDocenteSpider(scrapy.Spider):
         programs,
         prog_index,
         acronym,
+        inst_idx,
         cookiejar,
     ):
+        print(f"🔄 [{acronym}] Coletando programa ({prog_index + 1}/{len(programs)}): [{prog_code}] {prog_text}")
+
         ajax_payload = {
             'form': 'form',
             'form:j_idt33:ano': str(self.year),
@@ -308,6 +383,7 @@ class SucupiraDocenteSpider(scrapy.Spider):
             callback=self.parse_consult_result,
             meta={
                 'acronym': acronym,
+                'inst_idx': inst_idx,
                 'action_url': action_url,
                 'full_inst_text': full_inst_text,
                 'inst_value_id': inst_value_id,
@@ -327,6 +403,7 @@ class SucupiraDocenteSpider(scrapy.Spider):
             return
 
         acronym = response.meta['acronym']
+        inst_idx = response.meta['inst_idx']
         action_url = response.meta['action_url']
         full_inst_text = response.meta['full_inst_text']
         inst_value_id = response.meta['inst_value_id']
@@ -339,9 +416,12 @@ class SucupiraDocenteSpider(scrapy.Spider):
         try:
             xml_doc = etree.fromstring(response.body)
         except Exception as e:
+            err_msg = f'XML parse error: {e}'
+            print(f"⚠️  [{acronym} | {prog_code}] Erro no XML da consulta: {err_msg}")
             script_item_error(
-                f'{acronym}_{prog_code}', f'XML parse error: {e}'
+                f'{acronym}_{prog_code}', err_msg
             )
+            yield from self._next_institution_or_stop(inst_idx, action_url)
             return
 
         vs_update = xml_doc.xpath(
@@ -376,6 +456,20 @@ class SucupiraDocenteSpider(scrapy.Spider):
         self.stats_container['programs_scraped_count'] = (
             self.programs_scraped_count
         )
+        self.stats_container['total_programs_scraped'] = self.programs_scraped_count
+        self.stats_container['total_docentes_scraped'] = len(self.scraped_items)
+
+        if acronym in self.stats_container['institutions']:
+            self.stats_container['institutions'][acronym]['programs_scraped'] += 1
+            self.stats_container['institutions'][acronym]['docentes_scraped'] += docentes_count
+
+        print(f"   └─ 👥 [{acronym} | {prog_code}] {docentes_count} docente(s) coletado(s)")
+        logger.info(
+            f"Program {prog_code} scraped: {docentes_count} docentes",
+            acronym=acronym,
+            prog_code=prog_code,
+            docentes_count=docentes_count,
+        )
 
         script_progress(
             step_name=f'scrape_program_{prog_code}',
@@ -387,16 +481,19 @@ class SucupiraDocenteSpider(scrapy.Spider):
             acronym=acronym,
         )
 
+        inst_programs_scraped = self.stats_container['institutions'][acronym]['programs_scraped']
         if (
             self.limit_programs
-            and self.programs_scraped_count >= self.limit_programs
+            and inst_programs_scraped >= self.limit_programs
         ):
+            print(f"🛑 Limite de {self.limit_programs} programa(s) atingido para [{acronym}]. Avançando para próxima instituição...")
             logger.info(
-                'Reached limit of programs scraped',
-                programs_scraped=self.programs_scraped_count,
+                'Reached limit of programs scraped for institution',
+                acronym=acronym,
+                programs_scraped=inst_programs_scraped,
                 limit=self.limit_programs,
             )
-            self.stopped = True
+            yield from self._next_institution_or_stop(inst_idx, action_url)
             return
 
         next_idx = prog_index + 1
@@ -414,7 +511,23 @@ class SucupiraDocenteSpider(scrapy.Spider):
                 programs=programs,
                 prog_index=next_idx,
                 acronym=acronym,
+                inst_idx=inst_idx,
                 cookiejar=response.meta['cookiejar'],
+            )
+        else:
+            yield from self._next_institution_or_stop(inst_idx, action_url)
+
+    def _next_institution_or_stop(self, current_inst_idx: int, url: str):
+        next_idx = current_inst_idx + 1
+        if next_idx < len(self.acronyms) and not self.stopped:
+            yield scrapy.Request(
+                url=self.start_urls[0],
+                callback=self.parse,
+                meta={
+                    'inst_idx': next_idx,
+                    'cookiejar': next_idx,
+                },
+                dont_filter=True,
             )
 
 
@@ -460,7 +573,7 @@ def main():
         '--limit-programs',
         type=int,
         default=3,
-        help='Limit number of programs to scrape (default 3)',
+        help='Limit number of programs to scrape (default 3, 0 for unlimited)',
     )
     args = parser.parse_args()
 
@@ -470,10 +583,15 @@ def main():
 
     start_time = time.perf_counter()
 
+    print("=" * 80)
+    print("🚀 Scraping de Docentes de Pós-Graduação (Sucupira / CAPES)")
+    print("=" * 80)
+
     db_acronyms = fetch_institution_acronyms()
 
     if not db_acronyms:
         logger.warning('No institution acronyms found in administrative DB.')
+        print("⚠️  Nenhuma sigla de instituição encontrada no banco administrativo DB.")
 
     if args.acronyms:
         requested_acronyms = [
@@ -491,11 +609,18 @@ def main():
                 'Some requested acronyms were not found in administrative DB and will be ignored',
                 ignored_acronyms=ignored,
             )
+            print(f"⚠️  Siglas ignoradas por não constarem no banco DB: {', '.join(ignored)}")
     else:
         acronyms = db_acronyms
 
+    print(f"📌 Siglas para raspagem ({len(acronyms)}): {', '.join(acronyms) if acronyms else 'Nenhuma'}")
+    print(f"📌 Arquivo de saída: {args.output}")
+    print(f"📌 Limite de programas: {args.limit_programs if args.limit_programs > 0 else 'Sem limite'}")
+    print("=" * 80 + "\n")
+
     if not acronyms:
         logger.warning('No matching institution acronyms to scrape.')
+        print("❌ Nenhuma sigla válida para raspagem. Encerrando.")
         duration_ms = (time.perf_counter() - start_time) * 1000.0
         script_finished(
             script_name,
@@ -539,7 +664,8 @@ def main():
     )
     process.start()
 
-    duration_ms = (time.perf_counter() - start_time) * 1000.0
+    duration_sec = time.perf_counter() - start_time
+    duration_ms = duration_sec * 1000.0
 
     if scraped_results:
         df = pl.DataFrame(scraped_results)
@@ -559,6 +685,42 @@ def main():
         )
         df.write_csv(args.output)
         logger.warning('No items scraped', output_file=args.output)
+
+    inst_stats = stats_results.get('institutions', {})
+
+    print("\n" + "=" * 80)
+    print("📊 RESUMO FINAL DA EXECUÇÃO DA RASPAGEM")
+    print("=" * 80)
+    print(f"⏱️  Tempo total de execução: {duration_sec:.2f}s")
+    print(f"📦 Total de docentes coletados: {len(scraped_results)}")
+    print(f"📚 Total de programas raspados: {stats_results.get('total_programs_scraped', 0)}")
+    print("-" * 80)
+    print("📋 Detalhamento por Instituição:")
+
+    for acr in acronyms:
+        info = inst_stats.get(acr)
+        if not info:
+            print(f"  • {acr}: ❓ Não foi possível consultar")
+            continue
+        status = info.get('status')
+        if status == 'FOUND':
+            full_name = info.get('full_name')
+            p_found = info.get('programs_found', 0)
+            p_scraped = info.get('programs_scraped', 0)
+            d_scraped = info.get('docentes_scraped', 0)
+            print(f"  • {acr}: ✅ Encontrada ('{full_name}')")
+            print(f"    ├─ Programas encontrados: {p_found}")
+            print(f"    ├─ Programas raspados: {p_scraped}")
+            print(f"    └─ Docentes coletados: {d_scraped}")
+        elif status == 'NOT_FOUND':
+            print(f"  • {acr}: ❌ NÃO foi encontrada no sistema Sucupira")
+        else:
+            err = info.get('error', 'Erro desconhecido')
+            print(f"  • {acr}: ⚠️  Erro durante a consulta ({err})")
+
+    print("-" * 80)
+    print(f"💾 Registros salvos no arquivo: {args.output}")
+    print("=" * 80 + "\n")
 
     script_finished(
         script_name,
