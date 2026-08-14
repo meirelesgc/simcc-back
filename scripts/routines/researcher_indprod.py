@@ -220,7 +220,7 @@ def guidance_indprod(session):
 
 def list_researchers(session, researcher_ids=None, lattes_ids=None):
     base_query = """
-        SELECT id AS researcher_id
+        SELECT id::TEXT AS researcher_id
         FROM public.researcher
         WHERE 1=1
     """

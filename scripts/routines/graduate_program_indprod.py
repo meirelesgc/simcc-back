@@ -218,7 +218,7 @@ def guidance_indprod(session):
 
 def list_researchers(session):
     SCRIPT_SQL = text("""
-        SELECT id AS researcher_id::TEXT
+        SELECT id::TEXT AS researcher_id
         FROM public.researcher;
     """)
     result = session.execute(SCRIPT_SQL).mappings().all()
@@ -227,7 +227,7 @@ def list_researchers(session):
 
 def list_programs(session):
     SCRIPT_SQL = text("""
-        SELECT graduate_program_id, researcher_id::TEXT, year
+        SELECT graduate_program_id::TEXT, researcher_id::TEXT, year
         FROM graduate_program_researcher
     """)
     result = session.execute(SCRIPT_SQL).mappings().all()
