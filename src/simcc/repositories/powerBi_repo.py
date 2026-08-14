@@ -218,10 +218,8 @@ async def get_cimatec_graduate_program(session):
     return await query.execute()
 
 
-async def get_dim_research_project(session, limit: int, offset: int):
+async def get_dim_research_project(session):
     query = powerBi_query.DimResearchProjectQuery(session)
-    query.limit = limit
-    query.offset = offset
     return await query.execute()
 
 

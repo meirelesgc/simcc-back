@@ -694,19 +694,14 @@ class CimatecGraduateProgramQuery(BaseQuery):
 
 
 class DimResearchProjectQuery(BaseQuery):
-    limit: int = 10000
-    offset: int = 0
-
     @override
     def build_sql(self) -> str:
-        return f"""
+        return """
         SELECT id::TEXT, researcher_id::TEXT, start_year::TEXT, end_year::TEXT, agency_code::TEXT, agency_name::TEXT,
             TRANSLATE(project_name, ',', ' ')::TEXT AS project_name, status::TEXT, nature::TEXT,
             number_undergraduates::TEXT, TRANSLATE(description, ',', ' ')::TEXT AS description,
             number_specialists::TEXT, number_academic_masters::TEXT, number_phd::TEXT
-        FROM research_project
-        ORDER BY id
-        LIMIT {self.limit} OFFSET {self.offset};
+        FROM research_project;
         """
 
 
