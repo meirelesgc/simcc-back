@@ -128,13 +128,13 @@ async def get_researcher_city(session):
 
 async def get_dim_researcher(session, origin):
     query = powerBi_query.DimResearcherQuery(session)
-    query.params = {"origin": origin}
+    query.params = {'origin': origin}
     return await query.execute()
 
 
 async def get_dim_researcher_words(session, stopwords):
     query = powerBi_query.DimResearcherWordsQuery(session)
-    query.params = {"stopwords": stopwords}
+    query.params = {'stopwords': stopwords}
     return await query.execute()
 
 
@@ -218,8 +218,10 @@ async def get_cimatec_graduate_program(session):
     return await query.execute()
 
 
-async def get_dim_research_project(session):
+async def get_dim_research_project(session, limit: int, offset: int):
     query = powerBi_query.DimResearchProjectQuery(session)
+    query.limit = limit
+    query.offset = offset
     return await query.execute()
 
 
@@ -230,13 +232,13 @@ async def get_fat_research_project_foment(session):
 
 async def get_dim_bibliographic_production_terms(session, stopwords):
     query = powerBi_query.DimBibliographicProductionTermsQuery(session)
-    query.params = {"stopwords": stopwords}
+    query.params = {'stopwords': stopwords}
     return await query.execute()
 
 
 async def get_dim_tecnical_production_terms(session, stopwords):
     query = powerBi_query.DimTecnicalProductionTermsQuery(session)
-    query.params = {"stopwords": stopwords}
+    query.params = {'stopwords': stopwords}
     return await query.execute()
 
 
@@ -267,13 +269,13 @@ async def get_materialized_vision(session):
 
 async def get_dim_article_keyword(session, stopwords):
     query = powerBi_query.DimArticleKeywordQuery(session)
-    query.params = {"stopwords": stopwords}
+    query.params = {'stopwords': stopwords}
     return await query.execute()
 
 
 async def get_fat_article_keyword_(session, stopwords):
     query = powerBi_query.FatArticleKeywordUnderscoreQuery(session)
-    query.params = {"stopwords": stopwords}
+    query.params = {'stopwords': stopwords}
     return await query.execute()
 
 
@@ -284,7 +286,7 @@ async def get_fat_article_co_authorship(session):
 
 async def get_fat_keywords_cooccurrences(session, stopwords):
     query = powerBi_query.FatKeywordsCooccurrencesQuery(session)
-    query.params = {"stopwords": stopwords}
+    query.params = {'stopwords': stopwords}
     return await query.execute()
 
 
