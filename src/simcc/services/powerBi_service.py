@@ -860,7 +860,7 @@ async def dim_research_project(session):
         data = await powerBi_repo.get_dim_research_project(
             session, limit, offset
         )
-
+        print(len(data))
         if not data:
             break
 
