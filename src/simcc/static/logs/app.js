@@ -103,14 +103,17 @@ function loadInstances() {
             state.instances = [];
         }
     } else {
-        // Add default localhost connection
+        // Add default connection to the current instance
+        const defaultOrigin = (window && window.location && window.location.origin && window.location.origin !== 'null') 
+            ? window.location.origin 
+            : 'http://localhost:8000';
         state.instances = [
             {
                 id: 'inst-default-local',
-                name: 'Localhost API',
-                url: 'http://localhost:8000',
+                name: 'Esta Instância',
+                url: defaultOrigin,
                 token: '',
-                enabled: false
+                enabled: true
             }
         ];
         saveInstances();

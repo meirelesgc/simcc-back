@@ -1,12 +1,13 @@
+import sys
+from contextlib import asynccontextmanager
 from http import HTTPStatus
+from pathlib import Path
 
 import httpx
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
-
-import sys
-from contextlib import asynccontextmanager
+from fastapi.staticfiles import StaticFiles
 
 from simcc.core.logging.cleanup import clean_old_logs
 from simcc.core.logging.middleware import LoggingMiddleware
@@ -40,7 +41,7 @@ async def lifespan(app: FastAPI):
     try:
         clean_old_logs()
     except Exception as e:
-        sys.stderr.write(f"[Log Cleanup] Startup cleanup failed: {e}\n")
+        sys.stderr.write(f'[Log Cleanup] Startup cleanup failed: {e}\n')
     yield
 
 
@@ -72,6 +73,15 @@ app.include_router(maria.router)
 app.include_router(routines.router)
 app.include_router(powerBi.router)
 app.include_router(logs.router)
+
+
+STATIC_DIR = Path(__file__).resolve().parent / 'static'
+STATIC_DIR.mkdir(parents=True, exist_ok=True)
+app.mount(
+    '/static',
+    StaticFiles(directory=str(STATIC_DIR), html=True),
+    name='static',
+)
 
 
 @app.get('/', status_code=HTTPStatus.OK)
