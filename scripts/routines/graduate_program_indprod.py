@@ -13,7 +13,6 @@ from simcc.core.logging.events import (
     routine_step_started,
 )
 
-
 barema = {
     'A1': 1.0,
     'A2': 0.875,
@@ -42,7 +41,7 @@ barema = {
 
 def article_indprod(session):
     SCRIPT_SQL = text("""
-        SELECT year_ AS year, qualis, COUNT(*) AS count_article, researcher_id
+        SELECT year_ AS year, qualis, COUNT(*) AS count_article, researcher_id::TEXT
         FROM bibliographic_production bp
         RIGHT JOIN bibliographic_production_article bpa
             ON bp.id = bpa.bibliographic_production_id
@@ -54,16 +53,24 @@ def article_indprod(session):
 
     df = pl.DataFrame(result)
     df = df.with_columns(
-        (pl.col('qualis').replace_strict(barema, default=0.0).cast(pl.Float64) * pl.col('count_article')).alias('article_prod'),
-        pl.col('year').cast(pl.Int64)
+        (
+            pl
+            .col('qualis')
+            .replace_strict(barema, default=0.0)
+            .cast(pl.Float64)
+            * pl.col('count_article')
+        ).alias('article_prod'),
+        pl.col('year').cast(pl.Int64),
     )
-    df = df.group_by(['year', 'researcher_id']).agg(pl.col('article_prod').sum())
+    df = df.group_by(['year', 'researcher_id']).agg(
+        pl.col('article_prod').sum()
+    )
     return df.select(['year', 'researcher_id', 'article_prod']).to_dicts()
 
 
 def book_indprod(session):
     SCRIPT_SQL = text("""
-        SELECT year, COUNT(*) AS count_book, researcher_id
+        SELECT year, COUNT(*) AS count_book, researcher_id::TEXT
         FROM bibliographic_production bp
         WHERE type = 'BOOK'
         GROUP BY year, researcher_id;
@@ -74,14 +81,14 @@ def book_indprod(session):
     df = pl.DataFrame(result)
     df = df.with_columns(
         (pl.col('count_book') * barema.get('BOOK', 0.0)).alias('book_prod'),
-        pl.col('year').cast(pl.Int64)
+        pl.col('year').cast(pl.Int64),
     )
     return df.select(['year', 'researcher_id', 'book_prod']).to_dicts()
 
 
 def book_chapter_indprod(session):
     SCRIPT_SQL = text("""
-        SELECT year, COUNT(*) AS count_book_chapter, researcher_id
+        SELECT year, COUNT(*) AS count_book_chapter, researcher_id::TEXT
         FROM bibliographic_production bp
         WHERE type = 'BOOK_CHAPTER'
         GROUP BY year, researcher_id;
@@ -91,8 +98,10 @@ def book_chapter_indprod(session):
         return []
     df = pl.DataFrame(result)
     df = df.with_columns(
-        (pl.col('count_book_chapter') * barema.get('BOOK_CHAPTER', 0.0)).alias('book_chapter_prod'),
-        pl.col('year').cast(pl.Int64)
+        (pl.col('count_book_chapter') * barema.get('BOOK_CHAPTER', 0.0)).alias(
+            'book_chapter_prod'
+        ),
+        pl.col('year').cast(pl.Int64),
     )
     return df.select(['year', 'researcher_id', 'book_chapter_prod']).to_dicts()
 
@@ -100,7 +109,7 @@ def book_chapter_indprod(session):
 def patent_indprod(session):
     SCRIPT_SQL = text("""
         SELECT development_year AS year, 'PATENT_GRANTED' AS granted,
-            researcher_id, COUNT(*) as count_patent
+            researcher_id::TEXT, COUNT(*) as count_patent
         FROM patent p
         WHERE grant_date IS NOT NULL
         GROUP BY development_year, researcher_id
@@ -108,7 +117,7 @@ def patent_indprod(session):
         UNION
 
         SELECT development_year AS year, 'PATENT_NOT_GRANTED' AS granted,
-            researcher_id, COUNT(*) as count_patent
+            researcher_id::TEXT, COUNT(*) as count_patent
         FROM patent p
         WHERE grant_date IS NULL
         GROUP BY development_year, researcher_id
@@ -118,16 +127,24 @@ def patent_indprod(session):
         return []
     df = pl.DataFrame(result)
     df = df.with_columns(
-        (pl.col('granted').replace_strict(barema, default=0.0).cast(pl.Float64) * pl.col('count_patent')).alias('patent_prod'),
-        pl.col('year').cast(pl.Int64)
+        (
+            pl
+            .col('granted')
+            .replace_strict(barema, default=0.0)
+            .cast(pl.Float64)
+            * pl.col('count_patent')
+        ).alias('patent_prod'),
+        pl.col('year').cast(pl.Int64),
     )
-    df = df.group_by(['researcher_id', 'year']).agg(pl.col('patent_prod').sum())
+    df = df.group_by(['researcher_id', 'year']).agg(
+        pl.col('patent_prod').sum()
+    )
     return df.select(['year', 'researcher_id', 'patent_prod']).to_dicts()
 
 
 def software_indprod(session):
     SCRIPT_SQL = text("""
-        SELECT year, COUNT(*) AS software_count, researcher_id
+        SELECT year, COUNT(*) AS software_count, researcher_id::TEXT
         FROM software
         GROUP BY year, researcher_id;
     """)
@@ -136,15 +153,17 @@ def software_indprod(session):
         return []
     df = pl.DataFrame(result)
     df = df.with_columns(
-        (pl.col('software_count') * barema.get('SOFTWARE', 0.0)).alias('software_prod'),
-        pl.col('year').cast(pl.Int64)
+        (pl.col('software_count') * barema.get('SOFTWARE', 0.0)).alias(
+            'software_prod'
+        ),
+        pl.col('year').cast(pl.Int64),
     )
     return df.select(['year', 'researcher_id', 'software_prod']).to_dicts()
 
 
 def report_indprod(session):
     SCRIPT_SQL = text("""
-        SELECT year, COUNT(*) AS report_count, researcher_id
+        SELECT year, COUNT(*) AS report_count, researcher_id::TEXT
         FROM research_report
         GROUP BY year, researcher_id;
     """)
@@ -153,8 +172,10 @@ def report_indprod(session):
         return [{'year': 0, 'researcher_id': uuid4(), 'report_prod': 0.0}]
     df = pl.DataFrame(result)
     df = df.with_columns(
-        (pl.col('report_count') * barema.get('REPORT', 0.0)).alias('report_prod'),
-        pl.col('year').cast(pl.Int64)
+        (pl.col('report_count') * barema.get('REPORT', 0.0)).alias(
+            'report_prod'
+        ),
+        pl.col('year').cast(pl.Int64),
     )
     return df.select(['year', 'researcher_id', 'report_prod']).to_dicts()
 
@@ -162,7 +183,7 @@ def report_indprod(session):
 def guidance_indprod(session):
     SCRIPT_SQL = text("""
         SELECT year, nature || ' ' || status AS nature_status,
-            COUNT(*) AS guidance_count, researcher_id
+            COUNT(*) AS guidance_count, researcher_id::TEXT
         FROM guidance
         GROUP BY year, nature_status, researcher_id;
     """)
@@ -171,21 +192,33 @@ def guidance_indprod(session):
         return []
     df = pl.DataFrame(result)
     df = df.with_columns(
-        pl.col('nature_status')
-        .map_elements(lambda ns: unidecode(ns).upper() if ns is not None else '', return_dtype=pl.String)
+        pl
+        .col('nature_status')
+        .map_elements(
+            lambda ns: unidecode(ns).upper() if ns is not None else '',
+            return_dtype=pl.String,
+        )
         .alias('nature_status'),
-        pl.col('year').cast(pl.Int64)
+        pl.col('year').cast(pl.Int64),
     )
     df = df.with_columns(
-        (pl.col('nature_status').replace_strict(barema, default=0.0).cast(pl.Float64) * pl.col('guidance_count')).alias('guidance_prod')
+        (
+            pl
+            .col('nature_status')
+            .replace_strict(barema, default=0.0)
+            .cast(pl.Float64)
+            * pl.col('guidance_count')
+        ).alias('guidance_prod')
     )
-    df = df.group_by(['year', 'researcher_id']).agg(pl.col('guidance_prod').sum())
+    df = df.group_by(['year', 'researcher_id']).agg(
+        pl.col('guidance_prod').sum()
+    )
     return df.select(['year', 'researcher_id', 'guidance_prod']).to_dicts()
 
 
 def list_researchers(session):
     SCRIPT_SQL = text("""
-        SELECT id AS researcher_id
+        SELECT id AS researcher_id::TEXT
         FROM public.researcher;
     """)
     result = session.execute(SCRIPT_SQL).mappings().all()
@@ -194,7 +227,7 @@ def list_researchers(session):
 
 def list_programs(session):
     SCRIPT_SQL = text("""
-        SELECT graduate_program_id, researcher_id, year
+        SELECT graduate_program_id, researcher_id::TEXT, year
         FROM graduate_program_researcher
     """)
     result = session.execute(SCRIPT_SQL).mappings().all()
@@ -212,44 +245,64 @@ def main():
     start_time = time.perf_counter()
 
     try:
-        routine_step_started("calculate_graduate_program_indprod")
+        routine_step_started('calculate_graduate_program_indprod')
         current_year = 2026
         YEAR = range(2008, current_year + 1)
-        history = pl.DataFrame({'year': list(YEAR)}).with_columns(pl.col('year').cast(pl.Int64))
+        history = pl.DataFrame({'year': list(YEAR)}).with_columns(
+            pl.col('year').cast(pl.Int64)
+        )
 
         researchers = list_researchers(session)
         if not researchers:
             raise ValueError('No researchers found')
-        researchers = pl.DataFrame(researchers).with_columns(pl.col('researcher_id').cast(pl.String))
+        researchers = pl.DataFrame(researchers).with_columns(
+            pl.col('researcher_id').cast(pl.String)
+        )
 
         researchers = researchers.join(history, how='cross')
 
         on = ['researcher_id', 'year']
 
-        articles = pl.DataFrame(article_indprod(session)).with_columns(pl.col('researcher_id').cast(pl.String))
+        articles = pl.DataFrame(article_indprod(session)).with_columns(
+            pl.col('researcher_id').cast(pl.String)
+        )
         researchers = researchers.join(articles, on=on, how='left')
 
-        books = pl.DataFrame(book_indprod(session)).with_columns(pl.col('researcher_id').cast(pl.String))
+        books = pl.DataFrame(book_indprod(session)).with_columns(
+            pl.col('researcher_id').cast(pl.String)
+        )
         researchers = researchers.join(books, on=on, how='left')
 
-        book_chapter = pl.DataFrame(book_chapter_indprod(session)).with_columns(pl.col('researcher_id').cast(pl.String))
+        book_chapter = pl.DataFrame(
+            book_chapter_indprod(session)
+        ).with_columns(pl.col('researcher_id').cast(pl.String))
         researchers = researchers.join(book_chapter, on=on, how='left')
 
-        software = pl.DataFrame(software_indprod(session)).with_columns(pl.col('researcher_id').cast(pl.String))
+        software = pl.DataFrame(software_indprod(session)).with_columns(
+            pl.col('researcher_id').cast(pl.String)
+        )
         researchers = researchers.join(software, on=on, how='left')
 
-        patent = pl.DataFrame(patent_indprod(session)).with_columns(pl.col('researcher_id').cast(pl.String))
+        patent = pl.DataFrame(patent_indprod(session)).with_columns(
+            pl.col('researcher_id').cast(pl.String)
+        )
         researchers = researchers.join(patent, on=on, how='left')
 
-        report = pl.DataFrame(report_indprod(session)).with_columns(pl.col('researcher_id').cast(pl.String))
+        report = pl.DataFrame(report_indprod(session)).with_columns(
+            pl.col('researcher_id').cast(pl.String)
+        )
         researchers = researchers.join(report, on=on, how='left')
 
         guidance = guidance_indprod(session)
         if guidance:
-            guidance_df = pl.DataFrame(guidance).with_columns(pl.col('researcher_id').cast(pl.String))
+            guidance_df = pl.DataFrame(guidance).with_columns(
+                pl.col('researcher_id').cast(pl.String)
+            )
             researchers = researchers.join(guidance_df, on=on, how='left')
         else:
-            researchers = researchers.with_columns(pl.lit(0.0).alias('guidance_prod'))
+            researchers = researchers.with_columns(
+                pl.lit(0.0).alias('guidance_prod')
+            )
 
         programs = list_programs(session)
         if not programs:
@@ -257,11 +310,12 @@ def main():
         programs = pl.DataFrame(programs).with_columns(
             pl.col('graduate_program_id').cast(pl.String),
             pl.col('researcher_id').cast(pl.String),
-            pl.col('year').cast(pl.Int64)
+            pl.col('year').cast(pl.Int64),
         )
 
         history_program = (
-            programs.select('graduate_program_id')
+            programs
+            .select('graduate_program_id')
             .unique()
             .join(history, how='cross')
         )
@@ -285,9 +339,9 @@ def main():
             .with_columns(pl.col('year').cast(pl.Int64))
         )
 
-        routine_step_finished("calculate_graduate_program_indprod")
+        routine_step_finished('calculate_graduate_program_indprod')
 
-        routine_step_started("insert_graduate_program_indprod")
+        routine_step_started('insert_graduate_program_indprod')
         session.execute(text('DELETE FROM graduate_program_ind_prod;'))
 
         query_insert = text("""
@@ -325,23 +379,29 @@ def main():
             batch = params[i : i + BATCH_SIZE]
             session.execute(query_insert, batch)
             current_inserted = min(i + BATCH_SIZE, items_found)
-            routine_progress("insert_graduate_program_indprod", current_inserted, items_found, current_inserted, 0)
+            routine_progress(
+                'insert_graduate_program_indprod',
+                current_inserted,
+                items_found,
+                current_inserted,
+                0,
+            )
 
         session.commit()
         items_succeeded = items_found
         items_failed = 0
-        routine_step_finished("insert_graduate_program_indprod", total_inserted=items_succeeded)
+        routine_step_finished(
+            'insert_graduate_program_indprod', total_inserted=items_succeeded
+        )
         duration = time.perf_counter() - start_time
     except Exception as e:
         items_succeeded = 0
         items_failed = items_found
-        logger.error(f"Error in graduate_program_indprod: {e}")
+        logger.error(f'Error in graduate_program_indprod: {e}')
         session.rollback()
         duration = time.perf_counter() - start_time
         raise e
 
 
-
 if __name__ == '__main__':
     main()
-
