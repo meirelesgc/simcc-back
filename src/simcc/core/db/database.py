@@ -61,7 +61,6 @@ admin_sync_session = sessionmaker(
 )
 
 
-
 async def get_async_session():
     async with async_session() as session:
         yield session
