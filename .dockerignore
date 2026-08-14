@@ -69,7 +69,7 @@ docs/_build/
 
 # PyBuilder
 target/
-
+*.xml
 # Virtual environment
 .env
 .venv/
