@@ -675,9 +675,6 @@ async def fat_researcher_ind_prod(session):
         'ind_prod_guidance': pl.Utf8,
     }
     df = pl.DataFrame(data, schema=df_schema)
-    ind_cols = [c for c in df.columns if c.startswith('ind_prod_')]
-    for col in ind_cols:
-        df = df.with_columns(pl.col(col).str.replace('.', ',', literal=True))
     df.write_csv(
         os.path.join(PATH, 'fat_researcher_ind_prod.csv'), separator=';'
     )
@@ -698,9 +695,6 @@ async def graduate_program_ind_prod(session):
         'ind_prod_guidance': pl.Utf8,
     }
     df = pl.DataFrame(data, schema=df_schema)
-    ind_cols = [c for c in df.columns if c.startswith('ind_prod_')]
-    for col in ind_cols:
-        df = df.with_columns(pl.col(col).str.replace('.', ',', literal=True))
     df.write_csv(
         os.path.join(PATH, 'graduate_program_ind_prod.csv'), separator=';'
     )

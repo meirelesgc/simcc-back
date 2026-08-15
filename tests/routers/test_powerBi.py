@@ -183,3 +183,99 @@ async def test_fat_logs_and_supporting_csvs(client, tmp_path, monkeypatch):
     assert int(routine_rows[0]['items_found']) == 10
     assert int(routine_rows[0]['items_succeeded']) == 8
     assert int(routine_rows[0]['items_failed']) == 2
+
+
+@pytest.mark.asyncio
+async def test_fat_researcher_ind_prod(tmp_path, monkeypatch):
+    monkeypatch.setattr(simcc.services.powerBi_service, 'PATH', str(tmp_path))
+
+    mock_data = [
+        {
+            'researcher_id': '11111111-1111-1111-1111-111111111111',
+            'year': '2024',
+            'ind_prod_article': '1.25',
+            'ind_prod_book': '2.0',
+            'ind_prod_book_chapter': '0.5',
+            'ind_prod_granted_patent': '0.0',
+            'ind_prod_not_granted_patent': '3.75',
+            'ind_prod_software': '1.0',
+            'ind_prod_report': '0.0',
+            'ind_prod_guidance': '4.5',
+        }
+    ]
+
+    async def mock_get_fat_researcher_ind_prod(session):
+        return mock_data
+
+    monkeypatch.setattr(
+        simcc.services.powerBi_service.powerBi_repo,
+        'get_fat_researcher_ind_prod',
+        mock_get_fat_researcher_ind_prod,
+    )
+
+    await simcc.services.powerBi_service.fat_researcher_ind_prod(session=None)
+
+    csv_file = tmp_path / 'fat_researcher_ind_prod.csv'
+    assert csv_file.exists()
+
+    with open(csv_file, mode='r', encoding='utf-8') as f:
+        content = f.read()
+        f.seek(0)
+        reader = csv.DictReader(f, delimiter=';')
+        rows = list(reader)
+
+    assert len(rows) == 1
+    assert rows[0]['ind_prod_article'] == '1.25'
+    assert rows[0]['ind_prod_book'] == '2.0'
+    assert rows[0]['ind_prod_guidance'] == '4.5'
+    assert ';' in content
+    assert '1,25' not in content
+
+
+@pytest.mark.asyncio
+async def test_graduate_program_ind_prod(tmp_path, monkeypatch):
+    monkeypatch.setattr(simcc.services.powerBi_service, 'PATH', str(tmp_path))
+
+    mock_data = [
+        {
+            'graduate_program_id': '22222222-2222-2222-2222-222222222222',
+            'year': '2024',
+            'ind_prod_article': '3.14',
+            'ind_prod_book': '1.0',
+            'ind_prod_book_chapter': '2.5',
+            'ind_prod_granted_patent': '1.0',
+            'ind_prod_not_granted_patent': '0.0',
+            'ind_prod_software': '0.5',
+            'ind_prod_report': '1.5',
+            'ind_prod_guidance': '5.0',
+        }
+    ]
+
+    async def mock_get_graduate_program_ind_prod(session):
+        return mock_data
+
+    monkeypatch.setattr(
+        simcc.services.powerBi_service.powerBi_repo,
+        'get_graduate_program_ind_prod',
+        mock_get_graduate_program_ind_prod,
+    )
+
+    await simcc.services.powerBi_service.graduate_program_ind_prod(
+        session=None
+    )
+
+    csv_file = tmp_path / 'graduate_program_ind_prod.csv'
+    assert csv_file.exists()
+
+    with open(csv_file, mode='r', encoding='utf-8') as f:
+        content = f.read()
+        f.seek(0)
+        reader = csv.DictReader(f, delimiter=';')
+        rows = list(reader)
+
+    assert len(rows) == 1
+    assert rows[0]['ind_prod_article'] == '3.14'
+    assert rows[0]['ind_prod_book_chapter'] == '2.5'
+    assert rows[0]['ind_prod_guidance'] == '5.0'
+    assert ';' in content
+    assert '3,14' not in content
