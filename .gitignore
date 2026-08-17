@@ -1,4 +1,6 @@
-logs
+/logs
+/logs/
+
 
 .env.container
 .tool-versions

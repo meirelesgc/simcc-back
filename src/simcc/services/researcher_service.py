@@ -287,3 +287,16 @@ async def get_researcher_image_path(session, researcher_id):
 
 async def get_researcher_filter(session):
     return await researcher_repo.get_researcher_filter(session)
+
+
+async def get_outstanding_researchers(
+    session, limit: int = 10, pool_size: int = 100
+):
+    researchers = await researcher_repo.get_outstanding_researchers(
+        session, limit=limit, pool_size=pool_size
+    )
+
+    if researchers:
+        await enrich_researchers(session, researchers)
+
+    return researchers

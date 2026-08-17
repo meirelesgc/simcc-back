@@ -675,9 +675,6 @@ async def fat_researcher_ind_prod(session):
         'ind_prod_guidance': pl.Utf8,
     }
     df = pl.DataFrame(data, schema=df_schema)
-    ind_cols = [c for c in df.columns if c.startswith('ind_prod_')]
-    for col in ind_cols:
-        df = df.with_columns(pl.col(col).str.replace('.', ',', literal=True))
     df.write_csv(
         os.path.join(PATH, 'fat_researcher_ind_prod.csv'), separator=';'
     )
@@ -698,9 +695,6 @@ async def graduate_program_ind_prod(session):
         'ind_prod_guidance': pl.Utf8,
     }
     df = pl.DataFrame(data, schema=df_schema)
-    ind_cols = [c for c in df.columns if c.startswith('ind_prod_')]
-    for col in ind_cols:
-        df = df.with_columns(pl.col(col).str.replace('.', ',', literal=True))
     df.write_csv(
         os.path.join(PATH, 'graduate_program_ind_prod.csv'), separator=';'
     )
@@ -803,9 +797,6 @@ async def dim_departament(session):
     df.write_csv(os.path.join(PATH, 'dim_departament.csv'))
 
 
-import asyncio
-
-
 def _process_and_save_chunk(
     data, df_schema, file_path, is_first_chunk, row_index_offset
 ):
@@ -830,7 +821,9 @@ def _process_and_save_chunk(
 
 
 async def dim_research_project(session):
-    file_path = os.path.join(PATH, 'dim_research_project.csv')
+
+    data = await powerBi_repo.get_dim_research_project(session)
+
     df_schema = {
         'id': pl.Utf8,
         'researcher_id': pl.Utf8,
@@ -848,34 +841,24 @@ async def dim_research_project(session):
         'number_phd': pl.Utf8,
     }
 
-    limit = 10000
-    offset = 0
-    is_first_chunk = True
-    row_index_offset = 0
+    df = pl.DataFrame(data, schema=df_schema)
 
-    if os.path.exists(file_path):
-        os.remove(file_path)
+    df = df.with_columns(
+        pl
+        .col('start_year')
+        .cast(pl.Int64, strict=False)
+        .fill_null(0)
+        .cast(pl.Utf8),
+        pl
+        .col('end_year')
+        .cast(pl.Int64, strict=False)
+        .fill_null(0)
+        .cast(pl.Utf8),
+    )
 
-    while True:
-        data = await powerBi_repo.get_dim_research_project(
-            session, limit, offset
-        )
-        print(len(data))
-        if not data:
-            break
+    df = df.with_row_index(name='')
 
-        await asyncio.to_thread(
-            _process_and_save_chunk,
-            data,
-            df_schema,
-            file_path,
-            is_first_chunk,
-            row_index_offset,
-        )
-
-        is_first_chunk = False
-        row_index_offset += len(data)
-        offset += limit
+    df.write_csv(os.path.join(PATH, 'dim_research_project.csv'))
 
 
 async def fat_research_project_foment(session):
