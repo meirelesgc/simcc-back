@@ -435,3 +435,12 @@ async def get_researcher_filter(session):
     query = researcher_query.ResearcherFilterQuery(session)
     result = await query.execute()
     return result[0] if result else {}
+
+
+async def get_outstanding_researchers(
+    session, limit: int = 10, pool_size: int = 100
+):
+    query = researcher_query.OutstandingResearchersQuery(
+        session, limit=limit, pool_size=pool_size
+    )
+    return await query.execute()

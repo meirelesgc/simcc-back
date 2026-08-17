@@ -173,12 +173,8 @@ async def search_researcher_name(
 @router.get('/outstanding_researchers', include_in_schema=False)
 async def search_outstanding(
     session: AsyncSession,
-    current_user: CurrentUser,
 ):
-    filters = DefaultFilters(page=1, lenght=10)
-    return await researcher_service.search_researchers(
-        session, filters, search_type='ABSTRACT', pagination=filters
-    )
+    return await researcher_service.get_outstanding_researchers(session)
 
 
 @router.get('/researchers/patents', response_model=list[Researcher])

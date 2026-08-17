@@ -80,3 +80,29 @@ async def test_search_researcher_name_with_data(
     assert (
         researcher_data['cited_by_count'] == openalex_researcher.cited_by_count
     )
+
+
+@pytest.mark.asyncio
+async def test_search_outstanding_with_data(
+    client,
+    create_researcher,
+):
+    """
+    Testa se o endpoint /researchers/outstanding retorna pesquisadores
+    com last_update preenchido.
+    """
+    from datetime import datetime, timezone
+
+    researcher = await create_researcher(
+        name='Maria Souza',
+        lattes_id='9876543210987654',
+        lattes_10_id='L54321',
+        last_update=datetime.now(timezone.utc),
+    )
+
+    response = client.get('/researchers/outstanding')
+    assert response.status_code == HTTPStatus.OK
+
+    data = response.json()
+    assert len(data) >= 1
+    assert any(r['id'] == str(researcher.id) for r in data)

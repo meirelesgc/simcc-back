@@ -933,3 +933,53 @@ class ResearcherFilterQuery(BaseQuery):
                  
                 (SELECT COALESCE(ARRAY_AGG(DISTINCT dep_nom), '{}') FROM ufmg.departament) as departament;
         """
+
+
+class OutstandingResearchersQuery(BaseQuery):
+    def __init__(self, session, limit: int = 10, pool_size: int = 100):
+        super().__init__(session)
+        self.params['limit'] = limit
+        self.params['pool_size'] = pool_size
+
+    def build_sql(self) -> str:
+        return """
+            WITH top_recent AS (
+                SELECT
+                    r.id, r.name, r.lattes_id, r.lattes_10_id,
+                    r.abstract, r.orcid, r.graduation,
+                    r.last_update AS lattes_update,
+                    REPLACE(rp.great_area, '_', ' ') AS area, rp.city,
+                    i.image AS image_university, i.name AS university,
+                    0 AS among,
+                    COALESCE(rp.articles, 0) AS articles,
+                    COALESCE(rp.book_chapters, 0) AS book_chapters,
+                    COALESCE(rp.book, 0) AS book,
+                    COALESCE(rp.patent, 0) AS patent,
+                    COALESCE(rp.software, 0) AS software,
+                    COALESCE(rp.brand, 0) AS brand,
+                    COALESCE(opr.h_index, 0) AS h_index,
+                    COALESCE(opr.relevance_score, 0) AS relevance_score,
+                    COALESCE(opr.works_count, 0) AS works_count,
+                    COALESCE(opr.cited_by_count, 0) AS cited_by_count,
+                    COALESCE(opr.i10_index, 0) AS i10_index,
+                    opr.scopus,
+                    opr.openalex,
+                    r.classification, r.status, r.institution_id,
+                    r.abstract_ai, r.stars
+                FROM researcher r
+                    LEFT JOIN institution i
+                        ON i.id = r.institution_id
+                    LEFT JOIN researcher_production rp
+                        ON rp.researcher_id = r.id
+                    LEFT JOIN openalex_researcher opr
+                        ON opr.researcher_id = r.id
+                WHERE
+                    r.status IS True
+                    AND r.last_update IS NOT NULL
+                ORDER BY r.last_update DESC
+                LIMIT :pool_size
+            )
+            SELECT * FROM top_recent
+            ORDER BY RANDOM()
+            LIMIT :limit;
+        """
