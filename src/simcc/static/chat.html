@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MarIA - Assistente Científica da Bahia</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #f9fafb;
+            --surface-color: #ffffff;
+            --primary-color: #2563eb;
+            --primary-hover: #1d4ed8;
+            --text-primary: #111827;
+            --text-secondary: #4b5563;
+            --border-color: #e5e7eb;
+            --user-msg-bg: #dbeafe;
+            --user-msg-text: #1e3a8a;
+            --bot-msg-bg: #f3f4f6;
+            --bot-msg-text: #1f2937;
+            --radius: 12px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            line-height: 1.5;
+        }
+
+        .chat-container {
+            width: 100%;
+            max-width: 800px;
+            height: 90vh;
+            background-color: var(--surface-color);
+            border-radius: var(--radius);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            background-color: var(--surface-color);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .chat-header h1 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .chat-header p {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 1.2rem;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 1.5rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .message-wrapper {
+            display: flex;
+            flex-direction: column;
+            max-width: 80%;
+        }
+
+        .message-wrapper.user {
+            align-self: flex-end;
+            align-items: flex-end;
+        }
+
+        .message-wrapper.bot {
+            align-self: flex-start;
+            align-items: flex-start;
+        }
+
+        .message-bubble {
+            padding: 1rem 1.25rem;
+            border-radius: var(--radius);
+            font-size: 0.95rem;
+            white-space: pre-wrap;
+        }
+
+        .message-wrapper.user .message-bubble {
+            background-color: var(--user-msg-bg);
+            color: var(--user-msg-text);
+            border-bottom-right-radius: 4px;
+        }
+
+        .message-wrapper.bot .message-bubble {
+            background-color: var(--bot-msg-bg);
+            color: var(--bot-msg-text);
+            border-bottom-left-radius: 4px;
+            border: 1px solid var(--border-color);
+        }
+
+        .researcher-card {
+            background-color: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 0.75rem;
+            width: 100%;
+        }
+
+        .researcher-card h3 {
+            font-size: 0.95rem;
+            margin-bottom: 0.25rem;
+            color: var(--text-primary);
+        }
+
+        .researcher-card p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .chat-input-container {
+            padding: 1rem 1.5rem;
+            background-color: var(--surface-color);
+            border-top: 1px solid var(--border-color);
+        }
+
+        .chat-form {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 0.875rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            font-size: 1rem;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .chat-input:focus {
+            border-color: var(--primary-color);
+        }
+
+        .send-button {
+            padding: 0.875rem 1.5rem;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .send-button:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .send-button:disabled {
+            background-color: #93c5fd;
+            cursor: not-allowed;
+        }
+
+        .loading-dots {
+            display: inline-block;
+        }
+        
+        .loading-dots:after {
+            content: '.';
+            animation: dots 1.5s steps(5, end) infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% {
+                color: rgba(0,0,0,0);
+                text-shadow:
+                    .25em 0 0 rgba(0,0,0,0),
+                    .5em 0 0 rgba(0,0,0,0);
+            }
+            40% {
+                color: var(--text-secondary);
+                text-shadow:
+                    .25em 0 0 rgba(0,0,0,0),
+                    .5em 0 0 rgba(0,0,0,0);
+            }
+            60% {
+                text-shadow:
+                    .25em 0 0 var(--text-secondary),
+                    .5em 0 0 rgba(0,0,0,0);
+            }
+            80%, 100% {
+                text-shadow:
+                    .25em 0 0 var(--text-secondary),
+                    .5em 0 0 var(--text-secondary);
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="chat-container">
+        <div class="chat-header">
+            <div class="avatar">M</div>
+            <div>
+                <h1>MarIA</h1>
+                <p>Assistente de Pesquisa Científica da Bahia</p>
+            </div>
+        </div>
+
+        <div class="chat-messages" id="chat-messages">
+            <div class="message-wrapper bot">
+                <div class="message-bubble">Olá! Sou a MarIA. Como posso ajudar na sua pesquisa hoje? Você pode me perguntar sobre pesquisadores, produções científicas ou temas de estudo na Bahia.</div>
+            </div>
+        </div>
+
+        <div class="chat-input-container">
+            <form class="chat-form" id="chat-form">
+                <input type="text" class="chat-input" id="chat-input" placeholder="Pergunte sobre pesquisadores ou produções..." autocomplete="off" required>
+                <button type="submit" class="send-button" id="send-btn">Enviar</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const chatMessages = document.getElementById('chat-messages');
+        const chatForm = document.getElementById('chat-form');
+        const chatInput = document.getElementById('chat-input');
+        const sendBtn = document.getElementById('send-btn');
+        const sessionId = "sess_" + Math.random().toString(36).substring(2, 9);
+
+        function parseSimpleMarkdown(text) {
+            if (!text) return '';
+            let html = text
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/^### (.*$)/gim, '<h3 style="margin-top:0.75rem;margin-bottom:0.25rem;font-size:1rem;color:var(--text-primary);">$1</h3>')
+                .replace(/^## (.*$)/gim, '<h2 style="margin-top:0.9rem;margin-bottom:0.35rem;font-size:1.1rem;color:var(--text-primary);">$1</h2>')
+                .replace(/^# (.*$)/gim, '<h1 style="margin-top:1rem;margin-bottom:0.5rem;font-size:1.2rem;color:var(--text-primary);">$1</h1>')
+                .replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/gim, '<em>$1</em>')
+                .replace(/^\s*-\s+(.*$)/gim, '<li style="margin-left:1.25rem;margin-bottom:0.25rem;">$1</li>')
+                .replace(/\n\n/g, '<br><br>')
+                .replace(/\n/g, '<br>');
+            return html;
+        }
+
+        function addMessage(text, isUser, meta = null) {
+            const wrapper = document.createElement('div');
+            wrapper.className = `message-wrapper ${isUser ? 'user' : 'bot'}`;
+            
+            const bubble = document.createElement('div');
+            bubble.className = 'message-bubble';
+            
+            if (isUser) {
+                bubble.textContent = text;
+            } else {
+                bubble.innerHTML = parseSimpleMarkdown(text);
+                
+                // Show debug badge for filters if present
+                if (meta && (meta.intent || Object.keys(meta.filters_extracted || {}).length > 0)) {
+                    const badgeContainer = document.createElement('div');
+                    badgeContainer.style.cssText = 'margin-top:0.75rem;padding-top:0.5rem;border-top:1px dashed var(--border-color);font-size:0.75rem;color:var(--text-secondary);display:flex;flex-wrap:wrap;gap:6px;';
+                    
+                    if (meta.intent) {
+                        const intentBadge = document.createElement('span');
+                        intentBadge.style.cssText = 'background:#e0e7ff;color:#3730a3;padding:2px 8px;border-radius:999px;font-weight:500;';
+                        intentBadge.textContent = `Intenção: ${meta.intent}`;
+                        badgeContainer.appendChild(intentBadge);
+                    }
+                    
+                    if (meta.filters_extracted && meta.filters_extracted.institutions && meta.filters_extracted.institutions.length > 0) {
+                        const instBadge = document.createElement('span');
+                        instBadge.style.cssText = 'background:#dcfce7;color:#166534;padding:2px 8px;border-radius:999px;font-weight:500;';
+                        instBadge.textContent = `Instituições: ${meta.filters_extracted.institutions.join(', ')}`;
+                        badgeContainer.appendChild(instBadge);
+                    }
+
+                    if (meta.filters_extracted && meta.filters_extracted.researcher_name) {
+                        const nameBadge = document.createElement('span');
+                        nameBadge.style.cssText = 'background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:999px;font-weight:500;';
+                        nameBadge.textContent = `Pesquisador: ${meta.filters_extracted.researcher_name}`;
+                        badgeContainer.appendChild(nameBadge);
+                    }
+                    
+                    bubble.appendChild(badgeContainer);
+                }
+            }
+            
+            wrapper.appendChild(bubble);
+            chatMessages.appendChild(wrapper);
+            scrollToBottom();
+            return wrapper;
+        }
+
+        function addLoadingIndicator() {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'message-wrapper bot';
+            wrapper.id = 'loading-indicator';
+            
+            const bubble = document.createElement('div');
+            bubble.className = 'message-bubble';
+            
+            const dots = document.createElement('span');
+            dots.className = 'loading-dots';
+            dots.textContent = 'Consultando base científica';
+            
+            bubble.appendChild(dots);
+            wrapper.appendChild(bubble);
+            chatMessages.appendChild(wrapper);
+            scrollToBottom();
+            return wrapper;
+        }
+
+        function removeLoadingIndicator() {
+            const el = document.getElementById('loading-indicator');
+            if (el) el.remove();
+        }
+
+        function addResearchers(wrapper, researchers) {
+            if (!researchers || researchers.length === 0) return;
+            
+            const header = document.createElement('div');
+            header.style.cssText = 'font-size:0.8rem;font-weight:600;color:var(--text-secondary);margin-top:0.75rem;text-transform:uppercase;letter-spacing:0.05em;';
+            header.textContent = `Pesquisadores Identificados (${researchers.length})`;
+            wrapper.appendChild(header);
+
+            researchers.forEach(r => {
+                const card = document.createElement('div');
+                card.className = 'researcher-card';
+                
+                const inst = r.institution_acronym ? `${r.institution} (${r.institution_acronym})` : (r.institution || 'Instituição não informada');
+                const lattes = r.lattes_id ? `Lattes: ${r.lattes_id}` : '';
+                
+                card.innerHTML = `
+                    <h3>${r.name}</h3>
+                    <p style="color:var(--primary-color);font-weight:500;margin-bottom:4px;">${inst}</p>
+                    ${r.abstract ? `<p style="font-size:0.8rem;color:var(--text-secondary);line-height:1.4;">${r.abstract.substring(0, 180)}...</p>` : ''}
+                `;
+                wrapper.appendChild(card);
+            });
+            scrollToBottom();
+        }
+
+        function scrollToBottom() {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        chatForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const query = chatInput.value.trim();
+            if (!query) return;
+
+            // Add user message
+            addMessage(query, true);
+            chatInput.value = '';
+            chatInput.disabled = true;
+            sendBtn.disabled = true;
+
+            // Add loading
+            addLoadingIndicator();
+
+            try {
+                // Call API
+                const response = await fetch('/ai/chat/ask', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ query: query, session_id: sessionId })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Erro na resposta do servidor');
+                }
+
+                const data = await response.json();
+                
+                removeLoadingIndicator();
+                
+                // Add bot message with parsed markdown and metadata
+                const botMsgWrapper = addMessage(data.answer, false, {
+                    intent: data.intent,
+                    filters_extracted: data.filters_extracted
+                });
+                
+                // Add researcher cards if any
+                if (data.researchers && data.researchers.length > 0) {
+                    addResearchers(botMsgWrapper, data.researchers);
+                }
+
+            } catch (error) {
+                removeLoadingIndicator();
+                addMessage('Desculpe, ocorreu um erro ao processar sua requisição.', false);
+                console.error(error);
+            } finally {
+                chatInput.disabled = false;
+                sendBtn.disabled = false;
+                chatInput.focus();
+            }
+        });
+    </script>
+</body>
+</html>

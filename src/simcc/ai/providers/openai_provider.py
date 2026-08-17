@@ -10,7 +10,7 @@ class OpenAIProvider(LLMProvider, EmbeddingsProvider):
     def __init__(self, api_key: str, model: str = 'gpt-3.5-turbo'):
         self.llm = ChatOpenAI(api_key=api_key, model=model, temperature=0.9)
         self.embeddings = OpenAIEmbeddings(
-            api_key=api_key, model='text-embedding-3-large'
+            api_key=api_key, model='text-embedding-3-small'
         )
 
     async def generate(self, prompt: str, **kwargs: Any) -> str:

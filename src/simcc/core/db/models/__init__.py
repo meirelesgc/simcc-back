@@ -19,6 +19,10 @@ from simcc.core.db.models.admin import (
     AdminUsersRoles,
     AdminWeights,
 )
+from simcc.core.db.models.ai import (
+    SearchDocumentProduction,
+    SearchDocumentResearcher,
+)
 from simcc.core.db.models.base import table_registry
 from simcc.core.db.models.expertise import (
     AreaExpertise,
@@ -202,6 +206,8 @@ __all__ = [
     'Routine',
     'Sdg',
     'SdgAlignment',
+    'SearchDocumentProduction',
+    'SearchDocumentResearcher',
     'ShortCourse',
     'ShortCourseTaught',
     'SocialMediaWebsiteBlog',

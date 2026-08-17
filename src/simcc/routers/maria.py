@@ -2,8 +2,8 @@ from enum import Enum
 
 from fastapi import APIRouter, Depends, Query
 
-from simcc.ai.dependencies import get_embeddings_provider, get_llm_provider
-from simcc.ai.schemas.maria import MariaResponse
+from simcc.ai.dependencies import get_embeddings_provider, get_llm_provider, get_query_planner, get_ai_search_service
+from simcc.ai.schemas.maria import MariaResponse, ChatRequest, ChatResponse
 from simcc.core.dependencies import AsyncSession
 from simcc.schemas import DefaultFilters
 from simcc.services.maria_service import MariaService
@@ -42,17 +42,18 @@ async def summarize_researcher(
     )
 
 
-@router.post('/ai/chat/ask', response_model=MariaResponse)
+@router.post('/ai/chat/ask', response_model=ChatResponse)
 async def chat_ask(
     session: AsyncSession,
-    query: str = Query(...),
+    request: ChatRequest,
     service: MariaService = Depends(get_maria_service),
+    planner=Depends(get_query_planner),
+    search_service=Depends(get_ai_search_service)
 ):
     """
-    Interface de chat genérica com a MarIA.
+    Interface de chat principal com a MarIA, suportando Query Planning e Busca Híbrida.
     """
-    # TODO: Implementar lógica de chat genérico no MariaService
-    return await service.search_and_summarize(session, query, 'abstract')
+    return await service.chat_ask(session, request.query, planner, search_service)
 
 
 @router.get('/ai/production/classify')
