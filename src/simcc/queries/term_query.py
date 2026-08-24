@@ -10,18 +10,39 @@ class OriginalWordsQuery(BaseQuery):
 
     def build_sql(self) -> str:
         if self.type_ == 'NAME':
-            return """
-                SELECT
-                    name AS term,
-                    0 AS frequency,
-                    '0' AS type
-                FROM
-                    researcher
-                WHERE
-                    unaccent(LOWER(name)) LIKE unaccent(:initials) || '%'
-                ORDER BY name
-                LIMIT 300
-            """
+            tokens = [t.strip() for t in self.initials.split() if t.strip()]
+            if len(tokens) <= 1:
+                return """
+                    SELECT
+                        name AS term,
+                        0 AS frequency,
+                        '0' AS type
+                    FROM
+                        researcher
+                    WHERE
+                        unaccent(LOWER(name)) LIKE unaccent(:initials) || '%'
+                    ORDER BY name
+                    LIMIT 300
+                """
+            else:
+                conditions = []
+                for i, token in enumerate(tokens):
+                    param_name = f'init_tok_{i}'
+                    self.params[param_name] = f'%{token}%'
+                    conditions.append(f'unaccent(LOWER(name)) LIKE :{param_name}')
+                where_clause = ' AND '.join(conditions)
+                return f"""
+                    SELECT
+                        name AS term,
+                        0 AS frequency,
+                        '0' AS type
+                    FROM
+                        researcher
+                    WHERE
+                        {where_clause}
+                    ORDER BY name
+                    LIMIT 300
+                """
         elif self.type_ == 'AREA':
             return """
                 SELECT name AS term,

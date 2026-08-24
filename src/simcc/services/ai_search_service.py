@@ -53,7 +53,9 @@ class AISearchService:
         # 3. Filtro por Nome do Pesquisador (se especificado)
         researcher_name = filters.get('researcher_name')
         if researcher_name:
-            stmt = stmt.filter(Researcher.name.ilike(f"%{researcher_name.strip()}%"))
+            tokens = [t.strip() for t in researcher_name.split() if t.strip()]
+            for tok in tokens:
+                stmt = stmt.filter(Researcher.name.ilike(f"%{tok}%"))
             
         # 4. Ordenação e Busca Semântica
         if query and query.strip():

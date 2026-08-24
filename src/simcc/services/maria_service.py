@@ -132,43 +132,48 @@ class MariaService:
         }
 
     async def chat_ask(
-        self,
-        session,
-        query: str,
-        planner,
-        search_service
+        self, session, query: str, planner, search_service
     ) -> dict:
         from simcc.ai.schemas.maria import ChatResponse
-        
+
         # 1. Planejar a query
         plan = await planner.plan(query)
-        
+
         # 2. Executar a busca baseada na intenção
         researchers = []
         productions = []
-        
-        if plan.intent in ['researcher_search', 'researcher_profile', 'researcher_comparison', 'aggregation']:
+
+        if plan.intent in [
+            'researcher_search',
+            'researcher_profile',
+            'researcher_comparison',
+            'aggregation',
+        ]:
             # Extrai filtros limpos
             filters_dict = plan.filters.model_dump(exclude_none=True)
-            
+
             researchers = await search_service.search_researchers_hybrid(
                 session=session,
                 query=plan.semantic_query,
                 limit=10,
-                filters=filters_dict
+                filters=filters_dict,
             )
-            
+
         # 3. Construir um prompt contextualizado de síntese
-        researchers_context = ""
+        researchers_context = ''
         for i, r in enumerate(researchers, 1):
-            inst = r.get('institution_acronym') or r.get('institution') or 'Instituição não informada'
-            researchers_context += (
-                f"\n--- [Pesquisador {i}] ---\n"
-                f"Nome: {r['name']}\n"
-                f"Instituição: {inst}\n"
-                f"Conteúdo Semântico:\n{r.get('semantic_content', r.get('abstract', ''))}\n"
+            inst = (
+                r.get('institution_acronym')
+                or r.get('institution')
+                or 'Instituição não informada'
             )
-        
+            researchers_context += (
+                f'\n--- [Pesquisador {i}] ---\n'
+                f'Nome: {r["name"]}\n'
+                f'Instituição: {inst}\n'
+                f'Conteúdo Semântico:\n{r.get("semantic_content", r.get("abstract", ""))}\n'
+            )
+
         synthesis_prompt = f"""
 Você é a MarIA, assistente de inteligência artificial especializada na base de dados de pesquisadores e produções científicas da Bahia.
 
@@ -179,7 +184,7 @@ Plano de Execução do Planner:
 - Busca Semântica: "{plan.semantic_query}"
 
 Contexto Recuperado da Base de Dados ({len(researchers)} registros):
-{researchers_context if researchers else "Nenhum pesquisador recuperado para os critérios informados."}
+{researchers_context if researchers else 'Nenhum pesquisador recuperado para os critérios informados.'}
 
 Instruções para a Resposta:
 1. Responda em Português de forma clara, natural, profissional e informativa.
@@ -191,14 +196,19 @@ Instruções para a Resposta:
 3. Use formatação Markdown (títulos, negrito para nomes de pesquisadores e instituições, tópicos) para facilitar a leitura.
 4. Baseie-se ESTRITAMENTE nas informações fornecidas no contexto acima. Não invente formações ou produções.
 """
-        
+
         answer = await self.llm.generate(synthesis_prompt)
-        
+
         return ChatResponse(
             answer=answer,
             intent=plan.intent,
             filters_extracted=plan.filters.model_dump(exclude_none=True),
             researchers=researchers,
             productions=productions,
-            sources=[f"{r['name']} ({r.get('institution_acronym') or r.get('institution') or 'BA'})" for r in researchers] if researchers else []
+            sources=[
+                f'{r["name"]} ({r.get("institution_acronym") or r.get("institution") or "BA"})'
+                for r in researchers
+            ]
+            if researchers
+            else [],
         )
