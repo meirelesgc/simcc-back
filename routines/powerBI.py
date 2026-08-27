@@ -1436,23 +1436,30 @@ def guidance():
     csv: pd.DataFrame = _guidance()
     csv = csv.rename(columns={'type': 'program_type'})
 
+    if csv.empty:
+        csv_path = os.path.join(PATH, 'guidance.csv')
+        csv.to_csv(csv_path, index=True, quoting=QUOTE_ALL, encoding='utf-8-sig')
+        return
+
     def peding_days(row):
         delays = []
         if row['done_date_conclusion'] is None:
-            if row['planned_date_conclusion'] < today:
+            if row['planned_date_conclusion'] and row['planned_date_conclusion'] < today:
                 days = (today - row['planned_date_conclusion']).days
                 delays.append(days)
         if row['done_date_qualification'] is None:
-            if row['planned_date_qualification'] < today:
+            if row['planned_date_qualification'] and row['planned_date_qualification'] < today:
                 days = (today - row['planned_date_qualification']).days
                 delays.append(days)
         if row['done_date_project'] is None:
-            if row['planned_date_project'] < today:
+            if row['planned_date_project'] and row['planned_date_project'] < today:
                 days = (today - row['planned_date_project']).days
                 delays.append(days)
         if delays:
             return max(delays)
-        return (row['planned_date_conclusion'] - today).days
+        if row['planned_date_conclusion']:
+            return (row['planned_date_conclusion'] - today).days
+        return 0
 
     def peding_days_(row):
         delays = []
@@ -1604,6 +1611,14 @@ def in_progress_per_year():
     csv: pd.DataFrame = _guidance()
     csv = csv.rename(columns={'type': 'program_type'})
 
+    if csv.empty:
+        csv_path = os.path.join(PATH, 'in_progress_per_year.csv')
+        pd.DataFrame(
+            columns=['in_progress', 'year', 'supervisor_name',
+                     'supervisor_researcher_id', 'graduate_program_id', 'count']
+        ).to_csv(csv_path, index=False, encoding='utf-8-sig')
+        return
+
     def type_(row):
         t = []
         if row['done_date_project'] is None:
@@ -1684,7 +1699,7 @@ def in_progress_per_year():
     min_year = df['year'].min()
     max_year = df['year'].max()
 
-    years = pd.Series(range(min_year, max_year + 1), name='year')
+    years = pd.Series(range(int(min_year), int(max_year) + 1), name='year')
     columns = [
         'in_progress',
         'year',
@@ -1693,10 +1708,12 @@ def in_progress_per_year():
         'graduate_program_id',
     ]
     df = csv[columns].copy()
+    df = df.dropna(subset=['year'])
+    df['year'] = df['year'].astype(int)
 
     min_year = df['year'].min()
     max_year = df['year'].max()
-    years = pd.Series(range(min_year, max_year + 1), name='year')
+    years = pd.Series(range(int(min_year), int(max_year) + 1), name='year')
 
     supervisors = df[
         ['supervisor_name', 'supervisor_researcher_id']
