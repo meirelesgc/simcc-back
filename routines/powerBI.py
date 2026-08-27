@@ -434,9 +434,10 @@ def dim_researcher(origin: str):
             r.graduation AS graduation, r.institution_id, r.docente,
             regexp_replace(r.abstract, E'[\\n\\r]+', ' - ', 'g' ) AS abstract,
             '{origin}ResearcherData/Image?researcher_id=' || r.id AS image,
-            r.orcid
+            r.orcid,
+            r.status,
+            CASE WHEN r.status IS TRUE THEN 'Ativo' ELSE 'Inativo' END AS status_name
         FROM researcher r
-        WHERE r.status = True
         """
     result = conn.select(SCRIPT_SQL)
     csv = pd.DataFrame(result)
@@ -547,7 +548,9 @@ def researcher():
     SCRIPT_SQL = """
         SELECT r.name AS researcher, r.id AS researcher_id,
             TO_CHAR(r.last_update,'dd/mm/yyyy') AS last_update,
-            r.graduation AS graduation, r.lattes_id, extra_field AS area_leader
+            r.graduation AS graduation, r.lattes_id, extra_field AS area_leader,
+            r.status,
+            CASE WHEN r.status IS TRUE THEN 'Ativo' ELSE 'Inativo' END AS status_name
         FROM  researcher r;
         """
     result = conn.select(SCRIPT_SQL)
