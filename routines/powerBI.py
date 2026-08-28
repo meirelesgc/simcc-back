@@ -225,23 +225,40 @@ def data():
 
 def cimatec_graduate_program_student():
     SCRIPT_SQL = """
-        SELECT researcher_id, graduate_program_id,
-            EXTRACT(YEAR FROM CURRENT_DATE) AS year
-        FROM graduate_program_student
+        SELECT gps.graduate_program_id, r.lattes_id, gps.year
+        FROM graduate_program_student gps
+        JOIN researcher r ON r.researcher_id = gps.researcher_id
         """
-    result = conn.select(SCRIPT_SQL)
-    csv = pd.DataFrame(result)
+    students_admin = pd.DataFrame(conn_admin.select(SCRIPT_SQL))
+    if students_admin.empty:
+        csv = pd.DataFrame(columns=['researcher_id', 'graduate_program_id', 'year'])
+    else:
+        researchers_simcc = pd.DataFrame(
+            conn.select('SELECT id AS researcher_id, lattes_id FROM researcher')
+        )
+        csv = pd.merge(students_admin, researchers_simcc, on='lattes_id', how='left')
+        csv = csv[['researcher_id', 'graduate_program_id', 'year']].dropna(subset=['researcher_id'])
+
     csv_path = os.path.join(PATH, 'cimatec_graduate_program_student.csv')
     csv.to_csv(csv_path)
 
 
 def graduate_program_student_year_unnest():
     SCRIPT_SQL = """
-        SELECT graduate_program_id, researcher_id, year
-        FROM graduate_program_student;
+        SELECT gps.graduate_program_id, r.lattes_id, gps.year
+        FROM graduate_program_student gps
+        JOIN researcher r ON r.researcher_id = gps.researcher_id
         """
-    result = conn.select(SCRIPT_SQL)
-    csv = pd.DataFrame(result)
+    students_admin = pd.DataFrame(conn_admin.select(SCRIPT_SQL))
+    if students_admin.empty:
+        csv = pd.DataFrame(columns=['graduate_program_id', 'researcher_id', 'year'])
+    else:
+        researchers_simcc = pd.DataFrame(
+            conn.select('SELECT id AS researcher_id, lattes_id FROM researcher')
+        )
+        csv = pd.merge(students_admin, researchers_simcc, on='lattes_id', how='left')
+        csv = csv[['graduate_program_id', 'researcher_id', 'year']].dropna(subset=['researcher_id'])
+
     csv_path = os.path.join(PATH, 'graduate_program_student_year_unnest.csv')
     csv.to_csv(csv_path)
 
