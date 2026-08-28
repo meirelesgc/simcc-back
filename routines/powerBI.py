@@ -225,7 +225,7 @@ def data():
 
 def cimatec_graduate_program_student():
     SCRIPT_SQL = """
-        SELECT gps.graduate_program_id, r.lattes_id, gps.year
+        SELECT gps.graduate_program_id, r.lattes_id, UNNEST(gps.year) AS year
         FROM graduate_program_student gps
         JOIN researcher r ON r.researcher_id = gps.researcher_id
         """
@@ -240,12 +240,12 @@ def cimatec_graduate_program_student():
         csv = csv[['researcher_id', 'graduate_program_id', 'year']].dropna(subset=['researcher_id'])
 
     csv_path = os.path.join(PATH, 'cimatec_graduate_program_student.csv')
-    csv.to_csv(csv_path)
+    csv.to_csv(csv_path, index=False)
 
 
 def graduate_program_student_year_unnest():
     SCRIPT_SQL = """
-        SELECT gps.graduate_program_id, r.lattes_id, gps.year
+        SELECT gps.graduate_program_id, r.lattes_id, UNNEST(gps.year) AS year
         FROM graduate_program_student gps
         JOIN researcher r ON r.researcher_id = gps.researcher_id
         """
@@ -260,7 +260,7 @@ def graduate_program_student_year_unnest():
         csv = csv[['graduate_program_id', 'researcher_id', 'year']].dropna(subset=['researcher_id'])
 
     csv_path = os.path.join(PATH, 'graduate_program_student_year_unnest.csv')
-    csv.to_csv(csv_path)
+    csv.to_csv(csv_path, index=False)
 
 
 def dim_graduate_program_acronym():
