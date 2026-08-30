@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from sqlalchemy import text
 
 from simcc.queries import institution_query, researcher_query
@@ -329,121 +331,18 @@ async def list_subsidy_by_ids(session, researcher_ids: list):
 
 
 async def list_departments_by_ids(session, researcher_ids: list):
-    if not researcher_ids:
-        return []
-
-    try:
-        SCRIPT_SQL = """
-            SELECT dpr.researcher_id AS id,
-                JSONB_AGG(JSONB_BUILD_OBJECT(
-                    'dep_id', dp.dep_id,
-                    'org_cod', dp.org_cod,
-                    'dep_nom', dp.dep_nom,
-                    'dep_des', dp.dep_des,
-                    'dep_email', dp.dep_email,
-                    'dep_site', dp.dep_site,
-                    'dep_sigla', dp.dep_sigla,
-                    'dep_tel', dp.dep_tel
-                )) AS departments
-            FROM ufmg.departament_researcher dpr
-            LEFT JOIN ufmg.departament dp
-                ON dpr.dep_id = dp.dep_id
-            WHERE dpr.researcher_id = ANY(:researcher_ids)
-            GROUP BY dpr.researcher_id;
-        """
-        result = await session.execute(
-            text(SCRIPT_SQL),
-            {'researcher_ids': [str(rid) for rid in researcher_ids]},
-        )
-        return result.mappings().all()
-    except Exception:
-        return []
+    # Schema legado ufmg descontinuado - retorno fixo compatível
+    return []
 
 
 async def list_ufmg_data_by_ids(session, researcher_ids: list):
-    if not researcher_ids:
-        return []
-
-    try:
-        SCRIPT_SQL = """
-            SELECT
-                researcher_id AS id,
-                full_name,
-                gender,
-                status_code,
-                work_regime,
-                job_class,
-                job_title,
-                job_rank,
-                job_reference_code,
-                academic_degree,
-                organization_entry_date,
-                last_promotion_date,
-                employment_status_description,
-                department_name,
-                career_category,
-                academic_unit,
-                unit_code,
-                function_code,
-                position_code,
-                leadership_start_date,
-                leadership_end_date,
-                current_function_name,
-                function_location,
-                registration_number,
-                ufmg_registration_number,
-                semester_reference
-            FROM ufmg.researcher
-            WHERE researcher_id = ANY(:researcher_ids);
-        """
-        result = await session.execute(
-            text(SCRIPT_SQL),
-            {'researcher_ids': [str(rid) for rid in researcher_ids]},
-        )
-        return result.mappings().all()
-    except Exception:
-        return []
+    # Schema legado ufmg descontinuado - retorno fixo compatível
+    return []
 
 
 async def list_user_data_by_lattes_ids(session, lattes_ids: list):
-    if not lattes_ids:
-        return []
-
-    try:
-        SCRIPT_SQL = """
-            SELECT
-                u.lattes_id,
-                JSONB_BUILD_OBJECT(
-                    'lattes_id', u.lattes_id,
-                    'uid', u.uid,
-                    'email', u.email,
-                    'gender', u.gender,
-                    'verify', u.verify,
-                    'shib_id', u.shib_id,
-                    'user_id', u.user_id,
-                    'linkedin', u.linkedin,
-                    'provider', u.provider,
-                    'last_name', u.last_name,
-                    'photo_url', u.photo_url,
-                    'shib_code', u.shib_code,
-                    'birth_date', u.birth_date,
-                    'first_name', u.first_name,
-                    'course_level', u.course_level,
-                    'display_name', u.display_name,
-                    'email_status', u.email_status,
-                    'registration', u.registration,
-                    'institution_id', u.institution_id,
-                    'visible_email', u.visible_email
-                ) AS user
-            FROM admin.users u
-            WHERE u.lattes_id = ANY(:lattes_ids);
-        """
-        result = await session.execute(
-            text(SCRIPT_SQL), {'lattes_ids': lattes_ids}
-        )
-        return result.mappings().all()
-    except Exception:
-        return []
+    # Schema legado admin descontinuado - retorno fixo compatível
+    return []
 
 
 async def list_institution_data_by_researcher_ids(
@@ -464,7 +363,7 @@ async def list_institution_data_by_researcher_ids(
         """
         result = await session.execute(
             text(SCRIPT_SQL),
-            {'researcher_ids': [str(rid) for rid in researcher_ids]},
+            {'researcher_ids': [UUID(str(rid)) for rid in researcher_ids]},
         )
         return result.mappings().all()
     except Exception:

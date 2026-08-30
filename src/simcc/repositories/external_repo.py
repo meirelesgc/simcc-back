@@ -1,6 +1,4 @@
-from sqlalchemy import text
-
-from simcc.queries import external_query, institution_query
+from simcc.queries import external_query
 
 
 async def list_article_production(
@@ -39,27 +37,10 @@ async def list_words(session, term: str, stopwords: list[str]):
 
 
 async def get_departament_rt(session):
-    try:
-        res_query = institution_query.RtMetricsQuery(session, 'researcher')
-        teachers = await res_query.execute()
-    except Exception:
-        teachers = []
-
-    try:
-        tech_query = institution_query.RtMetricsQuery(session, 'technician')
-        technicians = await tech_query.execute()
-    except Exception:
-        technicians = []
-
-    return {'teachers': teachers, 'technician': technicians}
+    # Schema legado ufmg descontinuado - retorno fixo compatível
+    return {'teachers': [], 'technician': []}
 
 
 async def post_congregation(session, congregation: list):
-    SCRIPT_SQL = """
-        INSERT INTO ufmg.mandate(member, departament, mandate, email, phone)
-        VALUES (:MEMBRO, :DEPARTAMENTO, :MANDATO, :EMAIL, :TELEFONE);
-    """
-    try:
-        await session.execute(text(SCRIPT_SQL), congregation)
-    except Exception:
-        pass
+    # Schema legado ufmg descontinuado - no-op
+    return None

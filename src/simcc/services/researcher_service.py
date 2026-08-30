@@ -24,7 +24,7 @@ async def search_researchers(
     )
 
     if researchers:
-        await enrich_researchers(session, researchers)
+        researchers = await enrich_researchers(session, researchers)
 
     return researchers
 
@@ -39,10 +39,10 @@ def _normalize_researcher_dict(r: Any) -> dict[str, Any]:
     return r if isinstance(r, dict) else {}
 
 
-def _build_institution_map(inst_data: list) -> dict[Any, dict[str, Any]]:
+def _build_institution_map(inst_data: list) -> dict[str, dict[str, Any]]:
     inst_map = {}
     for row in inst_data:
-        rid = row['id']
+        rid = str(row['id'])
         attrs = dict(row.get('custom_attributes') or {})
         if row.get('zip_code') is not None:
             attrs['zip_code'] = row['zip_code']
@@ -85,21 +85,21 @@ async def enrich_researchers(session, researchers: list):
     inst_data = await researcher_repo.list_institution_data_by_researcher_ids(
         session, researcher_ids
     )
-
     # Mapeamentos
     maps = {
-        'gp': {row['id']: row['graduate_programs'] for row in gp_data},
-        'rg': {row['id']: row['research_groups'] for row in rg_data},
-        'subsidy': {row['id']: row['subsidy'] for row in subsidy_data},
-        'dep': {row['id']: row['departments'] for row in dep_data},
-        'ufmg': {row['id']: dict(row) for row in ufmg_data},
-        'user': {row['lattes_id']: row['user'] for row in user_data},
+        'gp': {str(row['id']): row['graduate_programs'] for row in gp_data},
+        'rg': {str(row['id']): row['research_groups'] for row in rg_data},
+        'subsidy': {str(row['id']): row['subsidy'] for row in subsidy_data},
+        'dep': {str(row['id']): row['departments'] for row in dep_data},
+        'ufmg': {str(row['id']): dict(row) for row in ufmg_data},
+        'user': {str(row['lattes_id']): row['user'] for row in user_data},
         'inst': _build_institution_map(inst_data),
     }
 
     # Aplica dados
     for r in processed:
-        rid, lid = r.get('id'), r.get('lattes_id')
+        rid = str(r['id']) if r.get('id') is not None else None
+        lid = str(r['lattes_id']) if r.get('lattes_id') is not None else None
         r['graduate_programs'] = maps['gp'].get(rid, [])
         r['research_groups'] = maps['rg'].get(rid, [])
         r['subsidy'] = maps['subsidy'].get(rid, [])
