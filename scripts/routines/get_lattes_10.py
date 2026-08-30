@@ -81,7 +81,7 @@ def main(researcher_ids=None, lattes_ids=None):
         success = 0
         failed = 0
 
-        routine_step_started("fetch_lattes_10", total_items=items_found)
+        routine_step_started('fetch_lattes_10', total_items=items_found)
 
         query_update = text("""
             UPDATE researcher
@@ -103,25 +103,33 @@ def main(researcher_ids=None, lattes_ids=None):
                 )
                 if lattes_10_id:
                     success += 1
-                    logger.debug(f"Fetched lattes_10_id {lattes_10_id} for researcher {r_id}")
+                    logger.debug(
+                        f'Fetched lattes_10_id {lattes_10_id} for researcher {r_id}'
+                    )
                 else:
                     failed += 1
-                    routine_item_error(r_id, "Could not resolve lattes_10_id from CNPq redirect", lattes_id=l_id)
+                    routine_item_error(
+                        r_id,
+                        'Could not resolve lattes_10_id from CNPq redirect',
+                        lattes_id=l_id,
+                    )
             except Exception as item_err:
                 failed += 1
                 routine_item_error(r_id, str(item_err), lattes_id=l_id)
 
             if (i + 1) % 50 == 0 or (i + 1) == items_found:
-                routine_progress("fetch_lattes_10", i + 1, items_found, success, failed)
+                routine_progress(
+                    'fetch_lattes_10', i + 1, items_found, success, failed
+                )
 
         session.commit()
         items_succeeded = success
         items_failed = failed
-        routine_step_finished("fetch_lattes_10")
+        routine_step_finished('fetch_lattes_10')
     except Exception as E:
         items_succeeded = 0
         items_failed = items_found
-        logger.error(f"Error in get_lattes_10: {E}")
+        logger.error(f'Error in get_lattes_10: {E}')
         session.rollback()
         raise E
 

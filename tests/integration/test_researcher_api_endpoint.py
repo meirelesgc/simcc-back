@@ -40,7 +40,11 @@ async def test_get_researchers_by_institution_endpoint(session):
         researcher_id=researcher.id,
         zip_code='40000-000',
         work_regime='DE',
-        custom_attributes={'siape': '9876543', 'department': 'DCOMP'},
+        custom_attributes={
+            'genero': 'Mulher Cis',
+            'siape': '9876543',
+            'department': 'DCOMP',
+        },
     )
     session.add(inst_data)
     await session.commit()
@@ -60,7 +64,9 @@ async def test_get_researchers_by_institution_endpoint(session):
     assert matched is not None
     assert matched['name'] == 'Pesquisador Endpoint Integracao'
     assert matched['custom_attributes'] is not None
+    assert matched['custom_attributes']['genero'] == 'Mulher Cis'
     assert matched['custom_attributes']['zip_code'] == '40000-000'
     assert matched['custom_attributes']['work_regime'] == 'DE'
     assert matched['custom_attributes']['siape'] == '9876543'
     assert matched['custom_attributes']['department'] == 'DCOMP'
+
