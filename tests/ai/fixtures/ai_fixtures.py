@@ -1,4 +1,5 @@
 from unittest.mock import AsyncMock
+
 import pytest
 
 from simcc.ai.providers.base import EmbeddingsProvider, LLMProvider

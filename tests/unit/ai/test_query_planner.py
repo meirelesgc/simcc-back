@@ -23,7 +23,7 @@ def test_query_plan_valid_structure():
     )
     assert plan.intent == "researcher_comparison"
     assert len(plan.filters.institutions) == 2
-    
+
     data = plan.model_dump()
     assert "institutions" in data["filters"]
     assert data["filters"]["institutions"] == ["UFBA", "UNEB"]

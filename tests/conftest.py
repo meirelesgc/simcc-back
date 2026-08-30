@@ -1,4 +1,3 @@
-import sys
 import pytest
 import pytest_asyncio
 from fastapi.testclient import TestClient
@@ -30,14 +29,14 @@ def settings():
     return Settings()
 
 
-from sqlalchemy.pool import NullPool
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import NullPool
 
 
 @pytest.fixture(scope='session')
 def engine(settings):
     _engine = create_async_engine(settings.DATABASE_URL, poolclass=NullPool, echo=False)
-    yield _engine
+    return _engine
 
 
 @pytest_asyncio.fixture(scope='session', autouse=True)
@@ -45,7 +44,6 @@ async def setup_database(engine):
     async with engine.begin() as conn:
         await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
         await conn.run_sync(table_registry.metadata.create_all)
-    yield
 
 
 @pytest_asyncio.fixture
