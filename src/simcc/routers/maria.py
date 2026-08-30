@@ -87,19 +87,3 @@ async def summary_search(
     Utilizado para compatibilidade com sistemas legados.
     """
     return await service.generate_search_summary(session, filters)
-
-
-@router.get(
-    '/maria/researcher/{search_type}',
-    response_model=MariaResponse,
-    include_in_schema=False,
-)
-async def legacy_researcher_search(
-    search_type: SearchType,
-    session: AsyncSession,
-    query: str = Query(...),
-    service: MariaService = Depends(get_maria_service),
-):
-    return await service.search_and_summarize(
-        session, query, search_type.value
-    )

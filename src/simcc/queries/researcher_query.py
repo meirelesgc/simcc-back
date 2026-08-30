@@ -859,7 +859,7 @@ class ResearcherTermQuery(BaseQuery):
                 WHERE 1 = 1
                 {filters}
             ) sub
-            WHERE 
+            WHERE
                 CHAR_LENGTH(lexeme) > 3
                 AND lexeme <> ALL(:stopwords)
             GROUP BY lexeme
