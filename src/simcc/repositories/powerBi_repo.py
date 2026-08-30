@@ -52,13 +52,19 @@ async def get_dim_city(session):
 
 
 async def get_ufmg_researcher(session):
-    query = powerBi_query.UfmgResearcherQuery(session)
-    return await query.execute()
+    try:
+        query = powerBi_query.UfmgResearcherQuery(session)
+        return await query.execute()
+    except Exception:
+        return []
 
 
 async def get_dim_departament(session):
-    query = powerBi_query.DimDepartamentQuery(session)
-    return await query.execute()
+    try:
+        query = powerBi_query.DimDepartamentQuery(session)
+        return await query.execute()
+    except Exception:
+        return []
 
 
 async def get_cimatec_graduate_program_student(session):

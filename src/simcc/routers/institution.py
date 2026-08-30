@@ -3,7 +3,7 @@ from uuid import UUID
 from fastapi import APIRouter, Query
 
 from simcc.core.dependencies import AsyncSession
-from simcc.schemas.institution import Institution, InstitutionMetric, RtMetrics
+from simcc.schemas.institution import Institution, InstitutionMetric
 from simcc.services import researcher_service
 
 router = APIRouter(tags=['Institution'])

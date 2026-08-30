@@ -159,6 +159,7 @@ class Researcher(BaseModel):
     graduate_programs: Optional[Union[list, str]] = []
     ufmg: Optional[Any] = None
     user: Optional[Union[dict, str]] = {}
+    custom_attributes: Optional[dict[str, Any]] = None
 
     among: Union[int, str] = 0
     articles: Union[int, str] = 0

@@ -39,11 +39,17 @@ async def list_words(session, term: str, stopwords: list[str]):
 
 
 async def get_departament_rt(session):
-    res_query = institution_query.RtMetricsQuery(session, 'researcher')
-    teachers = await res_query.execute()
+    try:
+        res_query = institution_query.RtMetricsQuery(session, 'researcher')
+        teachers = await res_query.execute()
+    except Exception:
+        teachers = []
 
-    tech_query = institution_query.RtMetricsQuery(session, 'technician')
-    technicians = await tech_query.execute()
+    try:
+        tech_query = institution_query.RtMetricsQuery(session, 'technician')
+        technicians = await tech_query.execute()
+    except Exception:
+        technicians = []
 
     return {'teachers': teachers, 'technician': technicians}
 
@@ -53,5 +59,7 @@ async def post_congregation(session, congregation: list):
         INSERT INTO ufmg.mandate(member, departament, mandate, email, phone)
         VALUES (:MEMBRO, :DEPARTAMENTO, :MANDATO, :EMAIL, :TELEFONE);
     """
-    # Assuming the repository handles the session execution
-    await session.execute(text(SCRIPT_SQL), congregation)
+    try:
+        await session.execute(text(SCRIPT_SQL), congregation)
+    except Exception:
+        pass

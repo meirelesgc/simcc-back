@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Any
 
 import polars as pl
 
@@ -28,34 +29,41 @@ async def search_researchers(
     return researchers
 
 
+def _normalize_researcher_dict(r: Any) -> dict[str, Any]:
+    if hasattr(r, 'model_dump'):
+        return r.model_dump()
+    if hasattr(r, '_asdict'):
+        return r._asdict()
+    if not isinstance(r, dict) and hasattr(r, 'get'):
+        return dict(r)
+    return r if isinstance(r, dict) else {}
+
+
+def _build_institution_map(inst_data: list) -> dict[Any, dict[str, Any]]:
+    inst_map = {}
+    for row in inst_data:
+        rid = row['id']
+        attrs = dict(row.get('custom_attributes') or {})
+        if row.get('zip_code') is not None:
+            attrs['zip_code'] = row['zip_code']
+        if row.get('work_regime') is not None:
+            attrs['work_regime'] = row['work_regime']
+        inst_map[rid] = attrs
+    return inst_map
+
+
 async def enrich_researchers(session, researchers: list):
     if not researchers:
         return researchers
 
-    processed_researchers = []
-    for r in researchers:
-        if hasattr(r, 'model_dump'):  # Pydantic
-            processed_researchers.append(r.model_dump())
-        elif hasattr(r, '_asdict'):  # NamedTuple or similar
-            processed_researchers.append(r._asdict())
-        elif not isinstance(r, dict) and hasattr(r, 'get'):  # RowMapping
-            processed_researchers.append(dict(r))
-        else:
-            processed_researchers.append(r)
-    researcher_ids = []
-    lattes_ids = []
-
-    for r in processed_researchers:
-        rid = r.get('id')
-        lid = r.get('lattes_id')
-        if rid:
-            researcher_ids.append(rid)
-        if lid:
-            lattes_ids.append(lid)
+    processed = [_normalize_researcher_dict(r) for r in researchers]
+    researcher_ids = [r['id'] for r in processed if r.get('id')]
+    lattes_ids = [r['lattes_id'] for r in processed if r.get('lattes_id')]
 
     if not researcher_ids:
-        return processed_researchers
+        return processed
 
+    # Consultas em lote
     gp_data = await researcher_repo.list_graduate_programs_by_ids(
         session, researcher_ids
     )
@@ -74,33 +82,37 @@ async def enrich_researchers(session, researchers: list):
     user_data = await researcher_repo.list_user_data_by_lattes_ids(
         session, lattes_ids
     )
+    inst_data = await researcher_repo.list_institution_data_by_researcher_ids(
+        session, researcher_ids
+    )
 
-    # Create mapping dictionaries
-    gp_map = {row['id']: row['graduate_programs'] for row in gp_data}
-    rg_map = {row['id']: row['research_groups'] for row in rg_data}
-    subsidy_map = {row['id']: row['subsidy'] for row in subsidy_data}
-    dep_map = {row['id']: row['departments'] for row in dep_data}
-    ufmg_map = {row['id']: dict(row) for row in ufmg_data}
-    user_map = {row['lattes_id']: row['user'] for row in user_data}
+    # Mapeamentos
+    maps = {
+        'gp': {row['id']: row['graduate_programs'] for row in gp_data},
+        'rg': {row['id']: row['research_groups'] for row in rg_data},
+        'subsidy': {row['id']: row['subsidy'] for row in subsidy_data},
+        'dep': {row['id']: row['departments'] for row in dep_data},
+        'ufmg': {row['id']: dict(row) for row in ufmg_data},
+        'user': {row['lattes_id']: row['user'] for row in user_data},
+        'inst': _build_institution_map(inst_data),
+    }
 
-    # Apply data to researchers
-    for r in processed_researchers:
-        rid = r.get('id')
-        lid = r.get('lattes_id')
+    # Aplica dados
+    for r in processed:
+        rid, lid = r.get('id'), r.get('lattes_id')
+        r['graduate_programs'] = maps['gp'].get(rid, [])
+        r['research_groups'] = maps['rg'].get(rid, [])
+        r['subsidy'] = maps['subsidy'].get(rid, [])
+        r['departments'] = maps['dep'].get(rid, [])
+        r['ufmg'] = maps['ufmg'].get(rid)
+        r['user'] = maps['user'].get(lid)
+        r['custom_attributes'] = maps['inst'].get(rid, None)
 
-        r['graduate_programs'] = gp_map.get(rid, [])
-        r['research_groups'] = rg_map.get(rid, [])
-        r['subsidy'] = subsidy_map.get(rid, [])
-        r['departments'] = dep_map.get(rid, [])
-        r['ufmg'] = ufmg_map.get(rid)
-        r['user'] = user_map.get(lid)
-
-    # Replace original list content if possible, or return new list
-    if len(researchers) == len(processed_researchers):
+    if len(researchers) == len(processed):
         for i in range(len(researchers)):
-            researchers[i] = processed_researchers[i]
+            researchers[i] = processed[i]
 
-    return processed_researchers
+    return processed
 
 
 async def get_metrics_academic_degree(session, filters):

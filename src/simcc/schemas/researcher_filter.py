@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 
+
 class ResearcherFilter(BaseModel):
     area: list[str]
     graduation: list[str]
