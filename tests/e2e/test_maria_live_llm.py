@@ -11,19 +11,19 @@ def test_live_uneb_linguistics_search(live_client):
     """
     # Arrange
     payload = {
-        "query": "Quais pesquisadores da UNEB trabalham com linguística ou ensino de línguas?"
+        'query': 'Quais pesquisadores da UNEB trabalham com linguística ou ensino de línguas?'
     }
 
     # Act
-    response = live_client.post("/ai/chat/ask", json=payload)
+    response = live_client.post('/ai/chat/ask', json=payload)
 
     # Assert
     assert response.status_code == HTTPStatus.OK
     data = response.json()
-    assert "UNEB" in data["filters_extracted"].get("institutions", [])
-    names = [r["name"] for r in data["researchers"]]
-    assert any("Adilson" in n or "Abinalio" in n for n in names)
-    assert len(data["answer"]) > 50
+    assert 'UNEB' in data['filters_extracted'].get('institutions', [])
+    names = [r['name'] for r in data['researchers']]
+    assert any('Adilson' in n or 'Abinalio' in n for n in names)
+    assert len(data['answer']) > 50
 
 
 @pytest.mark.ai_live
@@ -34,17 +34,17 @@ def test_live_ai_broad_search(live_client):
     """
     # Arrange
     payload = {
-        "query": "Quais pesquisadores da Bahia trabalham com inteligência artificial, ciência de dados ou tecnologias digitais?"
+        'query': 'Quais pesquisadores da Bahia trabalham com inteligência artificial, ciência de dados ou tecnologias digitais?'
     }
 
     # Act
-    response = live_client.post("/ai/chat/ask", json=payload)
+    response = live_client.post('/ai/chat/ask', json=payload)
 
     # Assert
     assert response.status_code == HTTPStatus.OK
     data = response.json()
-    names = [r["name"] for r in data["researchers"]]
-    assert any("Eduardo Manuel" in n for n in names)
+    names = [r['name'] for r in data['researchers']]
+    assert any('Eduardo Manuel' in n for n in names)
 
 
 @pytest.mark.ai_live
@@ -55,19 +55,23 @@ def test_live_researcher_profile_lookup(live_client):
     """
     # Arrange
     payload = {
-        "query": "Quem é Eduardo Manuel de Freitas Jorge e quais são suas principais áreas de atuação?"
+        'query': 'Quem é Eduardo Manuel de Freitas Jorge e quais são suas principais áreas de atuação?'
     }
 
     # Act
-    response = live_client.post("/ai/chat/ask", json=payload)
+    response = live_client.post('/ai/chat/ask', json=payload)
 
     # Assert
     assert response.status_code == HTTPStatus.OK
     data = response.json()
-    assert data["intent"] == "researcher_profile"
-    assert len(data["researchers"]) >= 1
-    assert "Eduardo Manuel De Freitas Jorge" in data["researchers"][0]["name"]
-    assert "UNEB" in data["answer"] or "Ciência" in data["answer"] or "Inteligência" in data["answer"]
+    assert data['intent'] == 'researcher_profile'
+    assert len(data['researchers']) >= 1
+    assert 'Eduardo Manuel De Freitas Jorge' in data['researchers'][0]['name']
+    assert (
+        'UNEB' in data['answer']
+        or 'Ciência' in data['answer']
+        or 'Inteligência' in data['answer']
+    )
 
 
 @pytest.mark.ai_live
@@ -78,15 +82,15 @@ def test_live_institution_comparison(live_client):
     """
     # Arrange
     payload = {
-        "query": "Compare os pesquisadores da UFBA e da UNEB que trabalham com tecnologia e inovação."
+        'query': 'Compare os pesquisadores da UFBA e da UNEB que trabalham com tecnologia e inovação.'
     }
 
     # Act
-    response = live_client.post("/ai/chat/ask", json=payload)
+    response = live_client.post('/ai/chat/ask', json=payload)
 
     # Assert
     assert response.status_code == HTTPStatus.OK
     data = response.json()
-    institutions = data["filters_extracted"].get("institutions", [])
-    assert "UFBA" in institutions or "UNEB" in institutions
-    assert len(data["researchers"]) >= 2
+    institutions = data['filters_extracted'].get('institutions', [])
+    assert 'UFBA' in institutions or 'UNEB' in institutions
+    assert len(data['researchers']) >= 2

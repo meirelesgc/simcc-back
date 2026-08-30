@@ -163,7 +163,7 @@ def main():
     session = next(get_admin_sync_session())
 
     try:
-        routine_step_started("process_graduate_programs_csv")
+        routine_step_started('process_graduate_programs_csv')
         programs_df = load_programs_csv()
         institutions_map = get_institutions_mapping(session)
         stats = Counter()
@@ -183,18 +183,30 @@ def main():
             else:
                 stats[error_reason] += 1
                 if 'Erro' in error_reason:
-                    pg_code = row_dict.get('codigo do programa', row_dict.get('ies_nome'))
+                    pg_code = row_dict.get(
+                        'codigo do programa', row_dict.get('ies_nome')
+                    )
                     routine_item_error(str(pg_code), error_reason)
 
             if (idx + 1) % 50 == 0 or (idx + 1) == total_rows:
-                routine_progress("process_graduate_programs_csv", idx + 1, total_rows, stats['Sucesso'], total_rows - stats['Sucesso'])
+                routine_progress(
+                    'process_graduate_programs_csv',
+                    idx + 1,
+                    total_rows,
+                    stats['Sucesso'],
+                    total_rows - stats['Sucesso'],
+                )
 
         items_succeeded = stats['Sucesso']
         items_failed = total_rows - items_succeeded
-        routine_step_finished("process_graduate_programs_csv", total_valid=items_succeeded, total_invalid=items_failed)
+        routine_step_finished(
+            'process_graduate_programs_csv',
+            total_valid=items_succeeded,
+            total_invalid=items_failed,
+        )
 
         if valid_programs:
-            routine_step_started("upsert_graduate_programs")
+            routine_step_started('upsert_graduate_programs')
             query_upsert = text("""
                 INSERT INTO public.graduate_program (
                     code, name, name_en, basic_area, cooperation_project, area, modality, 
@@ -224,7 +236,9 @@ def main():
 
             session.execute(query_upsert, valid_programs)
             format_program_names(session)
-            routine_step_finished("upsert_graduate_programs", total_records=len(valid_programs))
+            routine_step_finished(
+                'upsert_graduate_programs', total_records=len(valid_programs)
+            )
 
         session.commit()
     except Exception as E:

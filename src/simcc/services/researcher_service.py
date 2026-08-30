@@ -44,6 +44,8 @@ def _build_institution_map(inst_data: list) -> dict[str, dict[str, Any]]:
     for row in inst_data:
         rid = str(row['id'])
         attrs = dict(row.get('custom_attributes') or {})
+        if row.get('gender') is not None:
+            attrs['gender'] = row['gender']
         if row.get('zip_code') is not None:
             attrs['zip_code'] = row['zip_code']
         if row.get('work_regime') is not None:
@@ -302,7 +304,6 @@ async def get_researcher_image_path(session, researcher_id):
         return str(DEFAULT_AVATAR_PATH)
 
     return str(path_image)
-
 
 
 async def get_researcher_filter(session):

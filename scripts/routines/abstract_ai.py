@@ -163,7 +163,9 @@ def main(researcher_ids=None, lattes_ids=None):
         success_count = 0
         failed_count = 0
 
-        routine_step_started("generate_abstract_ai", total_items=total_researchers)
+        routine_step_started(
+            'generate_abstract_ai', total_items=total_researchers
+        )
 
         SCRIPT_LAST_PROD = text("""
             SELECT bp.title, bp.type, bp.year FROM bibliographic_production bp
@@ -304,7 +306,7 @@ def main(researcher_ids=None, lattes_ids=None):
                     session.commit()
                     success_count += 1
                     logger.debug(
-                        f"Abstract AI generated for researcher {researcher_name} ({researcher_id})"
+                        f'Abstract AI generated for researcher {researcher_name} ({researcher_id})'
                     )
             except Exception as e:
                 session.rollback()
@@ -318,7 +320,7 @@ def main(researcher_ids=None, lattes_ids=None):
 
             if (i + 1) % 20 == 0 or (i + 1) == total_researchers:
                 routine_progress(
-                    "generate_abstract_ai",
+                    'generate_abstract_ai',
                     i + 1,
                     total_researchers,
                     success_count,
@@ -327,7 +329,7 @@ def main(researcher_ids=None, lattes_ids=None):
 
         items_succeeded = success_count
         items_failed = failed_count
-        routine_step_finished("generate_abstract_ai")
+        routine_step_finished('generate_abstract_ai')
         duration = time.perf_counter() - start_time
 
     except Exception:

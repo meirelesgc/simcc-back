@@ -12,7 +12,10 @@ CNPQ_IMAGE_URL = (
 )
 
 DEFAULT_AVATAR_PATH = (
-    Path(__file__).resolve().parent.parent / 'static' / 'images' / 'default_avatar.png'
+    Path(__file__).resolve().parent.parent
+    / 'static'
+    / 'images'
+    / 'default_avatar.png'
 )
 
 LATTES_10_PATTERN = re.compile(r'^[A-Za-z0-9]{10}$')
@@ -53,4 +56,3 @@ async def download_researcher_image(
                     path.write_bytes(response.content)
     except Exception:
         pass
-

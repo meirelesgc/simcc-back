@@ -18,7 +18,7 @@ class AISearchService:
         session: AsyncSession,
         query: str,
         limit: int = 10,
-        filters: Optional[Dict[str, Any]] = None
+        filters: Optional[Dict[str, Any]] = None,
     ) -> List[Dict[str, Any]]:
         """
         Realiza uma busca híbrida por pesquisadores combinando:
@@ -31,8 +31,13 @@ class AISearchService:
         # 1. Base query
         stmt = (
             select(SearchDocumentResearcher, Researcher, Institution)
-            .join(Researcher, Researcher.id == SearchDocumentResearcher.researcher_id)
-            .outerjoin(Institution, Institution.id == Researcher.institution_id)
+            .join(
+                Researcher,
+                Researcher.id == SearchDocumentResearcher.researcher_id,
+            )
+            .outerjoin(
+                Institution, Institution.id == Researcher.institution_id
+            )
         )
 
         # 2. Filtro por Instituições (suporta lista de siglas/nomes: UFBA, UNEB, etc)
@@ -45,8 +50,12 @@ class AISearchService:
             for inst in institutions:
                 inst_clean = inst.strip()
                 if inst_clean:
-                    inst_conditions.append(Institution.acronym.ilike(f"%{inst_clean}%"))
-                    inst_conditions.append(Institution.name.ilike(f"%{inst_clean}%"))
+                    inst_conditions.append(
+                        Institution.acronym.ilike(f'%{inst_clean}%')
+                    )
+                    inst_conditions.append(
+                        Institution.name.ilike(f'%{inst_clean}%')
+                    )
             if inst_conditions:
                 stmt = stmt.filter(or_(*inst_conditions))
 
@@ -55,7 +64,7 @@ class AISearchService:
         if researcher_name:
             tokens = [t.strip() for t in researcher_name.split() if t.strip()]
             for tok in tokens:
-                stmt = stmt.filter(Researcher.name.ilike(f"%{tok}%"))
+                stmt = stmt.filter(Researcher.name.ilike(f'%{tok}%'))
 
         # 4. Ordenação e Busca Semântica
         if query and query.strip():
@@ -75,13 +84,15 @@ class AISearchService:
         response = []
         for doc, researcher, institution in rows:
             response.append({
-                "id": str(researcher.id),
-                "name": researcher.name,
-                "institution": institution.name if institution else None,
-                "institution_acronym": institution.acronym if institution else None,
-                "lattes_id": researcher.lattes_id,
-                "abstract": researcher.abstract or researcher.abstract_ai,
-                "semantic_content": doc.document_content
+                'id': str(researcher.id),
+                'name': researcher.name,
+                'institution': institution.name if institution else None,
+                'institution_acronym': institution.acronym
+                if institution
+                else None,
+                'lattes_id': researcher.lattes_id,
+                'abstract': researcher.abstract or researcher.abstract_ai,
+                'semantic_content': doc.document_content,
             })
 
         return response

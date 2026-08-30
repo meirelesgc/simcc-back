@@ -92,8 +92,8 @@ from simcc.core.db.models.researcher import (
     ResearcherProduction,
     ResearcherProfessionalExperience,
 )
-from simcc.core.db.models.researcher_institution import (
-    ResearcherInstitutionData,
+from simcc.core.db.models.researcher_custom_attributes import (
+    ResearcherCustomAttributes,
 )
 
 __all__ = [
@@ -154,7 +154,7 @@ __all__ = [
     'ResearcherAddress',
     'ResearcherAreaExpertise',
     'ResearcherIndProd',
-    'ResearcherInstitutionData',
+    'ResearcherCustomAttributes',
     'ResearcherProduction',
     'ResearcherProfessionalExperience',
     'Sdg',

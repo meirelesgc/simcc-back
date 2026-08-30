@@ -137,14 +137,14 @@ def main():
 
         succeeded_count = 0
         for doc_type, query in configurations:
-            routine_step_started(f"dictionary_{doc_type.lower()}")
+            routine_step_started(f'dictionary_{doc_type.lower()}')
             session.execute(
                 text(
                     f"DELETE FROM research_dictionary WHERE type_ = '{doc_type}';"
                 )
             )
             session.execute(text(query), {'stopwords': stopwords})
-            routine_step_finished(f"dictionary_{doc_type.lower()}")
+            routine_step_finished(f'dictionary_{doc_type.lower()}')
             succeeded_count += 1
 
         session.commit()
@@ -152,9 +152,11 @@ def main():
         items_failed = items_found - items_succeeded
         duration = time.perf_counter() - start_time
     except Exception as e:
-        items_succeeded = succeeded_count if 'succeeded_count' in locals() else 0
+        items_succeeded = (
+            succeeded_count if 'succeeded_count' in locals() else 0
+        )
         items_failed = items_found - items_succeeded
-        logger.error(f"Error in research_dictionaries: {e}")
+        logger.error(f'Error in research_dictionaries: {e}')
         session.rollback()
         duration = time.perf_counter() - start_time
         raise e

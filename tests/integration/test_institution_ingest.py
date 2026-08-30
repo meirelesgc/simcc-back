@@ -49,7 +49,7 @@ async def test_ingest_csv_with_real_session(session):
 
         # 4. Verifica dados no banco
         sql_select = (
-            'SELECT * FROM researcher_institution_data '
+            'SELECT * FROM researcher_custom_attributes '
             'WHERE researcher_id = :rid'
         )
         result = await session.execute(
@@ -72,7 +72,7 @@ async def test_ingest_csv_with_real_session(session):
 
         # Garante que continua havendo exatamente 1 registro
         sql_count = (
-            'SELECT COUNT(*) FROM researcher_institution_data '
+            'SELECT COUNT(*) FROM researcher_custom_attributes '
             'WHERE researcher_id = :rid'
         )
         count_res = await session.execute(

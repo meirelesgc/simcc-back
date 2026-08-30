@@ -45,7 +45,9 @@ def calculate_llm_cost(
     usd_to_brl: float = USD_TO_BRL_RATE,
 ) -> dict:
     """Calcula o custo total em USD e BRL a partir dos tokens consumidos."""
-    cost_input_usd = (input_tokens * GPT_4O_MINI_INPUT_PRICE_PER_1M) / 1_000_000
+    cost_input_usd = (
+        input_tokens * GPT_4O_MINI_INPUT_PRICE_PER_1M
+    ) / 1_000_000
     cost_output_usd = (
         output_tokens * GPT_4O_MINI_OUTPUT_PRICE_PER_1M
     ) / 1_000_000
@@ -160,9 +162,8 @@ def main(
         if not overwrite:
             researcher_filter += """
                 AND (
-                    rid.custom_attributes IS NULL
-                    OR rid.custom_attributes->>'genero' IS NULL
-                    OR TRIM(rid.custom_attributes->>'genero') = ''
+                    rca.gender IS NULL
+                    OR TRIM(rca.gender) = ''
                 )
             """
 
@@ -171,9 +172,9 @@ def main(
             limit_clause = f'LIMIT {int(limit)}'
 
         SCRIPT_SQL_RESEARCHERS = text(f"""
-            SELECT r.id, r.name, r.lattes_id, r.abstract, rid.custom_attributes
+            SELECT r.id, r.name, r.lattes_id, r.abstract, rca.gender
             FROM researcher r
-            LEFT JOIN researcher_institution_data rid ON rid.researcher_id = r.id
+            LEFT JOIN researcher_custom_attributes rca ON rca.researcher_id = r.id
             WHERE 1 = 1 {researcher_filter}
             ORDER BY r.name ASC
             {limit_clause}
@@ -194,17 +195,14 @@ def main(
         )
 
         SCRIPT_UPSERT = text("""
-            INSERT INTO researcher_institution_data (
-                researcher_id, custom_attributes
+            INSERT INTO researcher_custom_attributes (
+                researcher_id, gender
             )
             VALUES (
-                :researcher_id,
-                jsonb_build_object('genero', CAST(:gender AS TEXT))
+                :researcher_id, :gender
             )
             ON CONFLICT (researcher_id) DO UPDATE SET
-                custom_attributes = COALESCE(
-                    researcher_institution_data.custom_attributes, '{}'::jsonb
-                ) || jsonb_build_object('genero', CAST(EXCLUDED.custom_attributes->>'genero' AS TEXT));
+                gender = EXCLUDED.gender;
         """)
 
         for i, researcher_data in enumerate(researchers_to_process):
@@ -315,8 +313,12 @@ def main(
         print('-' * 65)
         print(f'Tokens de Entrada (Prompt):          {total_input_tokens:,}')
         print(f'Tokens de Saída (Completion):        {total_output_tokens:,}')
-        print(f'Total de Tokens Consumidos:          {cost_info["total_tokens"]:,}')
-        print(f'Custo Total Estimado (USD):          ${cost_info["cost_usd"]:.6f}')
+        print(
+            f'Total de Tokens Consumidos:          {cost_info["total_tokens"]:,}'
+        )
+        print(
+            f'Custo Total Estimado (USD):          ${cost_info["cost_usd"]:.6f}'
+        )
         print(
             f'Custo Total Estimado (BRL):          R$ {cost_info["cost_brl"]:.4f} (cotação ref. R$ {USD_TO_BRL_RATE:.2f})'
         )

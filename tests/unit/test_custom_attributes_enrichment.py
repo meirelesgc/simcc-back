@@ -102,7 +102,9 @@ async def test_enrich_researchers_with_custom_attributes(monkeypatch):
 
 @pytest.mark.unit
 @pytest.mark.asyncio
-async def test_enrich_researchers_with_genero_in_custom_attributes(monkeypatch):
+async def test_enrich_researchers_with_arbitrary_custom_attributes(
+    monkeypatch,
+):
     session = AsyncMock()
 
     async def mock_list_gp(session, ids):
@@ -127,10 +129,11 @@ async def test_enrich_researchers_with_genero_in_custom_attributes(monkeypatch):
         return [
             {
                 'id': 'd8091801-1402-4db6-9e8c-550f75727196',
+                'gender': 'Mulher Cis',
                 'zip_code': '44300-000',
                 'work_regime': 'DE',
                 'custom_attributes': {
-                    'genero': 'Mulher Cis',
+                    'categoria': 'Docente',
                     'siape': '1673892',
                 },
             }
@@ -172,7 +175,7 @@ async def test_enrich_researchers_with_genero_in_custom_attributes(monkeypatch):
         session, researchers
     )
     assert len(enriched) == 1
-    assert enriched[0]['custom_attributes']['genero'] == 'Mulher Cis'
+    assert enriched[0]['custom_attributes']['gender'] == 'Mulher Cis'
+    assert enriched[0]['custom_attributes']['categoria'] == 'Docente'
     assert enriched[0]['custom_attributes']['siape'] == '1673892'
     assert enriched[0]['custom_attributes']['work_regime'] == 'DE'
-

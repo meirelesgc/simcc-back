@@ -225,7 +225,6 @@ async def get_researcher_id(
     return row
 
 
-
 async def get_researcher(session, researcher_id):
     filters = DefaultFilters(researcher_id=researcher_id)
     result = await search_researchers(session, filters)
@@ -363,10 +362,11 @@ async def list_institution_data_by_researcher_ids(
         SCRIPT_SQL = """
             SELECT
                 researcher_id AS id,
+                gender,
                 zip_code,
                 work_regime,
                 custom_attributes
-            FROM researcher_institution_data
+            FROM researcher_custom_attributes
             WHERE researcher_id = ANY(:researcher_ids);
         """
         result = await session.execute(

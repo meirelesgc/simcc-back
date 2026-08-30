@@ -52,7 +52,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
                 method=request.method,
                 route=request.url.path,
                 duration=duration_ms,
-                user_id=user_id or user_id_ctx.get()
+                user_id=user_id or user_id_ctx.get(),
             )
 
             # Inject X-Request-ID to response headers
@@ -69,7 +69,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
                 route=request.url.path,
                 duration=duration_ms,
                 error=str(e),
-                user_id=user_id or user_id_ctx.get()
+                user_id=user_id or user_id_ctx.get(),
             )
             raise e
         finally:

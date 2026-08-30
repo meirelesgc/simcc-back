@@ -28,11 +28,13 @@ def load_research_lines_csv(path='storage/seed/program_research_lines.csv'):
     df = df.rename({col: normalize_string(col) for col in df.columns})
 
     df = df.with_columns(
-        pl.col('data de inicio')
+        pl
+        .col('data de inicio')
         .str.to_date(format='%d/%m/%Y', strict=False)
         .dt.year()
         .alias('start_year'),
-        pl.col('data de fim')
+        pl
+        .col('data de fim')
         .str.to_date(format='%d/%m/%Y', strict=False)
         .dt.year()
         .alias('end_year'),
@@ -66,7 +68,7 @@ def main():
     start_time = time.perf_counter()
 
     try:
-        routine_step_started("process_research_lines_csv")
+        routine_step_started('process_research_lines_csv')
         df = load_research_lines_csv()
         total_rows = len(df)
         items_found = total_rows
@@ -84,7 +86,11 @@ def main():
 
             if not graduate_program_id:
                 stats['Barrado: programa nao encontrado'] += 1
-                routine_item_error(str(line_name), "Programa de pós não encontrado no banco", programa_codigo=code)
+                routine_item_error(
+                    str(line_name),
+                    'Programa de pós não encontrado no banco',
+                    programa_codigo=code,
+                )
                 continue
 
             records_to_insert.append({
@@ -97,12 +103,20 @@ def main():
             stats['Processado'] += 1
 
             if (idx + 1) % 50 == 0 or (idx + 1) == total_rows:
-                routine_progress("process_research_lines_csv", idx + 1, total_rows, stats['Processado'], total_rows - stats['Processado'])
+                routine_progress(
+                    'process_research_lines_csv',
+                    idx + 1,
+                    total_rows,
+                    stats['Processado'],
+                    total_rows - stats['Processado'],
+                )
 
-        routine_step_finished("process_research_lines_csv", total_processed=stats['Processado'])
+        routine_step_finished(
+            'process_research_lines_csv', total_processed=stats['Processado']
+        )
 
         if records_to_insert:
-            routine_step_started("insert_research_lines")
+            routine_step_started('insert_research_lines')
             query_insert = text("""
                 INSERT INTO public.research_lines_programs
                     (graduate_program_id, name, area, start_year, end_year)
@@ -112,7 +126,9 @@ def main():
             """)
             session.execute(query_insert, records_to_insert)
             format_research_lines(session)
-            routine_step_finished("insert_research_lines", total_inserted=len(records_to_insert))
+            routine_step_finished(
+                'insert_research_lines', total_inserted=len(records_to_insert)
+            )
 
         session.commit()
         items_succeeded = stats['Processado']
@@ -121,7 +137,7 @@ def main():
     except Exception as e:
         items_succeeded = 0
         items_failed = items_found
-        logger.error(f"Error in sync_research_lines: {e}")
+        logger.error(f'Error in sync_research_lines: {e}')
         session.rollback()
         duration = time.perf_counter() - start_time
         raise e

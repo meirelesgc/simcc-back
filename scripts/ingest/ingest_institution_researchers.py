@@ -75,9 +75,7 @@ def _extract_researcher_id(
     return None
 
 
-def _build_record(
-    row: dict[str, Any], researcher_id: UUID
-) -> dict[str, Any]:
+def _build_record(row: dict[str, Any], researcher_id: UUID) -> dict[str, Any]:
     """Monta o payload de dados para inserção na tabela."""
     zip_code = (
         str(row['zip_code']).strip()
@@ -147,7 +145,7 @@ async def ingest_csv(csv_path: Path, session: AsyncSession) -> dict[str, int]:
 
     if records:
         upsert_sql = """
-            INSERT INTO researcher_institution_data (
+            INSERT INTO researcher_custom_attributes (
                 researcher_id, zip_code, work_regime, custom_attributes
             )
             VALUES (

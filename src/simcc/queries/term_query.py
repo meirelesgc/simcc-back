@@ -29,7 +29,9 @@ class OriginalWordsQuery(BaseQuery):
                 for i, token in enumerate(tokens):
                     param_name = f'init_tok_{i}'
                     self.params[param_name] = f'%{token}%'
-                    conditions.append(f'unaccent(LOWER(name)) LIKE :{param_name}')
+                    conditions.append(
+                        f'unaccent(LOWER(name)) LIKE :{param_name}'
+                    )
                 where_clause = ' AND '.join(conditions)
                 return f"""
                     SELECT

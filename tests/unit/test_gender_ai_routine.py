@@ -83,19 +83,21 @@ def test_gender_ai_routine_with_mocked_llm(monkeypatch):
             'name': 'Carlos Silva',
             'lattes_id': '1111222233334444',
             'abstract': 'Professor titular de Engenharia.',
-            'custom_attributes': None,
+            'gender': None,
         },
         {
             'id': res2_id,
             'name': 'Ana Souza',
             'lattes_id': '5555666677778888',
             'abstract': 'Sem resumo disponível.',
-            'custom_attributes': {'siape': '123456'},
+            'gender': None,
         },
     ]
 
     mock_execute_result = MagicMock()
-    mock_execute_result.mappings.return_value.all.return_value = mock_researchers
+    mock_execute_result.mappings.return_value.all.return_value = (
+        mock_researchers
+    )
     mock_session.execute.return_value = mock_execute_result
 
     # Mock generator for get_sync_session

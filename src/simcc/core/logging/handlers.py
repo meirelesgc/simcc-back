@@ -59,5 +59,7 @@ def dispatch_log(log_data: Dict[str, Any]) -> None:
             dest(log_data)
         except Exception as e:
             # Backup error reporting to stderr in case a destination fails
-            sys.stderr.write(f"[Logging Handler Error] Failed to write log: {e}\n")
+            sys.stderr.write(
+                f'[Logging Handler Error] Failed to write log: {e}\n'
+            )
             sys.stderr.flush()

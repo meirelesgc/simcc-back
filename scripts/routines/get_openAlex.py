@@ -182,7 +182,7 @@ def process_articles(session):
     success = 0
     failed = 0
 
-    routine_step_started("openalex_articles", total_items=found)
+    routine_step_started('openalex_articles', total_items=found)
 
     for i, row in enumerate(results):
         article_id = row['id']
@@ -195,7 +195,9 @@ def process_articles(session):
 
             if not payload:
                 failed += 1
-                routine_item_error(article_id, f"OpenAlex returned status {status}", doi=doi)
+                routine_item_error(
+                    article_id, f'OpenAlex returned status {status}', doi=doi
+                )
                 continue
 
             article = extract_article(payload, article_id)
@@ -215,9 +217,11 @@ def process_articles(session):
             routine_item_error(article_id, str(e), doi=doi)
 
         if (i + 1) % 100 == 0 or (i + 1) == found:
-            routine_progress("openalex_articles", i + 1, found, success, failed)
+            routine_progress(
+                'openalex_articles', i + 1, found, success, failed
+            )
 
-    routine_step_finished("openalex_articles", total_items=found)
+    routine_step_finished('openalex_articles', total_items=found)
     return found, success, failed
 
 
@@ -227,7 +231,7 @@ def process_researchers(session):
     success = 0
     failed = 0
 
-    routine_step_started("openalex_researchers", total_items=found)
+    routine_step_started('openalex_researchers', total_items=found)
 
     for i, row in enumerate(results):
         researcher_id = row['id']
@@ -240,7 +244,11 @@ def process_researchers(session):
 
             if not payload:
                 failed += 1
-                routine_item_error(researcher_id, f"OpenAlex returned status {status}", orcid=orcid)
+                routine_item_error(
+                    researcher_id,
+                    f'OpenAlex returned status {status}',
+                    orcid=orcid,
+                )
                 continue
 
             researcher = extract_researcher(payload, researcher_id)
@@ -260,9 +268,11 @@ def process_researchers(session):
             routine_item_error(researcher_id, str(e), orcid=orcid)
 
         if (i + 1) % 50 == 0 or (i + 1) == found:
-            routine_progress("openalex_researchers", i + 1, found, success, failed)
+            routine_progress(
+                'openalex_researchers', i + 1, found, success, failed
+            )
 
-    routine_step_finished("openalex_researchers", total_items=found)
+    routine_step_finished('openalex_researchers', total_items=found)
     return found, success, failed
 
 

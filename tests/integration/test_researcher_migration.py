@@ -3,8 +3,8 @@ from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError
 
 from simcc.core.db.models.researcher import Researcher
-from simcc.core.db.models.researcher_institution import (
-    ResearcherInstitutionData,
+from simcc.core.db.models.researcher_custom_attributes import (
+    ResearcherCustomAttributes,
 )
 
 
@@ -37,7 +37,7 @@ async def test_researcher_institution_data_crud_and_cascade(session):
     await session.refresh(researcher)
 
     # 2. Cria dados institucionais vinculados
-    inst_data = ResearcherInstitutionData(
+    inst_data = ResearcherCustomAttributes(
         researcher_id=researcher.id,
         zip_code='44300-000',
         work_regime='DE',
@@ -56,7 +56,7 @@ async def test_researcher_institution_data_crud_and_cascade(session):
 
     # Verifica remoção automática via CASCADE
     sql = (
-        'SELECT id FROM researcher_institution_data '
+        'SELECT id FROM researcher_custom_attributes '
         'WHERE researcher_id = :rid'
     )
     result = await session.execute(text(sql), {'rid': str(researcher.id)})

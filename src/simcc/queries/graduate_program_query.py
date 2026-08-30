@@ -9,7 +9,9 @@ class GraduateProgramQuery(BaseQuery):
 
     def _apply_graduate_program_id_filter(self, value):
         self.params['graduate_program_id'] = value
-        self.filters_sql.append('AND gp.graduate_program_id = :graduate_program_id')
+        self.filters_sql.append(
+            'AND gp.graduate_program_id = :graduate_program_id'
+        )
 
     def _apply_institution_filter(self, value):
         self.joins['institution'] = (
@@ -96,7 +98,11 @@ class GraduateProgramQuery(BaseQuery):
 
 
 class ResearchLinesQuery(BaseQuery):
-    SUPPORTED_FILTERS: Set[str] = {'graduate_program_id', 'institution', 'term'}
+    SUPPORTED_FILTERS: Set[str] = {
+        'graduate_program_id',
+        'institution',
+        'term',
+    }
 
     def _apply_graduate_program_id_filter(self, value):
         self.params['graduate_program_id'] = value

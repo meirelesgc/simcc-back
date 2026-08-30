@@ -148,6 +148,7 @@ class Researcher(BaseModel):
 
     abstract: Optional[str] = None
     abstract_ai: Optional[str] = None
+    gender: Optional[str] = None
     classification: Optional[str] = None
     status: Optional[bool] = True
     lattes_update: Optional[datetime] = None

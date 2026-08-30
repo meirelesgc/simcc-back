@@ -3,7 +3,9 @@ import os
 import sys
 
 # Ajusta o path para importar os módulos internos corretamente
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../src')))
+sys.path.append(
+    os.path.abspath(os.path.join(os.path.dirname(__file__), '../../src'))
+)
 
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
@@ -34,7 +36,7 @@ async def run_ingestion():
     )
 
     if not settings.OPENAI_API_KEY:
-        print("OPENAI_API_KEY não configurada. Abortando ingestão.")
+        print('OPENAI_API_KEY não configurada. Abortando ingestão.')
         return
 
     ai_provider = OpenAIProvider(api_key=settings.OPENAI_API_KEY)
@@ -43,7 +45,9 @@ async def run_ingestion():
         # Busca os 10 primeiros pesquisadores
         query = (
             select(Researcher, Institution)
-            .outerjoin(Institution, Institution.id == Researcher.institution_id)
+            .outerjoin(
+                Institution, Institution.id == Researcher.institution_id
+            )
             .limit(10)
         )
 
@@ -51,28 +55,48 @@ async def run_ingestion():
         rows = result.all()
 
         if not rows:
-            print("Nenhum pesquisador encontrado.")
+            print('Nenhum pesquisador encontrado.')
             return
 
-        print(f"Indexando com dados enriquecidos {len(rows)} pesquisadores...")
+        print(f'Indexando com dados enriquecidos {len(rows)} pesquisadores...')
 
         for r, inst in rows:
-            print(f"Processando: {r.name}")
+            print(f'Processando: {r.name}')
 
             # 1. Instituição
-            institution_str = ""
+            institution_str = ''
             if inst:
-                institution_str = f"{inst.name} ({inst.acronym})" if inst.acronym else inst.name
+                institution_str = (
+                    f'{inst.name} ({inst.acronym})'
+                    if inst.acronym
+                    else inst.name
+                )
             else:
-                institution_str = "Não informada"
+                institution_str = 'Não informada'
 
             # 2. Áreas de Conhecimento
             areas_stmt = (
-                select(AreaExpertise.name, SubAreaExpertise.name, GreatAreaExpertise.name)
+                select(
+                    AreaExpertise.name,
+                    SubAreaExpertise.name,
+                    GreatAreaExpertise.name,
+                )
                 .select_from(ResearcherAreaExpertise)
-                .outerjoin(AreaExpertise, AreaExpertise.id == ResearcherAreaExpertise.area_expertise_id)
-                .outerjoin(SubAreaExpertise, SubAreaExpertise.id == ResearcherAreaExpertise.sub_area_expertise_id)
-                .outerjoin(GreatAreaExpertise, GreatAreaExpertise.id == ResearcherAreaExpertise.great_area_expertise_id)
+                .outerjoin(
+                    AreaExpertise,
+                    AreaExpertise.id
+                    == ResearcherAreaExpertise.area_expertise_id,
+                )
+                .outerjoin(
+                    SubAreaExpertise,
+                    SubAreaExpertise.id
+                    == ResearcherAreaExpertise.sub_area_expertise_id,
+                )
+                .outerjoin(
+                    GreatAreaExpertise,
+                    GreatAreaExpertise.id
+                    == ResearcherAreaExpertise.great_area_expertise_id,
+                )
                 .filter(ResearcherAreaExpertise.researcher_id == r.id)
             )
             areas_res = await session.execute(areas_stmt)
@@ -80,17 +104,27 @@ async def run_ingestion():
             for ae_name, sa_name, ga_name in areas_res.all():
                 parts = [p for p in [ga_name, ae_name, sa_name] if p]
                 if parts:
-                    areas_list.append(" / ".join(parts))
-            areas_str = "; ".join(areas_list) if areas_list else "Não informada"
+                    areas_list.append(' / '.join(parts))
+            areas_str = (
+                '; '.join(areas_list) if areas_list else 'Não informada'
+            )
 
             # 3. Formação Acadêmica
-            edu_stmt = select(Education).filter(Education.researcher_id == r.id)
+            edu_stmt = select(Education).filter(
+                Education.researcher_id == r.id
+            )
             edu_res = await session.execute(edu_stmt)
             edu_list = []
             for e in edu_res.scalars().all():
-                edu_parts = [e.degree or "", e.education_name or "", e.institution or ""]
-                edu_list.append(" - ".join([p for p in edu_parts if p]))
-            edu_str = "\n".join(edu_list) if edu_list else "Conforme resumo Lattes"
+                edu_parts = [
+                    e.degree or '',
+                    e.education_name or '',
+                    e.institution or '',
+                ]
+                edu_list.append(' - '.join([p for p in edu_parts if p]))
+            edu_str = (
+                '\n'.join(edu_list) if edu_list else 'Conforme resumo Lattes'
+            )
 
             # 4. Experiência e Cargos
             exp_stmt = select(ResearcherProfessionalExperience).filter(
@@ -101,22 +135,25 @@ async def run_ingestion():
             for exp in exp_res.scalars().all():
                 exp_parts = [
                     exp.enterprise,
-                    exp.functional_classification or exp.other_functional_classification,
+                    exp.functional_classification
+                    or exp.other_functional_classification,
                     exp.additional_info,
                 ]
-                exp_list.append(" - ".join([p for p in exp_parts if p]))
-            exp_str = "\n".join(exp_list) if exp_list else "Conforme resumo Lattes"
+                exp_list.append(' - '.join([p for p in exp_parts if p]))
+            exp_str = (
+                '\n'.join(exp_list) if exp_list else 'Conforme resumo Lattes'
+            )
 
             # 5. Resumo Profissional
-            abstract = r.abstract or r.abstract_ai or "Resumo não disponível"
+            abstract = r.abstract or r.abstract_ai or 'Resumo não disponível'
 
             document = (
-                f"Pesquisador: {r.name}\n"
-                f"Instituição: {institution_str}\n"
-                f"Áreas de Atuação e Especialidades: {areas_str}\n"
-                f"Formação Acadêmica:\n{edu_str}\n"
-                f"Experiência Profissional e Gestão:\n{exp_str}\n"
-                f"Resumo do Currículo Lattes:\n{abstract}\n"
+                f'Pesquisador: {r.name}\n'
+                f'Instituição: {institution_str}\n'
+                f'Áreas de Atuação e Especialidades: {areas_str}\n'
+                f'Formação Acadêmica:\n{edu_str}\n'
+                f'Experiência Profissional e Gestão:\n{exp_str}\n'
+                f'Resumo do Currículo Lattes:\n{abstract}\n'
             )
 
             # Gera embedding de alta fidelidade
@@ -133,13 +170,13 @@ async def run_ingestion():
             doc = SearchDocumentResearcher(
                 researcher_id=r.id,
                 document_content=document,
-                embedding=embedding
+                embedding=embedding,
             )
             session.add(doc)
 
         await session.commit()
-        print("Ingestão enriquecida concluída com sucesso.")
+        print('Ingestão enriquecida concluída com sucesso.')
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     asyncio.run(run_ingestion())

@@ -26,7 +26,9 @@ def test_names_filter_empty():
 
 
 def test_original_words_query_name_multi_token():
-    query = OriginalWordsQuery(session=None, initials='Eduardo Jorge', type_='NAME')
+    query = OriginalWordsQuery(
+        session=None, initials='Eduardo Jorge', type_='NAME'
+    )
     sql = query.build_sql()
     assert 'unaccent(LOWER(name)) LIKE :init_tok_0' in sql
     assert 'unaccent(LOWER(name)) LIKE :init_tok_1' in sql

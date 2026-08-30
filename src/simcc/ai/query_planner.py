@@ -8,20 +8,20 @@ from pydantic import BaseModel, Field
 class SearchFilters(BaseModel):
     institutions: List[str] = Field(
         default_factory=list,
-        description="Lista de instituições ou siglas mencionadas, ex: ['UFBA'], ['UNEB'], ['UFBA', 'UNEB'], ['UEFS'], ['UESB'], ['UFRB']"
+        description="Lista de instituições ou siglas mencionadas, ex: ['UFBA'], ['UNEB'], ['UFBA', 'UNEB'], ['UEFS'], ['UESB'], ['UFRB']",
     )
     researcher_name: Optional[str] = Field(
         None,
-        description="Nome específico de um pesquisador se a pergunta for sobre alguém em particular, ex: 'Eduardo Manuel de Freitas Jorge'"
+        description="Nome específico de um pesquisador se a pergunta for sobre alguém em particular, ex: 'Eduardo Manuel de Freitas Jorge'",
     )
     city: Optional[str] = Field(
         None, description="Nome da cidade, ex: 'Salvador', 'Feira de Santana'"
     )
     year_from: Optional[int] = Field(
-        None, description="Ano de início para o filtro temporal"
+        None, description='Ano de início para o filtro temporal'
     )
     year_to: Optional[int] = Field(
-        None, description="Ano de término para o filtro temporal"
+        None, description='Ano de término para o filtro temporal'
     )
 
 
@@ -33,7 +33,7 @@ class QueryPlan(BaseModel):
         description="Termos semânticos e conceituais para busca vetorial. Remova saudações e nomes de instituições. Mantenha os tópicos, áreas, especialidades e conceitos de pesquisa. Se for busca puramente por instituição sem tema (ex: 'pesquisadores da UEFS'), retorne string vazia."
     )
     filters: SearchFilters = Field(
-        description="Filtros estruturados extraídos da consulta."
+        description='Filtros estruturados extraídos da consulta.'
     )
 
 
@@ -81,15 +81,17 @@ Exemplos:
 
 class QueryPlanner:
     def __init__(self, api_key: str):
-        self.llm = ChatOpenAI(api_key=api_key, model="gpt-4o-mini", temperature=0)
+        self.llm = ChatOpenAI(
+            api_key=api_key, model='gpt-4o-mini', temperature=0
+        )
         self.structured_llm = self.llm.with_structured_output(QueryPlan)
 
         self.prompt = ChatPromptTemplate.from_messages([
-            ("system", PLANNER_SYSTEM_PROMPT),
-            ("human", "{question}")
+            ('system', PLANNER_SYSTEM_PROMPT),
+            ('human', '{question}'),
         ])
 
         self.chain = self.prompt | self.structured_llm
 
     async def plan(self, question: str) -> QueryPlan:
-        return await self.chain.ainvoke({"question": question})
+        return await self.chain.ainvoke({'question': question})

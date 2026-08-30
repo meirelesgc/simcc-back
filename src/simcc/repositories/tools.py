@@ -69,7 +69,9 @@ def websearch_filter(column, string_of_terms):
 
 def names_filter(column, name):
     name_clean = name.replace('(', '').replace(')', '').replace(';', ' ')
-    tokens = [unidecode(t.strip().lower()) for t in name_clean.split() if t.strip()]
+    tokens = [
+        unidecode(t.strip().lower()) for t in name_clean.split() if t.strip()
+    ]
     if not tokens:
         return '', {}
 
@@ -80,5 +82,5 @@ def names_filter(column, name):
         params[param_name] = f'%{token}%'
         conditions.append(f'unaccent(LOWER({column})) LIKE :{param_name}')
 
-    filter_sql = f" AND ({' AND '.join(conditions)})"
+    filter_sql = f' AND ({" AND ".join(conditions)})'
     return filter_sql, params

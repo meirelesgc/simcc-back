@@ -40,9 +40,16 @@ def article_metrics(session, year):
     ]
 
     if not result:
-        return pl.DataFrame(schema={c: pl.Int64 if c != 'researcher_id' else pl.String for c in columns})
+        return pl.DataFrame(
+            schema={
+                c: pl.Int64 if c != 'researcher_id' else pl.String
+                for c in columns
+            }
+        )
 
-    df = pl.DataFrame(result).with_columns(pl.col('researcher_id').cast(pl.String))
+    df = pl.DataFrame(result).with_columns(
+        pl.col('researcher_id').cast(pl.String)
+    )
 
     df = df.pivot(
         on='qualis',
@@ -70,8 +77,15 @@ def patent_metrics(session, year):
     result = session.execute(SCRIPT_SQL, {'year': year}).mappings().all()
     columns = ['researcher_id', 'patent_not_granted', 'patent_granted']
     if not result:
-        return pl.DataFrame(schema={c: pl.Int64 if c != 'researcher_id' else pl.String for c in columns})
-    return pl.DataFrame(result).with_columns(pl.col('researcher_id').cast(pl.String))
+        return pl.DataFrame(
+            schema={
+                c: pl.Int64 if c != 'researcher_id' else pl.String
+                for c in columns
+            }
+        )
+    return pl.DataFrame(result).with_columns(
+        pl.col('researcher_id').cast(pl.String)
+    )
 
 
 def guidance_metrics(session, year):
@@ -103,9 +117,16 @@ def guidance_metrics(session, year):
     columns = ['researcher_id'] + list(rename_dict.values())
 
     if not result:
-        return pl.DataFrame(schema={c: pl.Int64 if c != 'researcher_id' else pl.String for c in columns})
+        return pl.DataFrame(
+            schema={
+                c: pl.Int64 if c != 'researcher_id' else pl.String
+                for c in columns
+            }
+        )
 
-    df = pl.DataFrame(result).with_columns(pl.col('researcher_id').cast(pl.String))
+    df = pl.DataFrame(result).with_columns(
+        pl.col('researcher_id').cast(pl.String)
+    )
     df = df.pivot(
         on='nature',
         index='researcher_id',
@@ -132,18 +153,24 @@ def academic_degree_metrics(session):
     """)
     result = session.execute(SCRIPT_SQL).mappings().all()
     if not result:
-        return pl.DataFrame(schema={'researcher_id': pl.String, 'first_doc': pl.Int64})
+        return pl.DataFrame(
+            schema={'researcher_id': pl.String, 'first_doc': pl.Int64}
+        )
     return pl.DataFrame(result).with_columns(
         pl.col('researcher_id').cast(pl.String),
-        pl.col('first_doc').cast(pl.Int64)
+        pl.col('first_doc').cast(pl.Int64),
     )
 
 
 def simple_count_metrics(session, sql, params, column_name):
     result = session.execute(text(sql), params).mappings().all()
     if not result:
-        return pl.DataFrame(schema={'researcher_id': pl.String, column_name: pl.Int64})
-    return pl.DataFrame(result).with_columns(pl.col('researcher_id').cast(pl.String))
+        return pl.DataFrame(
+            schema={'researcher_id': pl.String, column_name: pl.Int64}
+        )
+    return pl.DataFrame(result).with_columns(
+        pl.col('researcher_id').cast(pl.String)
+    )
 
 
 def list_researchers(session, researcher_ids=None, lattes_ids=None):
@@ -171,8 +198,16 @@ def list_researchers(session, researcher_ids=None, lattes_ids=None):
 
     res_list = result.mappings().all()
     if not res_list:
-        return pl.DataFrame(schema={'researcher_id': pl.String, 'name': pl.String, 'lattes_id': pl.String})
-    return pl.DataFrame(res_list).with_columns(pl.col('researcher_id').cast(pl.String))
+        return pl.DataFrame(
+            schema={
+                'researcher_id': pl.String,
+                'name': pl.String,
+                'lattes_id': pl.String,
+            }
+        )
+    return pl.DataFrame(res_list).with_columns(
+        pl.col('researcher_id').cast(pl.String)
+    )
 
 
 def researcher_classification(researcher: dict) -> str:
@@ -276,11 +311,13 @@ def main(researcher_ids=None, lattes_ids=None):
     start_time = time.perf_counter()
 
     try:
-        routine_step_started("gather_classification_metrics")
+        routine_step_started('gather_classification_metrics')
         dataframe = list_researchers(session, researcher_ids, lattes_ids)
 
         if dataframe.is_empty():
-            routine_step_finished("gather_classification_metrics", items_found=0)
+            routine_step_finished(
+                'gather_classification_metrics', items_found=0
+            )
             return
 
         metrics_calls = [
@@ -347,13 +384,15 @@ def main(researcher_ids=None, lattes_ids=None):
             dataframe = dataframe.join(m_df, how='left', on='researcher_id')
 
         dataframe = dataframe.fill_null(0)
-        routine_step_finished("gather_classification_metrics")
+        routine_step_finished('gather_classification_metrics')
 
-        routine_step_started("update_researcher_classification")
+        routine_step_started('update_researcher_classification')
         classes = []
         for row in dataframe.to_dicts():
             classes.append(researcher_classification(row))
-        dataframe = dataframe.with_columns(pl.Series(name='class', values=classes))
+        dataframe = dataframe.with_columns(
+            pl.Series(name='class', values=classes)
+        )
 
         UPDATE_SQL = text("""
             UPDATE researcher
@@ -373,17 +412,25 @@ def main(researcher_ids=None, lattes_ids=None):
                 },
             )
             if (i + 1) % 100 == 0 or (i + 1) == items_found:
-                routine_progress("update_researcher_classification", i + 1, items_found, i + 1, 0)
+                routine_progress(
+                    'update_researcher_classification',
+                    i + 1,
+                    items_found,
+                    i + 1,
+                    0,
+                )
 
         session.commit()
         items_succeeded = items_found
         items_failed = 0
-        routine_step_finished("update_researcher_classification", total_updated=items_succeeded)
+        routine_step_finished(
+            'update_researcher_classification', total_updated=items_succeeded
+        )
         duration = time.perf_counter() - start_time
     except Exception as e:
         items_succeeded = 0
         items_failed = items_found
-        logger.error(f"Error in researcher_classification: {e}")
+        logger.error(f'Error in researcher_classification: {e}')
         session.rollback()
         duration = time.perf_counter() - start_time
         raise e

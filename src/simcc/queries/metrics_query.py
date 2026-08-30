@@ -403,7 +403,12 @@ class GraduateProgramProductionQuery(BaseQuery):
 
 
 class GeneralProductionMetricsQuery(BaseQuery):
-    SUPPORTED_FILTERS = {'year', 'graduate_program_id', 'dep_id', 'researcher_id'}
+    SUPPORTED_FILTERS = {
+        'year',
+        'graduate_program_id',
+        'dep_id',
+        'researcher_id',
+    }
 
     def __init__(self, session):
         super().__init__(session)

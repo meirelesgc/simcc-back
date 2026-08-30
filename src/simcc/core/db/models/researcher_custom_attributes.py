@@ -10,8 +10,8 @@ from simcc.core.db.models.base import table_registry
 
 
 @table_registry.mapped_as_dataclass
-class ResearcherInstitutionData:
-    __tablename__ = 'researcher_institution_data'
+class ResearcherCustomAttributes:
+    __tablename__ = 'researcher_custom_attributes'
 
     id: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True),
@@ -24,6 +24,9 @@ class ResearcherInstitutionData:
         ForeignKey('researcher.id', ondelete='CASCADE'),
         unique=True,
         index=True,
+    )
+    gender: Mapped[Optional[str]] = mapped_column(
+        String, nullable=True, default=None
     )
     zip_code: Mapped[Optional[str]] = mapped_column(
         String, nullable=True, default=None

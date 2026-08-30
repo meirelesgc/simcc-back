@@ -8,7 +8,7 @@ from simcc.ai.query_planner import QueryPlan, SearchFilters
 
 class MockLLMProvider(LLMProvider):
     async def generate(self, prompt: str, **kwargs) -> str:
-        return "Resposta simulada da MarIA para testes automatizados."
+        return 'Resposta simulada da MarIA para testes automatizados.'
 
 
 class MockEmbeddingsProvider(EmbeddingsProvider):
@@ -31,8 +31,8 @@ def mock_embeddings_provider():
 def mock_query_planner():
     planner = AsyncMock()
     planner.plan.return_value = QueryPlan(
-        intent="researcher_search",
-        semantic_query="inteligência artificial",
-        filters=SearchFilters(institutions=["UNEB"])
+        intent='researcher_search',
+        semantic_query='inteligência artificial',
+        filters=SearchFilters(institutions=['UNEB']),
     )
     return planner

@@ -158,7 +158,7 @@ def main(researcher_ids=None, lattes_ids=None):
     session = next(get_sync_session())
 
     try:
-        routine_step_started("gather_researcher_production")
+        routine_step_started('gather_researcher_production')
         delete_researcher_production(
             session, researcher_ids=researcher_ids, lattes_ids=lattes_ids
         )
@@ -167,7 +167,9 @@ def main(researcher_ids=None, lattes_ids=None):
             session, researcher_ids=researcher_ids, lattes_ids=lattes_ids
         )
         if not researchers:
-            routine_step_finished("gather_researcher_production", items_found=0)
+            routine_step_finished(
+                'gather_researcher_production', items_found=0
+            )
             return
 
         def to_df(data, schema):
@@ -261,9 +263,9 @@ def main(researcher_ids=None, lattes_ids=None):
         researchers = researchers.with_columns([
             pl.col(c).fill_null(0) for c in numeric_cols
         ])
-        routine_step_finished("gather_researcher_production")
+        routine_step_finished('gather_researcher_production')
 
-        routine_step_started("insert_researcher_production")
+        routine_step_started('insert_researcher_production')
         insert_query = text("""
             INSERT INTO researcher_production
                 (researcher_id, articles, book_chapters,
@@ -281,17 +283,25 @@ def main(researcher_ids=None, lattes_ids=None):
         for i, researcher in enumerate(records):
             session.execute(insert_query, researcher)
             if (i + 1) % 100 == 0 or (i + 1) == items_found:
-                routine_progress("insert_researcher_production", i + 1, items_found, i + 1, 0)
+                routine_progress(
+                    'insert_researcher_production',
+                    i + 1,
+                    items_found,
+                    i + 1,
+                    0,
+                )
 
         session.commit()
         items_succeeded = items_found
         items_failed = 0
-        routine_step_finished("insert_researcher_production", total_inserted=items_succeeded)
+        routine_step_finished(
+            'insert_researcher_production', total_inserted=items_succeeded
+        )
 
     except Exception as E:
         items_succeeded = 0
         items_failed = items_found
-        logger.error(f"Error in researcher_production: {E}")
+        logger.error(f'Error in researcher_production: {E}')
         session.rollback()
         raise E
 

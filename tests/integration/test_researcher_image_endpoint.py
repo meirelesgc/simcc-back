@@ -32,7 +32,9 @@ async def test_get_researcher_image_non_existent_researcher(session):
         async with AsyncClient(
             transport=ASGITransport(app=app), base_url='http://test'
         ) as ac:
-            response = await ac.get(f'/researcher/image?researcher_id={non_existent_uuid}')
+            response = await ac.get(
+                f'/researcher/image?researcher_id={non_existent_uuid}'
+            )
         assert response.status_code == HTTPStatus.NOT_FOUND
     finally:
         app.dependency_overrides.pop(get_async_session, None)
@@ -69,10 +71,16 @@ async def test_get_researcher_image_fallback_to_default_avatar(session):
         async with AsyncClient(
             transport=ASGITransport(app=app), base_url='http://test'
         ) as ac:
-            response = await ac.get(f'/researcher/image?researcher_id={researcher.id}')
+            response = await ac.get(
+                f'/researcher/image?researcher_id={researcher.id}'
+            )
 
         assert response.status_code == HTTPStatus.OK
-        assert response.headers['content-type'] in ('image/png', 'image/jpeg', 'image/svg+xml')
+        assert response.headers['content-type'] in (
+            'image/png',
+            'image/jpeg',
+            'image/svg+xml',
+        )
         assert len(response.content) > 0
     finally:
         app.dependency_overrides.pop(get_async_session, None)

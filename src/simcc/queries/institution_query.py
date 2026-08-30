@@ -172,7 +172,9 @@ class InstitutionFrequencyQuery(BaseQuery):
 
             filter_type = f" AND b.type = '{self.type_}' "
             if self.type_ == 'BOOK':
-                filter_type = " AND (b.type = 'BOOK' OR b.type = 'BOOK_CHAPTER') "
+                filter_type = (
+                    " AND (b.type = 'BOOK' OR b.type = 'BOOK_CHAPTER') "
+                )
 
             return f"""
                 SELECT COUNT(r.id) AS qtd, i.id, i.name AS institution, i.image
