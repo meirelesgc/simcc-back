@@ -22,6 +22,7 @@ def upgrade() -> None:
     """Upgrade schema."""
     op.execute('CREATE EXTENSION IF NOT EXISTS unaccent;')
     op.execute('CREATE EXTENSION IF NOT EXISTS pg_trgm;')
+    op.execute('ALTER FUNCTION unaccent(text) IMMUTABLE;')
 
     # 1. GIN Trigram Indexes para Busca Textual Rápida e Autocomplete
     op.execute('CREATE INDEX IF NOT EXISTS idx_researcher_name_trgm ON researcher USING gin (unaccent(lower(name)) gin_trgm_ops);')

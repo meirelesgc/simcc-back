@@ -135,7 +135,7 @@ def upgrade() -> None:
 
     # 4. Excluir schemas legados fisicamente do banco de dados
     op.execute('DROP SCHEMA IF EXISTS admin CASCADE;')
-    op.execute('DROP SCHEMA IF EXISTS admin_simcc CASCADE;')
+    op.execute('DROP SCHEMA IF EXISTS admin_ufmg CASCADE;')
     op.execute('DROP SCHEMA IF EXISTS logs CASCADE;')
     op.execute('DROP SCHEMA IF EXISTS ufmg CASCADE;')
 
@@ -143,7 +143,7 @@ def upgrade() -> None:
 def downgrade() -> None:
     # 1. Recriar schemas legados
     op.execute('CREATE SCHEMA IF NOT EXISTS admin;')
-    op.execute('CREATE SCHEMA IF NOT EXISTS admin_simcc;')
+    op.execute('CREATE SCHEMA IF NOT EXISTS admin_ufmg;')
     op.execute('CREATE SCHEMA IF NOT EXISTS logs;')
     op.execute('CREATE SCHEMA IF NOT EXISTS ufmg;')
 
