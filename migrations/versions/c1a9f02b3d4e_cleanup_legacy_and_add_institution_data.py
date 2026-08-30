@@ -25,6 +25,68 @@ def upgrade() -> None:
         DECLARE
             deleted_count INTEGER;
         BEGIN
+            -- Limpar dependências de bibliographic_production
+            DELETE FROM openalex_article WHERE article_id IN (
+                SELECT id FROM bibliographic_production WHERE researcher_id IN (
+                    SELECT id FROM researcher WHERE lattes_id IS NULL
+                )
+            );
+            DELETE FROM bibliographic_production_article WHERE bibliographic_production_id IN (
+                SELECT id FROM bibliographic_production WHERE researcher_id IN (
+                    SELECT id FROM researcher WHERE lattes_id IS NULL
+                )
+            );
+            DELETE FROM bibliographic_production_book_chapter WHERE bibliographic_production_id IN (
+                SELECT id FROM bibliographic_production WHERE researcher_id IN (
+                    SELECT id FROM researcher WHERE lattes_id IS NULL
+                )
+            );
+            DELETE FROM bibliographic_production_book WHERE bibliographic_production_id IN (
+                SELECT id FROM bibliographic_production WHERE researcher_id IN (
+                    SELECT id FROM researcher WHERE lattes_id IS NULL
+                )
+            );
+            DELETE FROM bibliographic_production_work_in_event WHERE bibliographic_production_id IN (
+                SELECT id FROM bibliographic_production WHERE researcher_id IN (
+                    SELECT id FROM researcher WHERE lattes_id IS NULL
+                )
+            );
+
+            -- Limpar dependências de process_or_technique
+            DELETE FROM process_author WHERE process_id IN (
+                SELECT id FROM process_or_technique WHERE researcher_id IN (
+                    SELECT id FROM researcher WHERE lattes_id IS NULL
+                )
+            );
+            DELETE FROM process_keyword WHERE process_id IN (
+                SELECT id FROM process_or_technique WHERE researcher_id IN (
+                    SELECT id FROM researcher WHERE lattes_id IS NULL
+                )
+            );
+            DELETE FROM process_knowledge_area WHERE process_id IN (
+                SELECT id FROM process_or_technique WHERE researcher_id IN (
+                    SELECT id FROM researcher WHERE lattes_id IS NULL
+                )
+            );
+
+            -- Limpar dependências de research_project
+            DELETE FROM research_project_components WHERE project_id IN (
+                SELECT id FROM research_project WHERE researcher_id IN (
+                    SELECT id FROM researcher WHERE lattes_id IS NULL
+                )
+            );
+            DELETE FROM research_project_foment WHERE project_id IN (
+                SELECT id FROM research_project WHERE researcher_id IN (
+                    SELECT id FROM researcher WHERE lattes_id IS NULL
+                )
+            );
+            DELETE FROM research_project_production WHERE project_id IN (
+                SELECT id FROM research_project WHERE researcher_id IN (
+                    SELECT id FROM researcher WHERE lattes_id IS NULL
+                )
+            );
+
+            -- Excluir pesquisadores órfãos
             DELETE FROM researcher WHERE lattes_id IS NULL;
             GET DIAGNOSTICS deleted_count = ROW_COUNT;
             RAISE NOTICE 'Deleted % orphan researchers with NULL lattes_id', deleted_count;
@@ -71,16 +133,28 @@ def upgrade() -> None:
         unique=True,
     )
 
+    # 4. Excluir schemas legados fisicamente do banco de dados
+    op.execute('DROP SCHEMA IF EXISTS admin CASCADE;')
+    op.execute('DROP SCHEMA IF EXISTS admin_simcc CASCADE;')
+    op.execute('DROP SCHEMA IF EXISTS logs CASCADE;')
+    op.execute('DROP SCHEMA IF EXISTS ufmg CASCADE;')
+
 
 def downgrade() -> None:
-    # 1. Remover tabela researcher_institution_data
+    # 1. Recriar schemas legados
+    op.execute('CREATE SCHEMA IF NOT EXISTS admin;')
+    op.execute('CREATE SCHEMA IF NOT EXISTS admin_simcc;')
+    op.execute('CREATE SCHEMA IF NOT EXISTS logs;')
+    op.execute('CREATE SCHEMA IF NOT EXISTS ufmg;')
+
+    # 2. Remover tabela researcher_institution_data
     op.drop_index(
         'ix_researcher_institution_data_researcher_id',
         table_name='researcher_institution_data',
     )
     op.drop_table('researcher_institution_data')
 
-    # 2. Reverter constraint NOT NULL na coluna lattes_id
+    # 3. Reverter constraint NOT NULL na coluna lattes_id
     op.alter_column(
         'researcher',
         'lattes_id',
