@@ -1,6 +1,8 @@
 import argparse
+import re
 import ssl
 from http import HTTPStatus
+from urllib.parse import parse_qs, urlparse
 
 import httpx
 from sqlalchemy import text
@@ -14,6 +16,8 @@ from simcc.core.logging.events import (
     routine_step_started,
 )
 
+LATTES_10_PATTERN = re.compile(r'^[A-Za-z0-9]{10}$')
+
 
 def create_legacy_ssl_context() -> ssl.SSLContext:
     context = ssl.create_default_context()
@@ -23,7 +27,10 @@ def create_legacy_ssl_context() -> ssl.SSLContext:
     return context
 
 
-def get_lattes_id_10(lattes_id: str) -> str:
+def get_lattes_id_10(lattes_id: str) -> str | None:
+    if not lattes_id:
+        return None
+
     URL = f'https://buscatextual.cnpq.br/buscatextual/cv?id={lattes_id}'
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36'
@@ -31,15 +38,32 @@ def get_lattes_id_10(lattes_id: str) -> str:
 
     ssl_context = create_legacy_ssl_context()
 
-    with httpx.Client(
-        follow_redirects=False, headers=headers, verify=ssl_context
-    ) as client:
-        response = client.get(URL, timeout=30.0)
+    try:
+        with httpx.Client(
+            follow_redirects=False, headers=headers, verify=ssl_context
+        ) as client:
+            response = client.get(URL, timeout=30.0)
 
-        if response.status_code == HTTPStatus.FOUND:
-            location = response.headers.get('Location', '')
-            if location and len(location) >= 10:
-                return location[-10:]
+            if response.status_code == HTTPStatus.FOUND:
+                location = response.headers.get('Location', '')
+                if not location or 'erro.jsp' in location.lower():
+                    return None
+
+                parsed = urlparse(location)
+                query_params = parse_qs(parsed.query)
+                candidate_id = query_params.get('id', [None])[0]
+
+                if candidate_id and LATTES_10_PATTERN.match(candidate_id):
+                    return candidate_id
+
+                if len(location) >= 10:
+                    last_10 = location[-10:]
+                    if LATTES_10_PATTERN.match(last_10):
+                        return last_10
+    except Exception as e:
+        logger.warning(f'Error requesting lattes_10_id for {lattes_id}: {e}')
+        return None
+
     return None
 
 
@@ -94,14 +118,14 @@ def main(researcher_ids=None, lattes_ids=None):
             l_id = researcher['lattes_id']
             try:
                 lattes_10_id = get_lattes_id_10(l_id)
-                session.execute(
-                    query_update,
-                    {
-                        'id': r_id,
-                        'lattes_10_id': lattes_10_id,
-                    },
-                )
                 if lattes_10_id:
+                    session.execute(
+                        query_update,
+                        {
+                            'id': r_id,
+                            'lattes_10_id': lattes_10_id,
+                        },
+                    )
                     success += 1
                     logger.debug(
                         f'Fetched lattes_10_id {lattes_10_id} for researcher {r_id}'

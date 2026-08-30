@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 
 import httpx
@@ -9,6 +10,12 @@ from simcc.core.db.model import Researcher
 CNPQ_IMAGE_URL = (
     'http://servicosweb.cnpq.br/wspessoa/servletrecuperafoto?tipo=1&id='
 )
+
+DEFAULT_AVATAR_PATH = (
+    Path(__file__).resolve().parent.parent / 'static' / 'images' / 'default_avatar.png'
+)
+
+LATTES_10_PATTERN = re.compile(r'^[A-Za-z0-9]{10}$')
 
 
 async def download_researcher_image(
@@ -26,7 +33,7 @@ async def download_researcher_image(
     result = await session.execute(query)
     lattes_10_id = result.scalar_one_or_none()
 
-    if not lattes_10_id:
+    if not lattes_10_id or not LATTES_10_PATTERN.match(lattes_10_id):
         return
 
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -46,3 +53,4 @@ async def download_researcher_image(
                     path.write_bytes(response.content)
     except Exception:
         pass
+

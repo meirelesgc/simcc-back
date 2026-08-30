@@ -204,8 +204,15 @@ async def get_departament_rt(session):
     return {'teachers': teachers, 'technician': technicians}
 
 
-async def get_researcher_id(session, lattes_id=None, name=None):
-    if lattes_id:
+async def get_researcher_id(
+    session, lattes_id=None, name=None, researcher_id=None
+):
+    if researcher_id:
+        sql = 'SELECT id FROM researcher WHERE id = :researcher_id LIMIT 1'
+        result = await session.execute(
+            text(sql), {'researcher_id': researcher_id}
+        )
+    elif lattes_id:
         sql = 'SELECT id FROM researcher WHERE lattes_id = :lattes_id LIMIT 1'
         result = await session.execute(text(sql), {'lattes_id': lattes_id})
     elif name:
@@ -216,6 +223,7 @@ async def get_researcher_id(session, lattes_id=None, name=None):
 
     row = result.scalar()
     return row
+
 
 
 async def get_researcher(session, researcher_id):

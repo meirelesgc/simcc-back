@@ -3,7 +3,7 @@ from typing import Any
 
 import polars as pl
 
-from simcc.core.utils import download_researcher_image
+from simcc.core.utils import DEFAULT_AVATAR_PATH, download_researcher_image
 from simcc.repositories import researcher_repo
 from simcc.schemas.common import PaginationParams
 
@@ -284,8 +284,12 @@ async def get_departament_rt(session):
     return await researcher_repo.get_departament_rt(session)
 
 
-async def get_researcher_id_by_params(session, lattes_id=None, name=None):
-    return await researcher_repo.get_researcher_id(session, lattes_id, name)
+async def get_researcher_id_by_params(
+    session, lattes_id=None, name=None, researcher_id=None
+):
+    return await researcher_repo.get_researcher_id(
+        session, lattes_id=lattes_id, name=name, researcher_id=researcher_id
+    )
 
 
 async def get_researcher_image_path(session, researcher_id):
@@ -294,7 +298,11 @@ async def get_researcher_image_path(session, researcher_id):
     if not path_image.exists():
         await download_researcher_image(researcher_id, session=session)
 
+    if not path_image.exists():
+        return str(DEFAULT_AVATAR_PATH)
+
     return str(path_image)
+
 
 
 async def get_researcher_filter(session):
