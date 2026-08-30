@@ -126,7 +126,6 @@ def main(researcher_ids=None, lattes_ids=None):
         raise E
 
 
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument(

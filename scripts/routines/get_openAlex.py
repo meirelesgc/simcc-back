@@ -10,7 +10,6 @@ from urllib3.util.retry import Retry
 
 from simcc.core.db.database import get_sync_session
 from simcc.core.db.model import OpenAlexArticle, OpenAlexResearcher
-from simcc.core.logging import logger
 from simcc.core.logging.events import (
     routine_item_error,
     routine_progress,
@@ -265,7 +264,6 @@ def process_researchers(session):
 
     routine_step_finished("openalex_researchers", total_items=found)
     return found, success, failed
-
 
 
 items_found = 0

@@ -6,14 +6,17 @@ e controlando o isolamento via transações/savepoints.
 """
 import pytest
 import pytest_asyncio
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from simcc.models import table_registry
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+
 from simcc.core.settings import Settings
+
 
 @pytest.fixture(scope="session")
 def engine():
     _engine = create_async_engine(Settings().DATABASE_URL)
-    yield _engine
+    return _engine
+
 
 @pytest_asyncio.fixture(scope="session", autouse=True)
 async def setup_database(engine):
@@ -26,6 +29,7 @@ async def setup_database(engine):
     async with engine.begin() as conn:
         await conn.run_sync(table_registry.metadata.drop_all)
 
+
 @pytest_asyncio.fixture
 async def session(engine):
     """
@@ -34,19 +38,19 @@ async def session(engine):
     """
     connection = await engine.connect()
     transaction = await connection.begin()
-    
+
     # Usa um savepoint para nested transactions (útil caso a aplicação dê seus próprios commits)
     nested = await connection.begin_nested()
-    
+
     session = AsyncSession(bind=connection, expire_on_commit=False)
-    
+
     # Hook para reiniciar o savepoint caso o service faça commit
     @pytest.hookimpl
     async def restart_savepoint(session, transaction):
         nonlocal nested
         if not nested.is_active:
             nested = await connection.begin_nested()
-            
+
     try:
         yield session
     finally:

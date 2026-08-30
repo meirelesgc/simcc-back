@@ -5,22 +5,25 @@ import sys
 # Ajusta o path para importar os módulos internos corretamente
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../src')))
 
-from sqlalchemy import select, and_, delete
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy import delete, select
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
-from simcc.core.settings import Settings
-from simcc.core.db.models.researcher import (
-    Researcher,
-    ResearcherProduction,
-    ResearcherAreaExpertise,
-    Education,
-    ResearcherProfessionalExperience,
+from simcc.ai.providers.openai_provider import OpenAIProvider
+from simcc.core.db.models.ai import SearchDocumentResearcher
+from simcc.core.db.models.expertise import (
+    AreaExpertise,
+    GreatAreaExpertise,
+    SubAreaExpertise,
 )
 from simcc.core.db.models.institution import Institution
-from simcc.core.db.models.expertise import AreaExpertise, SubAreaExpertise, GreatAreaExpertise
-from simcc.core.db.models.ai import SearchDocumentResearcher
-from simcc.ai.providers.openai_provider import OpenAIProvider
+from simcc.core.db.models.researcher import (
+    Education,
+    Researcher,
+    ResearcherAreaExpertise,
+    ResearcherProfessionalExperience,
+)
+from simcc.core.settings import Settings
 
 
 async def run_ingestion():
@@ -29,13 +32,13 @@ async def run_ingestion():
     async_session = sessionmaker(
         engine, class_=AsyncSession, expire_on_commit=False
     )
-    
+
     if not settings.OPENAI_API_KEY:
         print("OPENAI_API_KEY não configurada. Abortando ingestão.")
         return
 
     ai_provider = OpenAIProvider(api_key=settings.OPENAI_API_KEY)
-    
+
     async with async_session() as session:
         # Busca os 10 primeiros pesquisadores
         query = (
@@ -43,19 +46,19 @@ async def run_ingestion():
             .outerjoin(Institution, Institution.id == Researcher.institution_id)
             .limit(10)
         )
-        
+
         result = await session.execute(query)
         rows = result.all()
-        
+
         if not rows:
             print("Nenhum pesquisador encontrado.")
             return
-            
+
         print(f"Indexando com dados enriquecidos {len(rows)} pesquisadores...")
-        
+
         for r, inst in rows:
             print(f"Processando: {r.name}")
-            
+
             # 1. Instituição
             institution_str = ""
             if inst:
@@ -115,17 +118,17 @@ async def run_ingestion():
                 f"Experiência Profissional e Gestão:\n{exp_str}\n"
                 f"Resumo do Currículo Lattes:\n{abstract}\n"
             )
-            
+
             # Gera embedding de alta fidelidade
             embedding = await ai_provider.get_embeddings(document)
-            
+
             # Deleta index anterior para este pesquisador se existir (upsert simples)
             await session.execute(
                 delete(SearchDocumentResearcher).filter(
                     SearchDocumentResearcher.researcher_id == r.id
                 )
             )
-            
+
             # Salva o novo documento
             doc = SearchDocumentResearcher(
                 researcher_id=r.id,
@@ -133,7 +136,7 @@ async def run_ingestion():
                 embedding=embedding
             )
             session.add(doc)
-            
+
         await session.commit()
         print("Ingestão enriquecida concluída com sucesso.")
 

@@ -16,7 +16,6 @@ from simcc.core.logging.events import (
 )
 
 
-
 def normalize_string(s):
     if not isinstance(s, str):
         return str(s) if s is not None else ''
@@ -235,7 +234,6 @@ def main():
         )
         session.rollback()
         raise E
-
 
 
 if __name__ == '__main__':

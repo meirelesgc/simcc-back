@@ -1,8 +1,8 @@
+import json
 import os
 import sys
 from datetime import datetime
-import json
-from typing import Dict, Any, List, Callable
+from typing import Any, Callable, Dict, List
 
 from simcc.core.logging.cleanup import clean_old_logs
 
@@ -38,16 +38,19 @@ def write_to_file(log_data: Dict[str, Any]) -> None:
     with open(filepath, 'a', encoding='utf-8') as f:
         f.write(log_line + '\n')
 
+
 def write_to_console(log_data: Dict[str, Any]) -> None:
     """Writes a log entry dictionary as a single line to console (stdout)."""
     # Write to stdout
     sys.stdout.write(json.dumps(log_data, default=str) + '\n')
     sys.stdout.flush()
 
+
 # List of log destination callbacks. Can be modified/extended to support queues, APIs, etc.
 LOG_DESTINATIONS: List[Callable[[Dict[str, Any]], None]] = [
     write_to_file,
 ]
+
 
 def dispatch_log(log_data: Dict[str, Any]) -> None:
     """Dispatches a log entry to all registered destinations."""

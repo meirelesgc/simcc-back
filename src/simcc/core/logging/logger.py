@@ -1,4 +1,5 @@
 import structlog
+
 from simcc.core.logging.config import configure_logging
 
 # Configure logging immediately upon module load

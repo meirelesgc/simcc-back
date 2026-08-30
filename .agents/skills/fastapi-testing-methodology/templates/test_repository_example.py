@@ -8,6 +8,7 @@ import pytest
 
 # from simcc.repositories.project_repo import ProjectRepository
 
+
 @pytest.mark.asyncio
 async def test_repository_complex_query(session, project_factory, user_factory):
     """
@@ -17,12 +18,12 @@ async def test_repository_complex_query(session, project_factory, user_factory):
     # owner = await user_factory.create(session)
     # project_1 = await project_factory.create(session, owner=owner, name="Proj A")
     # project_2 = await project_factory.create(session, owner=owner, name="Proj B")
-    
+
     # repo = ProjectRepository(session)
-    
+
     # Act
     # results = await repo.get_user_projects_summary(user_id=owner.id)
-    
+
     # Assert
     # assert len(results) == 2
     # assert results[0].name == "Proj A"

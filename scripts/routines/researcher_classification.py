@@ -14,7 +14,6 @@ from simcc.core.logging.events import (
 )
 
 
-
 def article_metrics(session, year):
     SCRIPT_SQL = text("""
         SELECT qualis, COUNT(*) AS count_article, researcher_id::TEXT
@@ -390,7 +389,6 @@ def main(researcher_ids=None, lattes_ids=None):
         raise e
 
 
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -408,4 +406,3 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     main(researcher_ids=args.researcher_ids, lattes_ids=args.lattes_ids)
-
