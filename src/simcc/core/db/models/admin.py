@@ -15,12 +15,12 @@ from sqlalchemy import (
     text,
 )
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, registry
 
-from simcc.core.db.models.base import table_registry
+legacy_admin_registry = registry()
 
 
-@table_registry.mapped_as_dataclass
+@legacy_admin_registry.mapped_as_dataclass
 class AdminInstitution:
     __tablename__ = 'institution'
     __table_args__ = {'schema': 'admin'}
@@ -38,7 +38,7 @@ class AdminInstitution:
     lattes_id: Mapped[Optional[str]] = mapped_column(String, default=None)
 
 
-@table_registry.mapped_as_dataclass
+@legacy_admin_registry.mapped_as_dataclass
 class AdminResearcher:
     __tablename__ = 'researcher'
     __table_args__ = {'schema': 'admin'}
@@ -57,7 +57,7 @@ class AdminResearcher:
     status: Mapped[bool] = mapped_column(Boolean, default=True)
 
 
-@table_registry.mapped_as_dataclass
+@legacy_admin_registry.mapped_as_dataclass
 class AdminResearcherInstitution:
     __tablename__ = 'researcher_institution'
     __table_args__ = {'schema': 'admin'}
@@ -79,7 +79,7 @@ class AdminResearcherInstitution:
     is_current: Mapped[Optional[bool]] = mapped_column(Boolean, default=True)
 
 
-@table_registry.mapped_as_dataclass
+@legacy_admin_registry.mapped_as_dataclass
 class AdminGraduateProgram:
     __tablename__ = 'graduate_program'
     __table_args__ = {'schema': 'admin'}
@@ -114,7 +114,7 @@ class AdminGraduateProgram:
     )
 
 
-@table_registry.mapped_as_dataclass
+@legacy_admin_registry.mapped_as_dataclass
 class AdminGraduateProgramResearcher:
     __tablename__ = 'graduate_program_researcher'
     __table_args__ = {'schema': 'admin'}
@@ -131,7 +131,7 @@ class AdminGraduateProgramResearcher:
     type_: Mapped[Optional[str]] = mapped_column(String, default=None)
 
 
-@table_registry.mapped_as_dataclass
+@legacy_admin_registry.mapped_as_dataclass
 class AdminGraduateProgramStudent:
     __tablename__ = 'graduate_program_student'
     __table_args__ = {'schema': 'admin'}
@@ -147,7 +147,7 @@ class AdminGraduateProgramStudent:
     year: Mapped[list[int]] = mapped_column(ARRAY(Integer), primary_key=True)
 
 
-@table_registry.mapped_as_dataclass
+@legacy_admin_registry.mapped_as_dataclass
 class AdminWeights:
     __tablename__ = 'weights'
     __table_args__ = {'schema': 'admin'}
@@ -180,7 +180,7 @@ class AdminWeights:
     f5: Mapped[Optional[float]] = mapped_column(Float, default=0.0)
 
 
-@table_registry.mapped_as_dataclass
+@legacy_admin_registry.mapped_as_dataclass
 class AdminRoles:
     __tablename__ = 'roles'
     __table_args__ = {'schema': 'admin'}
@@ -194,7 +194,7 @@ class AdminRoles:
     role: Mapped[str] = mapped_column(String, unique=True)
 
 
-@table_registry.mapped_as_dataclass
+@legacy_admin_registry.mapped_as_dataclass
 class AdminPermission:
     __tablename__ = 'permission'
     __table_args__ = {'schema': 'admin'}
@@ -209,7 +209,7 @@ class AdminPermission:
     permission: Mapped[str] = mapped_column(String)
 
 
-@table_registry.mapped_as_dataclass
+@legacy_admin_registry.mapped_as_dataclass
 class AdminUsers:
     __tablename__ = 'users'
     __table_args__ = {'schema': 'admin'}
@@ -249,7 +249,7 @@ class AdminUsers:
     cover_url: Mapped[Optional[str]] = mapped_column(Text, default=None)
 
 
-@table_registry.mapped_as_dataclass
+@legacy_admin_registry.mapped_as_dataclass
 class AdminUsersRoles:
     __tablename__ = 'users_roles'
     __table_args__ = {'schema': 'admin'}
@@ -262,7 +262,7 @@ class AdminUsersRoles:
     )
 
 
-@table_registry.mapped_as_dataclass
+@legacy_admin_registry.mapped_as_dataclass
 class AdminNewsletterSubscribers:
     __tablename__ = 'newsletter_subscribers'
     __table_args__ = {'schema': 'admin'}
@@ -279,7 +279,7 @@ class AdminNewsletterSubscribers:
     )
 
 
-@table_registry.mapped_as_dataclass
+@legacy_admin_registry.mapped_as_dataclass
 class AdminFeedback:
     __tablename__ = 'feedback'
     __table_args__ = {'schema': 'admin'}
@@ -296,7 +296,7 @@ class AdminFeedback:
     description: Mapped[Optional[str]] = mapped_column(Text, default=None)
 
 
-@table_registry.mapped_as_dataclass
+@legacy_admin_registry.mapped_as_dataclass
 class AdminUfmgResearcher:
     __tablename__ = 'researcher'
     __table_args__ = {'schema': 'admin_ufmg'}
@@ -360,7 +360,7 @@ class AdminUfmgResearcher:
     )
 
 
-@table_registry.mapped_as_dataclass
+@legacy_admin_registry.mapped_as_dataclass
 class AdminUfmgTechnician:
     __tablename__ = 'technician'
     __table_args__ = {'schema': 'admin_ufmg'}
@@ -426,7 +426,7 @@ class AdminUfmgTechnician:
     )
 
 
-@table_registry.mapped_as_dataclass
+@legacy_admin_registry.mapped_as_dataclass
 class AdminUfmgDepartment:
     __tablename__ = 'department'
     __table_args__ = {'schema': 'admin_ufmg'}
@@ -442,7 +442,7 @@ class AdminUfmgDepartment:
     img_data: Mapped[Optional[bytes]] = mapped_column(String, default=None)
 
 
-@table_registry.mapped_as_dataclass
+@legacy_admin_registry.mapped_as_dataclass
 class AdminUfmgDepartmentTechnician:
     __tablename__ = 'department_technician'
     __table_args__ = {'schema': 'admin_ufmg'}
@@ -455,7 +455,7 @@ class AdminUfmgDepartmentTechnician:
     )
 
 
-@table_registry.mapped_as_dataclass
+@legacy_admin_registry.mapped_as_dataclass
 class AdminUfmgDepartmentResearcher:
     __tablename__ = 'department_researcher'
     __table_args__ = {'schema': 'admin_ufmg'}
@@ -469,7 +469,7 @@ class AdminUfmgDepartmentResearcher:
     )
 
 
-@table_registry.mapped_as_dataclass
+@legacy_admin_registry.mapped_as_dataclass
 class AdminUfmgDisciplines:
     __tablename__ = 'disciplines'
     __table_args__ = {'schema': 'admin_ufmg'}

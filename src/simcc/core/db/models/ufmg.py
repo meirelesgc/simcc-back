@@ -12,12 +12,12 @@ from sqlalchemy import (
     text,
 )
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, registry
 
-from simcc.core.db.models.base import table_registry
+legacy_ufmg_registry = registry()
 
 
-@table_registry.mapped_as_dataclass
+@legacy_ufmg_registry.mapped_as_dataclass
 class UfmgDepartament:
     __tablename__ = 'departament'
     __table_args__ = {'schema': 'ufmg'}
@@ -32,7 +32,7 @@ class UfmgDepartament:
     dep_tel: Mapped[Optional[str]] = mapped_column(String, default=None)
 
 
-@table_registry.mapped_as_dataclass
+@legacy_ufmg_registry.mapped_as_dataclass
 class UfmgResearcher:
     __tablename__ = 'researcher'
     __table_args__ = {'schema': 'ufmg'}
@@ -93,7 +93,7 @@ class UfmgResearcher:
     )
 
 
-@table_registry.mapped_as_dataclass
+@legacy_ufmg_registry.mapped_as_dataclass
 class UfmgTechnician:
     __tablename__ = 'technician'
     __table_args__ = {'schema': 'ufmg'}
@@ -159,7 +159,7 @@ class UfmgTechnician:
     )
 
 
-@table_registry.mapped_as_dataclass
+@legacy_ufmg_registry.mapped_as_dataclass
 class UfmgDepartamentTechnician:
     __tablename__ = 'departament_technician'
     __table_args__ = {'schema': 'ufmg'}
@@ -172,7 +172,7 @@ class UfmgDepartamentTechnician:
     )
 
 
-@table_registry.mapped_as_dataclass
+@legacy_ufmg_registry.mapped_as_dataclass
 class UfmgDepartamentResearcher:
     __tablename__ = 'departament_researcher'
     __table_args__ = {'schema': 'ufmg'}
@@ -187,7 +187,7 @@ class UfmgDepartamentResearcher:
     )
 
 
-@table_registry.mapped_as_dataclass
+@legacy_ufmg_registry.mapped_as_dataclass
 class UfmgResearcherData:
     __tablename__ = 'researcher_data'
     __table_args__ = {'schema': 'ufmg'}
@@ -205,7 +205,7 @@ class UfmgResearcherData:
     arquivo: Mapped[Optional[str]] = mapped_column(String, default=None)
 
 
-@table_registry.mapped_as_dataclass
+@legacy_ufmg_registry.mapped_as_dataclass
 class UfmgMandate:
     __tablename__ = 'mandate'
     __table_args__ = {'schema': 'ufmg'}

@@ -29,9 +29,7 @@ class Researcher:
         init=False,
     )
     name: Mapped[str] = mapped_column(String)
-    lattes_id: Mapped[Optional[str]] = mapped_column(
-        String, unique=True, default=None
-    )
+    lattes_id: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     lattes_10_id: Mapped[Optional[str]] = mapped_column(
         String, unique=True, default=None
     )

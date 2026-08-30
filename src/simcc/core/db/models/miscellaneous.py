@@ -13,13 +13,15 @@ from sqlalchemy import (
     text,
 )
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, registry
 from sqlalchemy.sql import func
 
 from simcc.core.db.models.base import table_registry
 
+legacy_logs_registry = registry()
 
-@table_registry.mapped_as_dataclass
+
+@legacy_logs_registry.mapped_as_dataclass
 class Routine:
     __tablename__ = 'routine'
     __table_args__ = (
