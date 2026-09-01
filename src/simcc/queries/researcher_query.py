@@ -595,19 +595,21 @@ class ResearcherSearchQuery(BaseQuery):
 
     def _apply_dep_id_filter(self, value):
         self.joins['departament'] = """
-            INNER JOIN ufmg.departament_researcher dpr ON dpr.researcher_id = r.id
-            INNER JOIN ufmg.departament dp ON dp.dep_id = dpr.dep_id
+            LEFT JOIN researcher_custom_attributes rca ON rca.researcher_id = r.id
         """
         self.params['dep_id'] = value
-        self.filters_sql.append(' AND dp.dep_id = :dep_id')
+        self.filters_sql.append(
+            " AND (rca.custom_attributes->>'department' = :dep_id OR rca.custom_attributes->>'dep_id' = :dep_id)"
+        )
 
     def _apply_departament_filter(self, value):
         self.joins['departament'] = """
-            INNER JOIN ufmg.departament_researcher dpr ON dpr.researcher_id = r.id
-            INNER JOIN ufmg.departament dp ON dp.dep_id = dpr.dep_id
+            LEFT JOIN researcher_custom_attributes rca ON rca.researcher_id = r.id
         """
         self.params['departament'] = value.split(';')
-        self.filters_sql.append(' AND dp.dep_nom = ANY(:departament)')
+        self.filters_sql.append(
+            " AND (rca.custom_attributes->>'department' = ANY(:departament) OR rca.custom_attributes->>'dep_nom' = ANY(:departament))"
+        )
 
     def _apply_group_id_filter(self, value):
         self.joins['group'] = """
@@ -826,8 +828,8 @@ class ResearcherTermQuery(BaseQuery):
             """
             AND b.researcher_id IN (
                 SELECT researcher_id 
-                FROM ufmg.departament_researcher 
-                WHERE dep_id = :dep_id
+                FROM researcher_custom_attributes 
+                WHERE custom_attributes->>'dep_id' = :dep_id OR custom_attributes->>'department' = :dep_id
             )
         """
         )
@@ -931,7 +933,9 @@ class ResearcherFilterQuery(BaseQuery):
                  FROM graduate_program gp
                  INNER JOIN graduate_program_researcher gpr ON gpr.graduate_program_id = gp.graduate_program_id) as graduate_program,
                  
-                (SELECT COALESCE(ARRAY_AGG(DISTINCT dep_nom), '{}') FROM ufmg.departament) as departament;
+                (SELECT COALESCE(ARRAY_AGG(DISTINCT (rca.custom_attributes->>'department')::TEXT), '{}') 
+                 FROM researcher_custom_attributes rca 
+                 WHERE rca.custom_attributes->>'department' IS NOT NULL) as departament;
         """
 
 

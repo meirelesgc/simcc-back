@@ -45,19 +45,17 @@ class DocenteSearchQuery(BaseQuery):
 
     def _apply_dep_id_filter(self, value):
         self.joins['departament'] = """
-            INNER JOIN ufmg.departament_researcher dpr ON dpr.researcher_id = ur.researcher_id
-            INNER JOIN ufmg.departament dp ON dp.dep_id = dpr.dep_id
+            LEFT JOIN researcher_custom_attributes rca ON rca.researcher_id = ur.researcher_id
         """
         self.params['dep_id'] = value.split(';')
-        self.where_extra += ' AND dp.dep_id = ANY(:dep_id)'
+        self.where_extra += " AND (rca.custom_attributes->>'department' = ANY(:dep_id) OR rca.custom_attributes->>'dep_id' = ANY(:dep_id))"
 
     def _apply_departament_filter(self, value):
         self.joins['departament'] = """
-            INNER JOIN ufmg.departament_researcher dpr ON dpr.researcher_id = ur.researcher_id
-            INNER JOIN ufmg.departament dp ON dp.dep_id = dpr.dep_id
+            LEFT JOIN researcher_custom_attributes rca ON rca.researcher_id = ur.researcher_id
         """
         self.params['departament'] = value.split(';')
-        self.where_extra += ' AND dp.dep_nom = ANY(:departament)'
+        self.where_extra += " AND (rca.custom_attributes->>'department' = ANY(:departament) OR rca.custom_attributes->>'dep_nom' = ANY(:departament))"
 
     def _apply_graduate_program_id_filter(self, value):
         self.distinct_flag = True
@@ -255,8 +253,8 @@ class ResearcherArticleProductionQuery(BaseQuery):
 
         if self.dep_id:
             self.params['dep_id'] = self.dep_id
-            filters += ' AND dpr.dep_id = :dep_id'
-            join_departament = 'INNER JOIN ufmg.departament_researcher dpr ON dpr.researcher_id = r.id'
+            filters += " AND (rca.custom_attributes->>'department' = :dep_id OR rca.custom_attributes->>'dep_id' = :dep_id)"
+            join_departament = 'LEFT JOIN researcher_custom_attributes rca ON rca.researcher_id = r.id'
 
         if self.program_id:
             self.params['program_id'] = str(self.program_id)

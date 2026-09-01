@@ -59,38 +59,18 @@ def list_foment_data(session):
 
 
 def list_departament_data(session):
-    SCRIPT_SQL = text("""
-        SELECT dpr.researcher_id AS id,
-               JSONB_AGG(JSONB_BUILD_OBJECT(
-                   'dep_nom', dp.dep_nom, 'dep_sigla', dp.dep_sigla
-               )) AS departments
-        FROM ufmg.departament_researcher dpr
-        LEFT JOIN ufmg.departament dp ON dpr.dep_id = dp.dep_id
-        GROUP BY dpr.researcher_id;
-    """)
-    return session.execute(SCRIPT_SQL).mappings().all()
+    # Schema legado ufmg descontinuado
+    return []
 
 
 def list_user_data(session):
-    SCRIPT_SQL = text("""
-        SELECT u.lattes_id,
-               JSONB_BUILD_OBJECT(
-                   'linkedin', u.linkedin, 'email', u.email,
-                   'visible_email', u.visible_email
-               ) AS user
-        FROM admin.users u
-        WHERE u.lattes_id IS NOT NULL;
-    """)
-    return session.execute(SCRIPT_SQL).mappings().all()
+    # Schema legado admin descontinuado
+    return []
 
 
 def list_ufmg_data(session):
-    SCRIPT_SQL = text("""
-        SELECT researcher_id AS id, full_name, gender,
-               job_title, academic_unit, department_name
-        FROM ufmg.researcher;
-    """)
-    return session.execute(SCRIPT_SQL).mappings().all()
+    # Schema legado ufmg descontinuado
+    return []
 
 
 items_found = 0

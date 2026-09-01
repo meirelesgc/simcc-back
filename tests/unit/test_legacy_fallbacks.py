@@ -1,9 +1,9 @@
+import pytest
 from unittest.mock import AsyncMock
 
-import pytest
 from sqlalchemy.exc import ProgrammingError
 
-from simcc.repositories import researcher_repo
+from simcc.repositories import external_repo, powerBi_repo, researcher_repo
 from simcc.services import researcher_service
 
 
@@ -130,3 +130,39 @@ async def test_enrich_researchers_with_fallback_data(monkeypatch):
     assert enriched[0]['departments'] == []
     assert enriched[0]['ufmg'] is None
     assert enriched[0]['user'] is None
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_external_repo_fallbacks_on_db_error():
+    session = AsyncMock()
+    session.execute.side_effect = ProgrammingError(
+        'relation does not exist',
+        params={},
+        orig=Exception(),
+    )
+
+    assert await external_repo.get_departament(session) == []
+    assert await external_repo.get_docentes(session, None) == []
+    assert await external_repo.get_researcher_data(session) == []
+    assert await external_repo.get_technician(session) == []
+    assert await external_repo.list_article_production(session) == []
+    assert await external_repo.list_words(session, 'test', []) == []
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_powerbi_repo_fallbacks_on_db_error():
+    session = AsyncMock()
+    session.execute.side_effect = ProgrammingError(
+        'relation does not exist',
+        params={},
+        orig=Exception(),
+    )
+
+    assert await powerBi_repo.get_dim_departament_technician(session) == []
+    assert await powerBi_repo.get_dim_departament_researcher(session) == []
+    assert await powerBi_repo.get_guidance(session) == []
+    assert await powerBi_repo.get_dim_tags(session) == []
+    assert await powerBi_repo.get_ind_guidance_ori(session) == []
+    assert await powerBi_repo.get_fat_guidance_history(session) == []

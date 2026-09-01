@@ -1,7 +1,8 @@
 # Specification Quality Checklist: Limpeza do Banco e Dados Flexíveis de Pesquisadores
 
-**Purpose**: Validar completude e qualidade da especificação antes de prosseguir para planejamento
-**Created**: 2026-08-29
+**Purpose**: Validar completude e qualidade da especificação antes de prosseguir para planejamento  
+**Created**: 2026-08-29  
+**Last Updated**: 2026-08-31  
 **Feature**: [spec.md](../spec.md)
 
 ## Content Quality
@@ -31,9 +32,6 @@
 
 ## Notes
 
-- Todos os itens foram validados e aprovados na primeira iteração.
-- A suposição sobre deleção dos pesquisadores sem lattes_id é crítica — deve ser
-  confirmada com a equipe antes de executar em produção.
-- A estratégia de fallback gracioso para schemas legados (FR-001 a FR-007) foi
-  deliberadamente mantida genérica para permitir flexibilidade na implementação
-  (try/except vs. verificação de existência prévia).
+- Revisão realizada em 2026-08-31 para mapear e desacoplar todas as consultas SQL em todo o sistema que ainda continham referências aos schemas depreciados (`ufmg.*`, `admin.*`, `admin_ufmg.*`, `logs.*`, `admin_simcc.*`).
+- As regras de compatibilidade estrita com o frontend foram preservadas em todos os módulos (listas vazias `[]`, valores `null`, contagens `0`).
+- A suposição sobre deleção dos pesquisadores sem `lattes_id` é mantida para garantir integridade referencial.

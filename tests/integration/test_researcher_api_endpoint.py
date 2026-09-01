@@ -2,9 +2,7 @@ from http import HTTPStatus
 from uuid import uuid4
 
 import pytest
-from httpx import ASGITransport, AsyncClient
 
-from simcc import app
 from simcc.core.db.models.institution import Institution
 from simcc.core.db.models.researcher import Researcher
 from simcc.core.db.models.researcher_custom_attributes import (

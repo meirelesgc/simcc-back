@@ -1,9 +1,7 @@
 from http import HTTPStatus
-from unittest.mock import MagicMock, patch
 
-import pytest
-import respx
 import httpx
+import respx
 
 from scripts.routines.get_lattes_10 import get_lattes_id_10
 

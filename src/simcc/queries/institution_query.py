@@ -48,15 +48,6 @@ class InstitutionQuery(BaseQuery):
               ) gps ON gps.graduate_program_id = gp.graduate_program_id
               GROUP BY gp.institution_id
             ),
-            ufmg_researcher_count AS (
-              SELECT r.institution_id, COUNT(ur.researcher_id) AS count_d
-              FROM ufmg.researcher ur
-              LEFT JOIN researcher r ON r.id = ur.researcher_id
-              GROUP BY r.institution_id
-            ),
-            technician_count AS (
-              SELECT COUNT(*) AS count_t FROM ufmg.technician
-            ),
             researchers AS (
               WITH ranked AS (
               SELECT lattes_id, institution_id, ROW_NUMBER() OVER (PARTITION BY institution_id ORDER BY random()) AS rn
@@ -70,8 +61,8 @@ class InstitutionQuery(BaseQuery):
             SELECT i.name, i.id, COALESCE(r.count_r, 0) AS count_r,
               COALESCE(gp.count_gp, 0) AS count_gp, COALESCE(gpr.count_gpr, 0)
               AS count_gpr, COALESCE(gps.count_gps, 0) AS count_gps,
-              COALESCE(d.count_d, 0) AS count_d, COALESCE(t.count_t, 0)
-              AS count_t, i.acronym, COALESCE(rl.researchers_list, ARRAY[]::TEXT[]) AS researchers
+              0::BIGINT AS count_d, 0::BIGINT AS count_t,
+              i.acronym, COALESCE(rl.researchers_list, ARRAY[]::TEXT[]) AS researchers
             FROM institution i
               LEFT JOIN researcher_count r
                 ON r.institution_id = i.id
@@ -81,11 +72,8 @@ class InstitutionQuery(BaseQuery):
                 ON gpr.institution_id = i.id
               LEFT JOIN graduate_program_student_count gps
                 ON gps.institution_id = i.id
-              LEFT JOIN ufmg_researcher_count d
-                ON d.institution_id = i.id
               LEFT JOIN researchers rl
                 ON rl.institution_id = i.id
-              CROSS JOIN technician_count t
             WHERE 1 = 1
               AND i.acronym IS NOT NULL
               {filters};
@@ -98,12 +86,16 @@ class RtMetricsQuery(BaseQuery):
         self.entity_type = entity_type  # 'researcher' or 'technician'
 
     def build_sql(self) -> str:
-        table = f'ufmg.{self.entity_type}'
-        return f"""
-            SELECT work_regime AS rt, COUNT(*) AS count
-            FROM {table}
-            WHERE work_regime IS NOT NULL
-            GROUP BY rt
+        if self.entity_type == 'researcher':
+            return """
+                SELECT work_regime AS rt, COUNT(*) AS count
+                FROM researcher_custom_attributes
+                WHERE work_regime IS NOT NULL AND work_regime != ''
+                GROUP BY rt
+            """
+        return """
+            SELECT NULL::TEXT AS rt, 0::BIGINT AS count
+            WHERE 1 = 0
         """
 
 

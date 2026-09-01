@@ -108,19 +108,21 @@ class BaseProductionQuery(BaseQuery):
 
     def _apply_dep_id_filter(self, value):
         self.joins['departament'] = f"""
-            INNER JOIN ufmg.departament_researcher dpr ON dpr.researcher_id = {self.table_alias}.{self.researcher_id_col}
-            INNER JOIN ufmg.departament dp ON dp.dep_id = dpr.dep_id
+            LEFT JOIN researcher_custom_attributes rca ON rca.researcher_id = {self.table_alias}.{self.researcher_id_col}
         """
         self.params['dep_id'] = value
-        self.filters_sql.append(' AND dp.dep_id = :dep_id')
+        self.filters_sql.append(
+            " AND (rca.custom_attributes->>'department' = :dep_id OR rca.custom_attributes->>'dep_id' = :dep_id)"
+        )
 
     def _apply_departament_filter(self, value):
         self.joins['departament'] = f"""
-            INNER JOIN ufmg.departament_researcher dpr ON dpr.researcher_id = {self.table_alias}.{self.researcher_id_col}
-            INNER JOIN ufmg.departament dp ON dp.dep_id = dpr.dep_id
+            LEFT JOIN researcher_custom_attributes rca ON rca.researcher_id = {self.table_alias}.{self.researcher_id_col}
         """
         self.params['departament'] = value.split(';')
-        self.filters_sql.append(' AND dp.dep_nom = ANY(:departament)')
+        self.filters_sql.append(
+            " AND (rca.custom_attributes->>'department' = ANY(:departament) OR rca.custom_attributes->>'dep_nom' = ANY(:departament))"
+        )
 
     def _apply_group_id_filter(self, value):
         self.joins['group'] = """

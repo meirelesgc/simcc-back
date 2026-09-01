@@ -46,19 +46,21 @@ class BaseMetricsQuery(BaseQuery):
 
     def _apply_dep_id_filter(self, value):
         self.joins['departament'] = """
-            INNER JOIN ufmg.departament_researcher dpr ON dpr.researcher_id = r.id
-            INNER JOIN ufmg.departament dp ON dp.dep_id = dpr.dep_id
+            LEFT JOIN researcher_custom_attributes rca ON rca.researcher_id = r.id
         """
         self.params['dep_id'] = value.split(';')
-        self.filters_sql.append(' AND dp.dep_id = ANY(:dep_id)')
+        self.filters_sql.append(
+            " AND (rca.custom_attributes->>'department' = ANY(:dep_id) OR rca.custom_attributes->>'dep_id' = ANY(:dep_id))"
+        )
 
     def _apply_departament_filter(self, value):
         self.joins['departament'] = """
-            INNER JOIN ufmg.departament_researcher dpr ON dpr.researcher_id = r.id
-            INNER JOIN ufmg.departament dp ON dp.dep_id = dpr.dep_id
+            LEFT JOIN researcher_custom_attributes rca ON rca.researcher_id = r.id
         """
         self.params['departament'] = value.split(';')
-        self.filters_sql.append(' AND dp.dep_nom = ANY(:departament)')
+        self.filters_sql.append(
+            " AND (rca.custom_attributes->>'department' = ANY(:departament) OR rca.custom_attributes->>'dep_nom' = ANY(:departament))"
+        )
 
     def _apply_institution_filter(self, value):
         self.joins['institution'] = (
@@ -300,12 +302,14 @@ class GraduateProgramProductionQuery(BaseQuery):
                 self.params['dep_id'] = self.dep_id
                 dep_filter = """
                     AND researcher_id IN (
-                        SELECT researcher_id FROM ufmg.departament_researcher WHERE dep_id = :dep_id
+                        SELECT researcher_id FROM researcher_custom_attributes
+                        WHERE custom_attributes->>'dep_id' = :dep_id OR custom_attributes->>'department' = :dep_id
                     )
                 """
                 researcher_filter = """
                     AND r.id IN (
-                        SELECT researcher_id FROM ufmg.departament_researcher WHERE dep_id = :dep_id
+                        SELECT researcher_id FROM researcher_custom_attributes
+                        WHERE custom_attributes->>'dep_id' = :dep_id OR custom_attributes->>'department' = :dep_id
                     )
                 """
 
@@ -446,8 +450,8 @@ class GeneralProductionMetricsQuery(BaseQuery):
             self.params['dep_id'] = self.dep_id
             filters += """
                 AND researcher_id IN (
-                    SELECT researcher_id FROM ufmg.departament_researcher 
-                    WHERE dep_id = :dep_id
+                    SELECT researcher_id FROM researcher_custom_attributes 
+                    WHERE custom_attributes->>'dep_id' = :dep_id OR custom_attributes->>'department' = :dep_id
                 )
             """
 
