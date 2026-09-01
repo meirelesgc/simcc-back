@@ -155,3 +155,36 @@ async def test_maria_service_chat_stream_empty_results_fallback(
     ]
     delta_event = events[1]
     assert delta_event.content == MARIA_EMPTY_FALLBACK_MESSAGE
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_maria_service_thematic_chat_without_db_search(
+    mock_llm_provider, mock_embeddings_provider
+):
+    mock_planner = AsyncMock()
+    mock_planner.plan.return_value = QueryPlan(
+        intent='thematic_chat',
+        semantic_query='aprendizado por reforço',
+        filters=SearchFilters(),
+    )
+
+    mock_search = AsyncMock()
+    service = MariaService(
+        llm=mock_llm_provider, embeddings=mock_embeddings_provider
+    )
+    mock_session = AsyncMock()
+
+    response = await service.chat_ask(
+        session=mock_session,
+        query='Como funciona o aprendizado por reforço profundo?',
+        planner=mock_planner,
+        search_service=mock_search,
+    )
+
+    assert response.intent == 'thematic_chat'
+    assert len(response.researchers) == 0
+    assert len(response.productions) == 0
+    assert 'Resposta simulada da MarIA' in response.answer
+    mock_search.search_researchers_hybrid.assert_not_called()
+    mock_search.search_productions_hybrid.assert_not_called()

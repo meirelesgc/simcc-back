@@ -224,7 +224,16 @@ class MariaService:
 
             # 3. Síntese
             async with tracer.trace_stage('synthesis'):
-                if total_found == 0:
+                if plan.intent in {'thematic_chat', 'general_question'}:
+                    synthesis_prompt = build_synthesis_prompt(
+                        query=query,
+                        intent=plan.intent,
+                        filters_dict=filters_dict,
+                        researchers=[],
+                        productions=[],
+                    )
+                    answer = await self.llm.generate(synthesis_prompt)
+                elif total_found == 0:
                     answer = MARIA_EMPTY_FALLBACK_MESSAGE
                 else:
                     synthesis_prompt = build_synthesis_prompt(
@@ -347,7 +356,25 @@ class MariaService:
 
             # 4. Síntese / Emissão de Deltas
             async with tracer.trace_stage('synthesis'):
-                if total_found == 0:
+                if plan.intent in {'thematic_chat', 'general_question'}:
+                    synthesis_prompt = build_synthesis_prompt(
+                        query=query,
+                        intent=plan.intent,
+                        filters_dict=filters_dict,
+                        researchers=[],
+                        productions=[],
+                    )
+                    async for chunk in self.llm.generate_stream(
+                        synthesis_prompt
+                    ):
+                        delta_event = ChatStreamEvent(
+                            type=ChatStreamEventType.DELTA,
+                            message_id=msg_id,
+                            content=chunk,
+                        )
+                        accumulated_events.append(delta_event.model_dump())
+                        yield delta_event
+                elif total_found == 0:
                     delta_event = ChatStreamEvent(
                         type=ChatStreamEventType.DELTA,
                         message_id=msg_id,

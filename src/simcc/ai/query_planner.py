@@ -31,7 +31,7 @@ class SearchFilters(BaseModel):
 
 class QueryPlan(BaseModel):
     intent: str = Field(
-        description="Intenção principal da consulta: 'production_search' (busca por produções científicas/tecnológicas: artigos, livros, patentes, softwares, relatórios), 'researcher_profile' (perfil de indivíduo específico), 'researcher_comparison' (comparação entre instituições), 'researcher_search' (busca temática de pesquisadores), 'aggregation' (estatísticas/contagem) ou 'general_question' (fora do escopo)."
+        description="Intenção principal da consulta: 'production_search' (busca por produções científicas/tecnológicas: artigos, livros, patentes, softwares, relatórios), 'researcher_profile' (perfil de indivíduo específico), 'researcher_comparison' (comparação entre instituições), 'researcher_search' (busca temática de pesquisadores), 'thematic_chat' (conversa conceitual, dúvidas teóricas ou metodológicas sobre um tema científico sem exigir listagem da base), 'aggregation' (estatísticas/contagem) ou 'general_question' (saudações e dúvidas gerais sobre o sistema)."
     )
     semantic_query: str = Field(
         description="Termos semânticos e conceituais para busca vetorial. Remova saudações e nomes de instituições. Mantenha os tópicos, áreas, temas, patentes ou títulos. Se a consulta for genérica sem tema (ex: 'Quais patentes existem?'), deixe uma string temática representativa ou vazia."
@@ -50,8 +50,9 @@ Regras de Classificação de Intenção (`intent`):
 2. `researcher_profile`: O usuário pergunta sobre um indivíduo específico (ex: "Quem é Eduardo Manuel...", "Qual o currículo de Fulano").
 3. `researcher_comparison`: O usuário quer comparar pesquisadores de diferentes universidades ou áreas.
 4. `researcher_search`: O usuário quer localizar pesquisadores por área, tema, instituição ou experiência.
-5. `aggregation`: Perguntas quantitativas ("Quantos artigos foram publicados em 2023?").
-6. `general_question`: Cumprimentos ou perguntas sem relação com a base científica.
+5. `thematic_chat`: O usuário quer entender um conceito, tirar dúvidas teóricas, discutir um método ou conversar sobre um tema científico sem pedir explicitamente listagem/busca na base do SIMCC (ex: "O que é aprendizado por reforço?", "Como funciona a edição gênica com CRISPR?", "Explique as diferenças entre Dengue e Chikungunya").
+6. `aggregation`: Perguntas quantitativas ("Quantos artigos foram publicados em 2023?").
+7. `general_question`: Cumprimentos, saudações ou dúvidas gerais sobre como o SIMCC funciona.
 
 Regras para Filtros e Tipos de Produção (`production_types`):
 - Se o usuário mencionar artigos, adicione 'ARTICLE'.

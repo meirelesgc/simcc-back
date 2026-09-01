@@ -38,11 +38,13 @@ flowchart TD
 - Combina ordenação vetorial por distância cosseno (`pgvector`) com filtros relacionais SQL no PostgreSQL.
 - **Linha de Corte de Relevância**: Aplica um limiar máximo de distância cosseno (`cosine_distance <= 0.65`). Registros fora da faixa de relevância são descartados para evitar ruído e alucinações.
 
-### 4. Variações Adaptativas de Síntese
-A MarIA ajusta dinamicamente a estrutura da resposta com base no perfil e volume dos dados recuperados:
-- **Modo Alto Volume (> 5 registros)**: Síntese panorâmica executiva destacando tendências e os principais expoentes no estado, convidando a refinar a busca.
-- **Modo Volume Reduzido (1 a 4 registros)**: Análise detalhada, acolhedora e contextualizada de cada registro.
+### 4. Variações Adaptativas de Síntese e Sobriedade Científica
+A MarIA ajusta dinamicamente a estrutura da resposta com base no perfil e volume dos dados recuperados, mantendo um tom amigável com o usuário, porém estritamente **sóbrio, factual e neutro** com os dados acadêmicos (sem adulações ou elogios vazios como "brilhante", "renomado" ou "ilustre"):
+
+- **Modo Alto Volume (> 5 registros)**: Síntese panorâmica executiva destacando tendências e os principais dados no estado, convidando a refinar a busca.
+- **Modo Volume Reduzido (1 a 4 registros)**: Análise detalhada, acolhedora e contextualizada de cada registro com foco em fatos e áreas de atuação.
 - **Modo Heterogêneo / Multidisciplinar**: Agrupamento comparativo estruturado por instituição ou tipo de produção.
+- **Modo Consultivo / Diálogo Temático (`thematic_chat`)**: Quando o usuário deseja entender um conceito científico, tirar dúvidas teóricas ou discutir metodologias sem pedir listagem na base, a MarIA atua como consultora científica, respondendo diretamente e convidando ao mapeamento de pesquisadores da Bahia ao final.
 - **Modo Base em Indexação (0 registros ou pós-corte)**: Mensagem transparente e empática informando que a base de dados estadual está em constante processamento pelo Observatório SECTI e sugerindo termos alternativos.
 
 ### 5. Telemetria e Observabilidade (`AITracer`)

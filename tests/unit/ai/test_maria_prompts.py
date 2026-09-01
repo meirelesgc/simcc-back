@@ -64,3 +64,16 @@ def test_build_synthesis_prompt_heterogeneous():
 def test_empty_fallback_message_content():
     assert 'Observatório SECTI' in MARIA_EMPTY_FALLBACK_MESSAGE
     assert 'constante processo de ingestão' in MARIA_EMPTY_FALLBACK_MESSAGE
+
+
+def test_build_synthesis_prompt_thematic_chat():
+    prompt = build_synthesis_prompt(
+        query='Como funciona o aprendizado por reforço profundo?',
+        intent='thematic_chat',
+        filters_dict={},
+        researchers=[],
+        productions=[],
+    )
+    assert 'MODO CONSULTORIA CONCEITUAL / DIÁLOGO TEMÁTICO' in prompt
+    assert 'Como funciona o aprendizado por reforço profundo?' in prompt
+    assert 'sem bajulação' in prompt
