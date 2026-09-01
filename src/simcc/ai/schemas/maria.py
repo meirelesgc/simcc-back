@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel
@@ -22,3 +23,29 @@ class ChatResponse(BaseModel):
     researchers: List[Dict[str, Any]]
     productions: List[Dict[str, Any]]
     sources: List[str]
+
+
+class ChatStreamEventType(str, Enum):
+    STATUS = 'status'
+    METADATA = 'metadata'
+    DELTA = 'delta'
+    ERROR = 'error'
+    DONE = 'done'
+
+
+class SearchUIMetadata(BaseModel):
+    intent: str
+    filters: Dict[str, Any]
+    researchers: List[Dict[str, Any]]
+    productions: List[Dict[str, Any]]
+    sources: List[str]
+
+
+class ChatStreamEvent(BaseModel):
+    type: ChatStreamEventType
+    message_id: str
+    data: Optional[Dict[str, Any]] = None
+    content: Optional[str] = None
+    code: Optional[str] = None
+    message: Optional[str] = None
+    stage: Optional[str] = None

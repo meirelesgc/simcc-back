@@ -10,6 +10,16 @@ class MockLLMProvider(LLMProvider):
     async def generate(self, prompt: str, **kwargs) -> str:
         return 'Resposta simulada da MarIA para testes automatizados.'
 
+    async def generate_stream(self, prompt: str, **kwargs):
+        chunks = [
+            'Resposta ',
+            'simulada ',
+            'da MarIA ',
+            'para testes automatizados.',
+        ]
+        for chunk in chunks:
+            yield chunk
+
 
 class MockEmbeddingsProvider(EmbeddingsProvider):
     async def get_embeddings(self, text: str) -> list[float]:

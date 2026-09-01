@@ -1,3 +1,4 @@
+from collections.abc import AsyncIterator
 from typing import Any, List
 
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
@@ -16,6 +17,13 @@ class OpenAIProvider(LLMProvider, EmbeddingsProvider):
     async def generate(self, prompt: str, **kwargs: Any) -> str:
         response = await self.llm.ainvoke(prompt)
         return str(response.content)
+
+    async def generate_stream(
+        self, prompt: str, **kwargs: Any
+    ) -> AsyncIterator[str]:
+        async for chunk in self.llm.astream(prompt):
+            if chunk.content:
+                yield str(chunk.content)
 
     async def get_embeddings(self, text: str) -> List[float]:
         return await self.embeddings.aembed_query(text)

@@ -14,6 +14,10 @@ class SearchFilters(BaseModel):
         None,
         description="Nome específico de um pesquisador se a pergunta for sobre alguém em particular, ex: 'Eduardo Manuel de Freitas Jorge'",
     )
+    production_types: List[str] = Field(
+        default_factory=list,
+        description="Tipos de produções solicitadas: 'ARTICLE' (artigos em periódicos), 'BOOK' (livros), 'BOOK_CHAPTER' (capítulos de livros), 'PATENT' (patentes/registros), 'SOFTWARE' (programas de computador), 'REPORT' (relatórios técnicos)",
+    )
     city: Optional[str] = Field(
         None, description="Nome da cidade, ex: 'Salvador', 'Feira de Santana'"
     )
@@ -27,10 +31,10 @@ class SearchFilters(BaseModel):
 
 class QueryPlan(BaseModel):
     intent: str = Field(
-        description="Intenção principal da consulta: 'researcher_profile' (perfil de indivíduo específico), 'researcher_comparison' (comparação entre instituições ou grupos), 'researcher_search' (busca temática/institucional de pesquisadores), 'production_search' (busca por produções), 'aggregation' (estatísticas/contagem) ou 'general_question' (fora do escopo)."
+        description="Intenção principal da consulta: 'production_search' (busca por produções científicas/tecnológicas: artigos, livros, patentes, softwares, relatórios), 'researcher_profile' (perfil de indivíduo específico), 'researcher_comparison' (comparação entre instituições), 'researcher_search' (busca temática de pesquisadores), 'aggregation' (estatísticas/contagem) ou 'general_question' (fora do escopo)."
     )
     semantic_query: str = Field(
-        description="Termos semânticos e conceituais para busca vetorial. Remova saudações e nomes de instituições. Mantenha os tópicos, áreas, especialidades e conceitos de pesquisa. Se for busca puramente por instituição sem tema (ex: 'pesquisadores da UEFS'), retorne string vazia."
+        description="Termos semânticos e conceituais para busca vetorial. Remova saudações e nomes de instituições. Mantenha os tópicos, áreas, temas, patentes ou títulos. Se a consulta for genérica sem tema (ex: 'Quais patentes existem?'), deixe uma string temática representativa ou vazia."
     )
     filters: SearchFilters = Field(
         description='Filtros estruturados extraídos da consulta.'
@@ -42,40 +46,40 @@ Você é o orquestrador de busca e planejamento de consultas (Query Planner) da 
 Sua missão é converter a pergunta em linguagem natural do usuário em um plano estruturado de busca (`QueryPlan`).
 
 Regras de Classificação de Intenção (`intent`):
-1. `researcher_profile`: O usuário pergunta sobre um indivíduo específico (ex: "Quem é Eduardo Manuel...", "Qual o currículo de Fulano").
-2. `researcher_comparison`: O usuário quer comparar pesquisadores de diferentes universidades ou áreas (ex: "Compare os pesquisadores da UFBA e UNEB em tecnologia").
-3. `researcher_search`: O usuário quer localizar pesquisadores por área, tema, instituição ou experiência (ex: "Quais pesquisadores trabalham com IA?", "Pesquisadores da UNEB em linguística").
-4. `production_search`: O usuário busca artigos, patentes ou produções específicas.
-5. `aggregation`: Perguntas quantitativas ("Quantos doutores existem na UFBA?").
+1. `production_search`: O usuário quer encontrar artigos, livros, capítulos, patentes, softwares ou relatórios técnicos.
+2. `researcher_profile`: O usuário pergunta sobre um indivíduo específico (ex: "Quem é Eduardo Manuel...", "Qual o currículo de Fulano").
+3. `researcher_comparison`: O usuário quer comparar pesquisadores de diferentes universidades ou áreas.
+4. `researcher_search`: O usuário quer localizar pesquisadores por área, tema, instituição ou experiência.
+5. `aggregation`: Perguntas quantitativas ("Quantos artigos foram publicados em 2023?").
 6. `general_question`: Cumprimentos ou perguntas sem relação com a base científica.
 
-Regras para Filtros e Semantic Query:
-- Identifique siglas de universidades baianas como UFBA, UNEB, UEFS, UESB, UFRB, IFBA, etc., e preencha em `institutions`.
-- Extraia em `researcher_name` se houver menção a nome próprio de pesquisador.
-- Na `semantic_query`, isole APENAS os conceitos temáticos, áreas de conhecimento, tópicos de pesquisa e termos técnicos.
-- Expanda ligeiramente termos sinônimos relevantes se ajudar na recuperação semântica (ex: "ensino de línguas" -> "ensino de línguas letras vernáculas linguística").
+Regras para Filtros e Tipos de Produção (`production_types`):
+- Se o usuário mencionar artigos, adicione 'ARTICLE'.
+- Se mencionar livros, adicione 'BOOK'.
+- Se mencionar capítulos, adicione 'BOOK_CHAPTER'.
+- Se mencionar patentes ou propriedade intelectual, adicione 'PATENT'.
+- Se mencionar softwares, programas ou sistemas desenvolvidos, adicione 'SOFTWARE'.
+- Se mencionar relatórios técnicos ou de pesquisa, adicione 'REPORT'.
+- Se pedir "produções" no geral sem especificar tipo, deixe `production_types: []` (para buscar em todas).
 
 Exemplos:
-- "Quais pesquisadores da UNEB trabalham com linguística ou ensino de línguas?"
-  -> intent: "researcher_search", institutions: ["UNEB"], semantic_query: "linguística ensino de línguas letras vernáculas"
+- "Quais artigos foram publicados sobre leishmaniose ou imunologia?"
+  -> intent: "production_search", production_types: ["ARTICLE"], institutions: [], semantic_query: "leishmaniose imunologia infecção celular"
 
-- "Quais pesquisadores da Bahia trabalham com inteligência artificial, ciência de dados ou tecnologias digitais?"
-  -> intent: "researcher_search", institutions: [], semantic_query: "inteligência artificial ciência de dados tecnologias digitais aprendizado de máquina"
+- "Quais patentes e registros foram desenvolvidos na UFBA?"
+  -> intent: "production_search", production_types: ["PATENT"], institutions: ["UFBA"], semantic_query: ""
 
-- "Quem é Eduardo Manuel de Freitas Jorge e quais são suas principais áreas de atuação?"
-  -> intent: "researcher_profile", researcher_name: "Eduardo Manuel de Freitas Jorge", institutions: [], semantic_query: "inteligência artificial ciência de dados computação inovação tecnológica"
+- "Livros e capítulos publicados sobre história da Bahia"
+  -> intent: "production_search", production_types: ["BOOK", "BOOK_CHAPTER"], institutions: [], semantic_query: "história da Bahia historiografia memória"
 
-- "Encontre pesquisadores que tenham experiência tanto em ensino quanto em gestão ou coordenação acadêmica."
-  -> intent: "researcher_search", institutions: [], semantic_query: "ensino docência professor gestão coordenação acadêmica administrativa colegiado pesquisa"
+- "Softwares e programas desenvolvidos em inteligência artificial na UNEB"
+  -> intent: "production_search", production_types: ["SOFTWARE"], institutions: ["UNEB"], semantic_query: "inteligência artificial sistemas de computação"
 
-- "Compare os pesquisadores da UFBA e da UNEB que trabalham com tecnologia e inovação."
-  -> intent: "researcher_comparison", institutions: ["UFBA", "UNEB"], semantic_query: "tecnologia inovação desenvolvimento tecnológico engenharia computação"
+- "Relatórios técnicos de projetos de pesquisa na área de saúde"
+  -> intent: "production_search", production_types: ["REPORT"], institutions: [], semantic_query: "saúde pública epidemiologia projetos"
 
-- "Quem trabalha com filosofia da matemática na UFBA?"
-  -> intent: "researcher_search", institutions: ["UFBA"], semantic_query: "filosofia da matemática lógica epistemologia"
-
-- "Quais pesquisadores trabalham com vibrações e elementos finitos?"
-  -> intent: "researcher_search", institutions: [], semantic_query: "vibrações elementos finitos mecânica dinâmica dos sólidos fluidos"
+- "Quais pesquisadores da UNEB trabalham com linguística?"
+  -> intent: "researcher_search", production_types: [], institutions: ["UNEB"], semantic_query: "linguística letras vernáculas"
 """
 
 

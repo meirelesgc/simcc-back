@@ -1,6 +1,7 @@
 from enum import Enum
 
 from fastapi import APIRouter, Depends, Query
+from fastapi.responses import StreamingResponse
 
 from simcc.ai.dependencies import (
     get_ai_search_service,
@@ -56,10 +57,44 @@ async def chat_ask(
     search_service=Depends(get_ai_search_service),
 ):
     """
-    Interface de chat principal com a MarIA, suportando Query Planning e Busca Híbrida.
+    Interface de chat principal com a MarIA (resposta em lote/JSON).
     """
     return await service.chat_ask(
         session, request.query, planner, search_service
+    )
+
+
+@router.post('/ai/chat/ask/stream')
+async def chat_ask_stream(
+    session: AsyncSession,
+    request: ChatRequest,
+    service: MariaService = Depends(get_maria_service),
+    planner=Depends(get_query_planner),
+    search_service=Depends(get_ai_search_service),
+):
+    """
+    Interface de chat em streaming (Server-Sent Events) com a MarIA.
+    Emite eventos de domínio formatados em SSE (metadata, delta, error, done).
+    """
+
+    async def event_generator():
+        async for event in service.chat_ask_stream(
+            session=session,
+            query=request.query,
+            planner=planner,
+            search_service=search_service,
+            message_id=request.session_id,
+        ):
+            yield f'data: {event.model_dump_json()}\n\n'
+
+    return StreamingResponse(
+        event_generator(),
+        media_type='text/event-stream',
+        headers={
+            'Cache-Control': 'no-cache, no-transform',
+            'Connection': 'keep-alive',
+            'X-Accel-Buffering': 'no',
+        },
     )
 
 
@@ -87,3 +122,19 @@ async def summary_search(
     Utilizado para compatibilidade com sistemas legados.
     """
     return await service.generate_search_summary(session, filters)
+
+
+@router.get(
+    '/maria/researcher/{search_type}',
+    response_model=MariaResponse,
+    include_in_schema=False,
+)
+async def legacy_researcher_search(
+    search_type: SearchType,
+    session: AsyncSession,
+    query: str = Query(...),
+    service: MariaService = Depends(get_maria_service),
+):
+    return await service.search_and_summarize(
+        session, query, search_type.value
+    )
