@@ -3,21 +3,13 @@ from collections.abc import AsyncIterator
 from typing import List, Optional
 from uuid import uuid4
 
-from simcc.ai.prompts.maria_prompts import (
-    MARIA_PROMPT_TEMPLATE,
-    SUMMARY_SEARCH_PROMPT,
-)
 from simcc.ai.providers.base import EmbeddingsProvider, LLMProvider
 from simcc.ai.schemas.maria import (
     ChatResponse,
     ChatStreamEvent,
     ChatStreamEventType,
-    MariaResponse,
     SearchUIMetadata,
 )
-from simcc.repositories import maria_repo, researcher_repo
-from simcc.schemas import DefaultFilters
-from simcc.services import production_service, researcher_service
 
 
 class MariaService:
@@ -28,104 +20,6 @@ class MariaService:
     ):
         self.llm = llm
         self.embeddings = embeddings
-
-    async def search_and_summarize(
-        self, session, query: str, search_type: str
-    ) -> MariaResponse:
-        # 1. Get embedding for the query
-        vector = await self.embeddings.get_embeddings(query)
-
-        # 2. Search IDs by similarity
-        researcher_ids = await maria_repo.search_by_embeddings(
-            session, vector, search_type
-        )
-
-        if not researcher_ids:
-            return MariaResponse(query='', researchers=[])
-
-        # 3. Fetch full researcher data
-        filters = DefaultFilters(researcher_ids=researcher_ids)
-        researchers_data = await researcher_repo.search_researchers(
-            session, filters
-        )
-
-        # 4. Generate AI summary comment
-        # Limita a 5 pesquisadores e reduz campos para o prompt
-        data_to_summarize = [
-            self._get_compact_researcher_data(dict(r))
-            for r in researchers_data[:5]
-        ]
-
-        prompt = MARIA_PROMPT_TEMPLATE.format(data_dict=str(data_to_summarize))
-
-        comment = await self.llm.generate(prompt)
-
-        return MariaResponse(query=comment, researchers=researchers_data)
-
-    async def generate_search_summary(
-        self, session, filters: DefaultFilters
-    ) -> str:
-        """
-        Gera um resumo baseado nos resultados de uma busca filtrada.
-        """
-        search_type = filters.type.upper() if filters.type else 'ARTICLE'
-
-        # Limite reduzido para pesquisadores para evitar prompts gigantes
-        limit = 5 if search_type in {'NAME', 'AREA'} else 10
-        filters.lenght = limit
-        filters.page = 1
-
-        data = []
-
-        if search_type == 'ARTICLE':
-            data = await production_service.list_bibliographic_production(
-                session, filters
-            )
-        elif search_type == 'BOOK':
-            data = await production_service.list_book(session, filters)
-        elif search_type == 'BOOK_CHAPTER':
-            data = await production_service.list_book_chapter(session, filters)
-        elif search_type == 'ABSTRACT':
-            # Utiliza o service de produção bibliográfica filtrando por tipo
-            filters.type = 'ABSTRACT'
-            data = await production_service.list_bibliographic_production(
-                session, filters
-            )
-        elif search_type in {'NAME', 'AREA'}:
-            data = await researcher_service.search_researchers(
-                session, filters
-            )
-        elif search_type == 'WORK_IN_EVENT':
-            data = await production_service.list_researcher_production_events(
-                session, filters
-            )
-        elif search_type == 'PATENT':
-            data = await production_service.list_patent(session, filters)
-        elif search_type == 'EVENT':
-            data = await production_service.list_participation_event(
-                session, filters
-            )
-        else:
-            # Fallback para produções bibliográficas gerais
-            data = await production_service.list_bibliographic_production(
-                session, filters
-            )
-
-        if not data:
-            return 'Nenhum resultado relevante encontrado para gerar o resumo.'
-
-        # Formata dados para o prompt
-        if search_type in {'NAME', 'AREA'}:
-            data_to_summarize = [
-                self._get_compact_researcher_data(dict(r))
-                for r in data[:limit]
-            ]
-        else:
-            data_to_summarize = [dict(r) for r in data[:limit]]
-
-        prompt = SUMMARY_SEARCH_PROMPT.format(data_dict=str(data_to_summarize))
-
-        return await self.llm.generate(prompt)
 
     def _get_compact_researcher_data(self, researcher: dict) -> dict:
         """
@@ -165,12 +59,12 @@ class MariaService:
         sources = []
         if researchers:
             sources.extend([
-                f"{r['name']} ({r.get('institution_acronym') or r.get('institution') or 'BA'})"
+                f'{r["name"]} ({r.get("institution_acronym") or r.get("institution") or "BA"})'
                 for r in researchers
             ])
         if productions:
             sources.extend([
-                f"{p.get('title')} [{p.get('type')}] ({p.get('year') or 'S/D'})"
+                f'{p.get("title")} [{p.get("type")}] ({p.get("year") or "S/D"})'
                 for p in productions
             ])
         return sources
@@ -187,25 +81,25 @@ class MariaService:
             )
             researchers_context += (
                 f'\n--- [Pesquisador {i}] ---\n'
-                f"Nome: {r['name']}\n"
+                f'Nome: {r["name"]}\n'
                 f'Instituição: {inst}\n'
-                f"Conteúdo Semântico:\n{r.get('semantic_content', r.get('abstract', ''))}\n"
+                f'Conteúdo Semântico:\n{r.get("semantic_content", r.get("abstract", ""))}\n'
             )
 
         productions_context = ''
         for i, p in enumerate(productions, 1):
             r_info = p.get('researcher', {})
             author_inst = (
-                f"{r_info.get('name', '')} ({r_info.get('institution', '')})"
+                f'{r_info.get("name", "")} ({r_info.get("institution", "")})'
             )
             productions_context += (
-                f"\n--- [Produção {i} - {p.get('type')}] ---\n"
-                f"Título: {p.get('title')}\n"
-                f"Autores/Pesquisador: {p.get('authors')} | Vinculado a: {author_inst}\n"
-                f"Ano: {p.get('year')}\n"
-                f"DOI/Código: {p.get('doi') or p.get('details', {}).get('code', 'N/A')}\n"
-                f"Detalhes: {p.get('details')}\n"
-                f"Conteúdo:\n{p.get('semantic_content', '')}\n"
+                f'\n--- [Produção {i} - {p.get("type")}] ---\n'
+                f'Título: {p.get("title")}\n'
+                f'Autores/Pesquisador: {p.get("authors")} | Vinculado a: {author_inst}\n'
+                f'Ano: {p.get("year")}\n'
+                f'DOI/Código: {p.get("doi") or p.get("details", {}).get("code", "N/A")}\n'
+                f'Detalhes: {p.get("details")}\n'
+                f'Conteúdo:\n{p.get("semantic_content", "")}\n'
             )
 
         return f"""
@@ -218,10 +112,10 @@ Plano de Execução do Planner:
 - Busca Semântica: "{plan.semantic_query}"
 
 Contexto de Pesquisadores ({len(researchers)} registros):
-{researchers_context if researchers else "Nenhum pesquisador recuperado diretamente."}
+{researchers_context if researchers else 'Nenhum pesquisador recuperado diretamente.'}
 
 Contexto de Produções Científicas e Tecnológicas ({len(productions)} registros):
-{productions_context if productions else "Nenhuma produção recuperada diretamente."}
+{productions_context if productions else 'Nenhuma produção recuperada diretamente.'}
 
 Instruções para a Resposta:
 1. Responda em Português de forma clara, natural, profissional e informativa.

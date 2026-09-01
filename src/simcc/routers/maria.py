@@ -11,7 +11,6 @@ from simcc.ai.dependencies import (
 )
 from simcc.ai.schemas.maria import ChatRequest, ChatResponse, MariaResponse
 from simcc.core.dependencies import AsyncSession
-from simcc.schemas import DefaultFilters
 from simcc.services.maria_service import MariaService
 
 router = APIRouter(tags=['MarIA - Inteligência Artificial'])
@@ -99,11 +98,7 @@ async def chat_ask_stream(
 
 
 @router.get('/ai/production/classify')
-async def classify_production(
-    session: AsyncSession,
-    production_id: str = Query(...),
-    service: MariaService = Depends(get_maria_service),
-):
+async def classify_production():
     """
     Classifica uma produção científica usando IA.
     """
@@ -112,29 +107,13 @@ async def classify_production(
 
 
 @router.get('/ai/summary_search/', include_in_schema=False)
-async def summary_search(
-    session: AsyncSession,
-    filters: DefaultFilters = Depends(),
-    service: MariaService = Depends(get_maria_service),
-):
-    """
-    Busca produções ou pesquisadores e gera um resumo (MarIA) em texto puro.
-    Utilizado para compatibilidade com sistemas legados.
-    """
-    return await service.generate_search_summary(session, filters)
+async def summary_search():
+    return str()
 
 
 @router.get(
     '/maria/researcher/{search_type}',
-    response_model=MariaResponse,
     include_in_schema=False,
 )
-async def legacy_researcher_search(
-    search_type: SearchType,
-    session: AsyncSession,
-    query: str = Query(...),
-    service: MariaService = Depends(get_maria_service),
-):
-    return await service.search_and_summarize(
-        session, query, search_type.value
-    )
+async def legacy_researcher_search():
+    return MariaResponse(query='', researchers=[])
