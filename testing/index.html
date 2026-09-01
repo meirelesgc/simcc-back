@@ -1,0 +1,914 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../adding_filters/">
+      
+      
+        <link rel="next" href="../ai_architecture/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Testes e Boas Práticas - Simcc Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#testes-e-boas-praticas" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Simcc Documentation" class="md-header__button md-logo" aria-label="Simcc Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Simcc Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Testes e Boas Práticas
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Simcc Documentation" class="md-nav__button md-logo" aria-label="Simcc Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Simcc Documentation
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Arquitetura
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adding_filters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Como Adicionar Filtros
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testes e Boas Práticas
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testes e Boas Práticas
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#estrategia-de-duas-camadas" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Estratégia de Duas Camadas
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Estratégia de Duas Camadas">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tier-a-unidade-de-logica-sql" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tier A: Unidade de Lógica SQL
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tier-b-integracao-semantica" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tier B: Integração Semântica
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mecanica-de-queries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mecânica de Queries
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Mecânica de Queries">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#estrutura-de-uma-query" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Estrutura de uma Query
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exemplo-de-implementacao-de-filtro" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exemplo de Implementação de Filtro
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#como-adicionar-um-novo-teste" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Como Adicionar um Novo Teste
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Como Adicionar um Novo Teste">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-testando-logica-de-query-tier-a" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Testando Lógica de Query (Tier A)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-testando-rotas-e-filtros-tier-b" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Testando Rotas e Filtros (Tier B)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#complexidade-de-filtros-padrao" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Complexidade de Filtros Padrão
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#boas-praticas-com-factories" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Boas Práticas com Factories
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Boas Práticas com Factories">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#composite-factories" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Composite Factories
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#integridade-de-dados-relacionais" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Integridade de Dados Relacionais
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuracao-do-banco-de-testes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuração do Banco de Testes
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ai_architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Como trabalhar com IA
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#estrategia-de-duas-camadas" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Estratégia de Duas Camadas
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Estratégia de Duas Camadas">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tier-a-unidade-de-logica-sql" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tier A: Unidade de Lógica SQL
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tier-b-integracao-semantica" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tier B: Integração Semântica
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mecanica-de-queries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mecânica de Queries
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Mecânica de Queries">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#estrutura-de-uma-query" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Estrutura de uma Query
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exemplo-de-implementacao-de-filtro" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exemplo de Implementação de Filtro
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#como-adicionar-um-novo-teste" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Como Adicionar um Novo Teste
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Como Adicionar um Novo Teste">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-testando-logica-de-query-tier-a" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Testando Lógica de Query (Tier A)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-testando-rotas-e-filtros-tier-b" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Testando Rotas e Filtros (Tier B)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#complexidade-de-filtros-padrao" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Complexidade de Filtros Padrão
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#boas-praticas-com-factories" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Boas Práticas com Factories
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Boas Práticas com Factories">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#composite-factories" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Composite Factories
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#integridade-de-dados-relacionais" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Integridade de Dados Relacionais
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuracao-do-banco-de-testes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuração do Banco de Testes
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="testes-e-boas-praticas">Testes e Boas Práticas</h1>
+<p>Nossa estratégia de testes é baseada em <strong>semântica</strong> e <strong>confiabilidade de dados</strong>. Como o projeto lida com grandes volumes de dados e buscas complexas, dividimos os testes para garantir performance e correção.</p>
+<h2 id="estrategia-de-duas-camadas">Estratégia de Duas Camadas</h2>
+<h3 id="tier-a-unidade-de-logica-sql">Tier A: Unidade de Lógica SQL</h3>
+<p>Localizados em <code>tests/queries/</code>, validam se o <code>Query Object</code> gera os snippets de SQL corretos e popula os parâmetros adequadamente. </p>
+<ul>
+<li><strong>Por que?</strong> Evita o overhead de subir um banco de dados para testar concatenação de strings e lógica de filtros.</li>
+<li><strong>Como funciona?</strong> Instanciamos a classe de query com <code>session=None</code>, chamamos <code>apply_filters()</code> e inspecionamos o resultado de <code>build_sql()</code>.</li>
+</ul>
+<h3 id="tier-b-integracao-semantica">Tier B: Integração Semântica</h3>
+<p>Localizados em <code>tests/routers/</code>, validam o comportamento real da API.
+- <strong>Busca Textual</strong>: Garantir que o Postgres TSVECTOR ignore acentos e trate stemming corretamente.
+- <strong>Integridade Relacional</strong>: Validar se os filtros de JOIN (cidade, instituição) funcionam no DB real.
+- <strong>Setup</strong>: Utiliza <code>testcontainers</code> para subir um Postgres real, garantindo que as extensões (<code>unaccent</code>) e o schema estejam idênticos ao de produção.</p>
+<hr />
+<h2 id="mecanica-de-queries">Mecânica de Queries</h2>
+<p>O sistema de busca utiliza o padrão <strong>Query Object</strong>. Todas as buscas complexas herdam de <code>BaseQuery</code>.</p>
+<h3 id="estrutura-de-uma-query">Estrutura de uma Query</h3>
+<ol>
+<li><strong><code>SUPPORTED_FILTERS</code></strong>: Conjunto de strings que define quais filtros a query aceita.</li>
+<li><strong><code>_apply_&lt;nome&gt;_filter</code></strong>: Métodos privados chamados automaticamente por <code>apply_filters</code>. É aqui que a lógica de JOIN e WHERE reside.</li>
+<li><strong><code>self.params</code></strong>: Dicionário de parâmetros nomeados para evitar SQL Injection.</li>
+<li><strong><code>self.joins</code></strong>: Dicionário de joins. Usar um dicionário permite que diferentes filtros ativem o mesmo JOIN sem duplicá-lo no SQL final.</li>
+</ol>
+<h3 id="exemplo-de-implementacao-de-filtro">Exemplo de Implementação de Filtro</h3>
+<pre><code class="language-python">def _apply_institution_filter(self, value):
+    # Força o JOIN a ser INNER em vez de LEFT se o filtro estiver presente
+    self.joins['institution'] = 'INNER JOIN institution i ON i.id = r.institution_id'
+    self.params['institution'] = value.split(';')
+    self.filters_sql.append(' AND i.name = ANY(:institution)')
+</code></pre>
+<hr />
+<h2 id="como-adicionar-um-novo-teste">Como Adicionar um Novo Teste</h2>
+<h3 id="1-testando-logica-de-query-tier-a">1. Testando Lógica de Query (Tier A)</h3>
+<p>Ao adicionar um novo filtro ou mudar a lógica de uma busca:
+1. Crie ou edite o arquivo em <code>tests/queries/test_&lt;sua_query&gt;_query.py</code>.
+2. Teste se o SQL gerado contém as cláusulas esperadas.
+3. Teste se os <code>self.params</code> estão sendo populados corretamente.</p>
+<pre><code class="language-python">def test_my_new_filter():
+    query = MyQuery(session=None)
+    query.apply_filters(DefaultFilters(my_field=&quot;valor&quot;))
+    sql = query.build_sql()
+    assert &quot;AND table.col = :my_field&quot; in sql
+    assert query.params[&quot;my_field&quot;] == &quot;valor&quot;
+</code></pre>
+<h3 id="2-testando-rotas-e-filtros-tier-b">2. Testando Rotas e Filtros (Tier B)</h3>
+<p>Para garantir que a integração com o banco está correta (especialmente para filtros complexos como <code>ANY</code>, <code>&amp;&amp;</code> ou busca textual):
+1. Use o fixture <code>client</code> (FastAPI TestClient) e <code>session</code> (AsyncSession).
+2. Utilize as <strong>Factories</strong> para popular o banco de teste.
+3. Faça a chamada via <code>client.get</code>.</p>
+<pre><code class="language-python">@pytest.mark.asyncio
+async def test_route_with_complex_filter(client, session):
+    # Cria os dados necessários
+    researcher = await create_researcher_with_full_graph(session)
+
+    # Executa a requisição
+    response = client.get(&quot;/researchers&quot;, params={&quot;city&quot;: &quot;Belo Horizonte&quot;})
+
+    assert response.status_code == 200
+    assert len(response.json()) &gt; 0
+</code></pre>
+<hr />
+<h2 id="complexidade-de-filtros-padrao">Complexidade de Filtros Padrão</h2>
+<p>Alguns filtros possuem comportamentos específicos que devem ser observados:</p>
+<ul>
+<li><strong>Filtros de Lista (Arrays)</strong>: Filtros como <code>institution</code>, <code>city</code> e <code>graduation</code> aceitam múltiplos valores separados por <code>;</code>. No SQL, isso é convertido para <code>ANY(:param)</code>.</li>
+<li><em>Exemplo</em>: <code>city=Belo Horizonte;Curitiba</code> filtra por ambas as cidades.</li>
+<li><strong>Busca Semântica (Websearch)</strong>: Filtros de termo (<code>term</code>) utilizam <code>tools.websearch_filter</code>, que suporta operadores lógicos especiais:</li>
+<li><code>;</code> representa <code>AND</code>.</li>
+<li><code>|</code> representa <code>OR</code>.</li>
+<li><code>.</code> representa <code>NOT</code>.</li>
+<li><em>Exemplo</em>: <code>machine|learning</code> busca por um ou outro.</li>
+<li><strong>Joins Dinâmicos</strong>: Para manter a performance, as queries começam com <code>LEFT JOIN</code>. Se um filtro de uma tabela relacionada for aplicado, a query automaticamente promove o join para <code>INNER JOIN</code>. Isso deve ser validado no Tier A.</li>
+<li><strong>Busca Textual e Normalização</strong>: Utilizamos <code>unaccent</code> e <code>translate</code> para normalizar strings no Postgres. Sempre teste isso no Tier B, inserindo dados com acentos e buscando por termos sem acentos.</li>
+</ul>
+<h2 id="boas-praticas-com-factories">Boas Práticas com Factories</h2>
+<h3 id="composite-factories">Composite Factories</h3>
+<p>Utilize o helper <code>create_researcher_with_full_graph(session)</code> em <code>tests/factories.py</code> para criar cenários complexos de teste com uma única chamada. Ele cria automaticamente Pesquisador, Instituição, Cidade, Publicações e Revistas vinculadas.</p>
+<h3 id="integridade-de-dados-relacionais">Integridade de Dados Relacionais</h3>
+<p>Para campos com restrição <code>UNIQUE</code> (como nomes de países, códigos ou Lattes ID), utilize sempre <code>factory.Sequence</code> em vez de Faker aleatório para evitar erros de <code>UniqueViolation</code> durante a execução paralela de testes.</p>
+<pre><code class="language-python">class CountryFactory(factory.Factory):
+    name = factory.Sequence(lambda n: f'Country {n}')
+</code></pre>
+<h2 id="configuracao-do-banco-de-testes">Configuração do Banco de Testes</h2>
+<p>O setup automático (<code>tests/conftest.py</code>) cria o banco utilizando Containers. É <strong>obrigatório</strong> garantir que a extensão <code>unaccent</code> esteja habilitada, pois ela é fundamental para a normalização de buscas textuais.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": [], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
