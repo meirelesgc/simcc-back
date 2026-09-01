@@ -4,6 +4,7 @@ Template: Teste Unitário (Service)
 Foco: Decisões e lógicas complexas.
 Deve isolar a base de dados utilizando unittest.mock (ou pytest-mock).
 """
+
 from unittest.mock import AsyncMock
 
 import pytest
@@ -30,7 +31,7 @@ async def test_release_logic_success(release_service, mock_release_repo):
     Comportamento esperado (Happy Path) isolado.
     """
     # Arrange
-    mock_release_repo.get_release.return_value = {"id": 1, "status": "draft"}
+    mock_release_repo.get_release.return_value = {'id': 1, 'status': 'draft'}
 
     # Act
     # result = await release_service.publish_release(release_id=1)
@@ -46,7 +47,10 @@ async def test_release_logic_invalid_state(release_service, mock_release_repo):
     Exemplo de Branch Coverage: Caso de Erro de negócio.
     """
     # Arrange
-    mock_release_repo.get_release.return_value = {"id": 1, "status": "published"}
+    mock_release_repo.get_release.return_value = {
+        'id': 1,
+        'status': 'published',
+    }
 
     # Act / Assert
     # with pytest.raises(InvalidStateError):

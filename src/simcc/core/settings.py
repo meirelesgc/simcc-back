@@ -39,6 +39,14 @@ class Settings(BaseSettings, extra='ignore'):
     LOG_DIR: str = 'logs'
     LOG_RETENTION_DAYS: int = 7
 
+    # Configurações de Cache (Redis)
+    REDIS_URL: str = 'redis://localhost:6379/0'
+    REDIS_ENABLED: bool = True
+
+    # Configurações de IA e Qualidade
+    AI_COSINE_DISTANCE_THRESHOLD: float = 0.65
+    AI_CACHE_TTL: int = 3600
+
     @field_validator(
         'CORS_ALLOW_ORIGINS',
         'CORS_ALLOW_METHODS',

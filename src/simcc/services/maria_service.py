@@ -1,15 +1,27 @@
 import asyncio
 from collections.abc import AsyncIterator
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
+from simcc.ai.prompts.maria_prompts import (
+    MARIA_EMPTY_FALLBACK_MESSAGE,
+    MARIA_PROMPT_TEMPLATE,
+    SUMMARY_SEARCH_PROMPT,
+    build_synthesis_prompt,
+)
 from simcc.ai.providers.base import EmbeddingsProvider, LLMProvider
 from simcc.ai.schemas.maria import (
     ChatResponse,
     ChatStreamEvent,
     ChatStreamEventType,
+    MariaResponse,
     SearchUIMetadata,
 )
+from simcc.ai.telemetry.tracer import AITracer
+from simcc.core.cache import CacheService
+from simcc.repositories import maria_repo, researcher_repo
+from simcc.schemas import DefaultFilters
+from simcc.services import production_service, researcher_service
 
 
 class MariaService:
@@ -17,14 +29,16 @@ class MariaService:
         self,
         llm: LLMProvider,
         embeddings: EmbeddingsProvider,
+        cache: Optional[CacheService] = None,
+        tracer: Optional[AITracer] = None,
     ):
         self.llm = llm
         self.embeddings = embeddings
+        self.cache = cache
+        self.tracer = tracer
 
-    def _get_compact_researcher_data(self, researcher: dict) -> dict:
-        """
-        Retorna um dicionário reduzido com os campos essenciais para o prompt da IA.
-        """
+    @staticmethod
+    def _get_compact_researcher_data(researcher: dict) -> dict:
         return {
             'name': researcher.get('name'),
             'university': researcher.get('university'),
@@ -36,7 +50,8 @@ class MariaService:
             'h_index': researcher.get('h_index'),
         }
 
-    def _build_ui_filters(self, filters) -> dict:
+    @staticmethod
+    def _build_ui_filters(filters) -> dict:
         ui_f = {}
         if filters.institutions:
             ui_f['institutions'] = filters.institutions
@@ -53,9 +68,8 @@ class MariaService:
                 ui_f['period'] = f'Até {filters.year_to}'
         return ui_f
 
-    def _build_sources(
-        self, researchers: list, productions: list
-    ) -> List[str]:
+    @staticmethod
+    def _build_sources(researchers: list, productions: list) -> List[str]:
         sources = []
         if researchers:
             sources.extend([
@@ -64,114 +78,184 @@ class MariaService:
             ])
         if productions:
             sources.extend([
-                f'{p.get("title")} [{p.get("type")}] ({p.get("year") or "S/D"})'
+                f'{p.get("title")} [{p.get("type")}] '
+                f'({p.get("year") or "S/D"})'
                 for p in productions
             ])
         return sources
 
-    def _build_synthesis_prompt(
-        self, query: str, plan, researchers: list, productions: list
+    async def search_and_summarize(
+        self, session, query: str, search_type: str
+    ) -> MariaResponse:
+        vector = await self.embeddings.get_embeddings(query)
+        researcher_ids = await maria_repo.search_by_embeddings(
+            session, vector, search_type
+        )
+
+        if not researcher_ids:
+            return MariaResponse(query='', researchers=[])
+
+        filters = DefaultFilters(researcher_ids=researcher_ids)
+        researchers_data = await researcher_repo.search_researchers(
+            session, filters
+        )
+
+        data_to_summarize = [
+            self._get_compact_researcher_data(dict(r))
+            for r in researchers_data[:5]
+        ]
+        prompt = MARIA_PROMPT_TEMPLATE.format(
+            area=search_type, data_dict=str(data_to_summarize)
+        )
+        comment = await self.llm.generate(prompt)
+
+        return MariaResponse(query=comment, researchers=researchers_data)
+
+    async def generate_search_summary(
+        self, session, filters: DefaultFilters
     ) -> str:
-        researchers_context = ''
-        for i, r in enumerate(researchers, 1):
-            inst = (
-                r.get('institution_acronym')
-                or r.get('institution')
-                or 'Instituição não informada'
+        search_type = filters.type.upper() if filters.type else 'ARTICLE'
+        limit = 5 if search_type in {'NAME', 'AREA'} else 10
+        filters.lenght = limit
+        filters.page = 1
+
+        data = []
+        if search_type == 'ARTICLE':
+            data = await production_service.list_bibliographic_production(
+                session, filters
             )
-            researchers_context += (
-                f'\n--- [Pesquisador {i}] ---\n'
-                f'Nome: {r["name"]}\n'
-                f'Instituição: {inst}\n'
-                f'Conteúdo Semântico:\n{r.get("semantic_content", r.get("abstract", ""))}\n'
+        elif search_type == 'BOOK':
+            data = await production_service.list_book(session, filters)
+        elif search_type == 'BOOK_CHAPTER':
+            data = await production_service.list_book_chapter(session, filters)
+        elif search_type == 'ABSTRACT':
+            filters.type = 'ABSTRACT'
+            data = await production_service.list_bibliographic_production(
+                session, filters
+            )
+        elif search_type in {'NAME', 'AREA'}:
+            data = await researcher_service.search_researchers(
+                session, filters
+            )
+        elif search_type == 'WORK_IN_EVENT':
+            data = await production_service.list_researcher_production_events(
+                session, filters
+            )
+        elif search_type == 'PATENT':
+            data = await production_service.list_patent(session, filters)
+        elif search_type == 'EVENT':
+            data = await production_service.list_participation_event(
+                session, filters
+            )
+        else:
+            data = await production_service.list_bibliographic_production(
+                session, filters
             )
 
-        productions_context = ''
-        for i, p in enumerate(productions, 1):
-            r_info = p.get('researcher', {})
-            author_inst = (
-                f'{r_info.get("name", "")} ({r_info.get("institution", "")})'
-            )
-            productions_context += (
-                f'\n--- [Produção {i} - {p.get("type")}] ---\n'
-                f'Título: {p.get("title")}\n'
-                f'Autores/Pesquisador: {p.get("authors")} | Vinculado a: {author_inst}\n'
-                f'Ano: {p.get("year")}\n'
-                f'DOI/Código: {p.get("doi") or p.get("details", {}).get("code", "N/A")}\n'
-                f'Detalhes: {p.get("details")}\n'
-                f'Conteúdo:\n{p.get("semantic_content", "")}\n'
-            )
+        if not data:
+            return 'Nenhum resultado relevante encontrado para gerar o resumo.'
 
-        return f"""
-Você é a MarIA, assistente de inteligência artificial especializada na base de dados de pesquisadores e produções científicas da Bahia.
+        if search_type in {'NAME', 'AREA'}:
+            data_to_summarize = [
+                self._get_compact_researcher_data(dict(r))
+                for r in data[:limit]
+            ]
+        else:
+            data_to_summarize = [dict(r) for r in data[:limit]]
 
-Pergunta do Usuário: "{query}"
-Plano de Execução do Planner:
-- Intenção: {plan.intent}
-- Filtros Aplicados: {plan.filters.model_dump(exclude_none=True)}
-- Busca Semântica: "{plan.semantic_query}"
-
-Contexto de Pesquisadores ({len(researchers)} registros):
-{researchers_context if researchers else 'Nenhum pesquisador recuperado diretamente.'}
-
-Contexto de Produções Científicas e Tecnológicas ({len(productions)} registros):
-{productions_context if productions else 'Nenhuma produção recuperada diretamente.'}
-
-Instruções para a Resposta:
-1. Responda em Português de forma clara, natural, profissional e informativa.
-2. Direcione o estilo da resposta de acordo com a intenção:
-   - Se for 'production_search': apresente as principais produções encontradas (artigos, livros, patentes, softwares, relatórios), destacando título, autores, ano, pesquisador/instituição vinculada e relevância para a pergunta. Se houver links DOI ou códigos de patente, cite-os.
-   - Se for 'researcher_profile': apresente o perfil completo da pessoa (instituição, formação, titulação, áreas de atuação e resumo de trajetória).
-   - Se for 'researcher_comparison': organize e agrupe a resposta por instituição (ex: 'Na UFBA...', 'Na UNEB...'), comparando as linhas de atuação e perfis de cada pesquisador recuperado.
-   - Se for 'researcher_search': apresente os pesquisadores encontrados que melhor atendem ao pedido, explicando brevemente por que cada um é relevante para o tema.
-   - Se a base não tiver resultados correspondentes ou tiver dados insuficientes, reconheça com transparência que não foram encontrados registros para aquele critério na base atual.
-3. Use formatação Markdown (títulos, negrito para nomes de pesquisadores e instituições, tópicos) para facilitar a leitura.
-4. Baseie-se ESTRITAMENTE nas informações fornecidas no contexto acima. Não invente formações ou produções.
-"""
+        prompt = SUMMARY_SEARCH_PROMPT.format(data_dict=str(data_to_summarize))
+        return await self.llm.generate(prompt)
 
     async def chat_ask(
         self, session, query: str, planner, search_service
     ) -> ChatResponse:
-        plan = await planner.plan(query)
-        researchers = []
-        productions = []
+        tracer = self.tracer or AITracer(query=query)
+        cache_key = None
 
-        if plan.intent in {
-            'researcher_search',
-            'researcher_profile',
-            'researcher_comparison',
-            'aggregation',
-        }:
-            filters_dict = plan.filters.model_dump(exclude_none=True)
-            researchers = await search_service.search_researchers_hybrid(
-                session=session,
-                query=plan.semantic_query,
-                limit=10,
-                filters=filters_dict,
+        if self.cache:
+            canonical_hash = self.cache.hash_payload({'query': query.strip()})
+            cache_key = self.cache.build_key(
+                'ai', 'chat:batch', canonical_hash
             )
-        elif plan.intent == 'production_search':
+            cached_val = await self.cache.get(cache_key)
+            if cached_val:
+                tracer.set_meta('cache_hit', True)
+                tracer.finish(status='success')
+                return ChatResponse(**cached_val)
+
+        try:
+            # 1. Planner
+            async with tracer.trace_stage('planner'):
+                plan = await planner.plan(query)
+                tracer.set_meta('intent', plan.intent)
+
+            # 2. Busca Híbrida
+            researchers = []
+            productions = []
             filters_dict = plan.filters.model_dump(exclude_none=True)
-            productions = await search_service.search_productions_hybrid(
-                session=session,
-                query=plan.semantic_query,
-                limit=10,
-                filters=filters_dict,
+
+            async with tracer.trace_stage('search'):
+                if plan.intent in {
+                    'researcher_search',
+                    'researcher_profile',
+                    'researcher_comparison',
+                    'aggregation',
+                }:
+                    researchers = (
+                        await search_service.search_researchers_hybrid(
+                            session=session,
+                            query=plan.semantic_query,
+                            limit=10,
+                            filters=filters_dict,
+                        )
+                    )
+                elif plan.intent == 'production_search':
+                    productions = (
+                        await search_service.search_productions_hybrid(
+                            session=session,
+                            query=plan.semantic_query,
+                            limit=10,
+                            filters=filters_dict,
+                        )
+                    )
+
+            total_found = len(researchers) + len(productions)
+            tracer.set_meta('final_count', total_found)
+
+            # 3. Síntese
+            async with tracer.trace_stage('synthesis'):
+                if total_found == 0:
+                    answer = MARIA_EMPTY_FALLBACK_MESSAGE
+                else:
+                    synthesis_prompt = build_synthesis_prompt(
+                        query=query,
+                        intent=plan.intent,
+                        filters_dict=filters_dict,
+                        researchers=researchers,
+                        productions=productions,
+                    )
+                    answer = await self.llm.generate(synthesis_prompt)
+
+            sources = self._build_sources(researchers, productions)
+            response = ChatResponse(
+                answer=answer,
+                intent=plan.intent,
+                filters_extracted=filters_dict,
+                researchers=researchers,
+                productions=productions,
+                sources=sources,
             )
 
-        synthesis_prompt = self._build_synthesis_prompt(
-            query, plan, researchers, productions
-        )
-        answer = await self.llm.generate(synthesis_prompt)
-        sources = self._build_sources(researchers, productions)
+            # 4. Gravação em Cache
+            if self.cache and cache_key:
+                await self.cache.set(cache_key, response.model_dump())
 
-        return ChatResponse(
-            answer=answer,
-            intent=plan.intent,
-            filters_extracted=plan.filters.model_dump(exclude_none=True),
-            researchers=researchers,
-            productions=productions,
-            sources=sources,
-        )
+            tracer.finish(status='success')
+            return response
+
+        except Exception as exc:
+            tracer.finish(status='failed', error_message=str(exc))
+            raise
 
     async def chat_ask_stream(
         self,
@@ -181,40 +265,65 @@ Instruções para a Resposta:
         search_service,
         message_id: Optional[str] = None,
     ) -> AsyncIterator[ChatStreamEvent]:
-        """
-        Emite eventos de domínio tipados para consumo de streaming.
-        """
         msg_id = message_id or f'msg_{uuid4().hex[:12]}'
+        tracer = self.tracer or AITracer(request_id=msg_id, query=query)
+        cache_key = None
+
+        if self.cache:
+            canonical_hash = self.cache.hash_payload({'query': query.strip()})
+            cache_key = self.cache.build_key(
+                'ai', 'chat:stream', canonical_hash
+            )
+            cached_events = await self.cache.get(cache_key)
+            if cached_events and isinstance(cached_events, list):
+                tracer.set_meta('cache_hit', True)
+                tracer.finish(status='success')
+                for ev in cached_events:
+                    ev_dict = dict(ev)
+                    ev_dict['message_id'] = msg_id
+                    yield ChatStreamEvent(**ev_dict)
+                return
+
+        accumulated_events: List[Dict[str, Any]] = []
 
         try:
             # 1. Planejamento
-            plan = await planner.plan(query)
+            async with tracer.trace_stage('planner'):
+                plan = await planner.plan(query)
+                tracer.set_meta('intent', plan.intent)
 
             # 2. Busca Híbrida
             researchers = []
             productions = []
+            filters_dict = plan.filters.model_dump(exclude_none=True)
 
-            if plan.intent in {
-                'researcher_search',
-                'researcher_profile',
-                'researcher_comparison',
-                'aggregation',
-            }:
-                filters_dict = plan.filters.model_dump(exclude_none=True)
-                researchers = await search_service.search_researchers_hybrid(
-                    session=session,
-                    query=plan.semantic_query,
-                    limit=10,
-                    filters=filters_dict,
-                )
-            elif plan.intent == 'production_search':
-                filters_dict = plan.filters.model_dump(exclude_none=True)
-                productions = await search_service.search_productions_hybrid(
-                    session=session,
-                    query=plan.semantic_query,
-                    limit=10,
-                    filters=filters_dict,
-                )
+            async with tracer.trace_stage('search'):
+                if plan.intent in {
+                    'researcher_search',
+                    'researcher_profile',
+                    'researcher_comparison',
+                    'aggregation',
+                }:
+                    researchers = (
+                        await search_service.search_researchers_hybrid(
+                            session=session,
+                            query=plan.semantic_query,
+                            limit=10,
+                            filters=filters_dict,
+                        )
+                    )
+                elif plan.intent == 'production_search':
+                    productions = (
+                        await search_service.search_productions_hybrid(
+                            session=session,
+                            query=plan.semantic_query,
+                            limit=10,
+                            filters=filters_dict,
+                        )
+                    )
+
+            total_found = len(researchers) + len(productions)
+            tracer.set_meta('final_count', total_found)
 
             # 3. Metadados e Fontes
             sources = self._build_sources(researchers, productions)
@@ -228,36 +337,67 @@ Instruções para a Resposta:
                 sources=sources,
             )
 
-            yield ChatStreamEvent(
+            meta_event = ChatStreamEvent(
                 type=ChatStreamEventType.METADATA,
                 message_id=msg_id,
                 data=ui_metadata.model_dump(),
             )
+            accumulated_events.append(meta_event.model_dump())
+            yield meta_event
 
-            # 4. Prompt de Síntese
-            synthesis_prompt = self._build_synthesis_prompt(
-                query, plan, researchers, productions
-            )
+            # 4. Síntese / Emissão de Deltas
+            async with tracer.trace_stage('synthesis'):
+                if total_found == 0:
+                    delta_event = ChatStreamEvent(
+                        type=ChatStreamEventType.DELTA,
+                        message_id=msg_id,
+                        content=MARIA_EMPTY_FALLBACK_MESSAGE,
+                    )
+                    accumulated_events.append(delta_event.model_dump())
+                    yield delta_event
+                else:
+                    synthesis_prompt = build_synthesis_prompt(
+                        query=query,
+                        intent=plan.intent,
+                        filters_dict=filters_dict,
+                        researchers=researchers,
+                        productions=productions,
+                    )
+                    async for chunk in self.llm.generate_stream(
+                        synthesis_prompt
+                    ):
+                        delta_event = ChatStreamEvent(
+                            type=ChatStreamEventType.DELTA,
+                            message_id=msg_id,
+                            content=chunk,
+                        )
+                        accumulated_events.append(delta_event.model_dump())
+                        yield delta_event
 
-            # 5. Emissão de Deltas (Tokens do LLM)
-            async for chunk in self.llm.generate_stream(synthesis_prompt):
-                yield ChatStreamEvent(
-                    type=ChatStreamEventType.DELTA,
-                    message_id=msg_id,
-                    content=chunk,
-                )
-
-            yield ChatStreamEvent(
+            done_event = ChatStreamEvent(
                 type=ChatStreamEventType.DONE, message_id=msg_id
             )
+            accumulated_events.append(done_event.model_dump())
+            yield done_event
+
+            # 5. Gravação em Cache
+            if self.cache and cache_key:
+                await self.cache.set(cache_key, accumulated_events)
+
+            tracer.finish(status='success')
 
         except asyncio.CancelledError:
-            # Propaga encerramento suave quando o cliente cancela o stream
+            tracer.finish(
+                status='failed', error_message='Stream cancelled by client'
+            )
             raise
-        except Exception:
+        except Exception as exc:
+            tracer.finish(status='failed', error_message=str(exc))
             yield ChatStreamEvent(
                 type=ChatStreamEventType.ERROR,
                 message_id=msg_id,
                 code='generation_failed',
-                message='Ocorreu um erro ao processar sua consulta com a MarIA.',
+                message=(
+                    'Ocorreu um erro ao processar sua consulta com a MarIA.'
+                ),
             )

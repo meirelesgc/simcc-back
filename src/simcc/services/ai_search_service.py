@@ -22,8 +22,13 @@ from simcc.core.db.models.researcher import Researcher
 
 
 class AISearchService:
-    def __init__(self, embeddings_provider: EmbeddingsProvider):
+    def __init__(
+        self,
+        embeddings_provider: EmbeddingsProvider,
+        cosine_distance_threshold: float = 0.65,
+    ):
         self.embeddings = embeddings_provider
+        self.cosine_distance_threshold = cosine_distance_threshold
 
     async def search_researchers_hybrid(
         self,
@@ -37,6 +42,7 @@ class AISearchService:
         - Filtros exatos/parciais de instituições (siglas e nomes)
         - Busca por nome próprio do pesquisador
         - Similaridade semântica vetorial (pgvector cosine_distance)
+        - Linha de corte de relevância (cosine_distance <= threshold)
         """
         filters = filters or {}
 
@@ -78,12 +84,14 @@ class AISearchService:
             for tok in tokens:
                 stmt = stmt.filter(Researcher.name.ilike(f'%{tok}%'))
 
-        # 4. Ordenação e Busca Semântica
+        # 4. Ordenação e Busca Semântica com Linha de Corte
         if query and query.strip():
             vector = await self.embeddings.get_embeddings(query.strip())
-            stmt = stmt.order_by(
-                SearchDocumentResearcher.embedding.cosine_distance(vector)
+            dist_expr = SearchDocumentResearcher.embedding.cosine_distance(
+                vector
             )
+            stmt = stmt.filter(dist_expr <= self.cosine_distance_threshold)
+            stmt = stmt.order_by(dist_expr)
         else:
             stmt = stmt.order_by(Researcher.name.asc())
 
@@ -121,6 +129,7 @@ class AISearchService:
         - Filtros por tipo de produção
         - Filtros temporais
         - Similaridade semântica vetorial (pgvector cosine_distance)
+        - Linha de corte de relevância (cosine_distance <= threshold)
         """
         filters = filters or {}
 
@@ -137,9 +146,11 @@ class AISearchService:
 
         if query and query.strip():
             vector = await self.embeddings.get_embeddings(query.strip())
-            stmt = stmt.order_by(
-                SearchDocumentProduction.embedding.cosine_distance(vector)
+            dist_expr = SearchDocumentProduction.embedding.cosine_distance(
+                vector
             )
+            stmt = stmt.filter(dist_expr <= self.cosine_distance_threshold)
+            stmt = stmt.order_by(dist_expr)
         else:
             stmt = stmt.order_by(
                 SearchDocumentProduction.last_indexed_at.desc()
@@ -176,7 +187,8 @@ class AISearchService:
                         Researcher.id == BibliographicProduction.researcher_id,
                     )
                     .outerjoin(
-                        Institution, Institution.id == Researcher.institution_id
+                        Institution,
+                        Institution.id == Researcher.institution_id,
                     )
                     .filter(BibliographicProduction.id == doc.production_id)
                 )
@@ -252,7 +264,8 @@ class AISearchService:
                     select(Patent, Researcher, Institution)
                     .join(Researcher, Researcher.id == Patent.researcher_id)
                     .outerjoin(
-                        Institution, Institution.id == Researcher.institution_id
+                        Institution,
+                        Institution.id == Researcher.institution_id,
                     )
                     .filter(Patent.id == doc.production_id)
                 )
@@ -285,7 +298,8 @@ class AISearchService:
                     select(Software, Researcher, Institution)
                     .join(Researcher, Researcher.id == Software.researcher_id)
                     .outerjoin(
-                        Institution, Institution.id == Researcher.institution_id
+                        Institution,
+                        Institution.id == Researcher.institution_id,
                     )
                     .filter(Software.id == doc.production_id)
                 )
@@ -317,7 +331,8 @@ class AISearchService:
                         Researcher.id == ResearchReport.researcher_id,
                     )
                     .outerjoin(
-                        Institution, Institution.id == Researcher.institution_id
+                        Institution,
+                        Institution.id == Researcher.institution_id,
                     )
                     .filter(ResearchReport.id == doc.production_id)
                 )

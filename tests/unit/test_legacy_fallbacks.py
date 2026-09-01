@@ -1,6 +1,6 @@
-import pytest
 from unittest.mock import AsyncMock
 
+import pytest
 from sqlalchemy.exc import ProgrammingError
 
 from simcc.repositories import external_repo, powerBi_repo, researcher_repo

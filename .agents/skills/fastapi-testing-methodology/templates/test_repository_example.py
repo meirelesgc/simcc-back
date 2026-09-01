@@ -4,13 +4,16 @@ Template: Teste de Integração (Repository)
 Foco: Funcionalidade de consultas complexas no Banco de Dados.
 Usa a `session` real injetada pelo conftest.
 """
+
 import pytest
 
 # from simcc.repositories.project_repo import ProjectRepository
 
 
 @pytest.mark.asyncio
-async def test_repository_complex_query(session, project_factory, user_factory):
+async def test_repository_complex_query(
+    session, project_factory, user_factory
+):
     """
     Testa se uma consulta com JOIN e GROUP BY traz os dados corretos.
     """

@@ -5,6 +5,8 @@ from fastapi.responses import StreamingResponse
 
 from simcc.ai.dependencies import (
     get_ai_search_service,
+    get_ai_tracer,
+    get_cache_service,
     get_embeddings_provider,
     get_llm_provider,
     get_query_planner,
@@ -26,9 +28,14 @@ class SearchType(str, Enum):
 
 
 def get_maria_service(
-    llm=Depends(get_llm_provider), embeddings=Depends(get_embeddings_provider)
+    llm=Depends(get_llm_provider),
+    embeddings=Depends(get_embeddings_provider),
+    cache=Depends(get_cache_service),
+    tracer=Depends(get_ai_tracer),
 ):
-    return MariaService(llm, embeddings)
+    return MariaService(
+        llm=llm, embeddings=embeddings, cache=cache, tracer=tracer
+    )
 
 
 @router.get('/ai/researcher/summarize', response_model=MariaResponse)

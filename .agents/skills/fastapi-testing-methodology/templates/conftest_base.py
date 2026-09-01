@@ -4,6 +4,7 @@ Template de Configuração Global de Testes (conftest_base.py)
 Demonstra a otimização de banco de dados rodando DDL apenas uma vez
 e controlando o isolamento via transações/savepoints.
 """
+
 import pytest
 import pytest_asyncio
 from simcc.models import table_registry
@@ -12,13 +13,13 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from simcc.core.settings import Settings
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope='session')
 def engine():
     _engine = create_async_engine(Settings().DATABASE_URL)
     return _engine
 
 
-@pytest_asyncio.fixture(scope="session", autouse=True)
+@pytest_asyncio.fixture(scope='session', autouse=True)
 async def setup_database(engine):
     """
     Cria as tabelas APENAS UMA VEZ no início de toda a sessão de testes.

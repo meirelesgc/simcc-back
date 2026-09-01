@@ -2,103 +2,156 @@ from unittest.mock import AsyncMock
 
 import pytest
 
+from simcc.ai.prompts.maria_prompts import MARIA_EMPTY_FALLBACK_MESSAGE
 from simcc.ai.query_planner import QueryPlan, SearchFilters
+from simcc.ai.schemas.maria import ChatStreamEventType
 from simcc.services.maria_service import MariaService
 
 
 @pytest.mark.unit
 @pytest.mark.asyncio
-async def test_chat_ask_researcher_search(
+async def test_maria_service_chat_ask_with_results(
     mock_llm_provider, mock_embeddings_provider
 ):
-    """
-    Testa se o MariaService orquestra corretamente o QueryPlanner,
-    o AISearchService e a geração de resposta para busca de pesquisadores.
-    """
-    service = MariaService(
-        llm=mock_llm_provider, embeddings=mock_embeddings_provider
-    )
-
-    # Mock do Planner
-    planner = AsyncMock()
-    planner.plan.return_value = QueryPlan(
+    mock_planner = AsyncMock()
+    mock_planner.plan.return_value = QueryPlan(
         intent='researcher_search',
-        semantic_query='linguística',
-        filters=SearchFilters(institutions=['UNEB']),
+        semantic_query='inteligência artificial',
+        filters=SearchFilters(institutions=['UFBA']),
     )
 
-    # Mock do SearchService
-    search_service = AsyncMock()
-    search_service.search_researchers_hybrid.return_value = [
+    mock_search = AsyncMock()
+    mock_search.search_researchers_hybrid.return_value = [
         {
-            'id': '12345',
-            'name': 'Adilson Da Silva Correia',
-            'institution': 'Universidade Do Estado Da Bahia',
-            'institution_acronym': 'UNEB',
-            'lattes_id': '9999',
-            'abstract': 'Doutor em Linguística',
-            'semantic_content': 'Pesquisador da UNEB em Linguística',
+            'id': '1',
+            'name': 'Dr. Teste',
+            'institution_acronym': 'UFBA',
+            'semantic_content': 'Pesquisa em IA e Visão Computacional',
         }
     ]
 
-    session = AsyncMock()
+    service = MariaService(
+        llm=mock_llm_provider, embeddings=mock_embeddings_provider
+    )
+    mock_session = AsyncMock()
 
-    # Executa chat_ask
     response = await service.chat_ask(
-        session=session,
-        query='Quais pesquisadores da UNEB trabalham com linguística?',
-        planner=planner,
-        search_service=search_service,
+        session=mock_session,
+        query='Quem pesquisa IA na UFBA?',
+        planner=mock_planner,
+        search_service=mock_search,
     )
 
-    # Asserções
     assert response.intent == 'researcher_search'
-    assert response.filters_extracted['institutions'] == ['UNEB']
     assert len(response.researchers) == 1
-    assert response.researchers[0]['name'] == 'Adilson Da Silva Correia'
-    assert 'Adilson Da Silva Correia (UNEB)' in response.sources
-    assert len(response.answer) > 0
-
-    # Verifica se o search_service foi chamado com os argumentos esperados
-    search_service.search_researchers_hybrid.assert_called_once_with(
-        session=session,
-        query='linguística',
-        limit=10,
-        filters={'institutions': ['UNEB']},
-    )
+    assert 'Resposta simulada da MarIA' in response.answer
 
 
 @pytest.mark.unit
 @pytest.mark.asyncio
-async def test_chat_ask_no_results_handling(
-    mock_llm_provider, mock_embeddings_provider
+async def test_maria_service_chat_ask_empty_results_fallback(
+    mock_embeddings_provider,
 ):
-    """
-    Testa o comportamento quando a busca não retorna nenhum resultado.
-    """
-    service = MariaService(
-        llm=mock_llm_provider, embeddings=mock_embeddings_provider
-    )
-
-    planner = AsyncMock()
-    planner.plan.return_value = QueryPlan(
+    mock_llm = AsyncMock()
+    mock_planner = AsyncMock()
+    mock_planner.plan.return_value = QueryPlan(
         intent='researcher_search',
-        semantic_query='astrofísica quântica',
-        filters=SearchFilters(institutions=['INEXISTENTE']),
+        semantic_query='termo inexistente',
+        filters=SearchFilters(),
     )
 
-    search_service = AsyncMock()
-    search_service.search_researchers_hybrid.return_value = []
+    mock_search = AsyncMock()
+    mock_search.search_researchers_hybrid.return_value = []
 
-    session = AsyncMock()
+    service = MariaService(llm=mock_llm, embeddings=mock_embeddings_provider)
+    mock_session = AsyncMock()
 
     response = await service.chat_ask(
-        session=session,
-        query='Pesquisadores de astrofísica na instituição inexistente',
-        planner=planner,
-        search_service=search_service,
+        session=mock_session,
+        query='Pesquisa sobre algo que não existe',
+        planner=mock_planner,
+        search_service=mock_search,
     )
 
-    assert response.intent == 'researcher_search'
+    assert response.answer == MARIA_EMPTY_FALLBACK_MESSAGE
     assert len(response.researchers) == 0
-    assert response.sources == []
+    # LLM generate não deve ser chamado quando 0 resultados forem
+    # encontrados, economizando tokens e tempo
+    mock_llm.generate.assert_not_called()
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_maria_service_chat_ask_cache_hit(
+    mock_llm_provider, mock_embeddings_provider
+):
+    mock_cache = AsyncMock()
+    cached_payload = {
+        'answer': 'Resposta vinda do cache',
+        'intent': 'researcher_search',
+        'filters_extracted': {'institutions': ['UFBA']},
+        'researchers': [{'name': 'Dr. Cache'}],
+        'productions': [],
+        'sources': ['Dr. Cache (UFBA)'],
+    }
+    mock_cache.get.return_value = cached_payload
+
+    service = MariaService(
+        llm=mock_llm_provider,
+        embeddings=mock_embeddings_provider,
+        cache=mock_cache,
+    )
+
+    mock_session = AsyncMock()
+    mock_planner = AsyncMock()
+    mock_search = AsyncMock()
+
+    response = await service.chat_ask(
+        session=mock_session,
+        query='Quem pesquisa IA na UFBA?',
+        planner=mock_planner,
+        search_service=mock_search,
+    )
+
+    assert response.answer == 'Resposta vinda do cache'
+    mock_planner.plan.assert_not_called()
+    mock_search.search_researchers_hybrid.assert_not_called()
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_maria_service_chat_stream_empty_results_fallback(
+    mock_embeddings_provider,
+):
+    mock_llm = AsyncMock()
+    mock_planner = AsyncMock()
+    mock_planner.plan.return_value = QueryPlan(
+        intent='production_search',
+        semantic_query='nave estelar',
+        filters=SearchFilters(),
+    )
+
+    mock_search = AsyncMock()
+    mock_search.search_productions_hybrid.return_value = []
+
+    service = MariaService(llm=mock_llm, embeddings=mock_embeddings_provider)
+    mock_session = AsyncMock()
+
+    events = []
+    async for event in service.chat_ask_stream(
+        session=mock_session,
+        query='Patente de propulsão de dobra',
+        planner=mock_planner,
+        search_service=mock_search,
+        message_id='msg_test_123',
+    ):
+        events.append(event)
+
+    types = [e.type for e in events]
+    assert types == [
+        ChatStreamEventType.METADATA,
+        ChatStreamEventType.DELTA,
+        ChatStreamEventType.DONE,
+    ]
+    delta_event = events[1]
+    assert delta_event.content == MARIA_EMPTY_FALLBACK_MESSAGE

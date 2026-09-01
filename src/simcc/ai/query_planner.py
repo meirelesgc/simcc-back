@@ -84,18 +84,24 @@ Exemplos:
 
 
 class QueryPlanner:
-    def __init__(self, api_key: str):
-        self.llm = ChatOpenAI(
-            api_key=api_key, model='gpt-4o-mini', temperature=0
-        )
-        self.structured_llm = self.llm.with_structured_output(QueryPlan)
-
-        self.prompt = ChatPromptTemplate.from_messages([
-            ('system', PLANNER_SYSTEM_PROMPT),
-            ('human', '{question}'),
-        ])
-
-        self.chain = self.prompt | self.structured_llm
+    def __init__(self, api_key: Optional[str] = None):
+        self.api_key = api_key
+        if self.api_key:
+            self.llm = ChatOpenAI(
+                api_key=api_key, model='gpt-4o-mini', temperature=0
+            )
+            self.structured_llm = self.llm.with_structured_output(QueryPlan)
+            self.prompt = ChatPromptTemplate.from_messages([
+                ('system', PLANNER_SYSTEM_PROMPT),
+                ('human', '{question}'),
+            ])
+            self.chain = self.prompt | self.structured_llm
+        else:
+            self.chain = None
 
     async def plan(self, question: str) -> QueryPlan:
+        if not self.chain:
+            from simcc.ai.exceptions import AIServiceUnavailableException
+
+            raise AIServiceUnavailableException()
         return await self.chain.ainvoke({'question': question})

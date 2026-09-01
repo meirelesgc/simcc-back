@@ -16,6 +16,19 @@ services:
       timeout: 5s
       retries: 5
 
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   api:
     build: .
     image: ${COMPOSE_PROJECT_NAME}
@@ -29,12 +42,15 @@ services:
       ALTERNATIVE_CNPQ_SERVICE: ${ALTERNATIVE_CNPQ_SERVICE}
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/${COMPOSE_PROJECT_NAME}
       ADMIN_DATABASE_URL: postgresql+asyncpg://postgres:postgres@simcc-admin-db:5432/${COMPOSE_PROJECT_NAME}_admin
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
     volumes:
       - xml:/app/storage/xml
       - logs:/app/logs
     restart: always
     depends_on:
       db:
+        condition: service_healthy
+      redis:
         condition: service_healthy
 
   hop:
@@ -56,4 +72,5 @@ volumes:
   db:
   xml:
   logs:
+  redis_data:
 
