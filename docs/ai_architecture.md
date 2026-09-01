@@ -53,6 +53,31 @@ A MarIA ajusta dinamicamente a estrutura da resposta com base no perfil e volume
 
 ---
 
+## 🔄 Ingestão e Indexação Vetorial (`pgvector`)
+
+Para que a IA tenha acesso à produção científica e aos currículos atualizados dos pesquisadores da Bahia, o ecossistema conta com scripts de ingestão incremental com suporte a **commits em lotes (*batching*)** e **recuperação de falhas (*resume*)**:
+
+### Ingestão de Pesquisadores
+Consolida filiação institucional, formação acadêmica, experiência de gestão, áreas de conhecimento e resumos Lattes em documentos vetoriais:
+```bash
+poetry run python scripts/ingest/ingest_researchers.py --batch-size 25
+```
+
+### Ingestão de Produções Científicas e Tecnológicas
+Indexa artigos, livros, capítulos, patentes, softwares e relatórios técnicos:
+```bash
+# Ingestão de todas as produções pendentes
+poetry run python scripts/ingest/ingest_productions.py
+
+# Ingestão de tipologias específicas
+poetry run python scripts/ingest/ingest_productions.py --types ARTICLE,PATENT --batch-size 50
+```
+
+* **Resiliência a Interrupções**: Os dados são persistidos continuamente a cada lote. Se o processo for interrompido, nenhum progresso salvo é perdido.
+* **Incrementalidade**: Apenas registros ainda não indexados são processados por padrão, economizando tokens e tempo de máquina.
+
+---
+
 ## ⚙️ Variáveis de Configuração
 
 | Variável | Padrão | Descrição |
