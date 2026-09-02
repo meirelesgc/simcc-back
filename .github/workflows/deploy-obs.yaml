@@ -52,6 +52,9 @@ jobs:
             # Atualiza o código
             git pull origin main --ff-only
 
+            # Volta pra pasta certa
+            cd /opt/apps/prod/observatorio
+
             # Constrói a imagem localmente e recria o container usando o compose.yaml atual
             docker compose up -d --build --force-recreate api
 
