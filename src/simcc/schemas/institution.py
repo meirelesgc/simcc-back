@@ -15,6 +15,8 @@ class Institution(BaseModel):
     count_d: int
     count_t: int
     researchers: List[str]
+    image: Optional[str] = None
+    cover: Optional[str] = None
 
 
 class WorkRegimeCount(BaseModel):

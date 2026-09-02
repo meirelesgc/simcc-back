@@ -56,3 +56,45 @@ async def download_researcher_image(
                     path.write_bytes(response.content)
     except Exception:
         pass
+
+
+INSTITUTIONS_STORAGE_DIR = Path('storage/institutions')
+INSTITUTIONS_PICTURE_DIR = INSTITUTIONS_STORAGE_DIR / 'picture'
+INSTITUTIONS_COVERS_DIR = INSTITUTIONS_STORAGE_DIR / 'covers'
+
+
+def get_institution_logo_path(acronym: str | None) -> Path | None:
+    if not acronym:
+        return None
+    acronym_clean = acronym.strip().upper()
+    for ext in ['.png', '.jpg', '.jpeg', '.webp', '.svg']:
+        p = INSTITUTIONS_PICTURE_DIR / f'{acronym_clean}{ext}'
+        if p.exists():
+            return p
+    return None
+
+
+def get_institution_cover_path(acronym: str | None) -> Path | None:
+    if not acronym:
+        return None
+    acronym_clean = acronym.strip().upper()
+    for ext in ['.jpg', '.jpeg', '.png', '.webp']:
+        p = INSTITUTIONS_COVERS_DIR / f'{acronym_clean}{ext}'
+        if p.exists():
+            return p
+    return None
+
+
+def get_institution_logo_url(acronym: str | None) -> str | None:
+    path = get_institution_logo_path(acronym)
+    if path:
+        return f'/storage/institutions/picture/{path.name}'
+    return None
+
+
+def get_institution_cover_url(acronym: str | None) -> str | None:
+    path = get_institution_cover_path(acronym)
+    if path:
+        return f'/storage/institutions/covers/{path.name}'
+    return None
+

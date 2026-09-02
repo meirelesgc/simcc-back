@@ -43,9 +43,13 @@ def engine(settings):
 
 @pytest_asyncio.fixture(scope='session', autouse=True)
 async def setup_database(engine):
-    async with engine.begin() as conn:
-        await conn.execute(text('CREATE EXTENSION IF NOT EXISTS vector;'))
-        await conn.run_sync(table_registry.metadata.create_all)
+    try:
+        async with engine.begin() as conn:
+            await conn.execute(text('CREATE EXTENSION IF NOT EXISTS vector;'))
+            await conn.run_sync(table_registry.metadata.create_all)
+    except Exception:
+        # Permite execução de testes puramente unitários sem conexão com banco
+        pass
 
 
 @pytest_asyncio.fixture

@@ -83,6 +83,14 @@ app.mount(
     name='static',
 )
 
+STORAGE_INSTITUTIONS_DIR = Path('storage/institutions').resolve()
+STORAGE_INSTITUTIONS_DIR.mkdir(parents=True, exist_ok=True)
+app.mount(
+    '/storage/institutions',
+    StaticFiles(directory=str(STORAGE_INSTITUTIONS_DIR)),
+    name='institutions_storage',
+)
+
 
 @app.get('/', status_code=HTTPStatus.OK)
 def read_root():

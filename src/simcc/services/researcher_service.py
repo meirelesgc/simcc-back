@@ -3,7 +3,14 @@ from typing import Any
 
 import polars as pl
 
-from simcc.core.utils import DEFAULT_AVATAR_PATH, download_researcher_image
+from simcc.core.utils import (
+    DEFAULT_AVATAR_PATH,
+    download_researcher_image,
+    get_institution_cover_path,
+    get_institution_cover_url,
+    get_institution_logo_path,
+    get_institution_logo_url,
+)
 from simcc.repositories import researcher_repo
 from simcc.schemas.common import PaginationParams
 
@@ -54,6 +61,38 @@ def _build_institution_map(inst_data: list) -> dict[str, dict[str, Any]]:
     return inst_map
 
 
+def _build_institution_objects_map(
+    inst_rows: list,
+) -> dict[str, dict[str, Any]]:
+    obj_map = {}
+    for row in inst_rows:
+        iid = str(row['id'])
+        acronym = row.get('acronym')
+        logo_url = get_institution_logo_url(acronym) or (
+            row.get('image') if row.get('image') else None
+        )
+        cover_url = get_institution_cover_url(acronym)
+        obj_map[iid] = {
+            'id': row['id'],
+            'name': row.get('name'),
+            'acronym': acronym,
+            'image': logo_url,
+            'cover': cover_url,
+        }
+    return obj_map
+
+
+def _enrich_institution_dict(inst: Any) -> dict[str, Any]:
+    d = dict(inst) if not isinstance(inst, dict) else dict(inst)
+    acronym = d.get('acronym')
+    logo_url = get_institution_logo_url(acronym) or d.get('image')
+    cover_url = get_institution_cover_url(acronym)
+    d['image'] = logo_url
+    d['cover'] = cover_url
+    return d
+
+
+
 async def enrich_researchers(session, researchers: list):
     if not researchers:
         return researchers
@@ -61,6 +100,9 @@ async def enrich_researchers(session, researchers: list):
     processed = [_normalize_researcher_dict(r) for r in researchers]
     researcher_ids = [r['id'] for r in processed if r.get('id')]
     lattes_ids = [r['lattes_id'] for r in processed if r.get('lattes_id')]
+    inst_ids = [
+        r['institution_id'] for r in processed if r.get('institution_id')
+    ]
 
     if not researcher_ids:
         return processed
@@ -87,6 +129,9 @@ async def enrich_researchers(session, researchers: list):
     inst_data = await researcher_repo.list_institution_data_by_researcher_ids(
         session, researcher_ids
     )
+    inst_obj_data = await researcher_repo.list_institutions_by_ids(
+        session, inst_ids
+    )
     # Mapeamentos
     maps = {
         'gp': {str(row['id']): row['graduate_programs'] for row in gp_data},
@@ -96,12 +141,19 @@ async def enrich_researchers(session, researchers: list):
         'ufmg': {str(row['id']): dict(row) for row in ufmg_data},
         'user': {str(row['lattes_id']): row['user'] for row in user_data},
         'inst': _build_institution_map(inst_data),
+        'inst_obj': _build_institution_objects_map(inst_obj_data),
     }
 
     # Aplica dados
     for r in processed:
         rid = str(r['id']) if r.get('id') is not None else None
         lid = str(r['lattes_id']) if r.get('lattes_id') is not None else None
+        inst_id = (
+            str(r['institution_id'])
+            if r.get('institution_id') is not None
+            else None
+        )
+
         r['graduate_programs'] = maps['gp'].get(rid, [])
         r['research_groups'] = maps['rg'].get(rid, [])
         r['subsidy'] = maps['subsidy'].get(rid, [])
@@ -110,11 +162,33 @@ async def enrich_researchers(session, researchers: list):
         r['user'] = maps['user'].get(lid)
         r['custom_attributes'] = maps['inst'].get(rid, None)
 
+        if inst_id and inst_id in maps['inst_obj']:
+            r['institution'] = maps['inst_obj'][inst_id]
+        elif r.get('institution_id') or r.get('university'):
+            acronym = r.get('university')
+            logo_url = (
+                get_institution_logo_url(acronym) or r.get('image_university')
+            )
+            cover_url = get_institution_cover_url(acronym)
+            r['institution'] = {
+                'id': r.get('institution_id'),
+                'name': r.get('university'),
+                'acronym': acronym,
+                'image': logo_url,
+                'cover': cover_url,
+            }
+        else:
+            r['institution'] = None
+
+        if r.get('institution') and r['institution'].get('image'):
+            r['image_university'] = r['institution']['image']
+
     if len(researchers) == len(processed):
         for i in range(len(researchers)):
             researchers[i] = processed[i]
 
     return processed
+
 
 
 async def get_metrics_academic_degree(session, filters):
@@ -188,11 +262,14 @@ async def list_labs(session, lattes_id=None, researcher_id=None):
 
 
 async def list_institutions(session):
-    return await researcher_repo.list_institutions(session)
+    data = await researcher_repo.list_institutions(session)
+    return [_enrich_institution_dict(inst) for inst in data]
 
 
 async def get_institution(session, institution_id):
-    return await researcher_repo.get_institution(session, institution_id)
+    data = await researcher_repo.get_institution(session, institution_id)
+    return _enrich_institution_dict(data) if data else None
+
 
 
 async def list_researcher_terms(session, filters):

@@ -130,6 +130,14 @@ class ScholarshipMetric(BaseModel):
     count: int
 
 
+class ResearcherInstitution(BaseModel):
+    id: Optional[UUID] = None
+    name: Optional[str] = None
+    acronym: Optional[str] = None
+    image: Optional[str] = None
+    cover: Optional[str] = None
+
+
 class Researcher(BaseModel):
     id: UUID
     institution_id: Optional[UUID] = None
@@ -154,6 +162,7 @@ class Researcher(BaseModel):
     lattes_update: Optional[datetime] = None
 
     # Colunas enriquecidas
+    institution: Optional[ResearcherInstitution] = None
     research_groups: Optional[Union[list, str]] = []
     subsidy: Optional[Union[list, str]] = []
     departments: Optional[Union[list, str]] = []

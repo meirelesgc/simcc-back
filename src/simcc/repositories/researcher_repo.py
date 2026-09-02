@@ -391,3 +391,27 @@ async def get_outstanding_researchers(
         session, limit=limit, pool_size=pool_size
     )
     return await query.execute()
+
+
+async def list_institutions_by_ids(session, institution_ids: list):
+    if not institution_ids:
+        return []
+
+    try:
+        SCRIPT_SQL = """
+            SELECT
+                id,
+                name,
+                acronym,
+                image
+            FROM institution
+            WHERE id = ANY(:institution_ids);
+        """
+        result = await session.execute(
+            text(SCRIPT_SQL),
+            {'institution_ids': [UUID(str(iid)) for iid in institution_ids]},
+        )
+        return result.mappings().all()
+    except Exception:
+        return []
+

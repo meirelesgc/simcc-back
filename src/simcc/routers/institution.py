@@ -1,8 +1,14 @@
+from http import HTTPStatus
 from uuid import UUID
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, HTTPException, Query
+from fastapi.responses import FileResponse
 
 from simcc.core.dependencies import AsyncSession
+from simcc.core.utils import (
+    get_institution_cover_path,
+    get_institution_logo_path,
+)
 from simcc.schemas.institution import Institution, InstitutionMetric
 from simcc.services import researcher_service
 
@@ -29,6 +35,73 @@ async def list_institution_frequency(
     )
 
 
+@router.get('/institution/image')
+@router.get('/institution/image/{acronym}')
+async def get_institution_image(
+    session: AsyncSession,
+    acronym: str | None = None,
+    institution_id: UUID | None = Query(None),
+):
+    resolved_acronym = acronym
+    if not resolved_acronym and institution_id:
+        inst = await researcher_service.get_institution(session, institution_id)
+        if inst:
+            resolved_acronym = inst.get('acronym')
+
+    if not resolved_acronym:
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST,
+            detail='Acrônimo ou ID da instituição não informado',
+        )
+
+    path = get_institution_logo_path(resolved_acronym)
+    if not path or not path.exists():
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND,
+            detail='Imagem da instituição não encontrada',
+        )
+
+    return FileResponse(path)
+
+
+@router.get('/institution/cover')
+@router.get('/institution/cover/{acronym}')
+async def get_institution_cover(
+    session: AsyncSession,
+    acronym: str | None = None,
+    institution_id: UUID | None = Query(None),
+):
+    resolved_acronym = acronym
+    if not resolved_acronym and institution_id:
+        inst = await researcher_service.get_institution(session, institution_id)
+        if inst:
+            resolved_acronym = inst.get('acronym')
+
+    if not resolved_acronym:
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST,
+            detail='Acrônimo ou ID da instituição não informado',
+        )
+
+    path = get_institution_cover_path(resolved_acronym)
+    if not path or not path.exists():
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND,
+            detail='Capa da instituição não encontrada',
+        )
+
+    return FileResponse(path)
+
+
 @router.get('/institution/{institution_id}', response_model=Institution)
 async def get_institution(session: AsyncSession, institution_id: UUID):
-    return await researcher_service.get_institution(session, institution_id)
+    institution = await researcher_service.get_institution(
+        session, institution_id
+    )
+    if not institution:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND,
+            detail='Instituição não encontrada',
+        )
+    return institution
+
