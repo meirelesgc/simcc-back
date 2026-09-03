@@ -1,15 +1,19 @@
 
 <!doctype html>
-<html lang="en" class="no-js">
+<html lang="pt" class="no-js">
   <head>
     
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
+        <meta name="description" content="Documentação técnica e arquitetural do SIMCC Backend (Observatório SECTI)">
+      
+      
+        <meta name="author" content="Observatório SECTI">
       
       
       
-        <link rel="prev" href="../testing/">
+        <link rel="prev" href="..">
       
       
       
@@ -21,11 +25,14 @@
     
     
       
-        <title>Como trabalhar com IA - Simcc Documentation</title>
+        <title>Arquitetura da MarIA & Cache - SIMCC Backend</title>
       
     
     
       <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -53,7 +60,14 @@
   </head>
   
   
-    <body dir="ltr">
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="deep-purple">
   
     
     <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
@@ -62,8 +76,8 @@
     <div data-md-component="skip">
       
         
-        <a href="#arquitetura-de-inteligencia-artificial-e-maria" class="md-skip">
-          Skip to content
+        <a href="#arquitetura-de-ia-maria-e-cache-distribuido" class="md-skip">
+          Pular para conteúdo
         </a>
       
     </div>
@@ -77,8 +91,8 @@
   
 
 <header class="md-header md-header--shadow" data-md-component="header">
-  <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href=".." title="Simcc Documentation" class="md-header__button md-logo" aria-label="Simcc Documentation" data-md-component="logo">
+  <nav class="md-header__inner md-grid" aria-label="Cabeçalho">
+    <a href=".." title="SIMCC Backend" class="md-header__button md-logo" aria-label="SIMCC Backend" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -92,18 +106,44 @@
       <div class="md-header__ellipsis">
         <div class="md-header__topic">
           <span class="md-ellipsis">
-            Simcc Documentation
+            SIMCC Backend
           </span>
         </div>
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Como trabalhar com IA
+              Arquitetura da MarIA & Cache
             
           </span>
         </div>
       </div>
     </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="deep-purple"  aria-label="Mudar para modo escuro"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Mudar para modo escuro" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="deep-purple"  aria-label="Mudar para modo claro"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Mudar para modo claro" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
     
     
       <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
@@ -120,27 +160,29 @@
   <label class="md-search__overlay" for="__search"></label>
   <div class="md-search__inner" role="search">
     <form class="md-search__form" name="search">
-      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <input type="text" class="md-search__input" name="query" aria-label="Buscar" placeholder="Buscar" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
       <label class="md-search__icon md-icon" for="__search">
         
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
         
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
       </label>
-      <nav class="md-search__options" aria-label="Search">
+      <nav class="md-search__options" aria-label="Pesquisar">
         
-        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+        <button type="reset" class="md-search__icon md-icon" title="Limpar" aria-label="Limpar" tabindex="-1">
           
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
         </button>
       </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
       
     </form>
     <div class="md-search__output">
       <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
         <div class="md-search-result" data-md-component="search-result">
           <div class="md-search-result__meta">
-            Initializing search
+            Inicializando busca
           </div>
           <ol class="md-search-result__list" role="presentation"></ol>
         </div>
@@ -174,15 +216,15 @@
 
 
 
-<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+<nav class="md-nav md-nav--primary" aria-label="Navegação" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href=".." title="Simcc Documentation" class="md-nav__button md-logo" aria-label="Simcc Documentation" data-md-component="logo">
+    <a href=".." title="SIMCC Backend" class="md-nav__button md-logo" aria-label="SIMCC Backend" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
 
     </a>
-    Simcc Documentation
+    SIMCC Backend
   </label>
   
   <ul class="md-nav__list" data-md-scrollfix>
@@ -201,7 +243,7 @@
   <span class="md-ellipsis">
     
   
-    Home
+    Início
   
 
     
@@ -218,17 +260,35 @@
       
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../architecture/" class="md-nav__link">
+  
+    
+    
+    
+    
+      
         
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
   
   
   <span class="md-ellipsis">
     
   
-    Arquitetura
+    Inteligência Artificial & Cache
   
 
     
@@ -236,67 +296,22 @@
   
   
 
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../adding_filters/" class="md-nav__link">
+            <span class="md-nav__icon md-icon"></span>
+          </label>
         
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
   
-  
-  <span class="md-ellipsis">
-    
-  
-    Como Adicionar Filtros
-  
-
-    
-  </span>
-  
+    Inteligência Artificial & Cache
   
 
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../testing/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Testes e Boas Práticas
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
   
   
     
@@ -318,7 +333,7 @@
   <span class="md-ellipsis">
     
   
-    Como trabalhar com IA
+    Arquitetura da MarIA & Cache
   
 
     
@@ -336,7 +351,7 @@
   <span class="md-ellipsis">
     
   
-    Como trabalhar com IA
+    Arquitetura da MarIA & Cache
   
 
     
@@ -348,7 +363,7 @@
       
         
 
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+<nav class="md-nav md-nav--secondary" aria-label="Índice">
   
   
   
@@ -357,27 +372,38 @@
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
-      Table of contents
+      Índice
     </label>
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#visao-geral-da-pipeline-da-maria" class="md-nav__link">
+  <a href="#1-visao-geral-da-maria" class="md-nav__link">
     <span class="md-ellipsis">
       
-        🏛️ Visão Geral da Pipeline da MarIA
+        1. Visão Geral da MarIA
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="🏛️ Visão Geral da Pipeline da MarIA">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-pipeline-operacional-de-execucao" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Pipeline Operacional de Execução
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Pipeline Operacional de Execução">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-camada-de-cache-distribuido-redis" class="md-nav__link">
+  <a href="#estagio-1-recepcao-e-consulta-ao-cache-distribuido" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Camada de Cache Distribuído (Redis)
+        Estágio 1: Recepção e Consulta ao Cache Distribuído
       
     </span>
   </a>
@@ -385,10 +411,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#2-planejamento-de-consulta-queryplanner" class="md-nav__link">
+  <a href="#estagio-2-planejador-semantico-queryplanner" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Planejamento de Consulta (QueryPlanner)
+        Estágio 2: Planejador Semântico (QueryPlanner)
       
     </span>
   </a>
@@ -396,10 +422,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#3-busca-hibrida-e-linha-de-corte-aisearchservice" class="md-nav__link">
+  <a href="#estagio-3-busca-hibrida-e-linha-de-corte-de-qualidade-cutoff" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3. Busca Híbrida e Linha de Corte (AISearchService)
+        Estágio 3: Busca Híbrida e Linha de Corte de Qualidade (Cutoff)
       
     </span>
   </a>
@@ -407,10 +433,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#4-variacoes-adaptativas-de-sintese-e-sobriedade-cientifica" class="md-nav__link">
+  <a href="#estagio-4-estrategias-adaptativas-de-resposta-5-variacoes" class="md-nav__link">
     <span class="md-ellipsis">
       
-        4. Variações Adaptativas de Síntese e Sobriedade Científica
+        Estágio 4: Estratégias Adaptativas de Resposta (5 Variações)
       
     </span>
   </a>
@@ -418,10 +444,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#5-telemetria-e-observabilidade-aitracer" class="md-nav__link">
+  <a href="#estagio-5-sintese-e-streaming-com-server-sent-events-sse" class="md-nav__link">
     <span class="md-ellipsis">
       
-        5. Telemetria e Observabilidade (AITracer)
+        Estágio 5: Síntese e Streaming com Server-Sent Events (SSE)
       
     </span>
   </a>
@@ -434,33 +460,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#ingestao-e-indexacao-vetorial-pgvector" class="md-nav__link">
+  <a href="#3-camada-de-cache-distribuido-redis" class="md-nav__link">
     <span class="md-ellipsis">
       
-        🔄 Ingestão e Indexação Vetorial (pgvector)
+        3. Camada de Cache Distribuído (Redis)
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="🔄 Ingestão e Indexação Vetorial (pgvector)">
+    <nav class="md-nav" aria-label="3. Camada de Cache Distribuído (Redis)">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#ingestao-de-pesquisadores" class="md-nav__link">
+  <a href="#caracteristicas-tecnicas-do-cache" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Ingestão de Pesquisadores
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#ingestao-de-producoes-cientificas-e-tecnologicas" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Ingestão de Produções Científicas e Tecnológicas
+        Características Técnicas do Cache:
       
     </span>
   </a>
@@ -473,30 +488,83 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#variaveis-de-configuracao" class="md-nav__link">
+  <a href="#4-observabilidade-rastreabilidade-e-tracing-jsonl" class="md-nav__link">
     <span class="md-ellipsis">
       
-        ⚙️ Variáveis de Configuração
+        4. Observabilidade, Rastreabilidade e Tracing (JSONL)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Observabilidade, Rastreabilidade e Tracing (JSONL)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#componentes-de-telemetria" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Componentes de Telemetria:
       
     </span>
   </a>
   
 </li>
+        
+      </ul>
+    </nav>
+  
+</li>
       
         <li class="md-nav__item">
-  <a href="#estrategia-de-testes" class="md-nav__link">
+  <a href="#5-contratos-de-api-e-compatibilidade-com-o-frontend" class="md-nav__link">
     <span class="md-ellipsis">
       
-        🧪 Estratégia de Testes
+        5. Contratos de API e Compatibilidade com o Frontend
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="5. Contratos de API e Compatibilidade com o Frontend">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-post-aichatask" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. POST /ai/chat/ask
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-post-aichataskstream" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. POST /ai/chat/ask/stream
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
     </ul>
   
 </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
       
     </li>
   
@@ -515,7 +583,7 @@
                   <div class="md-sidebar__inner">
                     
 
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+<nav class="md-nav md-nav--secondary" aria-label="Índice">
   
   
   
@@ -524,27 +592,38 @@
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
-      Table of contents
+      Índice
     </label>
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#visao-geral-da-pipeline-da-maria" class="md-nav__link">
+  <a href="#1-visao-geral-da-maria" class="md-nav__link">
     <span class="md-ellipsis">
       
-        🏛️ Visão Geral da Pipeline da MarIA
+        1. Visão Geral da MarIA
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="🏛️ Visão Geral da Pipeline da MarIA">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-pipeline-operacional-de-execucao" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Pipeline Operacional de Execução
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Pipeline Operacional de Execução">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-camada-de-cache-distribuido-redis" class="md-nav__link">
+  <a href="#estagio-1-recepcao-e-consulta-ao-cache-distribuido" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Camada de Cache Distribuído (Redis)
+        Estágio 1: Recepção e Consulta ao Cache Distribuído
       
     </span>
   </a>
@@ -552,10 +631,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#2-planejamento-de-consulta-queryplanner" class="md-nav__link">
+  <a href="#estagio-2-planejador-semantico-queryplanner" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Planejamento de Consulta (QueryPlanner)
+        Estágio 2: Planejador Semântico (QueryPlanner)
       
     </span>
   </a>
@@ -563,10 +642,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#3-busca-hibrida-e-linha-de-corte-aisearchservice" class="md-nav__link">
+  <a href="#estagio-3-busca-hibrida-e-linha-de-corte-de-qualidade-cutoff" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3. Busca Híbrida e Linha de Corte (AISearchService)
+        Estágio 3: Busca Híbrida e Linha de Corte de Qualidade (Cutoff)
       
     </span>
   </a>
@@ -574,10 +653,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#4-variacoes-adaptativas-de-sintese-e-sobriedade-cientifica" class="md-nav__link">
+  <a href="#estagio-4-estrategias-adaptativas-de-resposta-5-variacoes" class="md-nav__link">
     <span class="md-ellipsis">
       
-        4. Variações Adaptativas de Síntese e Sobriedade Científica
+        Estágio 4: Estratégias Adaptativas de Resposta (5 Variações)
       
     </span>
   </a>
@@ -585,10 +664,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#5-telemetria-e-observabilidade-aitracer" class="md-nav__link">
+  <a href="#estagio-5-sintese-e-streaming-com-server-sent-events-sse" class="md-nav__link">
     <span class="md-ellipsis">
       
-        5. Telemetria e Observabilidade (AITracer)
+        Estágio 5: Síntese e Streaming com Server-Sent Events (SSE)
       
     </span>
   </a>
@@ -601,33 +680,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#ingestao-e-indexacao-vetorial-pgvector" class="md-nav__link">
+  <a href="#3-camada-de-cache-distribuido-redis" class="md-nav__link">
     <span class="md-ellipsis">
       
-        🔄 Ingestão e Indexação Vetorial (pgvector)
+        3. Camada de Cache Distribuído (Redis)
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="🔄 Ingestão e Indexação Vetorial (pgvector)">
+    <nav class="md-nav" aria-label="3. Camada de Cache Distribuído (Redis)">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#ingestao-de-pesquisadores" class="md-nav__link">
+  <a href="#caracteristicas-tecnicas-do-cache" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Ingestão de Pesquisadores
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#ingestao-de-producoes-cientificas-e-tecnologicas" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Ingestão de Produções Científicas e Tecnológicas
+        Características Técnicas do Cache:
       
     </span>
   </a>
@@ -640,24 +708,69 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#variaveis-de-configuracao" class="md-nav__link">
+  <a href="#4-observabilidade-rastreabilidade-e-tracing-jsonl" class="md-nav__link">
     <span class="md-ellipsis">
       
-        ⚙️ Variáveis de Configuração
+        4. Observabilidade, Rastreabilidade e Tracing (JSONL)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Observabilidade, Rastreabilidade e Tracing (JSONL)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#componentes-de-telemetria" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Componentes de Telemetria:
       
     </span>
   </a>
   
 </li>
+        
+      </ul>
+    </nav>
+  
+</li>
       
         <li class="md-nav__item">
-  <a href="#estrategia-de-testes" class="md-nav__link">
+  <a href="#5-contratos-de-api-e-compatibilidade-com-o-frontend" class="md-nav__link">
     <span class="md-ellipsis">
       
-        🧪 Estratégia de Testes
+        5. Contratos de API e Compatibilidade com o Frontend
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="5. Contratos de API e Compatibilidade com o Frontend">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-post-aichatask" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. POST /ai/chat/ask
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-post-aichataskstream" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. POST /ai/chat/ask/stream
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -678,118 +791,153 @@
 
 
 
-<h1 id="arquitetura-de-inteligencia-artificial-e-maria">Arquitetura de Inteligência Artificial e MarIA</h1>
-<p>O ecossistema do <strong>SIMCC</strong> integra uma camada avançada de inteligência artificial voltada para descoberta científica, consultas semânticas e síntese contextual de dados acadêmicos do estado da Bahia.</p>
-<p>A assistente virtual <strong>MarIA</strong> atua como uma consultora inteligente capaz de interpretar perguntas em linguagem natural, planejar consultas estruturadas, cruzar bases vetoriais com filtros relacionais e gerar sínteses amigáveis e adaptativas.</p>
+<h1 id="arquitetura-de-ia-maria-e-cache-distribuido">Arquitetura de IA (MarIA) e Cache Distribuído</h1>
+<p>Bem-vindo à documentação arquitetural da <strong>MarIA</strong> (<em>Mapeamento e Articulação de Informações Acadêmicas</em>), a assistente inteligente do <strong>SIMCC</strong> (Sistema de Informação e Mapeamento da Competência Científica da Bahia), mantido pelo <strong>Observatório SECTI</strong> (Secretaria de Ciência, Tecnologia e Inovação da Bahia).</p>
+<p>Este guia apresenta em detalhes como a pipeline de inteligência artificial processa requisições de linguagem natural, realiza buscas híbridas na base científica estadual, aplica filtros de relevância semântica e utiliza uma camada distribuída de cache Redis para garantir alta performance e escalabilidade para múltiplos workers concorrentes.</p>
 <hr />
-<h2 id="visao-geral-da-pipeline-da-maria">🏛️ Visão Geral da Pipeline da MarIA</h2>
-<p>O fluxo conversacional da MarIA é organizado em cinco estágios desacoplados e observáveis:</p>
-<pre><code class="language-mermaid">flowchart TD
-    A[Pergunta do Usuário] --&gt; B[Cache Redis]
-    B -- Cache Hit --&gt; C[Retorno Imediato / Replay de Stream]
-    B -- Cache Miss --&gt; D[Query Planner]
-    D --&gt; E[Busca Híbrida &amp; pgvector]
-    E --&gt; F[Linha de Corte de Relevância]
-    F -- 0 resultados válidos --&gt; G[Mensagem Empática de Ingestão]
-    F -- Resultados Válidos --&gt; H[Síntese Adaptativa LLM]
-    H --&gt; I[Gravação no Cache Redis]
-    I --&gt; J[Resposta / Streaming SSE]
-</code></pre>
-<h3 id="1-camada-de-cache-distribuido-redis">1. Camada de Cache Distribuído (Redis)</h3>
-<ul>
-<li>Antes de qualquer processamento pesado, a consulta tem seu hash canônico verificado no Redis (<code>simcc:ai:chat:...</code>).</li>
-<li>Suporta múltiplos workers da aplicação Uvicorn sem concorrência ou duplicação de chamadas ao provedor de IA.</li>
-<li>Oferece paridade total entre o endpoint de lote (<code>/ai/chat/ask</code>) e o endpoint de streaming (<code>/ai/chat/ask/stream</code>), reproduzindo os eventos do stream instantaneamente quando há <em>cache hit</em>.</li>
-<li>Possui mecanismo de <em>Graceful Fallback</em>: em caso de instabilidade na conexão com o Redis, a aplicação prossegue em modo direto sem interrupção de serviço.</li>
-</ul>
-<h3 id="2-planejamento-de-consulta-queryplanner">2. Planejamento de Consulta (<code>QueryPlanner</code>)</h3>
-<ul>
-<li>Extrai a intenção do usuário (<code>researcher_search</code>, <code>production_search</code>, <code>researcher_profile</code>, <code>researcher_comparison</code>, <code>aggregation</code>, <code>general_question</code>).</li>
-<li>Identifica filtros estruturados (siglas de instituições como UFBA, UNEB, UEFS, UESC; nomes de pesquisadores; tipos de produção e intervalos de anos).</li>
-<li>Gera uma query semântica purificada para a busca vetorial.</li>
-</ul>
-<h3 id="3-busca-hibrida-e-linha-de-corte-aisearchservice">3. Busca Híbrida e Linha de Corte (<code>AISearchService</code>)</h3>
-<ul>
-<li>Combina ordenação vetorial por distância cosseno (<code>pgvector</code>) com filtros relacionais SQL no PostgreSQL.</li>
-<li><strong>Linha de Corte de Relevância</strong>: Aplica um limiar máximo de distância cosseno (<code>cosine_distance &lt;= 0.65</code>). Registros fora da faixa de relevância são descartados para evitar ruído e alucinações.</li>
-</ul>
-<h3 id="4-variacoes-adaptativas-de-sintese-e-sobriedade-cientifica">4. Variações Adaptativas de Síntese e Sobriedade Científica</h3>
-<p>A MarIA ajusta dinamicamente a estrutura da resposta com base no perfil e volume dos dados recuperados, mantendo um tom amigável com o usuário, porém estritamente <strong>sóbrio, factual e neutro</strong> com os dados acadêmicos (sem adulações ou elogios vazios como "brilhante", "renomado" ou "ilustre"):</p>
-<ul>
-<li><strong>Modo Alto Volume (&gt; 5 registros)</strong>: Síntese panorâmica executiva destacando tendências e os principais dados no estado, convidando a refinar a busca.</li>
-<li><strong>Modo Volume Reduzido (1 a 4 registros)</strong>: Análise detalhada, acolhedora e contextualizada de cada registro com foco em fatos e áreas de atuação.</li>
-<li><strong>Modo Heterogêneo / Multidisciplinar</strong>: Agrupamento comparativo estruturado por instituição ou tipo de produção.</li>
-<li><strong>Modo Consultivo / Diálogo Temático (<code>thematic_chat</code>)</strong>: Quando o usuário deseja entender um conceito científico, tirar dúvidas teóricas ou discutir metodologias sem pedir listagem na base, a MarIA atua como consultora científica, respondendo diretamente e convidando ao mapeamento de pesquisadores da Bahia ao final.</li>
-<li><strong>Modo Base em Indexação (0 registros ou pós-corte)</strong>: Mensagem transparente e empática informando que a base de dados estadual está em constante processamento pelo Observatório SECTI e sugerindo termos alternativos.</li>
-</ul>
-<h3 id="5-telemetria-e-observabilidade-aitracer">5. Telemetria e Observabilidade (<code>AITracer</code>)</h3>
-<ul>
-<li>Todas as execuções medem os tempos de cada estágio (<code>planner_ms</code>, <code>search_ms</code>, <code>cutoff_ms</code>, <code>synthesis_ms</code>).</li>
-<li>Emite logs estruturados JSONL na categoria <code>ai</code> em total conformidade com o padrão de observabilidade do projeto.</li>
-</ul>
+<h2 id="1-visao-geral-da-maria">1. Visão Geral da MarIA</h2>
+<p>A MarIA atua como uma consultora inteligente e amigável sobre o ecossistema de ciência, tecnologia e inovação da Bahia. Seu papel é traduzir dúvidas de pesquisadores, gestores públicos e cidadãos em consultas estruturadas e semânticas, sintetizando dados de currículos Lattes, artigos, livros, patentes e projetos acadêmicos.</p>
+<pre class="mermaid"><code>graph TD
+    User([Usuário / Frontend]) --&gt;|POST /ai/chat/ask ou /stream| Router[Router da MarIA]
+    Router --&gt;|1. Verifica Cache| Cache{Cache Redis}
+    Cache --&gt;|Cache Hit| ReturnCached[Retorno Imediato / Replay SSE]
+    Cache --&gt;|Cache Miss| Service[MarIAService]
+    Service --&gt;|2. Planejamento| Planner[QueryPlanner]
+    Planner --&gt;|Intenção + Filtros| Search[AISearchService]
+    Search --&gt;|3. Busca Vetorial| PG[(PostgreSQL + pgvector)]
+    Search --&gt;|4. Linha de Corte| Cutoff[QualityCutoffPolicy]
+    Cutoff --&gt;|5. Contexto Filtrado| Prompt[Prompt Builder]
+    Prompt --&gt;|6. Síntese Adaptativa| LLM[OpenAI / LLM Provider]
+    LLM --&gt;|7. Resposta / Stream| Service
+    Service --&gt;|8. Armazena Cache| Cache
+    Service --&gt;|9. Registro JSONL| Tracer[AITracer]
+    Service --&gt;|10. Resposta Final| User</code></pre>
 <hr />
-<h2 id="ingestao-e-indexacao-vetorial-pgvector">🔄 Ingestão e Indexação Vetorial (<code>pgvector</code>)</h2>
-<p>Para que a IA tenha acesso à produção científica e aos currículos atualizados dos pesquisadores da Bahia, o ecossistema conta com scripts de ingestão incremental com suporte a <strong>commits em lotes (<em>batching</em>)</strong> e <strong>recuperação de falhas (<em>resume</em>)</strong>:</p>
-<h3 id="ingestao-de-pesquisadores">Ingestão de Pesquisadores</h3>
-<p>Consolida filiação institucional, formação acadêmica, experiência de gestão, áreas de conhecimento e resumos Lattes em documentos vetoriais:</p>
-<pre><code class="language-bash">poetry run python scripts/ingest/ingest_researchers.py --batch-size 25
-</code></pre>
-<h3 id="ingestao-de-producoes-cientificas-e-tecnologicas">Ingestão de Produções Científicas e Tecnológicas</h3>
-<p>Indexa artigos, livros, capítulos, patentes, softwares e relatórios técnicos:</p>
-<pre><code class="language-bash"># Ingestão de todas as produções pendentes
-poetry run python scripts/ingest/ingest_productions.py
-
-# Ingestão de tipologias específicas
-poetry run python scripts/ingest/ingest_productions.py --types ARTICLE,PATENT --batch-size 50
-</code></pre>
-<ul>
-<li><strong>Resiliência a Interrupções</strong>: Os dados são persistidos continuamente a cada lote. Se o processo for interrompido, nenhum progresso salvo é perdido.</li>
-<li><strong>Incrementalidade</strong>: Apenas registros ainda não indexados são processados por padrão, economizando tokens e tempo de máquina.</li>
-</ul>
-<hr />
-<h2 id="variaveis-de-configuracao">⚙️ Variáveis de Configuração</h2>
+<h2 id="2-pipeline-operacional-de-execucao">2. Pipeline Operacional de Execução</h2>
+<p>O ciclo de vida de uma requisição de chat percorre 5 estágios principais, todos monitorados com telemetria contínua:</p>
+<h3 id="estagio-1-recepcao-e-consulta-ao-cache-distribuido">Estágio 1: Recepção e Consulta ao Cache Distribuído</h3>
+<ol>
+<li>O endpoint recebe a requisição (<code>query</code>, <code>session_id</code>, <code>filters</code>).</li>
+<li>O sistema gera uma chave canônica normalizada (<code>maria:chat:ask:&lt;hash&gt;</code> ou <code>maria:chat:stream:&lt;hash&gt;</code>).</li>
+<li>Em caso de <strong>Cache Hit</strong>, a resposta (ou os eventos de streaming SSE) é devolvida imediatamente (&lt; 50ms), sem custo de tokens ou consultas ao banco de dados.</li>
+<li>Em caso de <strong>Cache Miss</strong> ou indisponibilidade do Redis, o fluxo prossegue normalmente (<em>graceful fallback</em>).</li>
+</ol>
+<h3 id="estagio-2-planejador-semantico-queryplanner">Estágio 2: Planejador Semântico (<code>QueryPlanner</code>)</h3>
+<p>O <code>QueryPlanner</code> decompõe a linguagem natural do usuário em três dimensões estruturadas:
+* <strong>Intenção (<code>intent</code>)</strong>: Classifica a ação do usuário (ex: <code>find_researcher</code>, <code>find_production</code>, <code>thematic_chat</code>, <code>general_question</code>).
+* <strong>Consulta Semântica (<code>semantic_query</code>)</strong>: Extrai os conceitos e termos centrais para a geração do vetor de embeddings.
+* <strong>Filtros Estruturados (<code>filters</code>)</strong>: Identifica restrições relacionais explícitas (ex: instituição, gênero, área do conhecimento).</p>
+<h3 id="estagio-3-busca-hibrida-e-linha-de-corte-de-qualidade-cutoff">Estágio 3: Busca Híbrida e Linha de Corte de Qualidade (<code>Cutoff</code>)</h3>
+<p>A busca combina vetores de embeddings com filtros relacionais no PostgreSQL via extensão <code>pgvector</code>:
+* <strong>Similaridade Semântica</strong>: Cálculo da distância cosseno entre a pergunta e os resumos de pesquisadores e produções.
+* <strong>Linha de Corte (<code>cosine_distance &lt;= 0.65</code>)</strong>: Registros com distância cosseno superior a <code>0.65</code> (baixa correlação temática) são descartados automaticamente como ruído.
+* <strong>Detecção de Gaps de Base</strong>: Se nenhum registro atender ao limiar mínimo de qualidade, o sistema aciona o modo de resposta empática informando a indexação contínua da base estadual, prevenindo alucinações.</p>
+<h3 id="estagio-4-estrategias-adaptativas-de-resposta-5-variacoes">Estágio 4: Estratégias Adaptativas de Resposta (5 Variações)</h3>
+<p>O prompt de síntese seleciona dinamicamente uma estratégia de redação com base no volume e na diversidade dos dados:</p>
 <table>
 <thead>
 <tr>
-<th style="text-align: left;">Variável</th>
-<th style="text-align: left;">Padrão</th>
-<th style="text-align: left;">Descrição</th>
+<th>Variação</th>
+<th>Gatilho</th>
+<th>Comportamento da MarIA</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;"><code>OPENAI_API_KEY</code></td>
-<td style="text-align: left;"><code>None</code></td>
-<td style="text-align: left;">Chave de API da OpenAI (opcional para testes com mocks; dispara HTTP 503 amigável se ausente em tempo de execução).</td>
+<td><strong>Modo Alto Volume</strong></td>
+<td>Mais de 5 registros encontrados</td>
+<td>Síntese executiva panorâmica com destaques institucionais e tendências, sem listagens mecânicas.</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>REDIS_URL</code></td>
-<td style="text-align: left;"><code>redis://localhost:6379/0</code></td>
-<td style="text-align: left;">URL de conexão assíncrona com o cluster/instância Redis.</td>
+<td><strong>Modo Volume Reduzido</strong></td>
+<td>1 a 4 registros encontrados</td>
+<td>Análise individualizada e rica de cada registro, explicando seu alinhamento com a consulta.</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>REDIS_ENABLED</code></td>
-<td style="text-align: left;"><code>True</code></td>
-<td style="text-align: left;">Habilita ou desabilita a camada de cache.</td>
+<td><strong>Modo Heterogêneo / Multidisciplinar</strong></td>
+<td>Mistura de pesquisadores e produções diversas</td>
+<td>Estruturação comparativa por instituição ou tipologia de produção (artigos, patentes, etc.).</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>AI_CACHE_TTL</code></td>
-<td style="text-align: left;"><code>3600</code></td>
-<td style="text-align: left;">Tempo de vida (em segundos) para as respostas cacheadas de chat.</td>
+<td><strong>Modo Base em Indexação</strong></td>
+<td>0 registros válidos após a linha de corte</td>
+<td>Mensagem acolhedora e transparente explicando que os dados do estado estão em processamento e sugerindo refinamento.</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>AI_COSINE_DISTANCE_THRESHOLD</code></td>
-<td style="text-align: left;"><code>0.65</code></td>
-<td style="text-align: left;">Limiar de distância cosseno máxima para aceitação de documentos vetoriais.</td>
+<td><strong>Modo Consultoria Conceitual</strong></td>
+<td>Dúvidas teóricas / <code>thematic_chat</code></td>
+<td>Explicação didática e técnica do conceito, convidando o usuário a explorar pesquisadores no estado caso deseje.</td>
 </tr>
 </tbody>
 </table>
+<h3 id="estagio-5-sintese-e-streaming-com-server-sent-events-sse">Estágio 5: Síntese e Streaming com Server-Sent Events (SSE)</h3>
+<p>A resposta pode ser consumida de duas formas:
+* <strong>Síncrona (<code>POST /ai/chat/ask</code>)</strong>: Retorna o payload completo com <code>answer</code>, <code>intent</code>, <code>researchers</code>, <code>productions</code> e <code>sources</code>.
+* <strong>Streaming (<code>POST /ai/chat/ask/stream</code>)</strong>: Emite eventos SSE em tempo real nos blocos padronizados: <code>metadata</code> (dados estruturados e filtros), <code>delta</code> (pedaços do texto gerado) e <code>done</code> (término do stream).</p>
 <hr />
-<h2 id="estrategia-de-testes">🧪 Estratégia de Testes</h2>
-<p>Os testes da camada de IA são 100% isolados de custos de tokens através de mocks (<code>MockLLMProvider</code>, <code>MockEmbeddingsProvider</code>):
-- Testes unitários para planners, prompts, cache e telemetria: <code>tests/unit/ai/</code>, <code>tests/unit/core/</code>, <code>tests/unit/services/</code>.
-- Testes de integração de rotas e contratos com o frontend: <code>tests/api/routers/</code>.
-- Testes ponta a ponta com a API real da OpenAI são reservados para execução sob demanda com o marcador <code>@pytest.mark.ai_live</code>.</p>
+<h2 id="3-camada-de-cache-distribuido-redis">3. Camada de Cache Distribuído (Redis)</h2>
+<p>O SIMCC foi projetado para operar com múltiplos workers Uvicorn (tipicamente entre 4 e 6 processos). Para evitar duplicidade de computação e contenção, o cache é centralizado no Redis.</p>
+<pre class="mermaid"><code>graph LR
+    Worker1[Worker 1] --&gt;|redis.asyncio| Redis[(Redis 7+)]
+    Worker2[Worker 2] --&gt;|redis.asyncio| Redis
+    Worker3[Worker 3] --&gt;|redis.asyncio| Redis
+    WorkerN[Worker N] --&gt;|redis.asyncio| Redis</code></pre>
+<h3 id="caracteristicas-tecnicas-do-cache">Características Técnicas do Cache:</h3>
+<ul>
+<li><strong>Cliente Assíncrono (<code>redis.asyncio</code>)</strong>: Pool de conexões assíncronas não-bloqueantes integrado ao ciclo de vida do FastAPI.</li>
+<li><strong>Namespaces Isolados</strong>: Chaves prefixadas por domínio (ex: <code>simcc:ai:chat:ask:&lt;hash&gt;</code>, <code>simcc:ai:chat:stream:&lt;hash&gt;</code>).</li>
+<li><strong>Replay de Streaming</strong>: O cache armazena a sequência completa de eventos SSE (<code>metadata</code>, <code>deltas</code>, <code>done</code>). Requisições subsequentes de stream são reemitidas com latência zero.</li>
+<li><strong>Graceful Degradation</strong>: Falhas de conexão, timeouts ou indisponibilidade temporária do Redis não interrompem a aplicação — o sistema executa o fallback silencioso para a pipeline direta.</li>
+</ul>
+<hr />
+<h2 id="4-observabilidade-rastreabilidade-e-tracing-jsonl">4. Observabilidade, Rastreabilidade e Tracing (JSONL)</h2>
+<p>Em conformidade com a Constituição do SIMCC e os padrões de governança, todas as execuções de IA emitem eventos de telemetria estruturados no formato <strong>JSONL</strong>.</p>
+<h3 id="componentes-de-telemetria">Componentes de Telemetria:</h3>
+<ul>
+<li><strong><code>AITracer</code></strong>: Mede a latência individual de cada estágio (<code>planner</code>, <code>hybrid_search</code>, <code>cutoff_filtering</code>, <code>synthesis</code>).</li>
+<li><strong><code>AIPricingEstimator</code></strong>: Estima tokens de entrada, tokens de saída e custo monetário associado às chamadas da OpenAI.</li>
+<li><strong>Esquema de Log Estruturado</strong>:
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="p">{</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2026-09-03T15:30:00.000Z&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;INFO&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span><span class="nt">&quot;application&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;simcc&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span><span class="nt">&quot;environment&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;production&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">  </span><span class="nt">&quot;category&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ai&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">  </span><span class="nt">&quot;event&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;maria_chat_completed&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">  </span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Execução da pipeline MarIA concluída com sucesso&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">  </span><span class="nt">&quot;duration&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.452</span><span class="p">,</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="w">  </span><span class="nt">&quot;data&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="w">    </span><span class="nt">&quot;session_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;session_abc123&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="w">    </span><span class="nt">&quot;intent&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;find_researcher&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="w">    </span><span class="nt">&quot;cache_hit&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="w">    </span><span class="nt">&quot;results_count&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="w">    </span><span class="nt">&quot;estimated_tokens&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1250</span><span class="p">,</span>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="w">    </span><span class="nt">&quot;timings&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="w">      </span><span class="nt">&quot;planner_ms&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">120</span><span class="p">,</span>
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="w">      </span><span class="nt">&quot;search_ms&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">85</span><span class="p">,</span>
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="w">      </span><span class="nt">&quot;synthesis_ms&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">247</span>
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a><span class="w">  </span><span class="p">}</span>
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="p">}</span>
+</code></pre></div></li>
+</ul>
+<hr />
+<h2 id="5-contratos-de-api-e-compatibilidade-com-o-frontend">5. Contratos de API e Compatibilidade com o Frontend</h2>
+<p>Os endpoints preservam 100% de compatibilidade retroativa com os componentes do frontend visual:</p>
+<h3 id="1-post-aichatask">1. <code>POST /ai/chat/ask</code></h3>
+<p>Retorna o schema <code>ChatResponse</code>:
+* <code>answer</code> (string): Resposta formatada em Markdown com o tom adaptativo.
+* <code>intent</code> (string): Intenção classificada.
+* <code>filters_extracted</code> (objeto): Filtros relacionais identificados.
+* <code>researchers</code> (lista): Metadados dos pesquisadores relevantes.
+* <code>productions</code> (lista): Metadados das produções associadas.
+* <code>sources</code> (lista): Fontes institucionais e vínculos Lattes.</p>
+<h3 id="2-post-aichataskstream">2. <code>POST /ai/chat/ask/stream</code></h3>
+<p>Emite fluxo <code>text/event-stream</code> com eventos:
+1. <code>event: metadata</code> -&gt; Objeto <code>SearchUIMetadata</code> com pesquisadores, produções e filtros.
+2. <code>event: delta</code> -&gt; Fragmentos de texto gerados incrementalmente pelo modelo.
+3. <code>event: done</code> -&gt; Sinalização de término do processamento.
+4. <code>event: error</code> -&gt; Emissão controlada e amigável em caso de exceções.</p>
 
 
 
@@ -809,6 +957,12 @@ poetry run python scripts/ingest/ingest_productions.py --types ARTICLE,PATENT --
           
 <script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
         </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Voltar para o topo
+</button>
         
       </main>
       
@@ -839,7 +993,7 @@ poetry run python scripts/ingest/ingest_productions.py --types ARTICLE,PATENT --
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": [], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.instant", "navigation.tracking", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copiado para \u00e1rea de transfer\u00eancia", "clipboard.copy": "Copiar para \u00e1rea de transfer\u00eancia", "search.result.more.one": "mais 1 nesta p\u00e1gina", "search.result.more.other": "# mais nesta p\u00e1gina", "search.result.none": "Nenhum documento encontrado", "search.result.one": "1 documento encontrado", "search.result.other": "# documentos encontrados", "search.result.placeholder": "Digite para iniciar a busca", "search.result.term.missing": "Ausente", "select.version": "Selecione a vers\u00e3o"}, "version": null}</script>
     
     
       <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
