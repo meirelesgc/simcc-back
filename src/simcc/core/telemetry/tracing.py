@@ -7,7 +7,11 @@ from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
     OTLPSpanExporter,
 )
 from opentelemetry.sdk.resources import Resource
-from opentelemetry.sdk.trace import SpanProcessor, TracerProvider
+from opentelemetry.sdk.trace import (
+    ReadableSpan,
+    SpanProcessor,
+    TracerProvider,
+)
 from opentelemetry.sdk.trace.export import (
     BatchSpanProcessor,
     ConsoleSpanExporter,
@@ -50,7 +54,7 @@ class SanitizingSpanProcessor(SpanProcessor):
     ) -> None:
         pass
 
-    def on_end(self, span: trace.ReadableSpan) -> None:  # noqa: PLR6301
+    def on_end(self, span: ReadableSpan) -> None:  # noqa: PLR6301
         if not hasattr(span, '_attributes'):
             return
 
