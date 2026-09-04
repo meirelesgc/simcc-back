@@ -1,4 +1,5 @@
 import time
+from datetime import datetime
 from uuid import uuid4
 
 import polars as pl
@@ -227,7 +228,7 @@ def list_researchers(session):
 
 def list_programs(session):
     SCRIPT_SQL = text("""
-        SELECT graduate_program_id::TEXT, researcher_id::TEXT, year
+        SELECT DISTINCT graduate_program_id::TEXT, researcher_id::TEXT
         FROM graduate_program_researcher
     """)
     result = session.execute(SCRIPT_SQL).mappings().all()
@@ -246,8 +247,10 @@ def main():
 
     try:
         routine_step_started('calculate_graduate_program_indprod')
-        current_year = 2026
-        YEAR = range(2008, current_year + 1)
+
+        current_year = datetime.now().year
+        YEAR = range(current_year - 11, current_year + 1)
+
         history = pl.DataFrame({'year': list(YEAR)}).with_columns(
             pl.col('year').cast(pl.Int64)
         )
@@ -310,23 +313,9 @@ def main():
         programs = pl.DataFrame(programs).with_columns(
             pl.col('graduate_program_id').cast(pl.String),
             pl.col('researcher_id').cast(pl.String),
-            pl.col('year').cast(pl.Int64),
         )
 
-        history_program = (
-            programs
-            .select('graduate_program_id')
-            .unique()
-            .join(history, how='cross')
-        )
-
-        programs = history_program.join(
-            programs, on=['graduate_program_id', 'year'], how='left'
-        )
-
-        programs = programs.join(
-            researchers, on=['researcher_id', 'year'], how='left'
-        )
+        programs = programs.join(researchers, on=['researcher_id'], how='left')
 
         programs = programs.drop('researcher_id')
 

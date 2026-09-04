@@ -1,6 +1,7 @@
 import re
 import unicodedata
 from collections import Counter
+from datetime import datetime
 
 import polars as pl
 from sqlalchemy import text
@@ -136,7 +137,8 @@ def main():
                 pl.lit(None, dtype=pl.String).alias('graduate_program_id')
             )
 
-        years = [2026, 2025, 2024, 2023]
+        current_year = datetime.now().year
+
         stats = Counter()
         records_to_insert = []
 
@@ -165,13 +167,12 @@ def main():
                 )
                 continue
 
-            for year in years:
-                records_to_insert.append({
-                    'graduate_program_id': str(pg_id),
-                    'researcher_id': str(r_id),
-                    'year': year,
-                    'type_': row['categoria'],
-                })
+            records_to_insert.append({
+                'graduate_program_id': str(pg_id),
+                'researcher_id': str(r_id),
+                'year': current_year,
+                'type_': row['categoria'],
+            })
             stats['Processado'] += 1
 
             if (idx + 1) % 50 == 0 or (idx + 1) == items_found:
