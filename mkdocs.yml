@@ -1,9 +1,67 @@
-site_name: Simcc Documentation
-nav:
-  - Home: index.md
-  - Arquitetura: architecture.md
-  - Como Adicionar Filtros: adding_filters.md
-  - Testes e Boas Práticas: testing.md
-  - Como trabalhar com IA: ai_architecture.md
+site_name: SIMCC Backend - Observatório da Ciência
+site_description: Documentação técnica e arquitetural da API do SIMCC, motor de busca vetorial e inteligência artificial conversacional MarIA.
+site_author: Equipe SIMCC / Observatório da Ciência
+repo_name: observatorio-secti/simcc-back
+repo_url: https://github.com/observatorio-secti/simcc-back
+
 theme:
   name: material
+  language: pt-BR
+  palette:
+    # Alternância automática / tema claro
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: deep purple
+      toggle:
+        icon: material/weather-night
+        name: Alternar para modo escuro
+    # Tema escuro
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: deep purple
+      toggle:
+        icon: material/weather-sunny
+        name: Alternar para modo claro
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+  - attr_list
+  - md_in_html
+  - toc:
+      permalink: true
+
+nav:
+  - Início: index.md
+  - Inteligência Artificial (MarIA):
+      - Arquitetura e Pipeline: ai_architecture.md
+      - Cache Distribuído e Telemetria: cache_and_telemetry.md
+      - Contratos de API e Streaming: api_contracts.md
+  - Observabilidade e OpenTelemetry: observability.md

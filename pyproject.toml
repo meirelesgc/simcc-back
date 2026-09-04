@@ -35,6 +35,13 @@ dependencies = [
     "scrapy (>=2.17.0,<3.0.0)",
     "pgvector (>=0.5.0,<0.6.0)",
     "redis (>=5.0.0,<6.0.0)",
+    "opentelemetry-api (>=1.30.0,<2.0.0)",
+    "opentelemetry-sdk (>=1.30.0,<2.0.0)",
+    "opentelemetry-exporter-otlp (>=1.30.0,<2.0.0)",
+    "opentelemetry-instrumentation-fastapi (>=0.51b0,<1.0.0)",
+    "opentelemetry-instrumentation-sqlalchemy (>=0.51b0,<1.0.0)",
+    "opentelemetry-instrumentation-redis (>=0.51b0,<1.0.0)",
+    "opentelemetry-instrumentation-httpx (>=0.51b0,<1.0.0)",
 ]
 
 [tool.poetry]

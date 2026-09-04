@@ -1,8 +1,20 @@
+import os
 import pytest
 import pytest_asyncio
 from fastapi.testclient import TestClient
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from testcontainers.postgres import PostgresContainer
+
+# Garante defaults caso não haja .env no ambiente (ex: CI limpo)
+os.environ.setdefault(
+    'DATABASE_URL', 'postgresql+psycopg://test:test@localhost:5432/test'
+)
+os.environ.setdefault(
+    'ADMIN_DATABASE_URL', 'postgresql+psycopg://test:test@localhost:5432/test'
+)
+os.environ.setdefault('REDIS_ENABLED', 'false')
+os.environ.setdefault('OPENAI_API_KEY', 'dummy-key-for-tests')
 
 pytest_plugins = ['tests.ai.fixtures.ai_fixtures']
 
@@ -25,6 +37,18 @@ def pytest_configure(config):
 
 
 @pytest.fixture(scope='session')
+def postgres_container():
+    if os.getenv('USE_TESTCONTAINERS', 'true').lower() in {'false', '0'}:
+        yield None
+        return
+
+    with PostgresContainer(
+        'pgvector/pgvector:pg17', driver='psycopg'
+    ) as postgres:
+        yield postgres
+
+
+@pytest.fixture(scope='session')
 def settings():
     return Settings()
 
@@ -34,10 +58,21 @@ from sqlalchemy.pool import NullPool
 
 
 @pytest.fixture(scope='session')
-def engine(settings):
-    _engine = create_async_engine(
-        settings.DATABASE_URL, poolclass=NullPool, echo=False
-    )
+def engine(postgres_container, settings):
+    if postgres_container is not None:
+        db_url = postgres_container.get_connection_url()
+        if '+psycopg2' in db_url:
+            db_url = db_url.replace('+psycopg2', '+psycopg')
+        elif '+psycopg' not in db_url:
+            db_url = db_url.replace('postgresql://', 'postgresql+psycopg://')
+
+        settings.DATABASE_URL = db_url
+        os.environ['DATABASE_URL'] = db_url
+        os.environ['ADMIN_DATABASE_URL'] = db_url
+    else:
+        db_url = settings.DATABASE_URL
+
+    _engine = create_async_engine(db_url, poolclass=NullPool, echo=False)
     return _engine
 
 

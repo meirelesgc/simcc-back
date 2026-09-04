@@ -152,3 +152,16 @@
 3. **Passo 3 (Performance & Tracing - US3 + US4)**: Integrar cache Redis assíncrono e telemetria estruturada (T018-T025).
 4. **Passo 4 (Resiliência & Contratos - US5)**: Garantir compatibilidade e fallback sem chave OpenAI (T026-T029).
 5. **Passo 5 (Documentação & Qualidade)**: Atualizar MkDocs e rodar suíte de testes completa (T030-T033).
+
+---
+
+## Phase 9: Convergence
+
+**Purpose**: Estruturar e gerar a documentação viva e humanizada com MkDocs para atender a Constituição (Princípio VI) e os requisitos da especificação (FR-001)
+
+- [X] T034 [CRITICAL] Configurar MkDocs com tema Material, navegação e suporte a diagramas em `mkdocs.yml` per Constitution VI e FR-001 (missing)
+- [X] T035 [CRITICAL] Criar página inicial e visão geral humanizada do projeto em `docs/index.md` per Constitution VI e FR-001 (missing)
+- [X] T036 [CRITICAL] Criar documentação humanizada e técnica da arquitetura da MarIA (fluxos de streaming, prompt adaptativo e corte semântico) em `docs/ai_architecture.md` per Constitution VI, FR-001, US1 e US2 (missing)
+- [X] T037 [CRITICAL] Criar documentação técnica da camada de Cache Distribuído com Redis e Telemetria/Tracing JSONL em `docs/cache_and_telemetry.md` per Constitution VI, FR-007, FR-008 e US3/US4 (missing)
+- [X] T038 [CRITICAL] Documentar contratos de API REST e eventos de streaming SSE em `docs/api_contracts.md` per Constitution VI, FR-012 e US5 (missing)
+- [X] T039 Validar build da documentação sem warnings com `poetry run mkdocs build` per Constitution VI (missing)

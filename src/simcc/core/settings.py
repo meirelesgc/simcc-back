@@ -28,11 +28,6 @@ class Settings(BaseSettings, extra='ignore'):
 
     ALTERNATIVE_CNPQ_SERVICE: bool = False
 
-    HOP_IMAGE: str = 'gleidsoncosta/simcc-extrator:latest'
-    HOP_XML_VOLUME: str = 'simcc_xml'
-    HOP_NETWORK: str = 'simcc-back_default'
-    HOP_RUN_PARAMETERS: Optional[str] = None
-
     APPLICATION: str = 'simcc'
     ENVIRONMENT: str = 'development'
     LOG_LEVEL: str = 'INFO'
@@ -46,6 +41,16 @@ class Settings(BaseSettings, extra='ignore'):
     # Configurações de IA e Qualidade
     AI_COSINE_DISTANCE_THRESHOLD: float = 0.65
     AI_CACHE_TTL: int = 3600
+
+    # Configurações de Telemetria (OpenTelemetry)
+    OTEL_ENABLED: bool = True
+    OTEL_EXPORTER_TYPE: str = 'console'
+    OTEL_METRICS_EXPORTER_TYPE: str = 'none'
+    OTEL_EXPORTER_OTLP_ENDPOINT: str = 'http://localhost:4317'
+    OTEL_EXPORTER_OTLP_INSECURE: bool = True
+    OTEL_SAMPLING_RATIO: float = 1.0
+    OTEL_SERVICE_NAME: str = 'simcc-back'
+    OTEL_SERVICE_NAMESPACE: str = 'simcc'
 
     @field_validator(
         'CORS_ALLOW_ORIGINS',

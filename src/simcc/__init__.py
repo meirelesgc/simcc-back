@@ -45,7 +45,10 @@ async def lifespan(app: FastAPI):
     yield
 
 
+from simcc.core.telemetry import init_telemetry
+
 app = FastAPI(lifespan=lifespan)
+init_telemetry(app)
 
 app.add_middleware(
     CORSMiddleware,

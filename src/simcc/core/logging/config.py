@@ -2,6 +2,7 @@ import logging
 from datetime import datetime
 from typing import Any
 
+from opentelemetry import trace as otel_trace
 import structlog
 
 from simcc.core.logging.context import get_logging_context
@@ -166,6 +167,16 @@ def format_schema_processor(logger, method_name, event_dict):
     # Merge remaining dynamic extra keys
     for k, v in event_dict.items():
         data_dict[k] = v
+
+    # Correlate OpenTelemetry trace_id and span_id if available
+    try:
+        current_span = otel_trace.get_current_span()
+        if current_span and current_span.get_span_context().is_valid:
+            span_ctx = current_span.get_span_context()
+            data_dict.setdefault('trace_id', f'{span_ctx.trace_id:032x}')
+            data_dict.setdefault('span_id', f'{span_ctx.span_id:016x}')
+    except Exception:
+        pass
 
     formatted_log = {
         'timestamp': timestamp,
