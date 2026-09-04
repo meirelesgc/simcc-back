@@ -1,5 +1,4 @@
 import os
-import time
 from pathlib import Path
 
 from fastapi import APIRouter
@@ -11,10 +10,7 @@ from simcc.services import powerBi_service
 
 
 def is_file_valid(file_path: str, max_age_hours: int = 24) -> bool:
-    if not os.path.exists(file_path):
-        return False
-    file_age = time.time() - os.path.getmtime(file_path)
-    return file_age < (max_age_hours * 3600)
+    return False
 
 
 SETTINGS = Settings()
