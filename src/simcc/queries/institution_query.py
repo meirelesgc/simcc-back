@@ -76,6 +76,7 @@ class InstitutionQuery(BaseQuery):
                 ON rl.institution_id = i.id
             WHERE 1 = 1
               AND i.acronym IS NOT NULL
+              AND i.acronym <> 'EXTERNA'
               {filters};
         """
 

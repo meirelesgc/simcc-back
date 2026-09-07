@@ -6,9 +6,7 @@ import polars as pl
 from simcc.core.utils import (
     DEFAULT_AVATAR_PATH,
     download_researcher_image,
-    get_institution_cover_path,
     get_institution_cover_url,
-    get_institution_logo_path,
     get_institution_logo_url,
 )
 from simcc.repositories import researcher_repo
@@ -92,7 +90,6 @@ def _enrich_institution_dict(inst: Any) -> dict[str, Any]:
     return d
 
 
-
 async def enrich_researchers(session, researchers: list):
     if not researchers:
         return researchers
@@ -166,8 +163,8 @@ async def enrich_researchers(session, researchers: list):
             r['institution'] = maps['inst_obj'][inst_id]
         elif r.get('institution_id') or r.get('university'):
             acronym = r.get('university')
-            logo_url = (
-                get_institution_logo_url(acronym) or r.get('image_university')
+            logo_url = get_institution_logo_url(acronym) or r.get(
+                'image_university'
             )
             cover_url = get_institution_cover_url(acronym)
             r['institution'] = {
@@ -188,7 +185,6 @@ async def enrich_researchers(session, researchers: list):
             researchers[i] = processed[i]
 
     return processed
-
 
 
 async def get_metrics_academic_degree(session, filters):
@@ -269,7 +265,6 @@ async def list_institutions(session):
 async def get_institution(session, institution_id):
     data = await researcher_repo.get_institution(session, institution_id)
     return _enrich_institution_dict(data) if data else None
-
 
 
 async def list_researcher_terms(session, filters):

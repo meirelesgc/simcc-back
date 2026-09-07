@@ -44,7 +44,9 @@ async def get_institution_image(
 ):
     resolved_acronym = acronym
     if not resolved_acronym and institution_id:
-        inst = await researcher_service.get_institution(session, institution_id)
+        inst = await researcher_service.get_institution(
+            session, institution_id
+        )
         if inst:
             resolved_acronym = inst.get('acronym')
 
@@ -73,7 +75,9 @@ async def get_institution_cover(
 ):
     resolved_acronym = acronym
     if not resolved_acronym and institution_id:
-        inst = await researcher_service.get_institution(session, institution_id)
+        inst = await researcher_service.get_institution(
+            session, institution_id
+        )
         if inst:
             resolved_acronym = inst.get('acronym')
 
@@ -104,4 +108,3 @@ async def get_institution(session: AsyncSession, institution_id: UUID):
             detail='Instituição não encontrada',
         )
     return institution
-

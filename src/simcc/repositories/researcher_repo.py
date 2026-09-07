@@ -414,4 +414,3 @@ async def list_institutions_by_ids(session, institution_ids: list):
         return result.mappings().all()
     except Exception:
         return []
-
