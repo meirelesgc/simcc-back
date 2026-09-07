@@ -361,13 +361,18 @@ async def list_institution_data_by_researcher_ids(
     try:
         SCRIPT_SQL = """
             SELECT
-                researcher_id AS id,
-                gender,
-                zip_code,
-                work_regime,
-                custom_attributes
-            FROM researcher_custom_attributes
-            WHERE researcher_id = ANY(:researcher_ids);
+                r.id,
+                ca.gender,
+                ca.zip_code,
+                ca.work_regime,
+                ca.custom_attributes,
+                ri.territorio_identidade,
+                ri.carga_horaria
+            FROM researcher r
+            LEFT JOIN researcher_custom_attributes ca ON ca.researcher_id = r.id
+            LEFT JOIN researcher_institution ri ON ri.researcher_id = r.id
+                AND ri.institution_id = r.institution_id
+            WHERE r.id = ANY(:researcher_ids);
         """
         result = await session.execute(
             text(SCRIPT_SQL),

@@ -136,6 +136,8 @@ class ResearcherInstitution(BaseModel):
     acronym: Optional[str] = None
     image: Optional[str] = None
     cover: Optional[str] = None
+    territorio_identidade: Optional[str] = None
+    carga_horaria: Optional[float] = None
 
 
 class Researcher(BaseModel):
