@@ -1,6 +1,7 @@
 from http import HTTPStatus
 from unittest.mock import AsyncMock
 from uuid import uuid4
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -86,6 +87,8 @@ def test_get_institution_list_endpoint(test_client, monkeypatch):
             'count_gps': 30,
             'count_d': 0,
             'count_t': 0,
+            'count_rg': 0,
+            'count_foment': 0,
             'researchers': [],
             'image': '/storage/institutions/picture/UFBA.png',
             'cover': '/storage/institutions/covers/UFBA.jpg',
