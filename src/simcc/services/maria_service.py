@@ -277,7 +277,6 @@ class MariaService:
         msg_id = message_id or f'msg_{uuid4().hex[:12]}'
         tracer = self.tracer or AITracer(request_id=msg_id, query=query)
         cache_key = None
-
         if self.cache:
             canonical_hash = self.cache.hash_payload({'query': query.strip()})
             cache_key = self.cache.build_key(

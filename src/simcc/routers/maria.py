@@ -78,10 +78,6 @@ async def chat_ask_stream(
     planner=Depends(get_query_planner),
     search_service=Depends(get_ai_search_service),
 ):
-    """
-    Interface de chat em streaming (Server-Sent Events) com a MarIA.
-    Emite eventos de domínio formatados em SSE (metadata, delta, error, done).
-    """
 
     async def event_generator():
         async for event in service.chat_ask_stream(
