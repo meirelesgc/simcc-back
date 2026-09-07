@@ -12,71 +12,94 @@ class InstitutionQuery(BaseQuery):
         if self.institution_id:
             self.params['institution_id'] = self.institution_id
             filters = 'AND i.id = :institution_id'
-
+        # WIP - CRIAR UMA INSTITUTION_PRODUCTION PRA GUARDAR ESSES DADOS
         return f"""
             WITH researcher_count AS (
-              SELECT institution_id, COUNT(DISTINCT id)
-                AS count_r
-              FROM researcher
-              GROUP BY institution_id
+            SELECT institution_id, COUNT(DISTINCT id) AS count_r
+            FROM researcher
+            GROUP BY institution_id
             ),
             graduate_program_count AS (
-              SELECT institution_id, COUNT(DISTINCT graduate_program_id)
-                AS count_gp
-              FROM graduate_program
-              GROUP BY institution_id
+            SELECT institution_id, COUNT(DISTINCT graduate_program_id) AS count_gp
+            FROM graduate_program
+            GROUP BY institution_id
             ),
             graduate_program_researcher_count AS (
-              SELECT gp.institution_id, SUM(gpr.count_r) AS count_gpr
-              FROM graduate_program gp
-              LEFT JOIN (
-                SELECT graduate_program_id, COUNT(DISTINCT researcher_id)
-                  AS count_r
+            SELECT gp.institution_id, SUM(gpr.count_r) AS count_gpr
+            FROM graduate_program gp
+            LEFT JOIN (
+                SELECT graduate_program_id, COUNT(DISTINCT researcher_id) AS count_r
                 FROM graduate_program_researcher
                 GROUP BY graduate_program_id
-              ) gpr ON gpr.graduate_program_id = gp.graduate_program_id
-              GROUP BY gp.institution_id
+            ) gpr ON gpr.graduate_program_id = gp.graduate_program_id
+            GROUP BY gp.institution_id
             ),
             graduate_program_student_count AS (
-              SELECT gp.institution_id, SUM(gps.count_s) AS count_gps
-              FROM graduate_program gp
-              LEFT JOIN (
-                SELECT graduate_program_id, COUNT(DISTINCT researcher_id)
-                  AS count_s
+            SELECT gp.institution_id, SUM(gps.count_s) AS count_gps
+            FROM graduate_program gp
+            LEFT JOIN (
+                SELECT graduate_program_id, COUNT(DISTINCT researcher_id) AS count_s
                 FROM graduate_program_student
                 GROUP BY graduate_program_id
-              ) gps ON gps.graduate_program_id = gp.graduate_program_id
-              GROUP BY gp.institution_id
+            ) gps ON gps.graduate_program_id = gp.graduate_program_id
+            GROUP BY gp.institution_id
+            ),
+            foment_count AS (
+            SELECT r.institution_id, COUNT(*) AS count_foment
+            FROM researcher r
+            INNER JOIN foment f ON f.researcher_id = r.id
+            GROUP BY r.institution_id
+            ),
+            group_leaders AS (
+            SELECT id AS group_id, first_leader_id AS leader_id
+            FROM public.research_group
+            WHERE first_leader_id IS NOT NULL
+
+            UNION
+
+            SELECT id AS group_id, second_leader_id AS leader_id
+            FROM public.research_group
+            WHERE second_leader_id IS NOT NULL
+            ),
+            research_group_count AS (
+            SELECT r.institution_id, COUNT(DISTINCT gl.group_id) AS count_rg
+            FROM group_leaders gl
+            INNER JOIN researcher r ON gl.leader_id = r.id
+            GROUP BY r.institution_id
+            ),
+            ranked_researchers AS (
+            SELECT lattes_id, institution_id, ROW_NUMBER() OVER (PARTITION BY institution_id ORDER BY random()) AS rn
+            FROM researcher
             ),
             researchers AS (
-              WITH ranked AS (
-              SELECT lattes_id, institution_id, ROW_NUMBER() OVER (PARTITION BY institution_id ORDER BY random()) AS rn
-              FROM researcher
-              )
-              SELECT institution_id, ARRAY_AGG(lattes_id) AS researchers_list
-              FROM ranked
-              WHERE rn <= 20
-              GROUP BY institution_id
+            SELECT institution_id, ARRAY_AGG(lattes_id) AS researchers_list
+            FROM ranked_researchers
+            WHERE rn <= 20
+            GROUP BY institution_id
             )
-            SELECT i.name, i.id, COALESCE(r.count_r, 0) AS count_r,
-              COALESCE(gp.count_gp, 0) AS count_gp, COALESCE(gpr.count_gpr, 0)
-              AS count_gpr, COALESCE(gps.count_gps, 0) AS count_gps,
-              0::BIGINT AS count_d, 0::BIGINT AS count_t,
-              i.acronym, COALESCE(rl.researchers_list, ARRAY[]::TEXT[]) AS researchers
+            SELECT 
+            i.name, 
+            i.id, 
+            COALESCE(r.count_r, 0) AS count_r,
+            COALESCE(gp.count_gp, 0) AS count_gp, 
+            COALESCE(gpr.count_gpr, 0) AS count_gpr, 
+            COALESCE(gps.count_gps, 0) AS count_gps,
+            COALESCE(fc.count_foment, 0) AS count_foment,
+            COALESCE(rgc.count_rg, 0) AS count_rg,
+            0::BIGINT AS count_d, 
+            0::BIGINT AS count_t,
+            i.acronym, 
+            COALESCE(rl.researchers_list, ARRAY[]::TEXT[]) AS researchers
             FROM institution i
-              LEFT JOIN researcher_count r
-                ON r.institution_id = i.id
-              LEFT JOIN graduate_program_count gp
-                ON gp.institution_id = i.id
-              LEFT JOIN graduate_program_researcher_count gpr
-                ON gpr.institution_id = i.id
-              LEFT JOIN graduate_program_student_count gps
-                ON gps.institution_id = i.id
-              LEFT JOIN researchers rl
-                ON rl.institution_id = i.id
-            WHERE 1 = 1
-              AND i.acronym IS NOT NULL
-              AND i.acronym <> 'EXTERNA'
+            LEFT JOIN researcher_count r ON r.institution_id = i.id
+            LEFT JOIN graduate_program_count gp ON gp.institution_id = i.id
+            LEFT JOIN graduate_program_researcher_count gpr ON gpr.institution_id = i.id
+            LEFT JOIN graduate_program_student_count gps ON gps.institution_id = i.id
+            LEFT JOIN foment_count fc ON fc.institution_id = i.id
+            LEFT JOIN research_group_count rgc ON rgc.institution_id = i.id
+            LEFT JOIN researchers rl ON rl.institution_id = i.id
+            WHERE i.acronym IS NOT NULL
+            AND i.acronym <> 'EXTERNA';
               {filters};
         """
 
