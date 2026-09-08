@@ -242,14 +242,14 @@ A suíte de testes utiliza **Pytest**, **Testcontainers** e **FactoryBoy**, orga
 **Simular a importação:** substitua os caminhos dos exemplos pelos arquivos recebidos.
 
 ```powershell
-poetry run python scripts/ingest/ingest_teacher_affiliations.py --inst EBMSP --file "storage/docentes_ebmsp.csv" --dry-run
-poetry run python scripts/ingest/ingest_teacher_affiliations.py --inst UFOB --file "storage/docentes_ufob.xlsx" --dry-run
+poetry run python scripts/ingest/ingest_researcher_affiliations.py --inst EBMSP --file "storage/docentes_ebmsp.csv" 
+poetry run python scripts/ingest/ingest_researcher_affiliations.py --inst UFOB --file "storage/docentes_ufob.xlsx" 
 ```
 
 **Gravar os dados:** execute o mesmo comando sem `--dry-run`.
 
 ```powershell
-poetry run python scripts/ingest/ingest_teacher_affiliations.py --inst EBMSP --file "storage/docentes_ebmsp.csv"
+poetry run python scripts/ingest/ingest_researcher_affiliations.py --inst EBMSP --file "storage/docentes_ebmsp.csv"
 ```
 
 ## 🏛️ Estrutura Arquitetural
