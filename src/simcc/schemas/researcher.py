@@ -143,8 +143,8 @@ class ResearcherInstitution(BaseModel):
 class Researcher(BaseModel):
     id: UUID
     institution_id: Optional[UUID] = None
-    lattes_id: str
-    lattes_10_id: str
+    lattes_id: Optional[str]
+    lattes_10_id: Optional[str]
     orcid: Optional[str] = None
     scopus: Optional[str] = None
     openalex: Optional[str] = None
